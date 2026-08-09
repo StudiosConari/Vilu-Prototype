@@ -41,30 +41,6 @@ material = ExtResource("2_terrain")
 [node name="PlayerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 12)
 
-[node name="PlateHint" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 6)
-billboard = 1
-fixed_size = true
-text = "MONTA (Q) y pisa la placa → fija el puente"
-font_size = 38
-outline_size = 10
-
-[node name="TargetHint" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3.2, -10)
-billboard = 1
-fixed_size = true
-text = "OBJETIVO: clic der cuando esté DORADO"
-font_size = 38
-outline_size = 10
-
-[node name="GlideHint" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -24)
-billboard = 1
-fixed_size = true
-text = "SALTA y mantén Espacio para PLANEAR a la cima"
-font_size = 38
-outline_size = 10
-
 [node name="MountPlate" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
 collision_layer = 0

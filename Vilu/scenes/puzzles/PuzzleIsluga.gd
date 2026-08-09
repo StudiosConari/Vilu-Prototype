@@ -15,7 +15,6 @@ signal solved
 var _combo_done := false
 var _target_done := false
 var _is_solved := false
-var _player: Node = null
 
 @onready var _totem: Node3D = get_node_or_null("ComboTotem")
 @onready var _target: Node = get_node_or_null("TimedTarget")
@@ -23,19 +22,26 @@ var _player: Node = null
 
 
 func _ready() -> void:
-	_player = get_tree().get_first_node_in_group("player")
-	if _player and _player.has_signal("melee_hit"):
-		_player.melee_hit.connect(_on_melee)
+	# Conecta el combo de TODOS los personajes (solo el melee lo emite).
+	for p in get_tree().get_nodes_in_group("player"):
+		if p.has_signal("melee_hit"):
+			p.melee_hit.connect(_on_melee.bind(p))
 	if _target and _target.has_signal("hit_while_active"):
 		_target.hit_while_active.connect(_on_target_hit)
-	_banner("Prueba de Isluga — sella el combo en el tótem y sincroniza la flecha")
+	_hint("Isluga: con el personaje MELEE, combo completo (clic izq x3) junto al tótem amarillo. Con el ARQUERO, clic izq al cubo cuando esté DORADO. [R] cambia de personaje.")
 
 
-func _on_melee(step: int) -> void:
+func _hint(text: String) -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("show_hint"):
+		hud.show_hint(text)
+
+
+func _on_melee(step: int, who: Node) -> void:
 	if _combo_done or step < required_combo_step:
 		return
-	if _totem and is_instance_valid(_player):
-		if _player.global_position.distance_to(_totem.global_position) <= totem_range:
+	if _totem and is_instance_valid(who):
+		if who.global_position.distance_to(_totem.global_position) <= totem_range:
 			_mark_combo_done()
 
 
