@@ -1,0 +1,19 @@
+# Godot 4+ — caché de importación y datos generados
+.godot/
+/android/
+
+# .NET / Mono
+.mono/
+mono_crash.*.json
+[Bb]in/
+[Oo]bj/
+*.user
+
+# Exports / builds
+build/
+exports/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
