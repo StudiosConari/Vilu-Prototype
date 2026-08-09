@@ -50,6 +50,7 @@ var _interactable: Node = null
 
 var _jump_held_prev := false
 var _t_held_prev := false
+var _q_held_prev := false
 var _combo_step := 0
 var _combo_timer := 0.0
 var _attack_cd := 0.0
@@ -61,6 +62,14 @@ func _ready() -> void:
 	# Bloquear input mientras haya diálogo abierto (el balloon no pausa el árbol).
 	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void: input_locked = true)
 	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void: input_locked = false)
+	# Habilidades como estados: alas = planeo pasivo. Sincronizar del progreso.
+	can_glide = GameManager.has_ability("wings")
+	GameManager.ability_unlocked.connect(_on_ability_unlocked)
+
+
+func _on_ability_unlocked(ability: String) -> void:
+	if ability == "wings":
+		can_glide = true
 
 
 func _physics_process(delta: float) -> void:
@@ -95,6 +104,13 @@ func _physics_process(delta: float) -> void:
 		if t_held and not _t_held_prev and _interactable != null and _interactable.has_method("interact"):
 			_interactable.interact(self)
 		_t_held_prev = t_held
+
+		# Montura guanaco (toggle con Q; solo si se desbloqueó)
+		if GameManager.has_ability("guanaco"):
+			var q_held := Input.is_physical_key_pressed(KEY_Q)
+			if q_held and not _q_held_prev:
+				mounted = not mounted
+			_q_held_prev = q_held
 
 	var speed := run_speed if (controllable and Input.is_physical_key_pressed(KEY_SHIFT)) else walk_speed
 	if mounted:
