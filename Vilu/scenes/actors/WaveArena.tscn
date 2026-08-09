@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/actors/WaveArena.gd" id="1_arena"]
+[ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="2_barrier"]
+
+[sub_resource type="BoxShape3D" id="shape_trigger"]
+size = Vector3(24, 4, 14)
+
+[node name="WaveArena" type="Node3D"]
+script = ExtResource("1_arena")
+
+[node name="Trigger" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="TriggerShape" type="CollisionShape3D" parent="Trigger"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("shape_trigger")
+
+[node name="Spawns" type="Node3D" parent="."]
+
+[node name="S1" type="Marker3D" parent="Spawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -3)
+
+[node name="S2" type="Marker3D" parent="Spawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -3)
+
+[node name="S3" type="Marker3D" parent="Spawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -7)
+
+[node name="S4" type="Marker3D" parent="Spawns"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -7)
+
+[node name="Barrier" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -9)
+use_collision = true
+size = Vector3(24, 3, 1)
+material = ExtResource("2_barrier")

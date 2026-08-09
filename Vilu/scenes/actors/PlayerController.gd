@@ -206,3 +206,7 @@ func take_damage(amount: float, _from: Vector3 = Vector3.ZERO) -> void:
 func heal(amount: int) -> void:
 	health = min(max_health, health + amount)
 	health_changed.emit(health, max_health)
+
+
+func is_dead() -> bool:
+	return health <= 0

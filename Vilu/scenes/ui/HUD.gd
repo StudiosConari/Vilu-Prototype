@@ -9,6 +9,7 @@ extends CanvasLayer
 @onready var _abilities: Label = $Stats/Abilities
 @onready var _debug: Label = $Stats/Debug
 @onready var _prompt: Label = $Prompt
+@onready var _banner: Label = $Banner
 
 
 func _ready() -> void:
@@ -17,6 +18,7 @@ func _ready() -> void:
 	_refresh_abilities()
 	_refresh_debug()
 	hide_prompt()
+	clear_banner()
 
 
 ## Conecta el HUD a un Player ya instanciado.
@@ -59,3 +61,12 @@ func show_prompt(text: String) -> void:
 
 func hide_prompt() -> void:
 	_prompt.visible = false
+
+
+func show_banner(text: String) -> void:
+	_banner.text = text
+	_banner.visible = true
+
+
+func clear_banner() -> void:
+	_banner.visible = false
