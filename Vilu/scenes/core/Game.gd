@@ -1,27 +1,37 @@
 extends Node3D
 
-## Raiz jugable del MVP. Contenedor persistente: camara, luz, un holder de
-## region y un HUD de depuracion. Delega la carga de region en TravelManager y
-## lee el progreso de GameManager. El Player y el HUD real se anclan en fases
-## posteriores; por ahora prueba el pipeline TitleScreen -> Game -> Region.
+## Raíz jugable del MVP. Contenedor persistente: entorno, luz, un holder de
+## región y el Player. Delega la carga de región en TravelManager y lee el
+## progreso de GameManager. El Player se instancia una vez y persiste entre
+## regiones (se re-posiciona en el spawn de cada región al viajar).
+
+const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
+const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 
 @onready var _region_holder: Node3D = $RegionHolder
-@onready var _beat_label: Label = $DebugHUD/BeatLabel
+
+var player: CharacterBody3D
+var hud: CanvasLayer
 
 
 func _ready() -> void:
-	TravelManager.load_region(_region_holder, "Region1_Tarapaca")
-	GameManager.beat_changed.connect(_on_beat_changed)
-	_update_label()
+	var region := TravelManager.load_region(_region_holder, "Region1_Tarapaca")
+	_spawn_player(region)
+	hud = HUD_SCENE.instantiate()
+	add_child(hud)
+	hud.bind_player(player)
 
 
-func _on_beat_changed(_index: int) -> void:
-	_update_label()
+func _spawn_player(region: Node) -> void:
+	player = PLAYER_SCENE.instantiate()
+	add_child(player)
+	_move_to_spawn(region)
 
 
-func _update_label() -> void:
-	_beat_label.text = "VILU — greybox · Beat %d/%d · %s" % [
-		GameManager.get_beat() + 1,
-		GameManager.BEAT_COUNT,
-		TravelManager.current_region,
-	]
+## Coloca al Player en el Marker3D "PlayerSpawn" de la región (si existe).
+func _move_to_spawn(region: Node) -> void:
+	if region == null:
+		return
+	var spawn := region.get_node_or_null("PlayerSpawn") as Node3D
+	if spawn != null:
+		player.global_position = spawn.global_position
