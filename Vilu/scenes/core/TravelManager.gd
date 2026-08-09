@@ -19,6 +19,7 @@ const REGIONS := {
 	"Isluga": "res://scenes/puzzles/Isluga.tscn",
 	"AscensoOjos": "res://scenes/puzzles/Ascenso.tscn",
 	"Cumbre": "res://scenes/puzzles/Cumbre.tscn",
+	"Final": "res://scenes/puzzles/Final.tscn",
 }
 
 var state: State = State.IDLE
