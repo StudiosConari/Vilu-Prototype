@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "placeholder_creature"
+albedo_color = Color(0.6, 0.2, 0.8, 1)
+roughness = 0.9

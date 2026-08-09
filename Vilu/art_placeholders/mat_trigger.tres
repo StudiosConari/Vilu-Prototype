@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "placeholder_trigger"
+transparency = 1
+albedo_color = Color(0.1, 0.9, 0.9, 0.35)
+roughness = 1.0

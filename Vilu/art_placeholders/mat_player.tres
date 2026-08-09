@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "placeholder_player"
+albedo_color = Color(0.2, 0.4, 1, 1)
+roughness = 0.9

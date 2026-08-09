@@ -12,20 +12,15 @@ func _ready() -> void:
 	bg.color = Color(0.10, 0.12, 0.17)
 	add_child(bg)
 
-	var title := _label("EMILIA", 100, Color(1.0, 0.85, 0.4), 12)
+	var title := _label("VILU", 100, Color(1.0, 0.85, 0.4), 12)
 	title.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	title.position.y = 70
 	add_child(title)
 
-	var sub := _label("Beat 'em up cenital", 30, Color(0.9, 0.9, 0.95), 6)
+	var sub := _label("Prototipo — greybox", 30, Color(0.9, 0.9, 0.95), 6)
 	sub.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	sub.position.y = 190
 	add_child(sub)
-
-	var rec := _label("Mejor oleada: %d" % Save.best_wave, 26, Color(0.6, 1.0, 0.7), 5)
-	rec.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	rec.position.y = 240
-	add_child(rec)
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -59,8 +54,8 @@ func _ready() -> void:
 	_build_options()
 
 	var help := _label(
-		"WASD mover  ·  Shift correr  ·  Clic izq atacar  ·  Espacio saltar  ·  R cambiar de personaje\n"
-		+ "C gatear  ·  T hablar  ·  P siguiente oleada  ·  Clic der rotar camara",
+		"WASD mover  ·  Shift correr  ·  Clic izq atacar  ·  Espacio saltar\n"
+		+ "T hablar  ·  Clic der rotar camara",
 		22, Color(0.8, 0.85, 0.9), 5)
 	help.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	help.position.y = -110
@@ -123,4 +118,4 @@ func _label(txt: String, fsize: int, col: Color, outline: int) -> Label:
 
 
 func _on_play() -> void:
-	get_tree().change_scene_to_file("res://scenes/Main.tscn")
+	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")

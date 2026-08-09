@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://c15wu82qc0ina"]
 
 [ext_resource type="PackedScene" uid="uid://dflxge4ordlox" path="res://models/mix_base.fbx" id="1_emilia"]
-[ext_resource type="Script" uid="uid://np1ats4tj7nc" path="res://scenes/Main.gd" id="2_main"]
+[ext_resource type="Script" uid="uid://np1ats4tj7nc" path="res://scenes/_deprecated/Main.gd" id="2_main"]
 [ext_resource type="Script" uid="uid://g6kjolff8lmm" path="res://scenes/Player.gd" id="3_player"]
 [ext_resource type="PackedScene" uid="uid://d4lr2a3mc1ex" path="res://models/benja_base.fbx" id="4_benja"]
 

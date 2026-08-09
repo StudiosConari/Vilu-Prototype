@@ -8,6 +8,14 @@ var best_wave := 0
 var music_vol := 0.7  # 0..1
 var sfx_vol := 0.85
 
+# --- Progreso del MVP (seccion "g") ---
+# GameManager es el dueño de la logica; aqui solo se almacena. Un unico
+# escritor (_write) para no pisar secciones entre si.
+var beat_index := 0
+var has_bow := false
+var has_wings := false
+var has_guanaco := false
+
 
 func _ready() -> void:
 	var c := ConfigFile.new()
@@ -15,6 +23,10 @@ func _ready() -> void:
 		best_wave = int(c.get_value("d", "best_wave", 0))
 		music_vol = float(c.get_value("d", "music_vol", 0.7))
 		sfx_vol = float(c.get_value("d", "sfx_vol", 0.85))
+		beat_index = int(c.get_value("g", "beat_index", 0))
+		has_bow = bool(c.get_value("g", "has_bow", false))
+		has_wings = bool(c.get_value("g", "has_wings", false))
+		has_guanaco = bool(c.get_value("g", "has_guanaco", false))
 
 
 func _write() -> void:
@@ -22,7 +34,16 @@ func _write() -> void:
 	c.set_value("d", "best_wave", best_wave)
 	c.set_value("d", "music_vol", music_vol)
 	c.set_value("d", "sfx_vol", sfx_vol)
+	c.set_value("g", "beat_index", beat_index)
+	c.set_value("g", "has_bow", has_bow)
+	c.set_value("g", "has_wings", has_wings)
+	c.set_value("g", "has_guanaco", has_guanaco)
 	c.save(PATH)
+
+
+# Llamado por GameManager tras mutar el progreso.
+func save_progress() -> void:
+	_write()
 
 
 func record_wave(w: int) -> void:

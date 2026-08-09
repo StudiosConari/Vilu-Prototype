@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "placeholder_enemy_ranged"
+albedo_color = Color(1, 0.55, 0.1, 1)
+roughness = 0.9
