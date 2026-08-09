@@ -9,6 +9,8 @@ extends CharacterBody3D
 
 signal health_changed(current: int, maximum: int)
 signal died
+signal melee_hit(step: int)      # paso de combo alcanzado (0..N-1); N-1 = combo completo
+signal arrow_fired
 
 const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
 
@@ -139,6 +141,7 @@ func _melee_attack() -> void:
 	Sfx.play("punch" if _combo_step < 2 else "kick", -3.0, 1.0 + _combo_step * 0.12)
 	_squash()
 	_spawn_melee_hit(dmg)
+	melee_hit.emit(_combo_step)
 
 
 func _spawn_melee_hit(dmg: float) -> void:
@@ -167,9 +170,11 @@ func _shoot_arrow() -> void:
 	var arrow := Area3D.new()
 	arrow.set_script(ARROW_SCRIPT)
 	get_tree().current_scene.add_child(arrow)
+	arrow.add_to_group("arrow")
 	arrow.global_position = global_position + Vector3(0.0, 1.2, 0.0) + fwd * 0.6
 	arrow.setup(fwd, arrow_speed, arrow_damage, false)
 	Sfx.play("fire", -3.0)
+	arrow_fired.emit()
 
 
 func _squash() -> void:

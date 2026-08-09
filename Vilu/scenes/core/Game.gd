@@ -36,3 +36,11 @@ func _move_to_spawn(region: Node) -> void:
 	var spawn := region.get_node_or_null("PlayerSpawn") as Node3D
 	if spawn != null:
 		player.global_position = spawn.global_position
+		player.velocity = Vector3.ZERO
+
+
+## Viaja a otra zona/región (con fundido) y reubica al Player en su spawn.
+## Llamado por ZoneExit al entrar el Player en una salida.
+func go_to(region_name: String) -> void:
+	var region := await TravelManager.travel_to(_region_holder, region_name)
+	_move_to_spawn(region)

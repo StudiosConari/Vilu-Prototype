@@ -13,7 +13,7 @@ sky = SubResource("sky")
 ambient_light_source = 3
 tonemap_mode = 2
 
-[node name="Game" type="Node3D"]
+[node name="Game" type="Node3D" groups=["game"]]
 script = ExtResource("1_game")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]

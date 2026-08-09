@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/actors/ZoneExit.gd" id="1_exit"]
+
+[sub_resource type="BoxShape3D" id="shape_exit"]
+size = Vector3(24, 4, 2)
+
+[node name="ZoneExit" type="Area3D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_exit")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+shape = SubResource("shape_exit")
