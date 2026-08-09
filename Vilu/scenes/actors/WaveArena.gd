@@ -7,12 +7,11 @@ extends Node3D
 
 signal cleared
 
-const MINERO_NORMAL := preload("res://scenes/enemies/EnemyNormal.tscn")
-const MINERO_BIG := preload("res://scenes/enemies/EnemyBig.tscn")
-const MINERO_COLOR := Color(0.85, 0.15, 0.15)
-
+@export var enemy_a: PackedScene = preload("res://scenes/enemies/EnemyNormal.tscn")
+@export var enemy_b: PackedScene = preload("res://scenes/enemies/EnemyBig.tscn")
+@export var enemy_color: Color = Color(0.85, 0.15, 0.15)   # rojo minero por defecto
 @export var waves: Array = [3, 4]   # cantidad de enemigos por oleada
-@export var big_every := 3               # cada N enemigos, uno grande
+@export var b_every := 3            # cada N enemigos, uno del tipo B
 @export var auto_start := false
 @export var advance_to_beat := 3
 
@@ -57,10 +56,10 @@ func _spawn_wave() -> void:
 	var count: int = waves[_wave] if _wave < waves.size() else 0
 	_alive = 0
 	for i in count:
-		var big := big_every > 0 and (i + 1) % big_every == 0
-		var scene: PackedScene = MINERO_BIG if big else MINERO_NORMAL
+		var use_b := b_every > 0 and (i + 1) % b_every == 0
+		var scene: PackedScene = enemy_b if use_b else enemy_a
 		var e := scene.instantiate()
-		e.base_color = MINERO_COLOR      # se lee en _ready (antes de add_child)
+		e.base_color = enemy_color       # se lee en _ready (antes de add_child)
 		e.died.connect(_on_enemy_died)
 		add_child(e)
 		e.global_position = _spawn_point(i)

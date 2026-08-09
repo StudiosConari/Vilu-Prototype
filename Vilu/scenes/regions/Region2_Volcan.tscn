@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="1_terrain"]
+[ext_resource type="PackedScene" path="res://scenes/actors/AbilityGiver.tscn" id="2_giver"]
+[ext_resource type="PackedScene" path="res://scenes/actors/WaveArena.tscn" id="3_arena"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/EnemyFast.tscn" id="4_fast"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/EnemyRanged.tscn" id="5_ranged"]
 
 [node name="Region2_Volcan" type="Node3D"]
 
@@ -27,3 +31,22 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
 
 [node name="SummitMarker" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6, -12)
+
+[node name="Alicanto" parent="." instance=ExtResource("2_giver")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 4)
+ability = "wings"
+creature_name = "Alicanto"
+
+[node name="Yastay" parent="." instance=ExtResource("2_giver")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 4)
+ability = "guanaco"
+creature_name = "Yastay"
+
+[node name="HunterArena" parent="." instance=ExtResource("3_arena")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
+enemy_a = ExtResource("4_fast")
+enemy_b = ExtResource("5_ranged")
+enemy_color = Color(1, 0.55, 0.1, 1)
+waves = [3, 4]
+b_every = 2
+advance_to_beat = 6
