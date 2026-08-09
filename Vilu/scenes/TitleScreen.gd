@@ -37,6 +37,13 @@ func _ready() -> void:
 	play.pressed.connect(_on_play)
 	vb.add_child(play)
 
+	var newgame := Button.new()
+	newgame.text = "Nueva partida"
+	newgame.custom_minimum_size = Vector2(300, 54)
+	newgame.add_theme_font_size_override("font_size", 26)
+	newgame.pressed.connect(_on_new_game)
+	vb.add_child(newgame)
+
 	var opts := Button.new()
 	opts.text = "Opciones"
 	opts.custom_minimum_size = Vector2(300, 54)
@@ -118,4 +125,9 @@ func _label(txt: String, fsize: int, col: Color, outline: int) -> Label:
 
 
 func _on_play() -> void:
+	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")
+
+
+func _on_new_game() -> void:
+	GameManager.reset_progress()
 	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")

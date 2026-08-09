@@ -50,7 +50,10 @@ var hud: CanvasLayer
 var _interactable: Node = null
 
 @onready var _visual: Node3D = $Visual
+@onready var _wings_vis: Node3D = get_node_or_null("Visual/Wings")
+@onready var _guanaco_vis: Node3D = get_node_or_null("Visual/Guanaco")
 
+var _jumps_done := 0
 var _jump_held_prev := false
 var _t_held_prev := false
 var _q_held_prev := false
@@ -80,7 +83,9 @@ func _physics_process(delta: float) -> void:
 	_attack_cd = max(0.0, _attack_cd - delta)
 
 	# --- Gravedad (con planeo opcional si tiene alas) ---
-	if not is_on_floor():
+	if is_on_floor():
+		_jumps_done = 0
+	else:
 		var g := gravity
 		if can_glide and Input.is_physical_key_pressed(KEY_SPACE) and velocity.y < 0.0:
 			g *= glide_gravity_scale
@@ -96,10 +101,15 @@ func _physics_process(delta: float) -> void:
 		if Input.is_physical_key_pressed(KEY_D): dir.x += 1.0
 		dir = dir.normalized()
 
-		# Salto (flanco)
+		# Salto (flanco). Con alas (can_glide) hay DOBLE SALTO.
 		var jump_held := Input.is_physical_key_pressed(KEY_SPACE)
-		if jump_held and not _jump_held_prev and is_on_floor():
-			velocity.y = jump_velocity * (1.15 if mounted else 1.0)
+		if jump_held and not _jump_held_prev:
+			if is_on_floor():
+				velocity.y = jump_velocity * (1.15 if mounted else 1.0)
+				_jumps_done = 1
+			elif can_glide and _jumps_done < 2:
+				velocity.y = jump_velocity      # segundo salto (alas)
+				_jumps_done = 2
 		_jump_held_prev = jump_held
 
 		# Interacción (flanco de T)
@@ -113,6 +123,8 @@ func _physics_process(delta: float) -> void:
 			var q_held := Input.is_physical_key_pressed(KEY_Q)
 			if q_held and not _q_held_prev:
 				mounted = not mounted
+				if hud and hud.has_method("show_banner"):
+					hud.show_banner("Guanaco: MONTADO (Q para bajar)" if mounted else "Guanaco: a pie")
 			_q_held_prev = q_held
 
 	var speed := run_speed if (controllable and Input.is_physical_key_pressed(KEY_SHIFT)) else walk_speed
@@ -129,6 +141,13 @@ func _physics_process(delta: float) -> void:
 	if hv.length() > 0.15:
 		var target_yaw := atan2(-hv.x, -hv.z)
 		_visual.rotation.y = lerp_angle(_visual.rotation.y, target_yaw, turn_speed * delta)
+
+	# Visuales de habilidad (cajas ancladas al Visual): alas si desbloqueadas,
+	# guanaco cuando está montado.
+	if _wings_vis:
+		_wings_vis.visible = can_glide
+	if _guanaco_vis:
+		_guanaco_vis.visible = mounted
 
 
 func _unhandled_input(event: InputEvent) -> void:

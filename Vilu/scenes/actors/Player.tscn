@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scenes/actors/PlayerController.gd" id="1_ctrl"]
 [ext_resource type="Material" path="res://art_placeholders/mat_player.tres" id="2_body"]
@@ -14,6 +14,18 @@ height = 1.6
 
 [sub_resource type="BoxMesh" id="mesh_nose"]
 size = Vector3(0.18, 0.18, 0.4)
+
+[sub_resource type="BoxMesh" id="mesh_wings"]
+size = Vector3(1.5, 0.6, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="mat_wings"]
+albedo_color = Color(0.92, 0.94, 1, 1)
+
+[sub_resource type="BoxMesh" id="mesh_guanaco"]
+size = Vector3(0.8, 0.7, 1.4)
+
+[sub_resource type="StandardMaterial3D" id="mat_guanaco"]
+albedo_color = Color(0.55, 0.4, 0.25, 1)
 
 [node name="Player" type="CharacterBody3D" groups=["player"]]
 collision_layer = 2
@@ -35,6 +47,18 @@ surface_material_override/0 = ExtResource("2_body")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -0.4)
 mesh = SubResource("mesh_nose")
 surface_material_override/0 = ExtResource("3_nose")
+
+[node name="Wings" type="MeshInstance3D" parent="Visual"]
+visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.28)
+mesh = SubResource("mesh_wings")
+material_override = SubResource("mat_wings")
+
+[node name="Guanaco" type="MeshInstance3D" parent="Visual"]
+visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0.1)
+mesh = SubResource("mesh_guanaco")
+material_override = SubResource("mat_guanaco")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 

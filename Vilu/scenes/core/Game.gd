@@ -117,5 +117,11 @@ func _move_to_spawn(region: Node) -> void:
 
 ## Viaja a otra zona/región (con fundido) y reubica al party en su spawn.
 func go_to(region_name: String) -> void:
+	# Limpiar avisos/instrucciones de la zona anterior.
+	if hud:
+		if hud.has_method("clear_hint"):
+			hud.clear_hint()
+		if hud.has_method("clear_banner"):
+			hud.clear_banner()
 	var region := await TravelManager.travel_to(_region_holder, region_name)
 	_move_to_spawn(region)
