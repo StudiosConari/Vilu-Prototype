@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://cf4st1en3my00"]
+
+[ext_resource type="Script" uid="uid://dxtao12bo4roh" path="res://scenes/Enemy.gd" id="1_enemy"]
+
+[node name="EnemyFast" type="CharacterBody3D"]
+script = ExtResource("1_enemy")
+max_health = 22.0
+speed = 4.6
+damage = 7.0
+attack_range = 1.5
+base_color = Color(0.92, 0.78, 0.2, 1)
+scale_factor = 0.72
+windup_time = 0.45
