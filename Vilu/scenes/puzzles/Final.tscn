@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/puzzles/FinalScene.gd" id="1_final"]
+[ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="2_terrain"]
+
+[node name="Final" type="Node3D"]
+script = ExtResource("1_final")
+
+[node name="Ground" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(20, 1, 20)
+material = ExtResource("2_terrain")
+
+[node name="PlayerSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
