@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="1_terrain"]
+[ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="2_prop"]
+
+[node name="Region1_Tarapaca" type="Node3D"]
+
+[node name="Ground" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+size = Vector3(40, 1, 40)
+material = ExtResource("1_terrain")
+
+[node name="PlayerSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
+
+[node name="CarmenSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
+
+[node name="Prop_Rock" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.5, -2)
+size = Vector3(1.5, 1, 1.5)
+material = ExtResource("2_prop")
+
+[node name="Prop_Post" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -4)
+size = Vector3(0.6, 2, 0.6)
+material = ExtResource("2_prop")
