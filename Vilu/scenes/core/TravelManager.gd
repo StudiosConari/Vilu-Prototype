@@ -33,7 +33,7 @@ func is_valid_region(region_name: String) -> bool:
 ## Devuelve el nodo raiz de la region instanciada, o null si el nombre no existe.
 func load_region(holder: Node, region_name: String) -> Node:
 	if not is_valid_region(region_name):
-		push_error("TravelManager: region desconocida '%s'" % region_name)
+		push_warning("TravelManager: region desconocida '%s' (no-op)" % region_name)
 		return null
 	for child in holder.get_children():
 		child.queue_free()
@@ -49,7 +49,7 @@ func load_region(holder: Node, region_name: String) -> Node:
 ## Viaje con fundido: negro -> swap de region -> aclarar. Async.
 func travel_to(holder: Node, region_name: String) -> Node:
 	if not is_valid_region(region_name):
-		push_error("TravelManager: region desconocida '%s'" % region_name)
+		push_warning("TravelManager: region desconocida '%s' (no-op)" % region_name)
 		return null
 	state = State.TRAVELING
 	await _fade_to(1.0)

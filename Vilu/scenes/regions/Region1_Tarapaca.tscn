@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="1_terrain"]
 [ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="2_prop"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Carmen.tscn" id="3_carmen"]
 
 [node name="Region1_Tarapaca" type="Node3D"]
 
@@ -16,6 +17,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
 
 [node name="CarmenSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
+
+[node name="Carmen" parent="." instance=ExtResource("3_carmen")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -10)
 
 [node name="Prop_Rock" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.5, -2)

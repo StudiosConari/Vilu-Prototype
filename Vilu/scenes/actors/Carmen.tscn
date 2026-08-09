@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/actors/CarmenNPC.gd" id="1_npc"]
+[ext_resource type="Material" path="res://art_placeholders/mat_npc.tres" id="2_mat"]
+[ext_resource type="Script" path="res://scenes/actors/Interactable.gd" id="3_inter"]
+
+[sub_resource type="CapsuleShape3D" id="shape_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="CapsuleMesh" id="mesh_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="SphereShape3D" id="shape_interact"]
+radius = 2.5
+
+[node name="Carmen" type="CharacterBody3D" groups=["npc"]]
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("1_npc")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("shape_body")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Placeholder" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("mesh_body")
+surface_material_override/0 = ExtResource("2_mat")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Head" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+
+[node name="Interact" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("3_inter")
+prompt = "[T] Hablar con Carmen"
+
+[node name="InteractShape" type="CollisionShape3D" parent="Interact"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("shape_interact")
