@@ -20,6 +20,7 @@ func _ready() -> void:
 	hud = HUD_SCENE.instantiate()
 	add_child(hud)
 	hud.bind_player(player)
+	player.hud = hud
 
 
 func _spawn_player(region: Node) -> void:
