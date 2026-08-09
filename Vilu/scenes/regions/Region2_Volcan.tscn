@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="1_terrain"]
 [ext_resource type="PackedScene" path="res://scenes/actors/AbilityGiver.tscn" id="2_giver"]
 [ext_resource type="PackedScene" path="res://scenes/actors/WaveArena.tscn" id="3_arena"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/EnemyFast.tscn" id="4_fast"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/EnemyRanged.tscn" id="5_ranged"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="6_exit"]
 
 [node name="Region2_Volcan" type="Node3D"]
 
@@ -50,3 +51,8 @@ enemy_color = Color(1, 0.55, 0.1, 1)
 waves = [3, 4]
 b_every = 2
 advance_to_beat = 6
+
+[node name="ExitToCumbre" parent="." instance=ExtResource("6_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -18)
+target_region = "Cumbre"
+require_beat = 6
