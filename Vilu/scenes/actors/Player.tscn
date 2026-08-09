@@ -1,0 +1,50 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/actors/PlayerController.gd" id="1_ctrl"]
+[ext_resource type="Material" path="res://art_placeholders/mat_player.tres" id="2_body"]
+[ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="3_nose"]
+
+[sub_resource type="CapsuleShape3D" id="shape_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="CapsuleMesh" id="mesh_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="BoxMesh" id="mesh_nose"]
+size = Vector3(0.18, 0.18, 0.4)
+
+[node name="Player" type="CharacterBody3D"]
+script = ExtResource("1_ctrl")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("shape_body")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Placeholder" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+mesh = SubResource("mesh_body")
+surface_material_override/0 = ExtResource("2_body")
+
+[node name="Nose" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -0.4)
+mesh = SubResource("mesh_nose")
+surface_material_override/0 = ExtResource("3_nose")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -0.5)
+
+[node name="Hand" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 1, 0)
+
+[node name="Head" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, 13, 12)
+current = true

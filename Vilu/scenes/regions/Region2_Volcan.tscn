@@ -7,16 +7,19 @@
 [node name="Base_Desierto" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 size = Vector3(40, 1, 40)
+use_collision = true
 material = ExtResource("1_terrain")
 
 [node name="Step_Oasis" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1, -8)
 size = Vector3(12, 2, 12)
+use_collision = true
 material = ExtResource("1_terrain")
 
 [node name="Step_Cumbre" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 3, -12)
 size = Vector3(10, 6, 10)
+use_collision = true
 material = ExtResource("1_terrain")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
