@@ -33,6 +33,7 @@ func _spawn_player(region: Node) -> void:
 	add_child(player)
 	party = [player]
 	active_index = 0
+	_apply_active()
 	_move_to_spawn(region)
 
 
@@ -56,7 +57,11 @@ func add_party_member(character: Node) -> void:
 	if "hud" in character:
 		character.hud = hud
 	party.append(character)
-	character.set_active(false)
+	# Re-asegura cámaras/estado: el nuevo Player trae su cámara con current=true
+	# y le robaría la vista al activo; _apply_active deja solo la del activo.
+	_apply_active()
+	if hud and hud.has_method("show_swap_hint"):
+		hud.show_swap_hint(party.size() > 1)
 
 
 func remove_party_member(character: Node) -> void:
@@ -64,6 +69,8 @@ func remove_party_member(character: Node) -> void:
 	if active_index >= party.size():
 		active_index = 0
 	_apply_active()
+	if hud and hud.has_method("show_swap_hint"):
+		hud.show_swap_hint(party.size() > 1)
 
 
 func active_character() -> Node:
