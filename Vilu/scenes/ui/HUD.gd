@@ -21,8 +21,14 @@ func _ready() -> void:
 	clear_banner()
 
 
-## Conecta el HUD a un Player ya instanciado.
+var _bound: Node = null
+
+
+## Conecta el HUD al personaje activo (rebindable en cada swap, sin duplicar).
 func bind_player(player: Node) -> void:
+	if _bound and is_instance_valid(_bound) and _bound.health_changed.is_connected(_on_health):
+		_bound.health_changed.disconnect(_on_health)
+	_bound = player
 	if player.has_signal("health_changed"):
 		player.health_changed.connect(_on_health)
 		_on_health(player.health, player.max_health)

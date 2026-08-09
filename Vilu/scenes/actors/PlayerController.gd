@@ -35,6 +35,7 @@ const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
 
 var health: int
 var input_locked := false
+var active := true          # false = personaje inactivo del party (no recibe input)
 
 # Estados de habilidad (activados desde beats posteriores).
 var can_glide := false
@@ -74,8 +75,9 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= g * delta
 
 	# --- Entrada de movimiento ---
+	var controllable := active and not input_locked
 	var dir := Vector3.ZERO
-	if not input_locked:
+	if controllable:
 		if Input.is_physical_key_pressed(KEY_W): dir.z -= 1.0
 		if Input.is_physical_key_pressed(KEY_S): dir.z += 1.0
 		if Input.is_physical_key_pressed(KEY_A): dir.x -= 1.0
@@ -94,7 +96,7 @@ func _physics_process(delta: float) -> void:
 			_interactable.interact(self)
 		_t_held_prev = t_held
 
-	var speed := run_speed if (not input_locked and Input.is_physical_key_pressed(KEY_SHIFT)) else walk_speed
+	var speed := run_speed if (controllable and Input.is_physical_key_pressed(KEY_SHIFT)) else walk_speed
 	if mounted:
 		speed *= 1.5
 
@@ -111,7 +113,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if input_locked:
+	if input_locked or not active:
 		return
 	if event is InputEventMouseButton and event.pressed:
 		if not GameManager.has_ability("bow"):
@@ -215,3 +217,18 @@ func heal(amount: int) -> void:
 
 func is_dead() -> bool:
 	return health <= 0
+
+
+## Activa/desactiva el control de este personaje (sistema de party/swap).
+## El activo toma input y su cámara pasa a current; el inactivo se queda quieto.
+func set_active(a: bool) -> void:
+	active = a
+	var cam := get_node_or_null("Camera") as Camera3D
+	if cam:
+		cam.current = a
+	if not a:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if hud and hud.has_method("hide_prompt"):
+			hud.hide_prompt()
+		_interactable = null
