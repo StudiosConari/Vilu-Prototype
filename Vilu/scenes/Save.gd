@@ -1,8 +1,16 @@
 extends Node
 
 # Persistencia: mejor oleada y volumenes (user://save.cfg). Autoload (antes que Sfx).
+# Durante los tests (gut) se redirige a otro archivo para NO pisar la partida real.
 
-const PATH := "user://save.cfg"
+var PATH := "user://save.cfg"
+
+
+func _init() -> void:
+	for a in OS.get_cmdline_args():
+		if "gut" in a:
+			PATH = "user://test_save.cfg"
+			break
 
 var best_wave := 0
 var music_vol := 0.7  # 0..1

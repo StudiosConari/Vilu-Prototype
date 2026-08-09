@@ -10,15 +10,18 @@ extends CanvasLayer
 @onready var _debug: Label = $Stats/Debug
 @onready var _prompt: Label = $Prompt
 @onready var _banner: Label = $Banner
+@onready var _swap: Label = $Swap
 
 
 func _ready() -> void:
 	GameManager.ability_unlocked.connect(func(_a: String) -> void: _refresh_abilities())
 	GameManager.beat_changed.connect(func(_i: int) -> void: _refresh_debug())
+	TravelManager.region_changed.connect(func(_r: String) -> void: _refresh_debug())
 	_refresh_abilities()
 	_refresh_debug()
 	hide_prompt()
 	clear_banner()
+	show_swap_hint(false)
 
 
 var _bound: Node = null
@@ -76,3 +79,8 @@ func show_banner(text: String) -> void:
 
 func clear_banner() -> void:
 	_banner.visible = false
+
+
+func show_swap_hint(on: bool) -> void:
+	if _swap:
+		_swap.visible = on

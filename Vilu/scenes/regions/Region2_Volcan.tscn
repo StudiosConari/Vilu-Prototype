@@ -38,10 +38,26 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 4)
 ability = "wings"
 creature_name = "Alicanto"
 
+[node name="AlicantoHint" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 2.6, 4)
+billboard = 1
+fixed_size = true
+text = "ALICANTO — [T] te da ALAS"
+font_size = 38
+outline_size = 10
+
 [node name="Yastay" parent="." instance=ExtResource("2_giver")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 4)
 ability = "guanaco"
 creature_name = "Yastay"
+
+[node name="YastayHint" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 2.6, 4)
+billboard = 1
+fixed_size = true
+text = "YASTAY — [T] te da GUANACO"
+font_size = 38
+outline_size = 10
 
 [node name="HunterArena" parent="." instance=ExtResource("3_arena")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6)
@@ -56,3 +72,4 @@ advance_to_beat = 6
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -18)
 target_region = "Cumbre"
 require_beat = 6
+require_abilities = ["wings", "guanaco"]
