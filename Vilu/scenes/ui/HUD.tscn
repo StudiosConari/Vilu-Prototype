@@ -1,6 +1,17 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/ui/HUD.gd" id="1_hud"]
+
+[sub_resource type="StyleBoxFlat" id="hint_bg"]
+bg_color = Color(0, 0, 0, 0.45)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
 
 [node name="HUD" type="CanvasLayer" groups=["hud"]]
 script = ExtResource("1_hud")
@@ -65,3 +76,23 @@ offset_bottom = -16.0
 theme_override_font_sizes/font_size = 24
 horizontal_alignment = 2
 text = "[R] cambiar de personaje"
+
+[node name="Hint" type="PanelContainer" parent="."]
+visible = false
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -440.0
+offset_top = -120.0
+offset_right = 440.0
+offset_bottom = -64.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("hint_bg")
+
+[node name="HintLabel" type="Label" parent="Hint"]
+autowrap_mode = 3
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 22
+text = ""

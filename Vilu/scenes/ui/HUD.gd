@@ -11,6 +11,8 @@ extends CanvasLayer
 @onready var _prompt: Label = $Prompt
 @onready var _banner: Label = $Banner
 @onready var _swap: Label = $Swap
+@onready var _hint: Control = $Hint
+@onready var _hint_label: Label = $Hint/HintLabel
 
 
 func _ready() -> void:
@@ -22,6 +24,7 @@ func _ready() -> void:
 	hide_prompt()
 	clear_banner()
 	show_swap_hint(false)
+	clear_hint()
 
 
 var _bound: Node = null
@@ -84,3 +87,16 @@ func clear_banner() -> void:
 func show_swap_hint(on: bool) -> void:
 	if _swap:
 		_swap.visible = on
+
+
+## Panel de instrucción persistente (transparente) para puzzles.
+func show_hint(text: String) -> void:
+	if _hint_label:
+		_hint_label.text = text
+	if _hint:
+		_hint.visible = true
+
+
+func clear_hint() -> void:
+	if _hint:
+		_hint.visible = false

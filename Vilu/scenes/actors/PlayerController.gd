@@ -22,6 +22,9 @@ const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
 @export var gravity := 18.0
 @export var turn_speed := 14.0
 
+@export_group("Rol")
+@export var is_archer := false     # false = melee (combos); true = arquero (flechas)
+
 @export_group("Vida")
 @export var max_health := 100
 
@@ -131,13 +134,14 @@ func _physics_process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if input_locked or not active:
 		return
-	if event is InputEventMouseButton and event.pressed:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not GameManager.has_ability("bow"):
-			return  # combate lo entrega Carmen
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			_melee_attack()
-		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			return  # el combate lo entrega Carmen
+		# Cada personaje tiene UN estilo: el arquero dispara, el melee encadena combos.
+		if is_archer:
 			_shoot_arrow()
+		else:
+			_melee_attack()
 
 
 # --- Dirección de encare en el mundo (-Z del Visual) ---

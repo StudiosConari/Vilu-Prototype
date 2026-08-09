@@ -31,7 +31,13 @@ func _ready() -> void:
 	if _summit:
 		_summit.body_entered.connect(_on_summit)
 	_set_bridge(false)
-	_banner("Cumbre — encadena tus dones: Q monta para el puente, arco al objetivo, alas para cruzar")
+	_hint("Cumbre: monta el guanaco (Q) y pisa la placa para fijar el puente. Con el arquero, clic al objetivo dorado. Salta y mantén Espacio para PLANEAR a la cima.")
+
+
+func _hint(text: String) -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("show_hint"):
+		hud.show_hint(text)
 
 
 func _process(_delta: float) -> void:
