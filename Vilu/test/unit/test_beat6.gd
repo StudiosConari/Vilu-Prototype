@@ -31,6 +31,19 @@ func test_wings_enables_glide_state() -> void:
 	assert_true(p.can_glide, "desbloquear alas activa el planeo (estado)")
 
 
+func test_ability_visuals_toggle() -> void:
+	var p := PLAYER.instantiate()
+	add_child_autofree(p)
+	assert_false(p.get_node("Visual/Wings").visible, "alas ocultas por defecto")
+	assert_false(p.get_node("Visual/Guanaco").visible, "guanaco oculto por defecto")
+	p.can_glide = true
+	p.mounted = true
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert_true(p.get_node("Visual/Wings").visible, "alas visibles con can_glide")
+	assert_true(p.get_node("Visual/Guanaco").visible, "guanaco visible al montar")
+
+
 func test_arena_uses_configured_enemy_and_color() -> void:
 	var arena := WAVE_ARENA.instantiate()
 	add_child_autofree(arena)

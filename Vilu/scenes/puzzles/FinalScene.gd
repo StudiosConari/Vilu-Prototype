@@ -36,12 +36,17 @@ func _on_closing_ended(_res: Resource) -> void:
 
 
 func _show_end_panel() -> void:
+	# Ocultar el HUD de juego para que no se transparente detrás del cierre.
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud:
+		hud.visible = false
+
 	var layer := CanvasLayer.new()
 	layer.layer = 100
 	add_child(layer)
 
 	var dim := ColorRect.new()
-	dim.color = Color(0.06, 0.07, 0.10, 0.97)
+	dim.color = Color(0.06, 0.07, 0.10, 1.0)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(dim)
 
