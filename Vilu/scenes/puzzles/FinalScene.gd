@@ -50,11 +50,15 @@ func _show_end_panel() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(dim)
 
+	# CenterContainer a pantalla completa → centra el bloque de verdad.
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(center)
+
 	var vb := VBoxContainer.new()
-	vb.set_anchors_preset(Control.PRESET_CENTER)
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
 	vb.add_theme_constant_override("separation", 22)
-	layer.add_child(vb)
+	center.add_child(vb)
 
 	vb.add_child(_label("VILU", 96, Color(1.0, 0.85, 0.4)))
 	vb.add_child(_label("FIN del prototipo", 34, Color(0.9, 0.9, 0.95)))
