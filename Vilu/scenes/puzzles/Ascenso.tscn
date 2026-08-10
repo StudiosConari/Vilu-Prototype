@@ -62,6 +62,20 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 mesh = SubResource("mesh_plate")
 surface_material_override/0 = ExtResource("4_trigger")
 
+[node name="PlateB" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
+collision_layer = 0
+collision_mask = 2
+
+[node name="PlateShape" type="CollisionShape3D" parent="PlateB"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("shape_plate")
+
+[node name="PlateMesh" type="MeshInstance3D" parent="PlateB"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+mesh = SubResource("mesh_plate")
+surface_material_override/0 = ExtResource("4_trigger")
+
 [node name="PlayerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 10)
 

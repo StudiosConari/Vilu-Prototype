@@ -54,6 +54,7 @@ enum AiMode { COMBAT, FROZEN }
 @export var arrow_speed := 26.0
 @export var arrow_damage := 10.0
 @export var charge_time := 0.4      # mantener el clic este tiempo = flecha cargada
+@export var defense_radius := 3.0   # en modo QUIETO, defiende si un enemigo entra a este rango
 
 var health: int
 var energy: float
@@ -85,6 +86,7 @@ var _ai_atk_cd := 0.0
 var _charging := false
 var _charge_t := 0.0
 var _energy_shown := -1
+var _hold_pos := Vector3.ZERO      # puesto a defender en modo QUIETO
 
 
 func _ready() -> void:
@@ -130,11 +132,14 @@ func _physics_process(delta: float) -> void:
 
 	# --- Dirección según el modo ---
 	var dir := Vector3.ZERO
-	if active and not input_locked:
+	if input_locked:
+		dir = Vector3.ZERO
+	elif active:
 		dir = _player_input()
-	elif ai_mode == AiMode.COMBAT and not input_locked:
+	elif ai_mode == AiMode.COMBAT:
 		dir = _ai_behavior()
-	# FROZEN → dir queda en cero (se queda quieto)
+	else:
+		dir = _hold_behavior()   # QUIETO: defiende el puesto y vuelve
 
 	var speed := walk_speed
 	if active and not input_locked and Input.is_physical_key_pressed(KEY_SHIFT):
@@ -354,7 +359,7 @@ func _ai_attack(enemy: Node3D) -> void:
 		Sfx.play_at("punch", global_position, -7.0)
 
 
-func _nearest_enemy() -> Node3D:
+func _nearest_enemy(max_dist := 12.0) -> Node3D:
 	var best: Node3D = null
 	var bd := 1e9
 	for e in get_tree().get_nodes_in_group("enemies"):
@@ -364,9 +369,40 @@ func _nearest_enemy() -> Node3D:
 		if d < bd:
 			bd = d
 			best = e
-	if best != null and bd <= 12.0:
+	if best != null and bd <= max_dist:
 		return best
 	return null
+
+
+## Modo QUIETO (tras T): defiende el puesto si un enemigo entra en defense_radius,
+## y vuelve a su lugar. Emilia se acerca a golpear; Benjamín dispara desde el sitio.
+func _hold_behavior() -> Vector3:
+	var enemy := _nearest_enemy(defense_radius)
+	if enemy != null:
+		var to: Vector3 = enemy.global_position - global_position
+		to.y = 0.0
+		var dist := to.length()
+		if enemy.has_method("is_telegraphing") and enemy.is_telegraphing():
+			var danger := 2.0
+			if enemy.has_method("danger_radius"):
+				danger = enemy.danger_radius()
+			if dist < danger + 0.8:
+				return (-to).normalized()
+		if is_archer:
+			_face(to)
+			_ai_attack(enemy)          # dispara desde el puesto (no se mueve)
+			return Vector3.ZERO
+		if dist > 1.4:
+			return to.normalized()     # Emilia se acerca a golpear
+		_face(to)
+		_ai_attack(enemy)
+		return Vector3.ZERO
+	# Sin enemigos cerca: volver al puesto.
+	var back := _hold_pos - global_position
+	back.y = 0.0
+	if back.length() > 0.4:
+		return back.normalized()
+	return Vector3.ZERO
 
 
 func _leader() -> Node3D:
@@ -406,10 +442,11 @@ func set_active(a: bool) -> void:
 		_interactable = null
 
 
-## true = IA de combate (pelea solo); false = FROZEN (quieto, para puzzles).
+## true = IA de combate (pelea solo); false = QUIETO/guardia (defiende su puesto).
 func set_ai_mode(combat: bool) -> void:
 	ai_mode = AiMode.COMBAT if combat else AiMode.FROZEN
 	if not combat:
+		_hold_pos = global_position   # fija el puesto a defender
 		velocity.x = 0.0
 		velocity.z = 0.0
 
