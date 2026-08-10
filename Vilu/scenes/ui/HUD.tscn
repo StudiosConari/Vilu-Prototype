@@ -32,6 +32,15 @@ max_value = 100.0
 value = 100.0
 show_percentage = false
 
+[node name="EnergyLabel" type="Label" parent="Stats"]
+text = "Energía 100/100"
+
+[node name="Energy" type="ProgressBar" parent="Stats"]
+custom_minimum_size = Vector2(240, 14)
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
 [node name="Abilities" type="Label" parent="Stats"]
 text = "Arco ✗   Alas ✗   Guanaco ✗"
 
@@ -49,7 +58,7 @@ offset_top = -84.0
 offset_right = 220.0
 offset_bottom = -52.0
 horizontal_alignment = 1
-text = "[T] Interactuar"
+text = "[E] Interactuar"
 
 [node name="Banner" type="Label" parent="."]
 visible = false
@@ -73,9 +82,9 @@ offset_left = -300.0
 offset_top = -48.0
 offset_right = -16.0
 offset_bottom = -16.0
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 2
-text = "[R] cambiar de personaje"
+text = "[R] cambiar (IA) · [T] cambiar (queda quieto)"
 
 [node name="Hint" type="PanelContainer" parent="."]
 visible = false

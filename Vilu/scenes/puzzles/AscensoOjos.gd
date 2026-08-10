@@ -26,7 +26,7 @@ func _ready() -> void:
 	if _summit:
 		_summit.body_entered.connect(_on_summit)
 	_set_bridge(false)
-	_hint("Ascenso: deja un personaje sobre la placa (sube el puente) y cruza con el otro. [R] cambia de personaje.")
+	_hint("Ascenso: parate en la placa cian y pulsá T (deja a ese personaje quieto ahí sosteniendo el puente). Cambiás al otro y cruzás.")
 
 
 func _on_plate_enter(body: Node3D) -> void:

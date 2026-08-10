@@ -6,6 +6,8 @@ extends CanvasLayer
 
 @onready var _hp_label: Label = $Stats/HPLabel
 @onready var _hp: ProgressBar = $Stats/HP
+@onready var _energy_label: Label = $Stats/EnergyLabel
+@onready var _energy: ProgressBar = $Stats/Energy
 @onready var _abilities: Label = $Stats/Abilities
 @onready var _debug: Label = $Stats/Debug
 @onready var _prompt: Label = $Prompt
@@ -32,18 +34,30 @@ var _bound: Node = null
 
 ## Conecta el HUD al personaje activo (rebindable en cada swap, sin duplicar).
 func bind_player(player: Node) -> void:
-	if _bound and is_instance_valid(_bound) and _bound.health_changed.is_connected(_on_health):
-		_bound.health_changed.disconnect(_on_health)
+	if _bound and is_instance_valid(_bound):
+		if _bound.health_changed.is_connected(_on_health):
+			_bound.health_changed.disconnect(_on_health)
+		if _bound.energy_changed.is_connected(_on_energy):
+			_bound.energy_changed.disconnect(_on_energy)
 	_bound = player
 	if player.has_signal("health_changed"):
 		player.health_changed.connect(_on_health)
 		_on_health(player.health, player.max_health)
+	if player.has_signal("energy_changed"):
+		player.energy_changed.connect(_on_energy)
+		_on_energy(int(player.energy), player.max_energy)
 
 
 func _on_health(current: int, maximum: int) -> void:
 	_hp.max_value = maximum
 	_hp.value = current
 	_hp_label.text = "Vida %d/%d" % [current, maximum]
+
+
+func _on_energy(current: int, maximum: int) -> void:
+	_energy.max_value = maximum
+	_energy.value = current
+	_energy_label.text = "Energía %d/%d" % [current, maximum]
 
 
 func _refresh_abilities() -> void:

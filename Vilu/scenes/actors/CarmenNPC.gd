@@ -8,14 +8,14 @@ extends CharacterBody3D
 const BALLOON := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
 
 const DIALOGUE_INTRO := "~ start
-Carmen: Bienvenida, VILU. El norte te necesita.
-Carmen: Toma este arco. Con él dispararás flechas y encadenarás golpes.
-Carmen: Clic izquierdo encadena el combo; clic derecho dispara. Ve al paso del norte.
+Carmen: Bienvenida al norte. Soy la Tirana; les daré su fuerza.
+Carmen: Emilia, tuyo es el COMBO de cuatro golpes. Benjamín, tuya la FLECHA TRIPLE (clic derecho, gasta energía).
+Carmen: Cambien de héroe con R (el otro pelea solo) o con T (se queda quieto, para puzzles). Vayan al paso del norte.
 => END
 "
 
 const DIALOGUE_AGAIN := "~ start
-Carmen: Ya llevas el arco. El paso del norte te espera.
+Carmen: Ya tienen su don. El paso del norte los espera.
 => END
 "
 

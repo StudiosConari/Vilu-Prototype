@@ -61,9 +61,9 @@ func _ready() -> void:
 	_build_options()
 
 	var help := _label(
-		"WASD mover  ·  Shift correr  ·  Clic izq atacar  ·  Espacio saltar\n"
-		+ "T hablar  ·  Clic der rotar camara",
-		22, Color(0.8, 0.85, 0.9), 5)
+		"WASD mover · Shift correr · Espacio saltar (doble con alas) · Clic izq atacar (mantener = flecha cargada)\n"
+		+ "Clic der: flecha triple (Benjamín) · Q montar guanaco · E interactuar · R cambiar (IA) · T cambiar (queda quieto)",
+		20, Color(0.8, 0.85, 0.9), 4)
 	help.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	help.position.y = -110
 	add_child(help)
