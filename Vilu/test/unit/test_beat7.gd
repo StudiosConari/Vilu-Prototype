@@ -30,6 +30,16 @@ func test_final_needs_both_to_solve() -> void:
 	assert_eq(GameManager.get_beat(), 7, "resolver entra al Beat 7")
 
 
+func test_switch_activates_updraft2() -> void:
+	var c := CUMBRE.instantiate()
+	add_child_autofree(c)
+	var updraft2 := c.get_node("Updraft2")
+	assert_false(updraft2.active, "la corriente 2 arranca inactiva")
+	var sw := c.get_node("ArrowSwitch")
+	sw.activated.emit()   # simular acierto de flecha al cubo
+	assert_true(updraft2.active, "acertar el cubo activa la corriente 2")
+
+
 func test_reaching_platform1_arms_rope() -> void:
 	var c := CUMBRE.instantiate()
 	add_child_autofree(c)

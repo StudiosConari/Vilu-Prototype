@@ -25,6 +25,8 @@ var _on_final := 0
 @onready var _rope1: Area3D = get_node_or_null("Rope1")
 @onready var _final_trigger: Area3D = get_node_or_null("FinalTrigger")
 @onready var _rope2: Area3D = get_node_or_null("Rope2")
+@onready var _arrow_switch: Node = get_node_or_null("ArrowSwitch")
+@onready var _updraft2: Node = get_node_or_null("Updraft2")
 
 
 func _ready() -> void:
@@ -34,7 +36,10 @@ func _ready() -> void:
 	if _final_trigger:
 		_final_trigger.body_entered.connect(_on_final_enter)
 		_final_trigger.body_exited.connect(_on_final_exit)
-	_hint("Cumbre: cruza el puente (guanaco). Emilia sube por la corriente (mantené Espacio planeando); Benjamín sube por la CUERDA (E). LOS DOS se suben a la plataforma móvil (Benjamín montado la mueve) hacia la derecha. Ahí, Emilia toma la corriente a la cima y le tira la cuerda a Benjamín.")
+	# La corriente 2 arranca inactiva; se activa al acertarle la flecha al switch.
+	if _arrow_switch and _arrow_switch.has_signal("activated"):
+		_arrow_switch.activated.connect(_on_switch_activated)
+	_hint("Cumbre: cruza el puente (guanaco). Emilia sube por la corriente (Espacio); Benjamín sube por la CUERDA (E). LOS DOS van en la plataforma móvil a la derecha. Ahí Benjamín le dispara al CUBO (esquivá la muralla) para activar la corriente; Emilia sube a la cima y le tira la cuerda a Benjamín.")
 
 
 func _process(_delta: float) -> void:
@@ -63,6 +68,12 @@ func _set_bridge(up: bool) -> void:
 func _on_platform1_reached(body: Node3D) -> void:
 	if body.is_in_group("player") and _rope1 and _rope1.has_method("arm"):
 		_rope1.arm(true)
+
+
+func _on_switch_activated() -> void:
+	if _updraft2 and _updraft2.has_method("set_active"):
+		_updraft2.set_active(true)
+	_hint("¡Corriente activada! Emilia sube a la cima y le tira la cuerda a Benjamín.")
 
 
 func _on_final_enter(body: Node3D) -> void:
