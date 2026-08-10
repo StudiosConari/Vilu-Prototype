@@ -1,6 +1,6 @@
 extends "res://addons/gut/test.gd"
 
-## Beat 7 — cumbre: el objetivo libera la barrera; llegar a la cima entra al Beat 7.
+## Beat 7 — Cumbre multinivel: la cima requiere a LOS DOS; llegar arriba arma la cuerda.
 
 const CUMBRE := preload("res://scenes/puzzles/Cumbre.tscn")
 
@@ -18,19 +18,22 @@ func _fake_player() -> Node3D:
 	return n
 
 
-func test_summit_reaches_beat7() -> void:
+func test_final_needs_both_to_solve() -> void:
 	var c := CUMBRE.instantiate()
 	add_child_autofree(c)
 	watch_signals(c)
-	c._on_summit(_fake_player())
-	assert_true(c.is_solved())
+	c._on_final_enter(_fake_player())
+	assert_false(c.is_solved(), "con un solo personaje en la cima no se resuelve")
+	c._on_final_enter(_fake_player())
+	assert_true(c.is_solved(), "con LOS DOS en la cima, resuelto")
 	assert_signal_emitted(c, "reached_summit")
-	assert_eq(GameManager.get_beat(), 7, "llegar a la cima entra al Beat 7")
+	assert_eq(GameManager.get_beat(), 7, "resolver entra al Beat 7")
 
 
-func test_target_frees_barrier() -> void:
+func test_reaching_platform1_arms_rope() -> void:
 	var c := CUMBRE.instantiate()
 	add_child_autofree(c)
-	assert_not_null(c.get_node_or_null("Barrier2"))
-	c._on_target_hit()
-	assert_null(c._barrier, "acertar el objetivo libera la barrera")
+	var rope1 := c.get_node("Rope1")
+	assert_false(rope1.armed, "la cuerda arranca sin armar")
+	c._on_platform1_reached(_fake_player())
+	assert_true(rope1.armed, "llegar a Platform_1 arma la cuerda para el otro")
