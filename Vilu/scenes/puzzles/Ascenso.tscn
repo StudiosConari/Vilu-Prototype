@@ -1,100 +1,100 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=8 format=3]
 
-[ext_resource type="Script" path="res://scenes/puzzles/AscensoOjos.gd" id="1_asc"]
+[ext_resource type="Script" path="res://scenes/puzzles/LettersVilu.gd" id="1_letters"]
 [ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="2_terrain"]
-[ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="3_prop"]
-[ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="4_trigger"]
+[ext_resource type="Script" path="res://scenes/actors/VilLetter.gd" id="3_letter"]
+[ext_resource type="Script" path="res://scenes/actors/PuzzleButton.gd" id="4_button"]
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="5_exit"]
 
-[sub_resource type="BoxMesh" id="mesh_bridge"]
-size = Vector3(6, 0.6, 5)
+[sub_resource type="BoxMesh" id="mesh_cube"]
+size = Vector3(1.6, 1.6, 1.6)
 
-[sub_resource type="BoxShape3D" id="shape_bridge"]
-size = Vector3(6, 0.6, 5)
-
-[sub_resource type="BoxShape3D" id="shape_plate"]
-size = Vector3(2.5, 1.6, 2.5)
-
-[sub_resource type="BoxMesh" id="mesh_plate"]
-size = Vector3(2.5, 0.15, 2.5)
-
-[sub_resource type="BoxShape3D" id="shape_summit"]
-size = Vector3(5, 2, 5)
+[sub_resource type="BoxShape3D" id="shape_cube"]
+size = Vector3(1.6, 1.6, 1.6)
 
 [node name="Ascenso" type="Node3D"]
-script = ExtResource("1_asc")
+script = ExtResource("1_letters")
 
-[node name="Slab_Start" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 7.5)
+[node name="Board" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 use_collision = true
-size = Vector3(20, 1, 17)
+size = Vector3(38, 1, 26)
 material = ExtResource("2_terrain")
-
-[node name="Slab_Summit" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -12)
-use_collision = true
-size = Vector3(20, 1, 12)
-material = ExtResource("2_terrain")
-
-[node name="Bridge" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, -3.5)
-collision_layer = 1
-collision_mask = 0
-
-[node name="Mesh" type="MeshInstance3D" parent="Bridge"]
-mesh = SubResource("mesh_bridge")
-surface_material_override/0 = ExtResource("3_prop")
-
-[node name="Shape" type="CollisionShape3D" parent="Bridge"]
-shape = SubResource("shape_bridge")
-
-[node name="PlateA" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 6)
-collision_layer = 0
-collision_mask = 2
-
-[node name="PlateShape" type="CollisionShape3D" parent="PlateA"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
-shape = SubResource("shape_plate")
-
-[node name="PlateMesh" type="MeshInstance3D" parent="PlateA"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
-mesh = SubResource("mesh_plate")
-surface_material_override/0 = ExtResource("4_trigger")
-
-[node name="PlateB" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
-collision_layer = 0
-collision_mask = 2
-
-[node name="PlateShape" type="CollisionShape3D" parent="PlateB"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
-shape = SubResource("shape_plate")
-
-[node name="PlateMesh" type="MeshInstance3D" parent="PlateB"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
-mesh = SubResource("mesh_plate")
-surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 10)
 
-[node name="SpawnB" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.2, 10)
+[node name="Ghosts" type="Node3D" parent="."]
 
-[node name="SummitTrigger" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -14)
-collision_layer = 0
-collision_mask = 2
+[node name="GhostV" type="Node3D" parent="Ghosts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 0)
+script = ExtResource("3_letter")
+glyph = "V"
+is_ghost = true
 
-[node name="Shape" type="CollisionShape3D" parent="SummitTrigger"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-shape = SubResource("shape_summit")
+[node name="GhostI" type="Node3D" parent="Ghosts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
+script = ExtResource("3_letter")
+glyph = "I"
+is_ghost = true
 
-[node name="SummitMarker" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -14)
+[node name="GhostL" type="Node3D" parent="Ghosts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
+script = ExtResource("3_letter")
+glyph = "L"
+is_ghost = true
+
+[node name="GhostU" type="Node3D" parent="Ghosts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 0)
+script = ExtResource("3_letter")
+glyph = "U"
+is_ghost = true
+
+[node name="Letters" type="Node3D" parent="."]
+
+[node name="LetV" type="Node3D" parent="Letters"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 6, 0, -3)
+script = ExtResource("3_letter")
+glyph = "V"
+
+[node name="LetI" type="Node3D" parent="Letters"]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -9, 0, 3)
+script = ExtResource("3_letter")
+glyph = "I"
+
+[node name="LetL" type="Node3D" parent="Letters"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 9, 0, 3)
+script = ExtResource("3_letter")
+glyph = "L"
+
+[node name="LetU" type="Node3D" parent="Letters"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, -3)
+script = ExtResource("3_letter")
+glyph = "U"
+
+[node name="LeftCube" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.8, 0)
+script = ExtResource("4_button")
+color = Color(0.95, 0.45, 0.2, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="LeftCube"]
+mesh = SubResource("mesh_cube")
+
+[node name="Shape" type="CollisionShape3D" parent="LeftCube"]
+shape = SubResource("shape_cube")
+
+[node name="RightCube" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.8, 0)
+script = ExtResource("4_button")
+color = Color(0.9, 0.2, 0.2, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="RightCube"]
+mesh = SubResource("mesh_cube")
+
+[node name="Shape" type="CollisionShape3D" parent="RightCube"]
+shape = SubResource("shape_cube")
 
 [node name="ExitToVolcan" parent="." instance=ExtResource("5_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -11)
 target_region = "Region2_Volcan"
 require_beat = 5
