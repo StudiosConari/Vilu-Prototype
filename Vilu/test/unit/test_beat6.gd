@@ -31,6 +31,24 @@ func test_wings_enables_glide_state() -> void:
 	assert_true(p.can_glide, "desbloquear alas activa el planeo (estado)")
 
 
+func test_wings_only_for_melee() -> void:
+	var emilia := PLAYER.instantiate()
+	emilia.is_archer = false
+	add_child_autofree(emilia)
+	var benja := PLAYER.instantiate()
+	benja.is_archer = true
+	add_child_autofree(benja)
+	GameManager.unlock("wings")
+	assert_true(emilia.can_glide, "Emilia (melee) planea/doble salto con alas")
+	assert_false(benja.can_glide, "Benjamín (arquero) NO obtiene alas")
+
+
+func test_four_hit_combo() -> void:
+	var emilia := PLAYER.instantiate()
+	add_child_autofree(emilia)
+	assert_eq(emilia.melee_damage.size(), 4, "el combo de Emilia es de 4 golpes")
+
+
 func test_ability_visuals_toggle() -> void:
 	var p := PLAYER.instantiate()
 	add_child_autofree(p)

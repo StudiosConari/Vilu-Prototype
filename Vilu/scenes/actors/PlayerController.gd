@@ -31,7 +31,7 @@ const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
 @export_group("Combate")
 @export var combo_window := 0.6
 @export var attack_cooldown := 0.28
-@export var melee_damage: Array[float] = [8.0, 8.0, 14.0]
+@export var melee_damage: Array[float] = [8.0, 8.0, 12.0, 18.0]   # combo de 4 golpes (Emilia)
 @export var melee_range := 1.1
 @export var arrow_speed := 26.0
 @export var arrow_damage := 10.0
@@ -68,13 +68,14 @@ func _ready() -> void:
 	# Bloquear input mientras haya diálogo abierto (el balloon no pausa el árbol).
 	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void: input_locked = true)
 	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void: input_locked = false)
-	# Habilidades como estados: alas = planeo pasivo. Sincronizar del progreso.
-	can_glide = GameManager.has_ability("wings")
+	# Habilidades POR PERSONAJE: alas (doble salto/planeo) solo Emilia (melee);
+	# guanaco (montura) solo Benjamín (arquero). Ver _shoot_arrow / mount (Q).
+	can_glide = (not is_archer) and GameManager.has_ability("wings")
 	GameManager.ability_unlocked.connect(_on_ability_unlocked)
 
 
 func _on_ability_unlocked(ability: String) -> void:
-	if ability == "wings":
+	if ability == "wings" and not is_archer:
 		can_glide = true
 
 
@@ -118,8 +119,8 @@ func _physics_process(delta: float) -> void:
 			_interactable.interact(self)
 		_t_held_prev = t_held
 
-		# Montura guanaco (toggle con Q; solo si se desbloqueó)
-		if GameManager.has_ability("guanaco"):
+		# Montura guanaco (toggle con Q). Solo Benjamín (arquero).
+		if is_archer and GameManager.has_ability("guanaco"):
 			var q_held := Input.is_physical_key_pressed(KEY_Q)
 			if q_held and not _q_held_prev:
 				mounted = not mounted
@@ -208,12 +209,16 @@ func _shoot_arrow() -> void:
 		return
 	_attack_cd = 0.2
 	var fwd := _facing()
-	var arrow := Area3D.new()
-	arrow.set_script(ARROW_SCRIPT)
-	get_tree().current_scene.add_child(arrow)
-	arrow.add_to_group("arrow")
-	arrow.global_position = global_position + Vector3(0.0, 1.2, 0.0) + fwd * 0.6
-	arrow.setup(fwd, arrow_speed, arrow_damage, false)
+	var origin := global_position + Vector3(0.0, 1.2, 0.0) + fwd * 0.6
+	# Benjamín: FLECHA TRIPLE (abanico de 3).
+	for ang in [-0.22, 0.0, 0.22]:
+		var dir := fwd.rotated(Vector3.UP, ang)
+		var arrow := Area3D.new()
+		arrow.set_script(ARROW_SCRIPT)
+		get_tree().current_scene.add_child(arrow)
+		arrow.add_to_group("arrow")
+		arrow.global_position = origin
+		arrow.setup(dir, arrow_speed, arrow_damage, false)
 	Sfx.play("fire", -3.0)
 	arrow_fired.emit()
 
