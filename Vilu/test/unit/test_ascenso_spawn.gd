@@ -38,6 +38,17 @@ func test_debug_start_zone() -> void:
 	assert_eq(GameManager.debug_start_zone, "", "se limpia tras usarla")
 
 
+func test_fall_resets_zone() -> void:
+	GameManager.reset_progress()
+	var game := GAME.instantiate()
+	add_child_autofree(game)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	game.party[0].global_position = Vector3(0, -50, 0)   # cae al vacío
+	game._check_fall()
+	assert_gt(game.party[0].global_position.y, game.fall_limit, "tras caer se reubica arriba del límite")
+
+
 func test_party_persists_through_travel() -> void:
 	GameManager.reset_progress()
 	var game := GAME.instantiate()
