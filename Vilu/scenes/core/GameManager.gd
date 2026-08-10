@@ -16,6 +16,9 @@ signal ability_unlocked(ability: String)
 const BEAT_COUNT := 8
 const ABILITIES := ["bow", "wings", "guanaco"]
 
+## Debug: si no está vacío, Game arranca cargando esta zona (selector del título).
+var debug_start_zone := ""
+
 
 func get_beat() -> int:
 	return Save.beat_index

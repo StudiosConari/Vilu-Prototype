@@ -29,6 +29,16 @@ func test_spawns_two_distinct_characters() -> void:
 	assert_true(cam_b.current, "tras R, el arquero toma la cámara")
 
 
+func test_debug_start_zone() -> void:
+	GameManager.reset_progress()
+	GameManager.debug_start_zone = "Cumbre"
+	var game := GAME.instantiate()
+	add_child_autofree(game)
+	await get_tree().process_frame
+	assert_eq(TravelManager.current_region, "Cumbre", "Game arranca en la zona de debug")
+	assert_eq(GameManager.debug_start_zone, "", "se limpia tras usarla")
+
+
 func test_party_persists_through_travel() -> void:
 	GameManager.reset_progress()
 	var game := GAME.instantiate()

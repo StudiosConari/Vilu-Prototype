@@ -4,6 +4,16 @@ extends Control
 
 var _options: Control
 
+# Debug: [label, zona, beat, habilidades a desbloquear]
+const DEBUG_ZONES := [
+	["1 Tarapacá", "Region1_Tarapaca", 0, []],
+	["2 Isluga", "Isluga", 3, ["bow"]],
+	["3 Ascenso", "AscensoOjos", 4, ["bow"]],
+	["4 Región 2", "Region2_Volcan", 5, ["bow"]],
+	["5 Cumbre", "Cumbre", 6, ["bow", "wings", "guanaco"]],
+	["6 Final", "Final", 7, ["bow", "wings", "guanaco"]],
+]
+
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -67,6 +77,33 @@ func _ready() -> void:
 	help.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	help.position.y = -110
 	add_child(help)
+
+	_build_debug_zones()
+
+
+func _build_debug_zones() -> void:
+	var row := HBoxContainer.new()
+	row.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.position.y = -160
+	row.add_theme_constant_override("separation", 8)
+	add_child(row)
+	row.add_child(_label("Debug — ir a zona:", 20, Color(0.95, 0.8, 0.45), 3))
+	for z in DEBUG_ZONES:
+		var b := Button.new()
+		b.text = z[0]
+		b.add_theme_font_size_override("font_size", 18)
+		b.pressed.connect(_on_debug_zone.bind(z[1], z[2], z[3]))
+		row.add_child(b)
+
+
+func _on_debug_zone(zone: String, beat: int, abilities: Array) -> void:
+	GameManager.reset_progress()
+	GameManager.set_beat(beat)
+	for a in abilities:
+		GameManager.unlock(a)
+	GameManager.debug_start_zone = zone
+	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")
 
 
 func _build_options() -> void:
