@@ -54,13 +54,13 @@ material = ExtResource("2_terrain")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 8)
 
 [node name="EmiliaDock" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 0)
 
 [node name="EmiliaHorizDest" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, -2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, 0)
 
 [node name="EmiliaHoriz" type="AnimatableBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 0)
 collision_layer = 1
 collision_mask = 0
 script = ExtResource("4_rolemov")
@@ -166,13 +166,13 @@ mesh = SubResource("mesh_h5")
 shape = SubResource("shape_h5")
 
 [node name="BenjaminDock" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 0)
 
 [node name="BenjaminHorizDest" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, -2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, 0)
 
 [node name="BenjaminHoriz" type="AnimatableBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 0)
 collision_layer = 1
 collision_mask = 0
 script = ExtResource("4_rolemov")
