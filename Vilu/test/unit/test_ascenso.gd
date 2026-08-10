@@ -1,7 +1,7 @@
 extends "res://addons/gut/test.gd"
 
-## Beat 5 — Ascenso (Plan B): la cima resuelve; la placa activa el puente.
-## Swap de personaje a nivel de PlayerController.
+## Beat 5 — AscensoOjos (rediseño): rompecabezas de letras VILU. Hay que hacer
+## calzar las 4 letras azules con sus fantasmas rojos (posición + rotación).
 
 const ASCENSO := preload("res://scenes/puzzles/Ascenso.tscn")
 const PLAYER := preload("res://scenes/actors/Player.tscn")
@@ -13,52 +13,43 @@ func after_all() -> void:
 	GameManager.reset_progress()
 
 
-func _fake_player() -> Node3D:
-	var n := Node3D.new()
-	n.add_to_group("player")
-	add_child_autofree(n)
-	return n
+func test_has_four_letters_and_targets() -> void:
+	var a := ASCENSO.instantiate()
+	add_child_autofree(a)
+	for g in ["V", "I", "L", "U"]:
+		assert_not_null(a.letter(g), "existe la letra %s" % g)
+		assert_true(a._targets.has(g), "existe el objetivo de %s" % g)
 
 
-func test_summit_reached_solves_beat5() -> void:
+func test_all_letters_placed_solves_beat5() -> void:
 	var a := ASCENSO.instantiate()
 	add_child_autofree(a)
 	watch_signals(a)
-	a._on_summit(_fake_player())
+	for g in ["V", "I", "L", "U"]:
+		a.place_at_target(g)
+	a._check()
 	assert_true(a.is_solved())
 	assert_signal_emitted(a, "solved")
-	assert_eq(GameManager.get_beat(), 5, "llegar a la cima entra al Beat 5")
+	assert_eq(GameManager.get_beat(), 5, "completar VILU entra al Beat 5")
 
 
-func test_relay_two_plates_keeps_bridge() -> void:
+func test_not_solved_when_one_missing() -> void:
 	var a := ASCENSO.instantiate()
 	add_child_autofree(a)
-	var p1 := _fake_player()
-	var p2 := _fake_player()
-	var bridge_mesh := a.get_node("Bridge/Mesh") as Node3D
-	a._on_plate_enter(p1)   # personaje en la placa cercana
-	a._on_plate_enter(p2)   # el otro en la placa de enfrente
-	assert_eq(a._on_plate, 2)
-	a._on_plate_exit(p1)    # el primero se suelta para cruzar
-	assert_eq(a._on_plate, 1)
-	a._process(1.0)
-	assert_true(bridge_mesh.visible, "el puente sigue arriba con la placa de enfrente")
+	for g in ["V", "I", "L"]:
+		a.place_at_target(g)
+	a._check()
+	assert_false(a.is_solved(), "con una letra fuera de lugar no se resuelve")
 
 
-func test_plate_toggles_bridge() -> void:
+func test_face_move_maps_directions() -> void:
 	var a := ASCENSO.instantiate()
 	add_child_autofree(a)
-	var p := _fake_player()
-	var bridge_mesh := a.get_node("Bridge/Mesh") as Node3D
-
-	a._on_plate_enter(p)
-	assert_eq(a._on_plate, 1)
-	assert_true(bridge_mesh.visible, "el puente aparece al sostener la placa")
-
-	a._on_plate_exit(p)
-	assert_eq(a._on_plate, 0)
-	a._process(1.0)   # expira la gracia
-	assert_false(bridge_mesh.visible, "el puente desaparece tras soltar la placa (con gracia)")
+	var c := Vector3.ZERO
+	assert_eq(a._face_move(Vector3(5, 0, 0), c), Vector3(1, 0, 0), "cara este -> derecha")
+	assert_eq(a._face_move(Vector3(-5, 0, 0), c), Vector3(-1, 0, 0), "cara oeste -> izquierda")
+	assert_eq(a._face_move(Vector3(0, 0, 5), c), Vector3(0, 0, 1), "cara sur -> abajo")
+	assert_eq(a._face_move(Vector3(0, 0, -5), c), Vector3(0, 0, -1), "cara norte -> arriba")
 
 
 func test_player_set_active_toggles() -> void:
