@@ -1,252 +1,239 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scenes/puzzles/PuzzleIsluga.gd" id="1_puzzle"]
 [ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="2_terrain"]
-[ext_resource type="Material" path="res://art_placeholders/mat_boss.tres" id="3_boss"]
-[ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="4_trigger"]
+[ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="3_trigger"]
+[ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="4_prop"]
 [ext_resource type="Script" path="res://scenes/actors/RoleMovingPlatform.gd" id="5_rolemov"]
-[ext_resource type="Script" path="res://scenes/actors/HitCube.gd" id="6_cube"]
-[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="7_exit"]
+[ext_resource type="Script" path="res://scenes/actors/VertPlatform.gd" id="6_vert"]
+[ext_resource type="Script" path="res://scenes/actors/HitCube.gd" id="7_cube"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="8_exit"]
 
-[sub_resource type="BoxMesh" id="mesh_movplat"]
+[sub_resource type="BoxMesh" id="mesh_plat"]
 size = Vector3(4, 0.4, 4)
 
-[sub_resource type="BoxShape3D" id="shape_movplat"]
+[sub_resource type="BoxShape3D" id="shape_plat"]
 size = Vector3(4, 0.4, 4)
 
 [sub_resource type="BoxShape3D" id="shape_rider"]
 size = Vector3(3.6, 1.6, 3.6)
 
-[sub_resource type="BoxMesh" id="mesh_h2"]
-size = Vector3(1.2, 2, 1.2)
+[sub_resource type="BoxMesh" id="mesh_cube"]
+size = Vector3(1.4, 2, 1.4)
 
-[sub_resource type="BoxShape3D" id="shape_h2"]
-size = Vector3(1.2, 2, 1.2)
-
-[sub_resource type="BoxMesh" id="mesh_h3"]
-size = Vector3(1.2, 3, 1.2)
-
-[sub_resource type="BoxShape3D" id="shape_h3"]
-size = Vector3(1.2, 3, 1.2)
-
-[sub_resource type="BoxMesh" id="mesh_h4"]
-size = Vector3(1.2, 4, 1.2)
-
-[sub_resource type="BoxShape3D" id="shape_h4"]
-size = Vector3(1.2, 4, 1.2)
-
-[sub_resource type="BoxMesh" id="mesh_h5"]
-size = Vector3(1.2, 5, 1.2)
-
-[sub_resource type="BoxShape3D" id="shape_h5"]
-size = Vector3(1.2, 5, 1.2)
+[sub_resource type="BoxShape3D" id="shape_cube"]
+size = Vector3(1.4, 2, 1.4)
 
 [sub_resource type="BoxShape3D" id="shape_finaltrig"]
-size = Vector3(20, 2, 10)
+size = Vector3(24, 2, 12)
 
 [node name="Isluga" type="Node3D"]
 script = ExtResource("1_puzzle")
 
 [node name="Ground" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 4)
 use_collision = true
-size = Vector3(24, 1, 20)
+size = Vector3(30, 1, 16)
 material = ExtResource("2_terrain")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 8)
 
 [node name="EmiliaDock" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 4)
 
-[node name="EmiliaDest" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 6.2, -10)
+[node name="EmiliaHorizDest" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, -4)
 
-[node name="EmiliaPlatform" type="AnimatableBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.2, 0)
+[node name="EmiliaHoriz" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 4)
 collision_layer = 1
 collision_mask = 0
 script = ExtResource("5_rolemov")
 for_archer = false
 dock = NodePath("../EmiliaDock")
-dest = NodePath("../EmiliaDest")
+dest = NodePath("../EmiliaHorizDest")
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaPlatform"]
-mesh = SubResource("mesh_movplat")
-surface_material_override/0 = ExtResource("4_trigger")
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaHoriz"]
+mesh = SubResource("mesh_plat")
+surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaPlatform"]
-shape = SubResource("shape_movplat")
+[node name="Shape" type="CollisionShape3D" parent="EmiliaHoriz"]
+shape = SubResource("shape_plat")
 
-[node name="Rider" type="Area3D" parent="EmiliaPlatform"]
+[node name="Rider" type="Area3D" parent="EmiliaHoriz"]
 collision_layer = 0
 collision_mask = 2
 
-[node name="RiderShape" type="CollisionShape3D" parent="EmiliaPlatform/Rider"]
+[node name="RiderShape" type="CollisionShape3D" parent="EmiliaHoriz/Rider"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("shape_rider")
 
-[node name="LeftLedge" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 5.5, -14)
+[node name="EmiliaFloor1" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 5.5, -8)
 use_collision = true
-size = Vector3(12, 1, 10)
+size = Vector3(10, 1, 8)
 material = ExtResource("2_terrain")
 
-[node name="EmiliaCubes" type="Node3D" parent="."]
-
-[node name="Cube1" type="StaticBody3D" parent="EmiliaCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 7, -13)
-script = ExtResource("6_cube")
-hits_needed = 1
-
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaCubes/Cube1"]
-mesh = SubResource("mesh_h2")
-
-[node name="Shape" type="CollisionShape3D" parent="EmiliaCubes/Cube1"]
-shape = SubResource("shape_h2")
-
-[node name="Cube2" type="StaticBody3D" parent="EmiliaCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 7.5, -13)
-script = ExtResource("6_cube")
+[node name="EmiliaCube1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 7, -8)
+script = ExtResource("7_cube")
 hits_needed = 2
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaCubes/Cube2"]
-mesh = SubResource("mesh_h3")
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaCube1"]
+mesh = SubResource("mesh_cube")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaCubes/Cube2"]
-shape = SubResource("shape_h3")
+[node name="Shape" type="CollisionShape3D" parent="EmiliaCube1"]
+shape = SubResource("shape_cube")
 
-[node name="Cube3" type="StaticBody3D" parent="EmiliaCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 8, -13)
-script = ExtResource("6_cube")
-hits_needed = 3
+[node name="EmiliaVert1" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 6, -9)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("6_vert")
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaCubes/Cube3"]
-mesh = SubResource("mesh_h4")
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaVert1"]
+mesh = SubResource("mesh_plat")
+surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaCubes/Cube3"]
-shape = SubResource("shape_h4")
+[node name="Shape" type="CollisionShape3D" parent="EmiliaVert1"]
+shape = SubResource("shape_plat")
 
-[node name="Cube4" type="StaticBody3D" parent="EmiliaCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 8.5, -13)
-script = ExtResource("6_cube")
-hits_needed = 4
+[node name="EmiliaFloor2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 11.5, -13)
+use_collision = true
+size = Vector3(8, 1, 8)
+material = ExtResource("2_terrain")
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaCubes/Cube4"]
-mesh = SubResource("mesh_h5")
+[node name="EmiliaCube2" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 13, -13)
+script = ExtResource("7_cube")
+hits_needed = 2
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaCubes/Cube4"]
-shape = SubResource("shape_h5")
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaCube2"]
+mesh = SubResource("mesh_cube")
+
+[node name="Shape" type="CollisionShape3D" parent="EmiliaCube2"]
+shape = SubResource("shape_cube")
+
+[node name="EmiliaVert2" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 12, -15)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("6_vert")
+
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaVert2"]
+mesh = SubResource("mesh_plat")
+surface_material_override/0 = ExtResource("3_trigger")
+
+[node name="Shape" type="CollisionShape3D" parent="EmiliaVert2"]
+shape = SubResource("shape_plat")
 
 [node name="BenjaminDock" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 4)
 
-[node name="BenjaminDest" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6.2, -10)
+[node name="BenjaminHorizDest" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, -4)
 
-[node name="BenjaminPlatform" type="AnimatableBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.2, 0)
+[node name="BenjaminHoriz" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 4)
 collision_layer = 1
 collision_mask = 0
 script = ExtResource("5_rolemov")
 for_archer = true
 dock = NodePath("../BenjaminDock")
-dest = NodePath("../BenjaminDest")
+dest = NodePath("../BenjaminHorizDest")
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminPlatform"]
-mesh = SubResource("mesh_movplat")
-surface_material_override/0 = ExtResource("4_trigger")
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminHoriz"]
+mesh = SubResource("mesh_plat")
+surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminPlatform"]
-shape = SubResource("shape_movplat")
+[node name="Shape" type="CollisionShape3D" parent="BenjaminHoriz"]
+shape = SubResource("shape_plat")
 
-[node name="Rider" type="Area3D" parent="BenjaminPlatform"]
+[node name="Rider" type="Area3D" parent="BenjaminHoriz"]
 collision_layer = 0
 collision_mask = 2
 
-[node name="RiderShape" type="CollisionShape3D" parent="BenjaminPlatform/Rider"]
+[node name="RiderShape" type="CollisionShape3D" parent="BenjaminHoriz/Rider"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("shape_rider")
 
-[node name="RightLedge" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 5.5, -14)
+[node name="BenjaminFloor1" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.5, -8)
 use_collision = true
-size = Vector3(12, 1, 10)
+size = Vector3(10, 1, 8)
 material = ExtResource("2_terrain")
 
-[node name="BenjaminCubes" type="Node3D" parent="."]
-
-[node name="Cube1" type="StaticBody3D" parent="BenjaminCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.5, -11)
-script = ExtResource("6_cube")
-hits_needed = 1
-
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminCubes/Cube1"]
-mesh = SubResource("mesh_h2")
-
-[node name="Shape" type="CollisionShape3D" parent="BenjaminCubes/Cube1"]
-shape = SubResource("shape_h2")
-
-[node name="Cube2" type="StaticBody3D" parent="BenjaminCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.5, -13)
-script = ExtResource("6_cube")
+[node name="BenjaminCube1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 7, -8)
+script = ExtResource("7_cube")
 hits_needed = 2
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminCubes/Cube2"]
-mesh = SubResource("mesh_h3")
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminCube1"]
+mesh = SubResource("mesh_cube")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminCubes/Cube2"]
-shape = SubResource("shape_h3")
+[node name="Shape" type="CollisionShape3D" parent="BenjaminCube1"]
+shape = SubResource("shape_cube")
 
-[node name="Cube3" type="StaticBody3D" parent="BenjaminCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.5, -15)
-script = ExtResource("6_cube")
-hits_needed = 3
+[node name="BenjaminVert1" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 6, -9)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("6_vert")
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminCubes/Cube3"]
-mesh = SubResource("mesh_h4")
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminVert1"]
+mesh = SubResource("mesh_plat")
+surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminCubes/Cube3"]
-shape = SubResource("shape_h4")
+[node name="Shape" type="CollisionShape3D" parent="BenjaminVert1"]
+shape = SubResource("shape_plat")
 
-[node name="Cube4" type="StaticBody3D" parent="BenjaminCubes"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.5, -17)
-script = ExtResource("6_cube")
-hits_needed = 4
-
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminCubes/Cube4"]
-mesh = SubResource("mesh_h5")
-
-[node name="Shape" type="CollisionShape3D" parent="BenjaminCubes/Cube4"]
-shape = SubResource("shape_h5")
-
-[node name="EmiliaExit" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 6.5, -19)
+[node name="BenjaminFloor2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 11.5, -13)
 use_collision = true
-size = Vector3(8, 3, 1)
-material = ExtResource("3_boss")
+size = Vector3(8, 1, 8)
+material = ExtResource("2_terrain")
 
-[node name="BenjaminExit" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 6.5, -19)
-use_collision = true
-size = Vector3(8, 3, 1)
-material = ExtResource("3_boss")
+[node name="BenjaminCube2" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 13, -13)
+script = ExtResource("7_cube")
+hits_needed = 2
 
-[node name="TopCenter" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -24)
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminCube2"]
+mesh = SubResource("mesh_cube")
+
+[node name="Shape" type="CollisionShape3D" parent="BenjaminCube2"]
+shape = SubResource("shape_cube")
+
+[node name="BenjaminVert2" type="AnimatableBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 12, -15)
+collision_layer = 1
+collision_mask = 0
+script = ExtResource("6_vert")
+
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminVert2"]
+mesh = SubResource("mesh_plat")
+surface_material_override/0 = ExtResource("3_trigger")
+
+[node name="Shape" type="CollisionShape3D" parent="BenjaminVert2"]
+shape = SubResource("shape_plat")
+
+[node name="TopPlatform" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5, -18)
 use_collision = true
-size = Vector3(20, 1, 10)
+size = Vector3(24, 1, 12)
 material = ExtResource("2_terrain")
 
 [node name="FinalTrigger" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -24)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 18.5, -18)
 collision_layer = 0
 collision_mask = 2
 
 [node name="Shape" type="CollisionShape3D" parent="FinalTrigger"]
 shape = SubResource("shape_finaltrig")
 
-[node name="ExitToAscenso" parent="." instance=ExtResource("7_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -27)
+[node name="ExitToAscenso" parent="." instance=ExtResource("8_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 19, -21)
 target_region = "AscensoOjos"
 require_beat = 4

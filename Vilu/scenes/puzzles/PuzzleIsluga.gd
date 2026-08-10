@@ -1,69 +1,42 @@
 extends Node3D
 
-## Beat 4 — Isluga: puzzle colaborativo en "C espejo".
-## Cada personaje sube por SU plataforma (RoleMovingPlatform: la de Emilia solo se
-## mueve con Emilia, la de Benjamín solo con Benjamín) a su repisa.
-##  - Emilia: 4 cubos de distinta ALTURA en su repisa; se activan con 1/2/3/4
-##    golpes (melee) según altura. Completarlos abre la salida de BENJAMÍN.
-##  - Benjamín: 4 cubos FUERA de su repisa; se activan con 1/2/3/4 FLECHAS. Abren
-##    la salida de EMILIA.
-## Cada uno cruza SU salida hacia la cima central; cuando LOS DOS llegan, superan
-## el desafío (Beat 4).
+## Beat 4 — Isluga: ascenso cooperativo en "C espejo". Cada personaje sube por SU
+## plataforma (RoleMovingPlatform) al primer piso. Ahí, al golpear su cubo, activa
+## el ASCENSOR VERTICAL del OTRO (que empieza a subir y bajar en el lado del otro).
+## Con el ascensor activo cada uno sube al 2º piso; su cubo activa el ascensor del
+## otro hacia la última plataforma. Cuando LOS DOS llegan arriba, superan el
+## desafío (Beat 4).
 ##
-## (Primer pase de la mecánica; enemigos/palancas intermedias quedan para iterar.)
+## Cableo: el cubo de cada uno activa el ascensor del OTRO (dependencia cruzada).
 
 signal solved
 
 @export var advance_to_beat := 4
 
 var _solved := false
-var _emilia_done := 0
-var _benja_done := 0
-var _emilia_total := 0
-var _benja_total := 0
 var _on_top := 0
-
-@onready var _emilia_cubes: Node = get_node_or_null("EmiliaCubes")
-@onready var _benja_cubes: Node = get_node_or_null("BenjaminCubes")
-@onready var _emilia_exit: Node = get_node_or_null("EmiliaExit")
-@onready var _benja_exit: Node = get_node_or_null("BenjaminExit")
-@onready var _final_trigger: Area3D = get_node_or_null("FinalTrigger")
 
 
 func _ready() -> void:
-	if _emilia_cubes:
-		for c in _emilia_cubes.get_children():
-			if c.has_signal("activated"):
-				c.activated.connect(_on_emilia_cube)
-				_emilia_total += 1
-	if _benja_cubes:
-		for c in _benja_cubes.get_children():
-			if c.has_signal("activated"):
-				c.activated.connect(_on_benja_cube)
-				_benja_total += 1
-	if _final_trigger:
-		_final_trigger.body_entered.connect(_on_top_enter)
-		_final_trigger.body_exited.connect(_on_top_exit)
-	_hint("Isluga (colaborativo): cada uno sube por SU plataforma. Emilia golpea sus 4 cubos (1/2/3/4 golpes según altura) para abrir la salida de Benjamín; Benjamín acierta con flechas sus 4 cubos (1/2/3/4) para abrir la de Emilia. Júntense arriba.")
+	# cubo de Emilia -> ascensor de Benjamín (y viceversa), en cada piso.
+	_wire("EmiliaCube1", "BenjaminVert1")
+	_wire("BenjaminCube1", "EmiliaVert1")
+	_wire("EmiliaCube2", "BenjaminVert2")
+	_wire("BenjaminCube2", "EmiliaVert2")
+	var ft := get_node_or_null("FinalTrigger")
+	if ft:
+		ft.body_entered.connect(_on_top_enter)
+		ft.body_exited.connect(_on_top_exit)
+	_hint("Isluga (cooperativo): cada uno sube por SU plataforma. Golpeá tu cubo para ACTIVAR el ascensor del OTRO. Suban piso a piso ayudándose y júntense en la cima.")
 
 
-func _on_emilia_cube() -> void:
-	_emilia_done += 1
-	if _emilia_done >= _emilia_total:
-		_open(_benja_exit)
-		_hint("¡Emilia completó sus cubos! Se abrió la salida de Benjamín.")
-
-
-func _on_benja_cube() -> void:
-	_benja_done += 1
-	if _benja_done >= _benja_total:
-		_open(_emilia_exit)
-		_hint("¡Benjamín acertó sus cubos! Se abrió la salida de Emilia.")
-
-
-func _open(door: Node) -> void:
-	if door and is_instance_valid(door):
-		door.queue_free()
+func _wire(cube_name: String, vert_name: String) -> void:
+	var cube := get_node_or_null(cube_name)
+	var vert := get_node_or_null(vert_name)
+	if cube and vert and cube.has_signal("activated") and vert.has_method("set_active"):
+		cube.activated.connect(func() -> void:
+			vert.set_active(true)
+			_hint("¡Ascensor activado para tu compañero!"))
 
 
 func _on_top_enter(body: Node3D) -> void:
@@ -92,12 +65,10 @@ func is_solved() -> bool:
 	return _solved
 
 
-# --- Helpers para tests ---
-func emilia_progress() -> int:
-	return _emilia_done
-
-func benja_progress() -> int:
-	return _benja_done
+# --- Helper para tests ---
+func vert_active(vert_name: String) -> bool:
+	var v := get_node_or_null(vert_name)
+	return v != null and v.has_method("is_active") and v.is_active()
 
 
 func _hint(text: String) -> void:
