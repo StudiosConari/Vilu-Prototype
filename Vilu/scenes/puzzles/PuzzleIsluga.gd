@@ -45,18 +45,20 @@ func _wire_cubes(container_name: String, cb: Callable) -> int:
 	if n:
 		for c in n.get_children():
 			if c.has_signal("activated"):
-				c.activated.connect(cb)
+				c.activated.connect(cb.bind(1))     # acertó la cantidad justa
+				if c.has_signal("deactivated"):
+					c.deactivated.connect(cb.bind(-1))  # se pasó -> se reinició
 				total += 1
 	return total
 
 
-func _on_emilia_top() -> void:
-	_emilia_done += 1
+func _on_emilia_top(delta: int) -> void:
+	_emilia_done = clampi(_emilia_done + delta, 0, _emilia_total)
 	_check()
 
 
-func _on_benja_top() -> void:
-	_benja_done += 1
+func _on_benja_top(delta: int) -> void:
+	_benja_done = clampi(_benja_done + delta, 0, _benja_total)
 	_check()
 
 
