@@ -35,6 +35,32 @@ func test_hitcube_activates_after_n_hits() -> void:
 	assert_signal_emitted(cube, "activated")
 
 
+func test_top_cube_resets_on_overhit() -> void:
+	var c := ISLUGA.instantiate()
+	add_child_autofree(c)
+	var cube := c.get_node("EmiliaTopCubes/Cube2")   # necesita 2 golpes exactos
+	watch_signals(cube)
+	cube.take_damage()
+	cube.take_damage()
+	assert_true(cube.is_satisfied(), "con 2 golpes justos queda satisfecho")
+	cube.take_damage()   # un golpe de más -> se reinicia
+	assert_false(cube.is_satisfied(), "el 3er golpe lo reinicia")
+	assert_signal_emitted(cube, "deactivated")
+
+
+func test_top_cube_overhit_drops_progress() -> void:
+	var c := ISLUGA.instantiate()
+	add_child_autofree(c)
+	# Completar los 4 de Emilia con la cantidad justa.
+	for cube in c.get_node("EmiliaTopCubes").get_children():
+		for i in cube.hits_needed:
+			cube.take_damage()
+	assert_eq(c.emilia_progress(), 4, "los 4 justos suman 4")
+	# Pasarse en uno resta ese progreso.
+	c.get_node("EmiliaTopCubes/Cube1").take_damage()   # ya estaba en 1, ahora 2 -> reinicia
+	assert_eq(c.emilia_progress(), 3, "pasarse en un cubo baja el progreso")
+
+
 func test_both_finish_top_cubes_solves() -> void:
 	var c := ISLUGA.instantiate()
 	add_child_autofree(c)

@@ -125,6 +125,7 @@ material = ExtResource("2_terrain")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 13, -19)
 script = ExtResource("6_cube")
 hits_needed = 1
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube1"]
 mesh = SubResource("mesh_h2")
@@ -136,6 +137,7 @@ shape = SubResource("shape_h2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 13.5, -19)
 script = ExtResource("6_cube")
 hits_needed = 2
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube2"]
 mesh = SubResource("mesh_h3")
@@ -147,6 +149,7 @@ shape = SubResource("shape_h3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 14, -19)
 script = ExtResource("6_cube")
 hits_needed = 3
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube3"]
 mesh = SubResource("mesh_h4")
@@ -158,6 +161,7 @@ shape = SubResource("shape_h4")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 14.5, -19)
 script = ExtResource("6_cube")
 hits_needed = 4
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube4"]
 mesh = SubResource("mesh_h5")
@@ -237,6 +241,7 @@ material = ExtResource("2_terrain")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 13.2, -27)
 script = ExtResource("6_cube")
 hits_needed = 1
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube1"]
 mesh = SubResource("mesh_h2")
@@ -248,6 +253,7 @@ shape = SubResource("shape_h2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 13.2, -27)
 script = ExtResource("6_cube")
 hits_needed = 2
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube2"]
 mesh = SubResource("mesh_h3")
@@ -259,6 +265,7 @@ shape = SubResource("shape_h3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 13.2, -27)
 script = ExtResource("6_cube")
 hits_needed = 3
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube3"]
 mesh = SubResource("mesh_h4")
@@ -270,6 +277,7 @@ shape = SubResource("shape_h4")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 13.2, -27)
 script = ExtResource("6_cube")
 hits_needed = 4
+reset_on_overhit = true
 
 [node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube4"]
 mesh = SubResource("mesh_h5")
