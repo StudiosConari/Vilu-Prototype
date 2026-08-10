@@ -9,10 +9,10 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="7_exit"]
 
 [sub_resource type="BoxMesh" id="mesh_bridge"]
-size = Vector3(6, 0.6, 5)
+size = Vector3(6, 0.6, 4)
 
 [sub_resource type="BoxShape3D" id="shape_bridge"]
-size = Vector3(6, 0.6, 5)
+size = Vector3(6, 0.6, 4)
 
 [sub_resource type="BoxShape3D" id="shape_plate"]
 size = Vector3(2.5, 1.6, 2.5)
