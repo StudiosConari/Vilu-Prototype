@@ -239,6 +239,36 @@ func _face(to: Vector3) -> void:
 		_visual.rotation.y = atan2(-to.x, -to.z)
 
 
+## Dirección de apuntado del jugador: del personaje hacia el punto del mundo bajo
+## el MOUSE (proyección de la cámara sobre el plano del pecho). Si no se puede,
+## cae al encare actual.
+func _aim_direction() -> Vector3:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return _facing()
+	var mouse := get_viewport().get_mouse_position()
+	var from := cam.project_ray_origin(mouse)
+	var ray := cam.project_ray_normal(mouse)
+	var plane_y := global_position.y + 1.0
+	if absf(ray.y) < 0.0001:
+		return _facing()
+	var t := (plane_y - from.y) / ray.y
+	if t <= 0.0:
+		return _facing()
+	var point := from + ray * t
+	var dir := point - (global_position + Vector3(0.0, 1.0, 0.0))
+	dir.y = 0.0
+	if dir.length() < 0.15:
+		return _facing()
+	return dir.normalized()
+
+
+func _face_aim() -> Vector3:
+	var d := _aim_direction()
+	_visual.rotation.y = atan2(-d.x, -d.z)
+	return d
+
+
 # --- Melee (Emilia): combo de 4 golpes tras la Tirana; 1 golpe antes ---
 func _melee_attack() -> void:
 	if _attack_cd > 0.0:
@@ -253,6 +283,7 @@ func _melee_attack() -> void:
 
 	var dmg: float = melee_damage[_combo_step]
 	Sfx.play("punch" if _combo_step < 2 else "kick", -3.0, 1.0 + _combo_step * 0.1)
+	_face_aim()                # encara hacia el mouse antes de golpear
 	_squash()
 	_spawn_melee_hit(dmg)
 	melee_hit.emit(_combo_step)
@@ -281,7 +312,7 @@ func _shoot_arrow(charged: bool) -> void:
 	if _attack_cd > 0.0:
 		return
 	_attack_cd = 0.4 if charged else 0.22
-	_spawn_arrow(_facing(), charged)
+	_spawn_arrow(_face_aim(), charged)   # apunta hacia el mouse
 	Sfx.play("fire", -3.0, 0.8 if charged else 1.0)
 	arrow_fired.emit()
 
@@ -297,7 +328,7 @@ func _triple_arrow() -> void:
 		return
 	_attack_cd = 0.3
 	energy -= float(triple_cost)
-	var fwd := _facing()
+	var fwd := _face_aim()      # apunta el abanico hacia el mouse
 	for ang in [-0.22, 0.0, 0.22]:
 		_spawn_arrow(fwd.rotated(Vector3.UP, ang), false)
 	Sfx.play("fire", -2.0)
