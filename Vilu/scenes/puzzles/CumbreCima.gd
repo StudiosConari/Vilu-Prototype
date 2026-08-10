@@ -31,7 +31,7 @@ func _ready() -> void:
 	if _summit:
 		_summit.body_entered.connect(_on_summit)
 	_set_bridge(false)
-	_hint("Cumbre: monta el guanaco (Q) y pisa la placa para fijar el puente. Con el arquero, clic al objetivo dorado. Salta y mantén Espacio para PLANEAR a la cima.")
+	_hint("Cumbre: con Benjamín montá (Q) y pisá la placa para FIJAR el puente. Cruzá, y con Emilia usá el DOBLE SALTO/planeo (Espacio) para llegar a la cima. Clic der = flecha triple al objetivo.")
 
 
 func _hint(text: String) -> void:

@@ -1,18 +1,36 @@
 extends CharacterBody3D
 
-## Controlador del Player (greybox). Movimiento cenital (WASD relativo al mundo),
-## correr (Shift), salto (Espacio). Combate desbloqueado por Carmen (has_bow):
-## clic izq = combo melee (cadena de 3 con ventana de input), clic der = flecha.
-## Interacción con [T]. Solo el nodo Visual rota para encarar (-Z adelante); el
-## cuerpo queda alineado para que la cámara hija no gire. Habilidades =
-## ESTADOS (planeo con alas, montura guanaco), no arte.
+## Protagonista de VILU. Hay dos en el party: Emilia (melee) y Benjamín (arquero).
+##
+## MODO DE CONTROL:
+##  - PLAYER: lo controlás con teclado/mouse (activo, con cámara).
+##  - IA COMBAT: pelea solo (persigue, ataca básico, esquiva telegrafiados).
+##  - FROZEN: se queda quieto (para puzzles).
+## Game cambia el activo con R (deja al otro en IA) o T (deja al otro QUIETO).
+##
+## HABILIDADES (por personaje, algunas las entrega La Tirana / Carmen = has_bow):
+##  - Emilia: base 1 golpe -> tras la Tirana, COMBO de 4 golpes. Alas: doble
+##    salto + planeo.
+##  - Benjamín: base flecha normal + flecha CARGADA (mantener clic). Tras la
+##    Tirana: FLECHA TRIPLE (activable con clic der, gasta energía). Guanaco:
+##    montura (Q).
+##
+## Controles (activo): WASD mover, Shift correr, Espacio saltar (doble con alas),
+## clic izq atacar (melee o flecha, mantener = cargada), clic der flecha triple,
+## Q montar (Benjamín), E interactuar.
 
 signal health_changed(current: int, maximum: int)
+signal energy_changed(current: int, maximum: int)
 signal died
-signal melee_hit(step: int)      # paso de combo alcanzado (0..N-1); N-1 = combo completo
+signal melee_hit(step: int)
 signal arrow_fired
 
 const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
+
+enum AiMode { COMBAT, FROZEN }
+
+@export_group("Rol")
+@export var is_archer := false
 
 @export_group("Movimiento")
 @export var walk_speed := 4.0
@@ -22,25 +40,28 @@ const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
 @export var gravity := 18.0
 @export var turn_speed := 14.0
 
-@export_group("Rol")
-@export var is_archer := false     # false = melee (combos); true = arquero (flechas)
-
-@export_group("Vida")
+@export_group("Vida y energía")
 @export var max_health := 100
+@export var max_energy := 100
+@export var energy_regen := 18.0
+@export var triple_cost := 35
 
 @export_group("Combate")
 @export var combo_window := 0.6
 @export var attack_cooldown := 0.28
-@export var melee_damage: Array[float] = [8.0, 8.0, 12.0, 18.0]   # combo de 4 golpes (Emilia)
+@export var melee_damage: Array[float] = [8.0, 8.0, 12.0, 18.0]   # combo de 4 (Emilia, tras la Tirana)
 @export var melee_range := 1.1
 @export var arrow_speed := 26.0
 @export var arrow_damage := 10.0
+@export var charge_time := 0.4      # mantener el clic este tiempo = flecha cargada
 
 var health: int
+var energy: float
 var input_locked := false
-var active := true          # false = personaje inactivo del party (no recibe input)
+var active := true
+var ai_mode: int = AiMode.COMBAT
 
-# Estados de habilidad (activados desde beats posteriores).
+# Estados de habilidad
 var can_glide := false
 var glide_gravity_scale := 0.35
 var mounted := false
@@ -55,21 +76,24 @@ var _interactable: Node = null
 
 var _jumps_done := 0
 var _jump_held_prev := false
-var _t_held_prev := false
+var _e_held_prev := false
 var _q_held_prev := false
 var _combo_step := 0
 var _combo_timer := 0.0
 var _attack_cd := 0.0
+var _ai_atk_cd := 0.0
+var _charging := false
+var _charge_t := 0.0
+var _energy_shown := -1
 
 
 func _ready() -> void:
 	health = max_health
+	energy = float(max_energy)
 	health_changed.emit(health, max_health)
-	# Bloquear input mientras haya diálogo abierto (el balloon no pausa el árbol).
+	energy_changed.emit(int(energy), max_energy)
 	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void: input_locked = true)
 	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void: input_locked = false)
-	# Habilidades POR PERSONAJE: alas (doble salto/planeo) solo Emilia (melee);
-	# guanaco (montura) solo Benjamín (arquero). Ver _shoot_arrow / mount (Q).
 	can_glide = (not is_archer) and GameManager.has_ability("wings")
 	GameManager.ability_unlocked.connect(_on_ability_unlocked)
 
@@ -79,62 +103,47 @@ func _on_ability_unlocked(ability: String) -> void:
 		can_glide = true
 
 
+# La Tirana (Carmen) mejora el combate: Emilia combo x4, Benjamín flecha triple.
+func _upgraded() -> bool:
+	return GameManager.has_ability("bow")
+
+
 func _physics_process(delta: float) -> void:
 	_combo_timer = max(0.0, _combo_timer - delta)
 	_attack_cd = max(0.0, _attack_cd - delta)
+	_ai_atk_cd = max(0.0, _ai_atk_cd - delta)
+	if _charging:
+		_charge_t += delta
+	energy = min(float(max_energy), energy + energy_regen * delta)
+	if int(energy) != _energy_shown:
+		_energy_shown = int(energy)
+		energy_changed.emit(_energy_shown, max_energy)
 
-	# --- Gravedad (con planeo opcional si tiene alas) ---
+	# --- Gravedad + reset de saltos ---
 	if is_on_floor():
 		_jumps_done = 0
 	else:
 		var g := gravity
-		if can_glide and Input.is_physical_key_pressed(KEY_SPACE) and velocity.y < 0.0:
+		if active and can_glide and Input.is_physical_key_pressed(KEY_SPACE) and velocity.y < 0.0:
 			g *= glide_gravity_scale
 		velocity.y -= g * delta
 
-	# --- Entrada de movimiento ---
-	var controllable := active and not input_locked
+	# --- Dirección según el modo ---
 	var dir := Vector3.ZERO
-	if controllable:
-		if Input.is_physical_key_pressed(KEY_W): dir.z -= 1.0
-		if Input.is_physical_key_pressed(KEY_S): dir.z += 1.0
-		if Input.is_physical_key_pressed(KEY_A): dir.x -= 1.0
-		if Input.is_physical_key_pressed(KEY_D): dir.x += 1.0
-		dir = dir.normalized()
+	if active and not input_locked:
+		dir = _player_input()
+	elif ai_mode == AiMode.COMBAT and not input_locked:
+		dir = _ai_behavior()
+	# FROZEN → dir queda en cero (se queda quieto)
 
-		# Salto (flanco). Con alas (can_glide) hay DOBLE SALTO.
-		var jump_held := Input.is_physical_key_pressed(KEY_SPACE)
-		if jump_held and not _jump_held_prev:
-			if is_on_floor():
-				velocity.y = jump_velocity * (1.15 if mounted else 1.0)
-				_jumps_done = 1
-			elif can_glide and _jumps_done < 2:
-				velocity.y = jump_velocity      # segundo salto (alas)
-				_jumps_done = 2
-		_jump_held_prev = jump_held
-
-		# Interacción (flanco de T)
-		var t_held := Input.is_physical_key_pressed(KEY_T)
-		if t_held and not _t_held_prev and _interactable != null and _interactable.has_method("interact"):
-			_interactable.interact(self)
-		_t_held_prev = t_held
-
-		# Montura guanaco (toggle con Q). Solo Benjamín (arquero).
-		if is_archer and GameManager.has_ability("guanaco"):
-			var q_held := Input.is_physical_key_pressed(KEY_Q)
-			if q_held and not _q_held_prev:
-				mounted = not mounted
-				if hud and hud.has_method("show_banner"):
-					hud.show_banner("Guanaco: MONTADO (Q para bajar)" if mounted else "Guanaco: a pie")
-			_q_held_prev = q_held
-
-	var speed := run_speed if (controllable and Input.is_physical_key_pressed(KEY_SHIFT)) else walk_speed
+	var speed := walk_speed
+	if active and not input_locked and Input.is_physical_key_pressed(KEY_SHIFT):
+		speed = run_speed
 	if mounted:
 		speed *= 1.5
 
 	velocity.x = move_toward(velocity.x, dir.x * speed, acceleration * speed * delta)
 	velocity.z = move_toward(velocity.z, dir.z * speed, acceleration * speed * delta)
-
 	move_and_slide()
 
 	# --- Encarar el movimiento (solo el Visual rota; -Z adelante) ---
@@ -143,36 +152,87 @@ func _physics_process(delta: float) -> void:
 		var target_yaw := atan2(-hv.x, -hv.z)
 		_visual.rotation.y = lerp_angle(_visual.rotation.y, target_yaw, turn_speed * delta)
 
-	# Visuales de habilidad (cajas ancladas al Visual): alas si desbloqueadas,
-	# guanaco cuando está montado.
 	if _wings_vis:
 		_wings_vis.visible = can_glide
 	if _guanaco_vis:
 		_guanaco_vis.visible = mounted
 
 
+# --- Control del jugador (WASD/salto/mount/interact) ---
+func _player_input() -> Vector3:
+	var dir := Vector3.ZERO
+	if Input.is_physical_key_pressed(KEY_W): dir.z -= 1.0
+	if Input.is_physical_key_pressed(KEY_S): dir.z += 1.0
+	if Input.is_physical_key_pressed(KEY_A): dir.x -= 1.0
+	if Input.is_physical_key_pressed(KEY_D): dir.x += 1.0
+	dir = dir.normalized()
+
+	# Salto (doble con alas)
+	var jump_held := Input.is_physical_key_pressed(KEY_SPACE)
+	if jump_held and not _jump_held_prev:
+		if is_on_floor():
+			velocity.y = jump_velocity * (1.15 if mounted else 1.0)
+			_jumps_done = 1
+		elif can_glide and _jumps_done < 2:
+			velocity.y = jump_velocity
+			_jumps_done = 2
+	_jump_held_prev = jump_held
+
+	# Interacción (E)
+	var e_held := Input.is_physical_key_pressed(KEY_E)
+	if e_held and not _e_held_prev and _interactable != null and _interactable.has_method("interact"):
+		_interactable.interact(self)
+	_e_held_prev = e_held
+
+	# Montura guanaco (Q) — solo Benjamín
+	if is_archer and GameManager.has_ability("guanaco"):
+		var q_held := Input.is_physical_key_pressed(KEY_Q)
+		if q_held and not _q_held_prev:
+			mounted = not mounted
+			_banner("Guanaco: MONTADO (Q para bajar)" if mounted else "Guanaco: a pie")
+		_q_held_prev = q_held
+
+	return dir
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if input_locked or not active:
+	if not active or input_locked:
 		return
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if not GameManager.has_ability("bow"):
-			return  # el combate lo entrega Carmen
-		# Cada personaje tiene UN estilo: el arquero dispara, el melee encadena combos.
+	if not (event is InputEventMouseButton):
+		return
+	if event.button_index == MOUSE_BUTTON_LEFT:
 		if is_archer:
-			_shoot_arrow()
-		else:
+			# Flecha: tap = normal, mantener = cargada (perforante).
+			if event.pressed:
+				_charging = true
+				_charge_t = 0.0
+			else:
+				var charged := _charge_t >= charge_time
+				_charging = false
+				_shoot_arrow(charged)
+		elif event.pressed:
 			_melee_attack()
+	elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+		if is_archer:
+			_triple_arrow()
 
 
-# --- Dirección de encare en el mundo (-Z del Visual) ---
 func _facing() -> Vector3:
 	return (-_visual.global_transform.basis.z).normalized()
 
 
+func _face(to: Vector3) -> void:
+	to.y = 0.0
+	if to.length() > 0.05:
+		_visual.rotation.y = atan2(-to.x, -to.z)
+
+
+# --- Melee (Emilia): combo de 4 golpes tras la Tirana; 1 golpe antes ---
 func _melee_attack() -> void:
 	if _attack_cd > 0.0:
 		return
-	if _combo_timer > 0.0 and _combo_step < melee_damage.size() - 1:
+	var max_step := (melee_damage.size() - 1) if _upgraded() else 0
+	if _combo_timer > 0.0 and _combo_step < max_step:
 		_combo_step += 1
 	else:
 		_combo_step = 0
@@ -180,7 +240,7 @@ func _melee_attack() -> void:
 	_attack_cd = attack_cooldown
 
 	var dmg: float = melee_damage[_combo_step]
-	Sfx.play("punch" if _combo_step < 2 else "kick", -3.0, 1.0 + _combo_step * 0.12)
+	Sfx.play("punch" if _combo_step < 2 else "kick", -3.0, 1.0 + _combo_step * 0.1)
 	_squash()
 	_spawn_melee_hit(dmg)
 	melee_hit.emit(_combo_step)
@@ -188,7 +248,7 @@ func _melee_attack() -> void:
 
 func _spawn_melee_hit(dmg: float) -> void:
 	var hit := Area3D.new()
-	hit.collision_mask = 4  # capa de enemigos
+	hit.collision_mask = 4
 	hit.monitoring = true
 	var cs := CollisionShape3D.new()
 	var sh := SphereShape3D.new()
@@ -204,23 +264,41 @@ func _spawn_melee_hit(dmg: float) -> void:
 	get_tree().create_timer(0.12).timeout.connect(hit.queue_free)
 
 
-func _shoot_arrow() -> void:
+# --- Arco (Benjamín) ---
+func _shoot_arrow(charged: bool) -> void:
 	if _attack_cd > 0.0:
 		return
-	_attack_cd = 0.2
-	var fwd := _facing()
-	var origin := global_position + Vector3(0.0, 1.2, 0.0) + fwd * 0.6
-	# Benjamín: FLECHA TRIPLE (abanico de 3).
-	for ang in [-0.22, 0.0, 0.22]:
-		var dir := fwd.rotated(Vector3.UP, ang)
-		var arrow := Area3D.new()
-		arrow.set_script(ARROW_SCRIPT)
-		get_tree().current_scene.add_child(arrow)
-		arrow.add_to_group("arrow")
-		arrow.global_position = origin
-		arrow.setup(dir, arrow_speed, arrow_damage, false)
-	Sfx.play("fire", -3.0)
+	_attack_cd = 0.4 if charged else 0.22
+	_spawn_arrow(_facing(), charged)
+	Sfx.play("fire", -3.0, 0.8 if charged else 1.0)
 	arrow_fired.emit()
+
+
+func _triple_arrow() -> void:
+	if not _upgraded():
+		_banner("Flecha triple: habla con La Tirana")
+		return
+	if energy < float(triple_cost):
+		_banner("Sin energía para la flecha triple")
+		return
+	if _attack_cd > 0.0:
+		return
+	_attack_cd = 0.3
+	energy -= float(triple_cost)
+	var fwd := _facing()
+	for ang in [-0.22, 0.0, 0.22]:
+		_spawn_arrow(fwd.rotated(Vector3.UP, ang), false)
+	Sfx.play("fire", -2.0)
+	arrow_fired.emit()
+
+
+func _spawn_arrow(dir: Vector3, pierce: bool) -> void:
+	var arrow := Area3D.new()
+	arrow.set_script(ARROW_SCRIPT)
+	get_tree().current_scene.add_child(arrow)
+	arrow.add_to_group("arrow")
+	arrow.global_position = global_position + Vector3(0.0, 1.2, 0.0) + dir * 0.6
+	arrow.setup(dir, arrow_speed * (1.3 if pierce else 1.0), arrow_damage * (1.8 if pierce else 1.0), pierce)
 
 
 func _squash() -> void:
@@ -229,11 +307,80 @@ func _squash() -> void:
 	t.tween_property(_visual, "scale", Vector3.ONE, 0.15)
 
 
+# --- IA de combate del compañero (ataques básicos + esquiva) ---
+func _ai_behavior() -> Vector3:
+	var enemy := _nearest_enemy()
+	if enemy != null:
+		var to: Vector3 = enemy.global_position - global_position
+		to.y = 0.0
+		var dist := to.length()
+		# Esquivar telegrafiados
+		if enemy.has_method("is_telegraphing") and enemy.is_telegraphing():
+			var danger := 2.0
+			if enemy.has_method("danger_radius"):
+				danger = enemy.danger_radius()
+			if dist < danger + 1.2:
+				return (-to).normalized()
+		var atk_range := 6.5 if is_archer else 1.5
+		if dist > atk_range:
+			return to.normalized()
+		_face(to)
+		_ai_attack(enemy)
+		if is_archer and dist < 3.5:
+			return (-to).normalized()   # el arquero mantiene distancia
+		return Vector3.ZERO
+	# Sin enemigos: seguir al líder (personaje activo)
+	var leader := _leader()
+	if leader != null:
+		var to: Vector3 = leader.global_position - global_position
+		to.y = 0.0
+		if to.length() > 3.5:
+			return to.normalized()
+	return Vector3.ZERO
+
+
+func _ai_attack(enemy: Node3D) -> void:
+	if _ai_atk_cd > 0.0:
+		return
+	_ai_atk_cd = 0.9
+	if is_archer:
+		var d: Vector3 = enemy.global_position - global_position
+		d.y = 0.0
+		_spawn_arrow(d.normalized(), false)   # básico: flecha normal
+		Sfx.play_at("fire", global_position, -9.0)
+	else:
+		_squash()
+		_spawn_melee_hit(melee_damage[0])      # básico: 1 golpe
+		Sfx.play_at("punch", global_position, -7.0)
+
+
+func _nearest_enemy() -> Node3D:
+	var best: Node3D = null
+	var bd := 1e9
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e):
+			continue
+		var d := global_position.distance_to(e.global_position)
+		if d < bd:
+			bd = d
+			best = e
+	if best != null and bd <= 12.0:
+		return best
+	return null
+
+
+func _leader() -> Node3D:
+	for p in get_tree().get_nodes_in_group("player"):
+		if p != self and p.get("active"):
+			return p
+	return null
+
+
 # --- Interacción (llamado por Interactable.gd) ---
 func set_interactable(node: Node) -> void:
 	_interactable = node
 	if hud and hud.has_method("show_prompt"):
-		var text: String = node.prompt if "prompt" in node else "[T] Interactuar"
+		var text: String = node.prompt if "prompt" in node else "[E] Interactuar"
 		hud.show_prompt(text)
 
 
@@ -242,6 +389,29 @@ func clear_interactable(node: Node) -> void:
 		_interactable = null
 		if hud and hud.has_method("hide_prompt"):
 			hud.hide_prompt()
+
+
+# --- Control (party/swap) ---
+func set_active(a: bool) -> void:
+	active = a
+	var cam := get_node_or_null("Camera") as Camera3D
+	if cam:
+		cam.current = a
+	if not a:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_charging = false
+		if hud and hud.has_method("hide_prompt"):
+			hud.hide_prompt()
+		_interactable = null
+
+
+## true = IA de combate (pelea solo); false = FROZEN (quieto, para puzzles).
+func set_ai_mode(combat: bool) -> void:
+	ai_mode = AiMode.COMBAT if combat else AiMode.FROZEN
+	if not combat:
+		velocity.x = 0.0
+		velocity.z = 0.0
 
 
 # --- Vida ---
@@ -263,16 +433,6 @@ func is_dead() -> bool:
 	return health <= 0
 
 
-## Activa/desactiva el control de este personaje (sistema de party/swap).
-## El activo toma input y su cámara pasa a current; el inactivo se queda quieto.
-func set_active(a: bool) -> void:
-	active = a
-	var cam := get_node_or_null("Camera") as Camera3D
-	if cam:
-		cam.current = a
-	if not a:
-		velocity.x = 0.0
-		velocity.z = 0.0
-		if hud and hud.has_method("hide_prompt"):
-			hud.hide_prompt()
-		_interactable = null
+func _banner(text: String) -> void:
+	if hud and hud.has_method("show_banner"):
+		hud.show_banner(text)

@@ -49,6 +49,28 @@ func test_four_hit_combo() -> void:
 	assert_eq(emilia.melee_damage.size(), 4, "el combo de Emilia es de 4 golpes")
 
 
+func test_ai_mode_freeze_toggle() -> void:
+	var p := PLAYER.instantiate()
+	add_child_autofree(p)
+	p.set_ai_mode(false)
+	assert_eq(p.ai_mode, 1, "T deja al personaje FROZEN")
+	p.set_ai_mode(true)
+	assert_eq(p.ai_mode, 0, "R deja al personaje en IA COMBAT")
+
+
+func test_triple_arrow_needs_tirana_and_energy() -> void:
+	var benja := PLAYER.instantiate()
+	benja.is_archer = true
+	add_child_autofree(benja)
+	var e0: float = benja.energy
+	benja._triple_arrow()   # sin la Tirana (has_bow) → no gasta
+	assert_eq(benja.energy, e0, "sin la Tirana no dispara triple")
+	GameManager.unlock("bow")
+	benja.energy = 5.0
+	benja._triple_arrow()   # con la Tirana pero sin energía → no gasta
+	assert_eq(benja.energy, 5.0, "sin energía no dispara triple")
+
+
 func test_ability_visuals_toggle() -> void:
 	var p := PLAYER.instantiate()
 	add_child_autofree(p)

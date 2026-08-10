@@ -7,7 +7,7 @@ extends Area3D
 
 signal interacted(player: Node)
 
-@export var prompt := "[T] Hablar"
+@export var prompt := "[E] Hablar"
 
 
 func _ready() -> void:

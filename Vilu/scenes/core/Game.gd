@@ -19,6 +19,7 @@ var party: Array = []
 var active_index := 0
 
 var _r_prev := false
+var _t_prev := false
 
 
 func _ready() -> void:
@@ -54,19 +55,30 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 
 
 func _process(_delta: float) -> void:
-	# Swap con R (por polling, robusto ante propagación de input).
+	# R = cambiar dejando al otro en IA de combate; T = dejándolo QUIETO (puzzles).
 	var r := Input.is_physical_key_pressed(KEY_R)
 	if r and not _r_prev:
-		swap_character()
+		_swap(true)
 	_r_prev = r
+	var t := Input.is_physical_key_pressed(KEY_T)
+	if t and not _t_prev:
+		_swap(false)
+	_t_prev = t
 
 
-## Cambia al siguiente personaje del party (no-op si hay 1 solo).
+## Compat: cambia dejando al otro en IA de combate.
 func swap_character() -> void:
+	_swap(true)
+
+
+func _swap(combat: bool) -> void:
 	if party.size() <= 1:
 		return
+	var leaving := active_character()
 	active_index = (active_index + 1) % party.size()
 	_apply_active()
+	if leaving != null and leaving.has_method("set_ai_mode"):
+		leaving.set_ai_mode(combat)
 
 
 func add_party_member(character: Node) -> void:
