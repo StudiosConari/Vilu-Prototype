@@ -25,6 +25,9 @@ var _cam_pitch := -0.6
 var _cam_focus := Vector3.ZERO
 var _cam_rotating := false
 
+@export var fall_limit := -8.0   # por debajo de esto = cayó al vacío -> reinicia la zona
+var _resetting := false
+
 var player: CharacterBody3D          # personaje primario/activo de referencia
 var hud: CanvasLayer
 
@@ -87,6 +90,38 @@ func _process(_delta: float) -> void:
 		_swap(false)
 	_t_prev = t
 	_update_camera()
+	_check_fall()
+
+
+## Si algún personaje cae al vacío, reinicia la zona actual (recarga + respawn).
+func _check_fall() -> void:
+	if _resetting:
+		return
+	for c in party:
+		if is_instance_valid(c) and c.global_position.y < fall_limit:
+			_reset_zone()
+			return
+
+
+func _reset_zone() -> void:
+	if TravelManager.current_region == "":
+		return
+	_resetting = true
+	if hud and hud.has_method("show_banner"):
+		hud.show_banner("Caíste — reiniciando la zona")
+	var region := TravelManager.load_region(_region_holder, TravelManager.current_region)
+	_move_to_spawn(region)
+	for c in party:
+		if c.has_method("set_ai_mode"):
+			c.set_ai_mode(true)
+		if c.has_method("heal"):
+			c.heal(c.max_health)
+	_apply_active()
+	if hud and hud.has_method("clear_banner"):
+		get_tree().create_timer(1.5).timeout.connect(func() -> void:
+			if is_instance_valid(hud) and hud.has_method("clear_banner"):
+				hud.clear_banner())
+	_resetting = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
