@@ -177,12 +177,13 @@ func _physics_process(delta: float) -> void:
 
 # --- Control del jugador (WASD/salto/mount/interact) ---
 func _player_input() -> Vector3:
-	var dir := Vector3.ZERO
-	if Input.is_physical_key_pressed(KEY_W): dir.z -= 1.0
-	if Input.is_physical_key_pressed(KEY_S): dir.z += 1.0
-	if Input.is_physical_key_pressed(KEY_A): dir.x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D): dir.x += 1.0
-	dir = dir.normalized()
+	var iz := 0.0   # adelante/atrás (relativo a la cámara)
+	var ix := 0.0   # derecha/izquierda
+	if Input.is_physical_key_pressed(KEY_W): iz += 1.0
+	if Input.is_physical_key_pressed(KEY_S): iz -= 1.0
+	if Input.is_physical_key_pressed(KEY_D): ix += 1.0
+	if Input.is_physical_key_pressed(KEY_A): ix -= 1.0
+	var dir := _camera_relative(ix, iz)
 
 	# Salto (doble con alas)
 	var jump_held := Input.is_physical_key_pressed(KEY_SPACE)
@@ -215,11 +216,9 @@ func _player_input() -> Vector3:
 func _unhandled_input(event: InputEvent) -> void:
 	if not active or input_locked:
 		return
-	if not (event is InputEventMouseButton):
-		return
-	if event.button_index == MOUSE_BUTTON_LEFT:
+	# Clic izq: ataque (melee, o flecha normal/cargada del arquero).
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if is_archer:
-			# Flecha: tap = normal, mantener = cargada (perforante).
 			if event.pressed:
 				_charging = true
 				_charge_t = 0.0
@@ -229,9 +228,29 @@ func _unhandled_input(event: InputEvent) -> void:
 				_shoot_arrow(charged)
 		elif event.pressed:
 			_melee_attack()
-	elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+	# F: flecha triple (Benjamín). El clic derecho quedó para rotar la cámara.
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F:
 		if is_archer:
 			_triple_arrow()
+
+
+## Convierte input WASD (ix derecha, iz adelante) a dirección en el mundo relativa
+## a hacia dónde mira la cámara (para que W sea "hacia adentro de la pantalla").
+func _camera_relative(ix: float, iz: float) -> Vector3:
+	if ix == 0.0 and iz == 0.0:
+		return Vector3.ZERO
+	var cam := get_viewport().get_camera_3d()
+	var fwd := Vector3(0, 0, -1)
+	var right := Vector3(1, 0, 0)
+	if cam:
+		fwd = -cam.global_transform.basis.z
+		fwd.y = 0.0
+		right = cam.global_transform.basis.x
+		right.y = 0.0
+		fwd = fwd.normalized() if fwd.length() > 0.01 else Vector3(0, 0, -1)
+		right = right.normalized() if right.length() > 0.01 else Vector3(1, 0, 0)
+	var d := fwd * iz + right * ix
+	return d.normalized() if d.length() > 1.0 else d
 
 
 func _facing() -> Vector3:
