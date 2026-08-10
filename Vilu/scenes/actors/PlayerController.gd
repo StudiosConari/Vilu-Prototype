@@ -55,6 +55,7 @@ enum AiMode { COMBAT, FROZEN }
 @export var arrow_damage := 10.0
 @export var charge_time := 0.4      # mantener el clic este tiempo = flecha cargada
 @export var defense_radius := 3.0   # en modo QUIETO, defiende si un enemigo entra a este rango
+@export var guard_leash := 6.0      # persigue al objetivo hasta esta distancia del puesto
 
 var health: int
 var energy: float
@@ -87,6 +88,7 @@ var _charging := false
 var _charge_t := 0.0
 var _energy_shown := -1
 var _hold_pos := Vector3.ZERO      # puesto a defender en modo QUIETO
+var _guard_target: Node3D = null   # enemigo con el que el guardia se compromete
 
 
 func _ready() -> void:
@@ -140,6 +142,10 @@ func _physics_process(delta: float) -> void:
 		dir = _ai_behavior()
 	else:
 		dir = _hold_behavior()   # QUIETO: defiende el puesto y vuelve
+
+	# La IA/guardia no se tira a los vacíos: si no hay piso adelante, se frena.
+	if not active and dir != Vector3.ZERO and not _has_ground_ahead(dir):
+		dir = Vector3.ZERO
 
 	var speed := walk_speed
 	if active and not input_locked and Input.is_physical_key_pressed(KEY_SHIFT):
@@ -374,35 +380,58 @@ func _nearest_enemy(max_dist := 12.0) -> Node3D:
 	return null
 
 
-## Modo QUIETO (tras T): defiende el puesto si un enemigo entra en defense_radius,
-## y vuelve a su lugar. Emilia se acerca a golpear; Benjamín dispara desde el sitio.
+## Modo QUIETO (tras T): defiende el puesto. Si un enemigo entra en
+## defense_radius, se COMPROMETE a derrotarlo (lo persigue hasta guard_leash del
+## puesto) antes de volver; luego atiende al siguiente. Emilia se acerca a
+## golpear; Benjamín dispara desde el sitio.
 func _hold_behavior() -> Vector3:
-	var enemy := _nearest_enemy(defense_radius)
-	if enemy != null:
-		var to: Vector3 = enemy.global_position - global_position
+	# Soltar el objetivo si murió (nodo liberado) o se alejó demasiado del puesto.
+	if _guard_target != null and not is_instance_valid(_guard_target):
+		_guard_target = null
+	if _guard_target != null and _hold_pos.distance_to(_guard_target.global_position) > guard_leash:
+		_guard_target = null
+	# Adquirir un objetivo nuevo solo si entra al rango de defensa.
+	if _guard_target == null:
+		_guard_target = _nearest_enemy(defense_radius)
+
+	if _guard_target != null:
+		var to: Vector3 = _guard_target.global_position - global_position
 		to.y = 0.0
 		var dist := to.length()
-		if enemy.has_method("is_telegraphing") and enemy.is_telegraphing():
+		if _guard_target.has_method("is_telegraphing") and _guard_target.is_telegraphing():
 			var danger := 2.0
-			if enemy.has_method("danger_radius"):
-				danger = enemy.danger_radius()
+			if _guard_target.has_method("danger_radius"):
+				danger = _guard_target.danger_radius()
 			if dist < danger + 0.8:
 				return (-to).normalized()
 		if is_archer:
 			_face(to)
-			_ai_attack(enemy)          # dispara desde el puesto (no se mueve)
+			_ai_attack(_guard_target)   # dispara desde el sitio
 			return Vector3.ZERO
 		if dist > 1.4:
-			return to.normalized()     # Emilia se acerca a golpear
+			return to.normalized()      # Emilia se acerca a rematar
 		_face(to)
-		_ai_attack(enemy)
+		_ai_attack(_guard_target)
 		return Vector3.ZERO
-	# Sin enemigos cerca: volver al puesto.
+
+	# Sin objetivo: volver al puesto.
 	var back := _hold_pos - global_position
 	back.y = 0.0
 	if back.length() > 0.4:
 		return back.normalized()
 	return Vector3.ZERO
+
+
+## ¿Hay piso ~1.1m adelante en 'dir'? Evita que la IA/guardia se tire a un vacío.
+func _has_ground_ahead(dir: Vector3) -> bool:
+	var space := get_world_3d().direct_space_state
+	var from := global_position + dir.normalized() * 1.1 + Vector3(0.0, 0.5, 0.0)
+	var to := from + Vector3(0.0, -2.0, 0.0)
+	var q := PhysicsRayQueryParameters3D.create(from, to)
+	q.collision_mask = 1        # entorno
+	q.exclude = [get_rid()]
+	var hit := space.intersect_ray(q)
+	return not hit.is_empty()
 
 
 func _leader() -> Node3D:
@@ -445,6 +474,7 @@ func set_active(a: bool) -> void:
 ## true = IA de combate (pelea solo); false = QUIETO/guardia (defiende su puesto).
 func set_ai_mode(combat: bool) -> void:
 	ai_mode = AiMode.COMBAT if combat else AiMode.FROZEN
+	_guard_target = null
 	if not combat:
 		_hold_pos = global_position   # fija el puesto a defender
 		velocity.x = 0.0

@@ -137,3 +137,8 @@ func go_to(region_name: String) -> void:
 			hud.clear_banner()
 	var region := await TravelManager.travel_to(_region_holder, region_name)
 	_move_to_spawn(region)
+	# Al cambiar de zona, el compañero vuelve a IA de combate (no se queda
+	# "congelado" corriendo hacia un puesto de la zona anterior).
+	for i in party.size():
+		if i != active_index and party[i].has_method("set_ai_mode"):
+			party[i].set_ai_mode(true)
