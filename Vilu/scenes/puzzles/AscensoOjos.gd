@@ -12,6 +12,7 @@ signal solved
 
 var _is_solved := false
 var _on_plate := 0
+var _bridge_state := -1   # -1 sin fijar, 0 abajo, 1 arriba (evita re-togglear)
 
 @onready var _plate_a: Area3D = get_node_or_null("PlateA")
 @onready var _plate_b: Area3D = get_node_or_null("PlateB")
@@ -46,6 +47,10 @@ func _on_plate_exit(body: Node3D) -> void:
 
 
 func _set_bridge(up: bool) -> void:
+	var s := 1 if up else 0
+	if s == _bridge_state:
+		return   # sin cambios: no re-togglear (evita el "vibrado")
+	_bridge_state = s
 	if _bridge_mesh:
 		_bridge_mesh.visible = up
 	if _bridge_shape:
