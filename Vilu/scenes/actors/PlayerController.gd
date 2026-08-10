@@ -55,7 +55,8 @@ enum AiMode { COMBAT, FROZEN }
 @export var arrow_damage := 10.0
 @export var charge_time := 0.4      # mantener el clic este tiempo = flecha cargada
 @export var defense_radius := 3.0   # en modo QUIETO, defiende si un enemigo entra a este rango
-@export var guard_leash := 6.0      # persigue al objetivo hasta esta distancia del puesto
+@export var guard_leash := 14.0     # persigue y REMATA al objetivo hasta esta distancia del puesto
+@export var ai_attack_cooldown := 0.45   # cadencia de ataque de la IA
 
 var health: int
 var energy: float
@@ -353,7 +354,7 @@ func _ai_behavior() -> Vector3:
 func _ai_attack(enemy: Node3D) -> void:
 	if _ai_atk_cd > 0.0:
 		return
-	_ai_atk_cd = 0.9
+	_ai_atk_cd = ai_attack_cooldown
 	if is_archer:
 		var d: Vector3 = enemy.global_position - global_position
 		d.y = 0.0

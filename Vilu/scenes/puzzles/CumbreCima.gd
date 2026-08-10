@@ -16,6 +16,7 @@ signal reached_summit
 
 var _solved := false
 var _bridge_latched := false
+var _bridge_state := -1
 
 @onready var _mount_plate: Area3D = get_node_or_null("MountPlate")
 @onready var _bridge_mesh: Node3D = get_node_or_null("Bridge1/Mesh")
@@ -41,18 +42,24 @@ func _hint(text: String) -> void:
 
 
 func _process(_delta: float) -> void:
+	if _bridge_latched:
+		return   # ya fijo: no re-togglear cada frame (evita el "vibrado")
 	# Un personaje MONTADO (guanaco) que pise la placa deja el puente FIJO (latch),
 	# para que un solo personaje pueda montarse, activarlo y luego cruzar.
-	if not _bridge_latched and _mount_plate:
+	if _mount_plate:
 		for b in _mount_plate.get_overlapping_bodies():
 			if b.is_in_group("player") and "mounted" in b and b.mounted:
 				_bridge_latched = true
+				_set_bridge(true)
 				_banner("¡Puente asegurado! Ya puedes cruzar.", 2.5)
 				break
-	_set_bridge(_bridge_latched)
 
 
 func _set_bridge(up: bool) -> void:
+	var s := 1 if up else 0
+	if s == _bridge_state:
+		return
+	_bridge_state = s
 	if _bridge_mesh:
 		_bridge_mesh.visible = up
 	if _bridge_shape:

@@ -69,6 +69,25 @@ func test_hold_returns_to_post() -> void:
 	assert_lt(dir.x, 0.0, "sin enemigos, vuelve hacia su puesto (-x)")
 
 
+func test_guard_commits_to_target() -> void:
+	GameManager.reset_progress()
+	var emilia := PLAYER.instantiate()
+	emilia.is_archer = false
+	add_child_autofree(emilia)
+	emilia.global_position = Vector3.ZERO
+	emilia.set_active(false)
+	emilia.set_ai_mode(false)             # guardia en (0,0,0)
+	var enemy := preload("res://scenes/enemies/EnemyNormal.tscn").instantiate()
+	add_child_autofree(enemy)
+	enemy.global_position = Vector3(2, 0, 0)   # en rango de defensa, fuera de melee
+	emilia._hold_behavior()
+	var t: Node = emilia._guard_target
+	assert_not_null(t, "el guardia adquiere el objetivo en rango")
+	enemy.global_position = Vector3(6, 0, 0)   # se aleja, pero dentro de la correa (14)
+	emilia._hold_behavior()
+	assert_eq(emilia._guard_target, t, "lo persigue: mantiene el mismo objetivo hasta rematarlo")
+
+
 func test_triple_arrow_needs_tirana_and_energy() -> void:
 	var benja := PLAYER.instantiate()
 	benja.is_archer = true
