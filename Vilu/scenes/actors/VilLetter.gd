@@ -56,9 +56,11 @@ func _boxes(g: String) -> Array:
 				{"size": Vector3(2.4, 0.6, 0.6), "pos": Vector3(0, 0.3, 1.3)},
 			]
 		"V":
+			# Barras que se juntan ABAJO (+Z, base de la pantalla) y se abren
+			# ARRIBA (-Z). Así lee como "V" y no como "Λ".
 			return [
-				{"size": Vector3(0.6, 0.6, 3.4), "pos": Vector3(-0.75, 0.3, 0), "rot": -0.32},
-				{"size": Vector3(0.6, 0.6, 3.4), "pos": Vector3(0.75, 0.3, 0), "rot": 0.32},
+				{"size": Vector3(0.6, 0.6, 3.4), "pos": Vector3(-0.55, 0.3, 0), "rot": 0.33},
+				{"size": Vector3(0.6, 0.6, 3.4), "pos": Vector3(0.55, 0.3, 0), "rot": -0.33},
 			]
 	return [{"size": Vector3(0.6, 0.6, 3.2), "pos": Vector3(0, 0.3, 0)}]
 

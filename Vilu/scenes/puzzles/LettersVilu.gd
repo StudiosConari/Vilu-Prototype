@@ -13,7 +13,7 @@ signal solved
 
 @export var advance_to_beat := 5
 @export var grid_step := 3.0
-@export var select_radius := 4.5
+@export var select_radius := 2.8
 @export var pos_tol := 0.9
 @export var yaw_tol := 12.0
 @export var min_x := -9.0
