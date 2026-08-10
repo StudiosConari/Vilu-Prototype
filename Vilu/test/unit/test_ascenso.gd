@@ -41,6 +41,7 @@ func test_relay_two_plates_keeps_bridge() -> void:
 	assert_eq(a._on_plate, 2)
 	a._on_plate_exit(p1)    # el primero se suelta para cruzar
 	assert_eq(a._on_plate, 1)
+	a._process(1.0)
 	assert_true(bridge_mesh.visible, "el puente sigue arriba con la placa de enfrente")
 
 
@@ -56,7 +57,8 @@ func test_plate_toggles_bridge() -> void:
 
 	a._on_plate_exit(p)
 	assert_eq(a._on_plate, 0)
-	assert_false(bridge_mesh.visible, "el puente desaparece al soltar la placa")
+	a._process(1.0)   # expira la gracia
+	assert_false(bridge_mesh.visible, "el puente desaparece tras soltar la placa (con gracia)")
 
 
 func test_player_set_active_toggles() -> void:

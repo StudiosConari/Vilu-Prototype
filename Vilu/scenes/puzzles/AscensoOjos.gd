@@ -9,10 +9,12 @@ extends Node3D
 signal solved
 
 @export var advance_to_beat := 5
+@export var bridge_grace := 0.4   # el puente baja recién tras estar libre este tiempo (anti-vibrado)
 
 var _is_solved := false
 var _on_plate := 0
 var _bridge_state := -1   # -1 sin fijar, 0 abajo, 1 arriba (evita re-togglear)
+var _grace := 0.0
 
 @onready var _plate_a: Area3D = get_node_or_null("PlateA")
 @onready var _plate_b: Area3D = get_node_or_null("PlateB")
@@ -34,16 +36,28 @@ func _ready() -> void:
 	_hint("Ascenso: parate en una placa cian y pulsá T (queda quieto sosteniendo el puente). Cruzá con el otro, pisá la placa de enfrente (T) y cruza el primero.")
 
 
+func _process(delta: float) -> void:
+	# El puente sube al instante al ocupar una placa; baja recién tras estar
+	# libre 'bridge_grace' segundos seguidos (así micro-vibraciones no lo bajan).
+	if _on_plate > 0:
+		_grace = bridge_grace
+	else:
+		_grace = maxf(0.0, _grace - delta)
+		if _grace <= 0.0:
+			_set_bridge(false)
+
+
 func _on_plate_enter(body: Node3D) -> void:
 	if body.is_in_group("player"):
 		_on_plate += 1
-		_set_bridge(_on_plate > 0)
+		_grace = bridge_grace
+		_set_bridge(true)
 
 
 func _on_plate_exit(body: Node3D) -> void:
 	if body.is_in_group("player"):
 		_on_plate = max(0, _on_plate - 1)
-		_set_bridge(_on_plate > 0)
+		# El bajado lo maneja _process con gracia (anti-vibrado).
 
 
 func _set_bridge(up: bool) -> void:
