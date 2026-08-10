@@ -47,7 +47,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_body(body: Node3D) -> void:
-	if body.is_in_group("enemies"):
+	if body.is_in_group("enemies") or body.is_in_group("hittable"):
 		if body in _hit:
 			return
 		_hit.append(body)
