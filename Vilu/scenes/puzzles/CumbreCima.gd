@@ -34,7 +34,7 @@ func _ready() -> void:
 	if _final_trigger:
 		_final_trigger.body_entered.connect(_on_final_enter)
 		_final_trigger.body_exited.connect(_on_final_exit)
-	_hint("Cumbre: cruza el puente con el GUANACO. Con Emilia entra a la corriente y mantené Espacio para SUBIR; al llegar arriba, Benjamín sube por la CUERDA con E. Con el guanaco, Benjamín viaja en la plataforma móvil.")
+	_hint("Cumbre: cruza el puente (guanaco). Emilia sube por la corriente (mantené Espacio planeando); Benjamín sube por la CUERDA (E). LOS DOS se suben a la plataforma móvil (Benjamín montado la mueve) hacia la derecha. Ahí, Emilia toma la corriente a la cima y le tira la cuerda a Benjamín.")
 
 
 func _process(_delta: float) -> void:
