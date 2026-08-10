@@ -39,6 +39,7 @@ enum AiMode { COMBAT, FROZEN }
 @export var jump_velocity := 6.0
 @export var gravity := 18.0
 @export var turn_speed := 14.0
+@export var updraft_speed := 6.0    # velocidad de ascenso en una corriente (Emilia planeando)
 
 @export_group("Vida y energía")
 @export var max_health := 100
@@ -68,6 +69,7 @@ var ai_mode: int = AiMode.COMBAT
 var can_glide := false
 var glide_gravity_scale := 0.35
 var mounted := false
+var in_updraft := false             # dentro de una corriente ascendente (lo setea Updraft.gd)
 
 # Interacción
 var hud: CanvasLayer
@@ -124,8 +126,11 @@ func _physics_process(delta: float) -> void:
 		_energy_shown = int(energy)
 		energy_changed.emit(_energy_shown, max_energy)
 
-	# --- Gravedad + reset de saltos ---
-	if is_on_floor():
+	# --- Gravedad / planeo / corriente ascendente + reset de saltos ---
+	if active and in_updraft and can_glide and Input.is_physical_key_pressed(KEY_SPACE):
+		velocity.y = move_toward(velocity.y, updraft_speed, 40.0 * delta)   # Emilia sube en la corriente
+		_jumps_done = 0
+	elif is_on_floor():
 		_jumps_done = 0
 	else:
 		var g := gravity
