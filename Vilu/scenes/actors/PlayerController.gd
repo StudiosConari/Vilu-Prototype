@@ -326,7 +326,7 @@ func _spawn_melee_hit(dmg: float) -> void:
 	hit.global_position = global_position + Vector3(0.0, 0.9, 0.0) + _facing() * 1.0
 	var hit_pos := hit.global_position
 	hit.body_entered.connect(func(b: Node3D) -> void:
-		if b.is_in_group("enemies") and b.has_method("take_damage"):
+		if (b.is_in_group("enemies") or b.is_in_group("hittable")) and b.has_method("take_damage"):
 			b.take_damage(dmg, hit_pos, 5.0))
 	get_tree().create_timer(0.12).timeout.connect(hit.queue_free)
 
