@@ -10,11 +10,25 @@ const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 
 @onready var _region_holder: Node3D = $RegionHolder
+@onready var _camera: Camera3D = $Camera
+
+@export_group("Cámara")
+@export var cam_distance := 16.0
+@export var cam_zoom_min := 6.0
+@export var cam_zoom_max := 34.0
+@export var cam_zoom_step := 2.0
+@export var cam_rotate_speed := 0.006
+@export var cam_follow_lerp := 0.18
+
+var _cam_yaw := 0.0
+var _cam_pitch := -0.6
+var _cam_focus := Vector3.ZERO
+var _cam_rotating := false
 
 var player: CharacterBody3D          # personaje primario/activo de referencia
 var hud: CanvasLayer
 
-## Party controlable (2 protagonistas). Solo el activo recibe input/cámara.
+## Party controlable (2 protagonistas). Solo el activo recibe input.
 var party: Array = []
 var active_index := 0
 
@@ -31,6 +45,10 @@ func _ready() -> void:
 	hud = HUD_SCENE.instantiate()
 	add_child(hud)
 	_spawn_party(region)
+	var act := active_character()
+	if act != null:
+		_cam_focus = act.global_position + Vector3(0.0, 1.5, 0.0)
+	_update_camera()
 
 
 func _spawn_party(region: Node) -> void:
@@ -68,6 +86,33 @@ func _process(_delta: float) -> void:
 	if t and not _t_prev:
 		_swap(false)
 	_t_prev = t
+	_update_camera()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Cámara: rueda = zoom, clic derecho (arrastrar) = orbitar alrededor del activo.
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+			cam_distance = clampf(cam_distance - cam_zoom_step, cam_zoom_min, cam_zoom_max)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+			cam_distance = clampf(cam_distance + cam_zoom_step, cam_zoom_min, cam_zoom_max)
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			_cam_rotating = event.pressed
+	elif event is InputEventMouseMotion and _cam_rotating:
+		_cam_yaw -= event.relative.x * cam_rotate_speed
+		_cam_pitch = clampf(_cam_pitch - event.relative.y * cam_rotate_speed, -1.4, -0.15)
+
+
+func _update_camera() -> void:
+	var target := active_character()
+	if target == null or _camera == null:
+		return
+	_cam_focus = _cam_focus.lerp(target.global_position + Vector3(0.0, 1.5, 0.0), cam_follow_lerp)
+	var offset := Vector3(0.0, 0.0, cam_distance)
+	offset = offset.rotated(Vector3.RIGHT, _cam_pitch)
+	offset = offset.rotated(Vector3.UP, _cam_yaw)
+	_camera.global_position = _cam_focus + offset
+	_camera.look_at(_cam_focus, Vector3.UP)
 
 
 ## Compat: cambia dejando al otro en IA de combate.

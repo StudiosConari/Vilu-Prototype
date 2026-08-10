@@ -19,14 +19,13 @@ func test_spawns_two_distinct_characters() -> void:
 	assert_false(game.party[0].is_archer, "el 1º es melee")
 	assert_true(game.party[1].is_archer, "el 2º es arquero")
 
-	var cam_a := game.party[0].get_node("Camera") as Camera3D
-	var cam_b := game.party[1].get_node("Camera") as Camera3D
-	assert_true(cam_a.current, "el activo (melee) tiene la cámara")
-	assert_false(cam_b.current, "el inactivo no")
+	assert_true(game.party[0].active, "el melee arranca activo")
+	assert_false(game.party[1].active, "el arquero arranca inactivo")
 
 	game.swap_character()
-	assert_false(cam_a.current, "tras R, el melee suelta la cámara")
-	assert_true(cam_b.current, "tras R, el arquero toma la cámara")
+	assert_false(game.party[0].active, "tras R, el melee deja de ser activo")
+	assert_true(game.party[1].active, "tras R, el arquero pasa a activo")
+	assert_eq(game.active_index, 1)
 
 
 func test_debug_start_zone() -> void:

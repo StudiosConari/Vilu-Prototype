@@ -71,8 +71,8 @@ func _ready() -> void:
 	_build_options()
 
 	var help := _label(
-		"WASD mover · Shift correr · Espacio saltar (doble con alas) · Clic izq atacar (mantener = flecha cargada)\n"
-		+ "Clic der: flecha triple (Benjamín) · Q montar guanaco · E interactuar · R cambiar (IA) · T cambiar (queda quieto)",
+		"WASD mover · Shift correr · Espacio saltar (doble con alas) · Clic izq atacar (mantener = flecha cargada) · F flecha triple\n"
+		+ "Q montar guanaco · E interactuar · R cambiar (IA) · T cambiar (queda quieto) · Rueda: zoom · Clic der: rotar cámara",
 		20, Color(0.8, 0.85, 0.9), 4)
 	help.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	help.position.y = -110

@@ -9,7 +9,7 @@ const BALLOON := "res://addons/dialogue_manager/example_balloon/example_balloon.
 
 const DIALOGUE_INTRO := "~ start
 Carmen: Bienvenida al norte. Soy la Tirana; les daré su fuerza.
-Carmen: Emilia, tuyo es el COMBO de cuatro golpes. Benjamín, tuya la FLECHA TRIPLE (clic derecho, gasta energía).
+Carmen: Emilia, tuyo es el COMBO de cuatro golpes. Benjamín, tuya la FLECHA TRIPLE (tecla F, gasta energía).
 Carmen: Cambien de héroe con R (el otro pelea solo) o con T (se queda quieto, para puzzles). Vayan al paso del norte.
 => END
 "
