@@ -23,7 +23,11 @@ var _t_prev := false
 
 
 func _ready() -> void:
-	var region := TravelManager.load_region(_region_holder, "Region1_Tarapaca")
+	var start := "Region1_Tarapaca"
+	if GameManager.debug_start_zone != "":
+		start = GameManager.debug_start_zone
+		GameManager.debug_start_zone = ""
+	var region := TravelManager.load_region(_region_holder, start)
 	hud = HUD_SCENE.instantiate()
 	add_child(hud)
 	_spawn_party(region)
