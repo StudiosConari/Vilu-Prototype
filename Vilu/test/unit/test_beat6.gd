@@ -58,6 +58,17 @@ func test_ai_mode_freeze_toggle() -> void:
 	assert_eq(p.ai_mode, 0, "R deja al personaje en IA COMBAT")
 
 
+func test_hold_returns_to_post() -> void:
+	var p := PLAYER.instantiate()
+	add_child_autofree(p)
+	p.global_position = Vector3.ZERO
+	p.set_active(false)
+	p.set_ai_mode(false)              # QUIETO: fija el puesto en (0,0,0)
+	p.global_position = Vector3(5, 0, 0)   # lo desplazamos
+	var dir: Vector3 = p._hold_behavior()
+	assert_lt(dir.x, 0.0, "sin enemigos, vuelve hacia su puesto (-x)")
+
+
 func test_triple_arrow_needs_tirana_and_energy() -> void:
 	var benja := PLAYER.instantiate()
 	benja.is_archer = true

@@ -13,20 +13,24 @@ signal solved
 var _is_solved := false
 var _on_plate := 0
 
-@onready var _plate: Area3D = get_node_or_null("PlateA")
+@onready var _plate_a: Area3D = get_node_or_null("PlateA")
+@onready var _plate_b: Area3D = get_node_or_null("PlateB")
 @onready var _bridge_mesh: Node3D = get_node_or_null("Bridge/Mesh")
 @onready var _bridge_shape: CollisionShape3D = get_node_or_null("Bridge/Shape")
 @onready var _summit: Area3D = get_node_or_null("SummitTrigger")
 
 
 func _ready() -> void:
-	if _plate:
-		_plate.body_entered.connect(_on_plate_enter)
-		_plate.body_exited.connect(_on_plate_exit)
+	# Dos placas (una a cada lado del vacío): el puente sube si CUALQUIERA está
+	# ocupada. Así el que cruza puede pisar la de enfrente y ayudar al otro a cruzar.
+	for pl in [_plate_a, _plate_b]:
+		if pl:
+			pl.body_entered.connect(_on_plate_enter)
+			pl.body_exited.connect(_on_plate_exit)
 	if _summit:
 		_summit.body_entered.connect(_on_summit)
 	_set_bridge(false)
-	_hint("Ascenso: parate en la placa cian y pulsá T (deja a ese personaje quieto ahí sosteniendo el puente). Cambiás al otro y cruzás.")
+	_hint("Ascenso: parate en una placa cian y pulsá T (queda quieto sosteniendo el puente). Cruzá con el otro, pisá la placa de enfrente (T) y cruza el primero.")
 
 
 func _on_plate_enter(body: Node3D) -> void:

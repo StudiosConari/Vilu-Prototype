@@ -30,6 +30,20 @@ func test_summit_reached_solves_beat5() -> void:
 	assert_eq(GameManager.get_beat(), 5, "llegar a la cima entra al Beat 5")
 
 
+func test_relay_two_plates_keeps_bridge() -> void:
+	var a := ASCENSO.instantiate()
+	add_child_autofree(a)
+	var p1 := _fake_player()
+	var p2 := _fake_player()
+	var bridge_mesh := a.get_node("Bridge/Mesh") as Node3D
+	a._on_plate_enter(p1)   # personaje en la placa cercana
+	a._on_plate_enter(p2)   # el otro en la placa de enfrente
+	assert_eq(a._on_plate, 2)
+	a._on_plate_exit(p1)    # el primero se suelta para cruzar
+	assert_eq(a._on_plate, 1)
+	assert_true(bridge_mesh.visible, "el puente sigue arriba con la placa de enfrente")
+
+
 func test_plate_toggles_bridge() -> void:
 	var a := ASCENSO.instantiate()
 	add_child_autofree(a)
