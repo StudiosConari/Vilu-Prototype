@@ -13,10 +13,10 @@ const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 @onready var _camera: Camera3D = $Camera
 
 @export_group("Cámara")
-@export var cam_distance := 16.0
-@export var cam_zoom_min := 6.0
-@export var cam_zoom_max := 34.0
-@export var cam_zoom_step := 2.0
+@export var cam_distance := 18.0
+@export var cam_zoom_min := 4.0
+@export var cam_zoom_max := 70.0
+@export var cam_zoom_step := 3.0
 @export var cam_rotate_speed := 0.006
 @export var cam_follow_lerp := 0.18
 
