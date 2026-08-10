@@ -55,5 +55,5 @@ func _on_body(body: Node3D) -> void:
 			body.take_damage(damage, global_position, 4.0)
 		if not pierce:
 			queue_free()  # cargada = perforante, no se destruye
-	elif body is StaticBody3D and not pierce:
+	elif (body is StaticBody3D or body is AnimatableBody3D) and not pierce:
 		queue_free()
