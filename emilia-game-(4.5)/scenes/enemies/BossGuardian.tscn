@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://cb0ss1guard00"]
+
+[ext_resource type="Script" uid="uid://dxtao12bo4roh" path="res://scenes/Enemy.gd" id="1_enemy"]
+
+[node name="BossGuardian" type="CharacterBody3D"]
+script = ExtResource("1_enemy")
+max_health = 520.0
+speed = 1.9
+damage = 26.0
+attack_range = 2.7
+base_color = Color(0.35, 0.1, 0.45, 1)
+scale_factor = 2.8
+is_boss = true
+boss_name = "GUARDIAN"
+boss_kind = 0
+burn_dps = 16.0
+windup_time = 1.15
+charge_windup = 1.1

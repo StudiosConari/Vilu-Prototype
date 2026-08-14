@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "better-godot-mcp": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@n24q02m/better-godot-mcp@latest"],
+      "env": {
+        "GODOT_PROJECT_PATH": "D:\\GitHub\\Vilu-Prototype\\Vilu",
+        "GODOT_PATH": "D:\\GameDev\\Motores\\Godot\\Godot.exe"
+      }
+    }
+  }
+}

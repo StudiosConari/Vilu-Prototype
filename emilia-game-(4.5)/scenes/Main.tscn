@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://c15wu82qc0ina"]
+
+[ext_resource type="PackedScene" uid="uid://dflxge4ordlox" path="res://models/mix_base.fbx" id="1_emilia"]
+[ext_resource type="Script" uid="uid://np1ats4tj7nc" path="res://scenes/Main.gd" id="2_main"]
+[ext_resource type="Script" uid="uid://g6kjolff8lmm" path="res://scenes/Player.gd" id="3_player"]
+[ext_resource type="PackedScene" uid="uid://d4lr2a3mc1ex" path="res://models/benja_base.fbx" id="4_benja"]
+
+[sub_resource type="CapsuleShape3D" id="Capsule_1"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="CapsuleShape3D" id="Capsule_2"]
+radius = 0.35
+height = 1.6
+
+[node name="Main" type="Node3D" unique_id=1198953097]
+script = ExtResource("2_main")
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1861715082]
+script = ExtResource("3_player")
+combo_cancel_ratio = 0.45
+
+[node name="Emilia" parent="Player" unique_id=679927333 instance=ExtResource("1_emilia")]
+
+[node name="Collision" type="CollisionShape3D" parent="Player" unique_id=1092313235]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("Capsule_1")
+
+[node name="Benja" type="CharacterBody3D" parent="." unique_id=797897685]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -1.8)
+script = ExtResource("3_player")
+is_archer = true
+active = false
+attack_speed = 2.7
+texture_path = "res://models/benja_base_0.png"
+idle_override_path = "res://models/benja_idle.fbx"
+combo_cancel_ratio = 0.45
+
+[node name="BenjaModel" parent="Benja" unique_id=270680946 instance=ExtResource("4_benja")]
+
+[node name="Collision" type="CollisionShape3D" parent="Benja" unique_id=1810262281]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("Capsule_2")
