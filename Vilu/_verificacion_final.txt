@@ -1,0 +1,18 @@
+=== VERIFICACION FINAL === 
+Fecha: 09-08-2026 16:14:46,87 
+ 
+[1] DOCTOR DEL SERVIDOR MCP 
+[ok] godot binary: D:\GameDev\Motores\Godot\Godot.exe (source: path)
+[ok] godot version: 4.7.1.stable.official.a13da4feb
+[ok] project: D:\GitHub\Vilu-Prototype\Vilu
+ 
+[2] PUERTOS 6505-6514 (deberia estar vacio tras reiniciar Godot) 
+(ninguno - correcto) 
+ 
+[3] PLUGINS ACTIVOS EN project.godot 
+enabled=PackedStringArray("res://addons/beehave/plugin.cfg", "res://addons/dialogue_manager/plugin.cfg", "res://addons/gut/plugin.cfg")
+ 
+[4] AUTOLOADS MCP RESTANTES 
+(ninguno - correcto) 
+ 
+=== FIN === 
