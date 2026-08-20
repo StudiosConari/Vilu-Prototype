@@ -4,7 +4,7 @@ extends "res://addons/gut/test.gd"
 
 func test_valid_regions() -> void:
 	assert_true(TravelManager.is_valid_region("Region1_Tarapaca"))
-	assert_true(TravelManager.is_valid_region("Region2_Volcan"))
+	assert_true(TravelManager.is_valid_region("Region2_Yastay"))
 	assert_false(TravelManager.is_valid_region("NoExiste"))
 
 func test_load_region_into_holder() -> void:

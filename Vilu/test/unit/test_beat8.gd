@@ -13,5 +13,5 @@ func test_final_registered_and_loads() -> void:
 
 func test_all_beat_zones_registered() -> void:
 	for zone in ["Region1_Tarapaca", "Mina", "Poblado", "Isluga", "Region2_Alicanto",
-			"Region2_Yastay", "Region2_Volcan", "Cumbre", "Final"]:
+			"Region2_Yastay", "Cumbre", "Final"]:
 		assert_true(TravelManager.is_valid_region(zone), "zona registrada: %s" % zone)

@@ -7,7 +7,11 @@ extends Node3D
 
 const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
 const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
+const WORLD_SCENE := preload("res://scenes/core/World.tscn")
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
+
+## Zonas que NO son parte del mundo continuo: se cargan aparte al entrar.
+const INTERIORES := ["Mina", "Final"]
 
 @onready var _region_holder: Node3D = $RegionHolder
 @onready var _camera: Camera3D = $Camera
@@ -31,6 +35,12 @@ var _resetting := false
 
 var player: CharacterBody3D          # personaje primario/activo de referencia
 var hud: CanvasLayer
+var world: Node3D                    # WorldRoot: todas las zonas al aire libre
+
+var _respawn_pos := Vector3.ZERO      # dónde reaparecer al caer al vacío
+var _interior := ""                   # interior abierto ("" = estás en el mundo)
+var _volviendo_de := ""               # interior del que se está saliendo
+var _pos_antes_interior := Vector3.ZERO
 
 ## Party controlable (2 protagonistas). Solo el activo recibe input.
 var party: Array = []
@@ -41,22 +51,30 @@ var _t_prev := false
 
 
 func _ready() -> void:
-	var start := "Region1_Tarapaca"
+	var start := "Poblado"   # el pueblo del bar y la bruja es el centro del mapa
 	if GameManager.debug_start_zone != "":
 		start = GameManager.debug_start_zone
 		GameManager.debug_start_zone = ""
-	var region := TravelManager.load_region(_region_holder, start)
+
+	# El mundo abierto (todas las zonas al aire libre) vive siempre.
+	world = WORLD_SCENE.instantiate()
+	add_child(world)
+
 	hud = HUD_SCENE.instantiate()
 	add_child(hud)
-	_spawn_party(region)
+	_spawn_party_open(start)
+
+	# Arrancar en un interior (Mina/Final) desde el selector de debug.
+	if not world.has_zone(start):
+		enter_interior(start)
+
 	var act := active_character()
 	if act != null:
 		_cam_focus = act.global_position + Vector3(0.0, 1.5, 0.0)
 	_update_camera()
 
 
-func _spawn_party(region: Node) -> void:
-	# A = melee (azul), B = arquero (teal). Ambos desde el inicio.
+func _spawn_party_open(zona: String) -> void:
 	var a := _make_character(false, null)
 	var b := _make_character(true, ARCHER_MAT)
 	party = [a, b]
@@ -65,8 +83,20 @@ func _spawn_party(region: Node) -> void:
 	for c in party:
 		c.hud = hud
 	_apply_active()
-	_move_to_spawn(region)
+	_colocar_en(world.spawn_point(zona if world.has_zone(zona) else "Region1_Tarapaca"))
 	hud.show_swap_hint(party.size() > 1)
+
+
+## Reubica al party alrededor de una posición mundial.
+func _colocar_en(pos: Vector3) -> void:
+	if pos == Vector3.INF:
+		return
+	var offsets := [Vector3.ZERO, Vector3(2.5, 0, 0), Vector3(-2.5, 0, 0)]
+	for i in party.size():
+		var off: Vector3 = offsets[i] if i < offsets.size() else Vector3(0, 0, i * 2.0)
+		party[i].global_position = pos + off
+		party[i].velocity = Vector3.ZERO
+	_respawn_pos = pos
 
 
 func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
@@ -94,24 +124,34 @@ func _process(_delta: float) -> void:
 	_check_fall()
 
 
-## Si algún personaje cae al vacío, reinicia la zona actual (recarga + respawn).
+## Si algún personaje cae al vacío, reaparece el party en el último punto seguro.
 func _check_fall() -> void:
 	if _resetting:
 		return
 	for c in party:
 		if is_instance_valid(c) and c.global_position.y < fall_limit:
-			_reset_zone()
+			_respawn()
 			return
 
 
-func _reset_zone() -> void:
-	if TravelManager.current_region == "":
-		return
+## MUNDO ABIERTO: ya no existe "recargar la zona actual" — el mundo entero está
+## siempre cargado y recargarlo reiniciaría guiones de zonas lejanas. En su
+## lugar se devuelve al party al último spawn pisado.
+func _respawn() -> void:
 	_resetting = true
 	if hud and hud.has_method("show_banner"):
-		hud.show_banner("Caíste — reiniciando la zona")
-	var region := TravelManager.load_region(_region_holder, TravelManager.current_region)
-	_move_to_spawn(region)
+		hud.show_banner("Caíste — volvés al último punto seguro")
+
+	var destino := _respawn_pos
+	if _interior == "":
+		# Preferir el spawn de la zona en la que estaba parado
+		var z: String = world.current_zone() if world else ""
+		if z != "":
+			var sp: Vector3 = world.spawn_point(z)
+			if sp != Vector3.INF:
+				destino = sp
+	_colocar_en(destino)
+
 	for c in party:
 		if c.has_method("set_ai_mode"):
 			c.set_ai_mode(true)
@@ -249,16 +289,69 @@ func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 		party[i].velocity = Vector3.ZERO
 
 
-## Viaja a otra zona/región (con fundido) y reubica al party en su spawn.
-## use_travel_spawn=true solo para fast-travel desde el mapa (aterrizará junto al guardián).
+## Punto de entrada único para "ir a X". Enruta según el tipo de destino:
+##   · INTERIOR (Mina, Final)  -> carga la escena aparte, con fundido.
+##   · zona del mundo abierto  -> si venías de un interior, sale; si ya estabas
+##     en el mundo, es un teletransporte (viaje rápido del mapa de Chile).
+## use_travel_spawn elige el marcador TravelSpawn (junto al guardián).
 func go_to(region_name: String, use_travel_spawn: bool = false) -> void:
 	if hud:
 		if hud.has_method("clear_hint"):
 			hud.clear_hint()
 		if hud.has_method("clear_banner"):
 			hud.clear_banner()
-	await TravelManager.travel_to_then(_region_holder, region_name,
-		func(r: Node) -> void: _move_to_spawn(r, use_travel_spawn))
+
+	if region_name in INTERIORES:
+		await enter_interior(region_name)
+	elif _interior != "":
+		_volviendo_de = _interior
+		await exit_interior(region_name, use_travel_spawn)
+		_volviendo_de = ""
+	else:
+		await teleport_to(region_name, use_travel_spawn)
+
 	for i in party.size():
 		if i != active_index and party[i].has_method("set_ai_mode"):
 			party[i].set_ai_mode(true)
+
+
+## Entra a un interior: oculta el mundo y carga la escena en el holder.
+func enter_interior(id: String) -> void:
+	_pos_antes_interior = active_character().global_position if active_character() else _respawn_pos
+	await TravelManager.travel_to_then(_region_holder, id, func(r: Node) -> void:
+		_interior = id
+		if world:
+			world.visible = false
+			world.process_mode = Node.PROCESS_MODE_DISABLED
+		_move_to_spawn(r))
+
+
+## Sale del interior de vuelta al mundo, aterrizando en la zona indicada.
+func exit_interior(zona: String, use_travel_spawn := false) -> void:
+	await TravelManager.fade_then(func() -> void:
+		TravelManager.clear_region(_region_holder)
+		_interior = ""
+		if world:
+			world.visible = true
+			world.process_mode = Node.PROCESS_MODE_INHERIT
+		# Al salir de la Mina se reaparece frente a su boca (al este del
+		# poblado), no en el centro del pueblo: entrás y salís por el mismo lado.
+		var destino := Vector3.INF
+		if world:
+			if _volviendo_de == "Mina" and world.has_method("mine_mouth"):
+				destino = world.mine_mouth()
+			else:
+				var marcador := "TravelSpawn" if use_travel_spawn else "PlayerSpawn"
+				destino = world.spawn_point(zona, marcador)
+		_colocar_en(destino if destino != Vector3.INF else _pos_antes_interior))
+
+
+## Teletransporte dentro del mundo abierto (viaje rápido de los Guardianes).
+## No hay carga de escena: sólo fundido y reubicación.
+func teleport_to(zona: String, use_travel_spawn := false) -> void:
+	if world == null or not world.has_zone(zona):
+		push_warning("Game: zona desconocida para teletransporte '%s'" % zona)
+		return
+	var marcador := "TravelSpawn" if use_travel_spawn else "PlayerSpawn"
+	var destino: Vector3 = world.spawn_point(zona, marcador)
+	await TravelManager.fade_then(func() -> void: _colocar_en(destino))
