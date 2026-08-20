@@ -7,7 +7,7 @@ extends Node
 ##
 ## Uso desde la escena de juego (Game.gd):
 ##   await TravelManager.load_region(region_holder, "Region1_Tarapaca")
-##   await TravelManager.travel_to(region_holder, "Region2_Volcan")
+##   await TravelManager.travel_to(region_holder, "Mina")
 
 signal region_changed(region_name: String)
 
@@ -17,7 +17,6 @@ const REGIONS := {
 	"Region1_Tarapaca": "res://scenes/regions/Region1_Tarapaca.tscn",
 	"Mina": "res://scenes/regions/Mina.tscn",
 	"Poblado": "res://scenes/regions/Poblado.tscn",
-	"Region2_Volcan": "res://scenes/regions/Region2_Volcan.tscn",
 	"Region2_Alicanto": "res://scenes/regions/Region2_Alicanto.tscn",
 	"Region2_Yastay": "res://scenes/regions/Region2_Yastay.tscn",
 	"Isluga": "res://scenes/puzzles/Isluga.tscn",
@@ -82,6 +81,24 @@ func travel_to_then(holder: Node, region_name: String, on_loaded: Callable) -> N
 	await _fade_to(0.0)
 	state = State.IDLE
 	return region
+
+
+## Fundido a negro -> ejecuta `accion` con la pantalla tapada -> aclara.
+## No carga ni libera escenas: sirve para el teletransporte dentro del mundo
+## abierto, donde no hay nada que cargar porque todo ya está vivo.
+func fade_then(accion: Callable) -> void:
+	state = State.TRAVELING
+	await _fade_to(1.0)
+	accion.call()
+	await _fade_to(0.0)
+	state = State.IDLE
+
+
+## Vacía el holder de interiores (al volver de la Mina/Final al mundo abierto).
+func clear_region(holder: Node) -> void:
+	for child in holder.get_children():
+		child.queue_free()
+	current_region = ""
 
 
 func _ensure_fade() -> void:

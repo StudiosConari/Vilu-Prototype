@@ -9,9 +9,3 @@ script = ExtResource("1_script")
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=100000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 19)
 
-[node name="ExitToPoblado" parent="." instance=ExtResource("2_exit") unique_id=100000003]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 2, -37)
-target_region = "Poblado"
-require_beat = -1
-require_abilities = ["wings"]
-prompt = "[E] Volver al poblado"

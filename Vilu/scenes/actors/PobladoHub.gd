@@ -62,7 +62,34 @@ func _ready() -> void:
 	_spawn_witch()
 	_spawn_bar_folk()
 	_setup_exit()
+	# MUNDO ABIERTO: el pueblo ya no se recarga en cada visita, así que la etapa
+	# tiene que recalcularse cuando cambia el progreso, no una sola vez.
+	GameManager.ability_unlocked.connect(_on_progreso.unbind(1))
+
+
+## WorldRoot llama a esto cuando el jugador entra al pueblo.
+func activate() -> void:
+	_refrescar_etapa()
 	_intro_hint()
+
+
+func deactivate() -> void:
+	pass
+
+
+func _on_progreso() -> void:
+	_refrescar_etapa()
+
+
+## Recalcula la etapa y actualiza lo que depende de ella (destino de la salida
+## y visibilidad del espía). No re-construye el pueblo: la geometría es fija.
+func _refrescar_etapa() -> void:
+	var nueva := _current_stage()
+	if nueva == _stage:
+		return
+	_stage = nueva
+	_bar_done = false
+	_setup_exit()
 
 
 ## 1 = primera visita (bruja lee el símbolo), 2 = bar habla del Yastay,
@@ -77,30 +104,28 @@ func _current_stage() -> int:
 
 func _intro_hint() -> void:
 	match _stage:
-		1: _hint("Poblado. Mostrale el talismán a la Bruja (casa del oeste).")
+		1: _hint("Poblado. Mostrale el talismán a la Bruja (casa del oeste). El camino al norte sube al Isluga.")
 		2: _hint("Poblado. En el bar están hablando de algo. Acercate a escuchar.")
 		3: _hint("Poblado. Llevale la segunda pieza a la Bruja.")
 
 
 # ─── Salida (cambia de destino según la etapa) ───────────────────────────────
 
+## MUNDO ABIERTO: al Isluga y a la quebrada del Yastay se llega CAMINANDO por
+## los caminos, así que esas salidas ya no existen. La única que queda es la del
+## Final, que sí es un interior y sólo se abre cuando el ocultista huye.
 func _setup_exit() -> void:
+	if is_instance_valid(_exit):
+		_exit.queue_free()
+		_exit = null
+	if _stage != 3:
+		return
 	_exit = EXIT_SCENE.instantiate()
 	add_child(_exit)
 	_exit.position = Vector3(0, 2, -21)
-	match _stage:
-		1:
-			_exit.target_region = "Isluga"
-			_exit.prompt = "[E] Subir al Isluga"
-		2:
-			_exit.target_region = "Region2_Yastay"
-			_exit.prompt = "[E] Ir hacia la quebrada del Yastay"
-		3:
-			_exit.target_region = "Final"
-			_exit.prompt = "[E] Seguir al ocultista"
-	# En etapa 2 y 3 el camino sólo se abre tras cumplir el objetivo del pueblo.
-	if _stage != 1:
-		_exit.monitoring = false
+	_exit.target_region = "Final"
+	_exit.prompt = "[E] Seguir al ocultista"
+	_exit.monitoring = false   # se abre en _ocultista_flees()
 
 
 func _open_exit() -> void:
@@ -192,11 +217,11 @@ func _spawn_bar_folk() -> void:
 	zone.add_child(cs)
 	zone.interacted.connect(_on_bar_talk)
 
-	# El ocultista espía junto al bar — invisible hasta la etapa 3
-	if _stage == 3:
-		_ocultista = _npc(Vector3(15.0, 0, -1.0), _mat(Color(0.09, 0.07, 0.13)), 1.05,
-			"???")
-		_ocultista.visible = false
+	# El ocultista espía junto al bar. Se crea SIEMPRE (oculto) porque el pueblo
+	# ya no se reconstruye al llegar a la etapa 3: si dependiera de _stage en
+	# _ready(), empezando la partida en la etapa 1 no existiría nunca.
+	_ocultista = _npc(Vector3(15.0, 0, -1.0), _mat(Color(0.09, 0.07, 0.13)), 1.05, "???")
+	_ocultista.visible = false
 
 
 func _on_bar_talk(_player: Node) -> void:
@@ -217,8 +242,8 @@ func _on_bar_talk(_player: Node) -> void:
 
 
 func _bar_objective_done() -> void:
-	_banner("Los cazadores quieren atrapar al Yastay en la pampa alta. Camino al norte abierto.", 6.0)
-	_hint("Salí del pueblo hacia el norte, a la quebrada del Yastay.")
+	_banner("Los cazadores quieren atrapar al Yastay en la pampa alta.", 6.0)
+	_hint("Tomá el camino del ESTE, hacia la quebrada del Yastay.")
 	_open_exit()
 
 
@@ -231,14 +256,15 @@ func _build_town() -> void:
 	var wood  := _mat(Color(0.32, 0.22, 0.14))
 	var wall  := _mat(Color(0.24, 0.20, 0.16))
 
-	# Plaza
+	# Plaza. MUNDO ABIERTO: el poblado es el centro del mapa y sale un camino
+	# por cada lado (sur a La Tirana, este a la Mina, norte al Alicanto, oeste
+	# al Yastay). Un muro con cuatro huecos ya no es un muro, así que en vez de
+	# cerrar el perímetro quedan sólo pilares en las esquinas: marcan el límite
+	# del pueblo sin cortar el paso.
 	_box(Vector3(0, -0.5, 0), Vector3(44, 1, 44), dirt)
-	_box(Vector3(-22.5, 3, 0), Vector3(1, 6, 44), wall)
-	_box(Vector3( 22.5, 3, 0), Vector3(1, 6, 44), wall)
-	_box(Vector3(0, 3,  22.5), Vector3(44, 6, 1), wall)
-	# Muro norte con hueco central (la salida del pueblo)
-	_box(Vector3(-14, 3, -22.5), Vector3(16, 6, 1), wall)
-	_box(Vector3( 14, 3, -22.5), Vector3(16, 6, 1), wall)
+	for px: float in [-21.0, 21.0]:
+		for pz: float in [-21.0, 21.0]:
+			_box(Vector3(px, 2.0, pz), Vector3(1.6, 5.0, 1.6), wall)
 
 	# — Casa de la Bruja (oeste), frente abierto hacia la plaza —
 	_box(Vector3(-13, 1.8, -7.0), Vector3(10, 3.6, 1.0), adobe)   # fondo

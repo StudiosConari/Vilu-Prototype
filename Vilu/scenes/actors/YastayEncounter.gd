@@ -40,13 +40,31 @@ var _wounded: Node3D = null
 var _wound_healed := false
 var _yastay_stomp_cd := 0.0
 var _brujo: Node3D = null
+var _iniciado := false   # la secuencia ya arrancó (no se repite al volver)
+var _en_zona := false    # el jugador está dentro de la quebrada
 
 
 func _ready() -> void:
 	_build_arena()
 	_spawn_characters()
+
+
+## MUNDO ABIERTO: la escena existe desde que arranca la partida, así que la
+## secuencia NO puede dispararse en _ready() — el Yastay derrotaría a los
+## cazadores mientras el jugador todavía está en La Tirana.
+## WorldRoot llama a esto cuando el jugador entra a la quebrada.
+func activate() -> void:
+	_en_zona = true
+	if _iniciado:
+		return
+	_iniciado = true
 	_hint("Los cazadores atacan al Yastay y sus guanacos…")
 	get_tree().create_timer(1.5).timeout.connect(_begin_hunt)
+
+
+## El jugador se fue de la zona: el Yastay deja de perseguirlo.
+func deactivate() -> void:
+	_en_zona = false
 
 
 # ─── Fases ────────────────────────────────────────────────────────────────────
@@ -148,7 +166,9 @@ func _begin_aggressive() -> void:
 
 
 func _process(delta: float) -> void:
-	if _phase == Phase.AGGRESSIVE:
+	# Sin el guardia de _en_zona el Yastay seguiría persiguiendo al jugador a
+	# través de todo el mapa después de que se fue de la quebrada.
+	if _en_zona and _phase == Phase.AGGRESSIVE:
 		_yastay_think(delta)
 
 
@@ -254,11 +274,16 @@ func _build_arena() -> void:
 	# Suelo
 	_box(Vector3(0, -0.5, 0), Vector3(38, 1, 40), grass)
 
-	# Paredes invisibles
-	_box(Vector3(-19.5, 3, 0), Vector3(1, 6, 40), border)
-	_box(Vector3( 19.5, 3, 0), Vector3(1, 6, 40), border)
-	_box(Vector3(0, 3, -20.5), Vector3(38, 6, 1), border)
-	_box(Vector3(0, 3,  20.5), Vector3(38, 6, 1), border)
+	# Paredes de la quebrada. El poblado queda al ESTE y el Ojos del Salado al
+	# NORTE, así que esos dos lados llevan hueco de 14 m.
+	_box(Vector3(-19.5, 3, 0), Vector3(1, 6, 40), border)     # oeste, cerrado
+	_box(Vector3(0, 3,  20.5), Vector3(38, 6, 1), border)     # sur, cerrado
+	# Este -> poblado
+	_box(Vector3( 19.5, 3, -13), Vector3(1, 6, 14), border)
+	_box(Vector3( 19.5, 3,  13), Vector3(1, 6, 14), border)
+	# Norte -> Ojos del Salado (bajo el portal luminoso)
+	_box(Vector3(-12, 3, -20.5), Vector3(14, 6, 1), border)
+	_box(Vector3( 12, 3, -20.5), Vector3(14, 6, 1), border)
 
 	# Rocas volcánicas como cobertura para esquivar
 	for rx: float in [-9.0, -4.0, 4.0, 9.0]:

@@ -303,14 +303,3 @@ use_collision = true
 size = Vector3(12, 1, 10)
 material = ExtResource("2_terrain")
 
-[node name="ExitToAlicanto" parent="." unique_id=1886396076 instance=ExtResource("7_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -22)
-target_region = "Region2_Alicanto"
-require_beat = 4
-
-[node name="ExitToPoblado" parent="." unique_id=1886396077 instance=ExtResource("7_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 14)
-target_region = "Poblado"
-require_beat = -1
-require_abilities = ["talisman_frag_2"]
-prompt = "[E] Bajar al poblado de la Bruja"

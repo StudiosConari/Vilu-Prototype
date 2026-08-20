@@ -263,8 +263,3 @@ surface_material_override/0 = ExtResource("3_prop")
 [node name="RopeTop2" type="Marker3D" parent="." unique_id=285890180]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 13.3, -14)
 
-[node name="ExitToPoblado" parent="." unique_id=614572681 instance=ExtResource("8_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 13.5, -9)
-target_region = "Poblado"
-require_beat = -1
-prompt = "[E] Bajar al poblado — llevarle la 2ª pieza a la Bruja"

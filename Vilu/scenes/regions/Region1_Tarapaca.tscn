@@ -15,7 +15,3 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 2)
 [node name="FiestaDirector" type="Node3D" parent="."]
 script = ExtResource("1_fiesta")
 
-[node name="ExitToMina" parent="." instance=ExtResource("3_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -19)
-target_region = "Mina"
-require_beat = 2
