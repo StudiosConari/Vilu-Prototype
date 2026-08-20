@@ -1,0 +1,417 @@
+extends Node3D
+
+## Secuencia 6 — La prueba del Alicanto.
+##
+## Un corredor se BIFURCA en dos caminos:
+##   · IZQUIERDA — sembrado de oro. Es la trampa: al avanzar, el piso se
+##     desvanece bajo tus pies y caés al vacío (Game reinicia la zona).
+##   · DERECHA  — una persona herida tirada en el camino. Si la ayudás,
+##     superás la prueba y al fondo aparece el Alicanto, que le entrega
+##     las ALAS a Emilia.
+##
+## El Alicanto guía al minero honrado y despeña al codicioso: la geometría
+## del nivel ES la moraleja.
+
+const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
+const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+
+const TALK_FORK := "~ start
+Benjamín: El camino se parte en dos.
+Emilia: Por la izquierda hay algo brillando. Mucho algo.
+Benjamín: Por la derecha hay alguien tirado en el suelo. Se está quejando.
+Emilia: ...
+Benjamín: Vos elegís.
+=> END
+"
+
+const TALK_HURT := "~ start
+Herida: No... no se acerquen al oro. Por favor.
+Herida: Vine con mi hermano. Él agarró un puñado y el suelo... el suelo no estaba.
+Emilia: Quedate quieta. Te vamos a sacar de acá.
+Herida: Hay algo mirando desde el fondo del barranco. Nos estuvo mirando todo el tiempo.
+=> END
+"
+
+const TALK_WINGS := "~ start
+Alicanto: Tres bajaron hoy a mi quebrada.
+Alicanto: El primero corrió al oro y el oro se lo tragó.
+Alicanto: El segundo corrió al oro y todavía está cayendo.
+Alicanto: Ustedes se agacharon a levantar a una desconocida.
+Alicanto: Guío al minero honrado y despeño al codicioso. Ese es todo mi oficio.
+Alicanto: Toma mis alas, Emilia. Que te sostengan donde la roca se acabe.
+Emilia: ...Puedo sentirlo. Como si el aire pesara menos.
+=> END
+"
+
+enum Phase { APPROACH, CHOOSING, SAVED, DONE }
+var _phase := Phase.APPROACH
+
+var _gold_tiles: Array = []      # losas del camino izquierdo (se desvanecen)
+var _hurt: Node3D = null
+var _alicanto: Node3D = null
+var _fork_seen := false
+var _t := 0.0
+
+
+func _ready() -> void:
+	_build_canyon()
+	_build_gold_path()
+	_build_hurt_path()
+	_hint("Quebrada del Alicanto. El camino se bifurca más adelante.")
+
+
+func _process(delta: float) -> void:
+	_t += delta
+	if is_instance_valid(_alicanto):
+		_alicanto.position.y = 6.0 + sin(_t * 1.2) * 0.35
+		_alicanto.rotation.y += delta * 0.4
+
+
+# ─── Bifurcación ─────────────────────────────────────────────────────────────
+
+func _on_fork_entered(body: Node3D) -> void:
+	if _fork_seen or not body.is_in_group("player"):
+		return
+	_fork_seen = true
+	_phase = Phase.CHOOSING
+	_hint("Izquierda: el oro. Derecha: la persona herida.")
+	_show(TALK_FORK)
+
+
+# ─── Camino del oro (la trampa) ──────────────────────────────────────────────
+
+func _on_gold_path_entered(body: Node3D) -> void:
+	if _phase == Phase.DONE or not body.is_in_group("player"):
+		return
+	_banner("El oro brilla... y el suelo empieza a ceder.", 3.0)
+	# Las losas caen una tras otra: no da tiempo a volver
+	for i in _gold_tiles.size():
+		get_tree().create_timer(0.18 * float(i)).timeout.connect(
+			_drop_tile.bind(i))
+
+
+func _drop_tile(idx: int) -> void:
+	if idx >= _gold_tiles.size():
+		return
+	var tile = _gold_tiles[idx]
+	if not is_instance_valid(tile):
+		return
+	# use_collision=false primero: el jugador cae de inmediato aunque la losa
+	# todavía se esté viendo desvanecer.
+	tile.use_collision = false
+	var tw := get_tree().create_tween()
+	tw.tween_property(tile, "position:y", tile.position.y - 14.0, 0.9)
+	tw.tween_callback(tile.queue_free)
+
+
+# ─── Camino de la herida (la prueba) ─────────────────────────────────────────
+
+func _on_hurt_help(_player: Node) -> void:
+	if _phase == Phase.SAVED or _phase == Phase.DONE:
+		return
+	_phase = Phase.SAVED
+
+	# Se incorpora
+	if is_instance_valid(_hurt):
+		var tw := get_tree().create_tween()
+		tw.tween_property(_hurt, "rotation:z", 0.0, 0.8)
+		tw.parallel().tween_property(_hurt, "position:y", 0.0, 0.8)
+		var lbl := _hurt.get_node_or_null("Label3D") as Label3D
+		if lbl:
+			lbl.text = "Sobreviviente"
+
+	DialogueManager.dialogue_ended.connect(_summon_alicanto.unbind(1), CONNECT_ONE_SHOT)
+	_show(TALK_HURT)
+
+
+func _summon_alicanto() -> void:
+	_banner("Al fondo de la quebrada se enciende una luz.", 4.0)
+	_hint("Algo bajó al final del camino de la derecha.")
+	_build_alicanto()
+
+
+# ─── Alicanto ────────────────────────────────────────────────────────────────
+
+func _build_alicanto() -> void:
+	_alicanto = Node3D.new()
+	_alicanto.position = Vector3(11.0, 6.0, -34.0)
+	add_child(_alicanto)
+
+	var bird := _mat_emit(Color(0.98, 0.82, 0.30), Color(0.66, 0.50, 0.08), 2.6)
+	var mi   := MeshInstance3D.new()
+	var body := SphereMesh.new()
+	body.radius = 0.55
+	body.height = 1.1
+	mi.mesh  = body
+	mi.set_surface_override_material(0, bird)
+	_alicanto.add_child(mi)
+
+	for side: float in [-1.0, 1.0]:
+		var wing_mi   := MeshInstance3D.new()
+		var wing_mesh := BoxMesh.new()
+		wing_mesh.size = Vector3(0.85, 0.09, 0.44)
+		wing_mi.mesh   = wing_mesh
+		wing_mi.position   = Vector3(side * 0.66, 0.12, 0.0)
+		wing_mi.rotation.z = side * -0.30
+		wing_mi.set_surface_override_material(0, bird)
+		_alicanto.add_child(wing_mi)
+
+	var light          := OmniLight3D.new()
+	light.light_color  = Color(1.0, 0.85, 0.40)
+	light.omni_range   = 14.0
+	light.light_energy = 2.4
+	_alicanto.add_child(light)
+
+	var lbl       := Label3D.new()
+	lbl.text      = "Alicanto"
+	lbl.font_size = 24
+	lbl.position.y = 1.5
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.modulate  = Color(1.0, 0.88, 0.45)
+	_alicanto.add_child(lbl)
+
+	# Zona de encuentro al final del camino derecho
+	var zone             := Area3D.new()
+	zone.collision_layer = 0
+	zone.collision_mask  = 2
+	zone.monitoring      = true
+	zone.position        = Vector3(11.0, 1.5, -34.0)
+	add_child(zone)
+	var cs  := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(9.0, 4.0, 4.0)
+	cs.shape = box
+	zone.add_child(cs)
+	zone.body_entered.connect(_on_alicanto_reached)
+
+
+func _on_alicanto_reached(body: Node3D) -> void:
+	if _phase != Phase.SAVED or not body.is_in_group("player"):
+		return
+	_phase = Phase.DONE
+	DialogueManager.dialogue_ended.connect(_give_wings.unbind(1), CONNECT_ONE_SHOT)
+	_show(TALK_WINGS)
+
+
+func _give_wings() -> void:
+	GameManager.unlock("wings")
+	if GameManager.get_beat() < 5:
+		GameManager.set_beat(5)
+	_banner("Emilia recibe las ALAS: doble salto y planeo (mantené Espacio al caer).", 7.0)
+	_hint("Emilia: [Espacio] doble salto · mantené [Espacio] al caer para planear · volvé al poblado")
+
+	if is_instance_valid(_alicanto):
+		var tw := get_tree().create_tween()
+		tw.tween_property(_alicanto, "position",
+			_alicanto.position + Vector3(0, 9.0, 0), 3.0)
+
+
+# ─── Geometría ───────────────────────────────────────────────────────────────
+
+func _build_canyon() -> void:
+	var rock  := _mat(Color(0.34, 0.29, 0.24))
+	var wall  := _mat(Color(0.22, 0.19, 0.16))
+	var floor_mat := _mat(Color(0.44, 0.37, 0.29))
+
+	# Corredor de entrada (sur), 10 de ancho
+	_box(Vector3(0, -0.5, 8.0), Vector3(10, 1, 24), floor_mat)
+	_box(Vector3(-5.5, 3, 8.0), Vector3(1, 6, 24), wall)
+	_box(Vector3( 5.5, 3, 8.0), Vector3(1, 6, 24), wall)
+
+	# Plataforma de la bifurcación
+	_box(Vector3(0, -0.5, -6.0), Vector3(26, 1, 8), floor_mat)
+	_box(Vector3(0, 3, -10.5), Vector3(8, 6, 1), wall)      # tabique central
+	_box(Vector3(-13.5, 3, -6.0), Vector3(1, 6, 8), wall)
+	_box(Vector3( 13.5, 3, -6.0), Vector3(1, 6, 8), wall)
+
+	# Paredes exteriores de los dos ramales (el vacío queda entre medio)
+	_box(Vector3(-15.5, 3, -24.0), Vector3(1, 6, 28), wall)
+	_box(Vector3( 15.5, 3, -24.0), Vector3(1, 6, 28), wall)
+	_box(Vector3(0, 3, -38.5), Vector3(32, 6, 1), wall)
+
+	# Cartel de advertencia en la bifurcación
+	var sign_lbl       := Label3D.new()
+	sign_lbl.text      = "Quebrada del Alicanto"
+	sign_lbl.font_size = 22
+	sign_lbl.position  = Vector3(0, 3.2, -10.0)
+	sign_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sign_lbl.modulate  = Color(0.85, 0.75, 0.55)
+	add_child(sign_lbl)
+
+	# Rocas sueltas de ambiente
+	for rp: Vector3 in [Vector3(-3, 0.5, 4), Vector3(3.5, 0.5, 12), Vector3(-2, 0.5, 16)]:
+		_box(rp, Vector3(1.2, 1.0, 1.2), rock)
+
+	# Trigger de la bifurcación
+	var fork             := Area3D.new()
+	fork.collision_layer = 0
+	fork.collision_mask  = 2
+	fork.monitoring      = true
+	fork.position        = Vector3(0, 1.5, -3.5)
+	add_child(fork)
+	var fcs  := CollisionShape3D.new()
+	var fbox := BoxShape3D.new()
+	fbox.size = Vector3(10.0, 4.0, 3.0)
+	fcs.shape = fbox
+	fork.add_child(fcs)
+	fork.body_entered.connect(_on_fork_entered)
+
+
+## Ramal IZQUIERDO: losas sueltas cubiertas de oro. Es la trampa.
+func _build_gold_path() -> void:
+	var tile_mat := _mat(Color(0.40, 0.34, 0.27))
+	var gold_mat := _mat_emit(Color(0.95, 0.79, 0.24), Color(0.52, 0.40, 0.05), 1.8)
+
+	# 8 losas de 4x4 bajando hacia el norte
+	for i in 8:
+		var z := -12.0 - float(i) * 3.4
+		var tile := _box(Vector3(-11.0, -0.5, z), Vector3(4.6, 1.0, 3.2), tile_mat)
+		_gold_tiles.append(tile)
+
+		# Oro sembrado encima
+		var g_mi   := MeshInstance3D.new()
+		var g_mesh := BoxMesh.new()
+		g_mesh.size = Vector3(0.5, 0.25, 0.5)
+		g_mi.mesh   = g_mesh
+		g_mi.position   = Vector3(-11.0 + (float(i % 3) - 1.0) * 0.9, 0.15, z)
+		g_mi.rotation.y = float(i) * 0.5
+		g_mi.set_surface_override_material(0, gold_mat)
+		add_child(g_mi)
+
+	# Montón grande al fondo, como cebo
+	for i in 6:
+		var b_mi   := MeshInstance3D.new()
+		var b_mesh := BoxMesh.new()
+		b_mesh.size = Vector3(0.7, 0.35, 0.7)
+		b_mi.mesh   = b_mesh
+		b_mi.position = Vector3(-11.0 + float(i % 3) * 0.75 - 0.75,
+			0.2 + floorf(float(i) / 3.0) * 0.35, -36.0)
+		b_mi.set_surface_override_material(0, gold_mat)
+		add_child(b_mi)
+
+	var g_lbl       := Label3D.new()
+	g_lbl.text      = "Oro"
+	g_lbl.font_size = 22
+	g_lbl.position  = Vector3(-11.0, 2.0, -30.0)
+	g_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	g_lbl.modulate  = Color(1.0, 0.85, 0.30)
+	add_child(g_lbl)
+
+	var glow          := OmniLight3D.new()
+	glow.position     = Vector3(-11.0, 1.5, -30.0)
+	glow.light_color  = Color(1.0, 0.82, 0.30)
+	glow.omni_range   = 16.0
+	glow.light_energy = 1.8
+	add_child(glow)
+
+	# Trigger: al pisar el ramal del oro empieza el derrumbe
+	var trap             := Area3D.new()
+	trap.collision_layer = 0
+	trap.collision_mask  = 2
+	trap.monitoring      = true
+	trap.position        = Vector3(-11.0, 1.5, -13.0)
+	add_child(trap)
+	var tcs  := CollisionShape3D.new()
+	var tbox := BoxShape3D.new()
+	tbox.size = Vector3(4.6, 4.0, 3.0)
+	tcs.shape = tbox
+	trap.add_child(tcs)
+	trap.body_entered.connect(_on_gold_path_entered)
+
+
+## Ramal DERECHO: piso firme y una persona herida a mitad de camino.
+func _build_hurt_path() -> void:
+	var floor_mat := _mat(Color(0.44, 0.37, 0.29))
+	_box(Vector3(11.0, -0.5, -25.0), Vector3(9, 1, 30), floor_mat)
+
+	_hurt = _npc(Vector3(11.0, 0.30, -22.0), _mat(Color(0.62, 0.50, 0.42)), 0.95,
+		"¡Alguien herido!")
+	_hurt.rotation.z = PI / 2.0   # tirada en el suelo
+
+	var zone             := Area3D.new()
+	zone.collision_layer = 0
+	zone.collision_mask  = 2
+	zone.set_script(INTERACT_SCR)
+	zone.prompt          = "[E] Ayudar a la herida"
+	_hurt.add_child(zone)
+
+	var cs  := CollisionShape3D.new()
+	var sph := SphereShape3D.new()
+	sph.radius = 2.4
+	cs.shape   = sph
+	zone.add_child(cs)
+	zone.interacted.connect(_on_hurt_help)
+
+
+# ─── Helpers ─────────────────────────────────────────────────────────────────
+
+func _npc(pos: Vector3, mat: Material, scale_f: float, label_text: String) -> Node3D:
+	var root := Node3D.new()
+	root.position = pos
+	add_child(root)
+
+	var mi  := MeshInstance3D.new()
+	var cap := CapsuleMesh.new()
+	cap.radius = 0.34 * scale_f
+	cap.height = 1.55 * scale_f
+	mi.mesh = cap
+	mi.set_surface_override_material(0, mat)
+	mi.position.y = 0.78 * scale_f
+	root.add_child(mi)
+
+	if label_text != "":
+		var lbl    := Label3D.new()
+		lbl.name   = "Label3D"
+		lbl.text   = label_text
+		lbl.font_size  = 20
+		lbl.position.y = 1.9 * scale_f
+		lbl.billboard  = BaseMaterial3D.BILLBOARD_ENABLED
+		root.add_child(lbl)
+
+	return root
+
+
+func _box(pos: Vector3, size: Vector3, mat: Material) -> CSGBox3D:
+	var b := CSGBox3D.new()
+	b.size = size
+	b.position = pos
+	b.use_collision = true
+	b.material_override = mat
+	add_child(b)
+	return b
+
+
+func _mat(c: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = c
+	return m
+
+
+func _mat_emit(c: Color, emit: Color, energy := 1.0) -> StandardMaterial3D:
+	var m := _mat(c)
+	m.emission_enabled = true
+	m.emission = emit
+	m.emission_energy_multiplier = energy
+	return m
+
+
+func _show(text: String) -> void:
+	var res := DialogueManager.create_resource_from_text(text)
+	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
+
+
+func _hint(text: String) -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("show_hint"):
+		hud.show_hint(text)
+
+
+func _banner(text: String, dur := 0.0) -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if not hud or not hud.has_method("show_banner"):
+		return
+	hud.show_banner(text)
+	if dur > 0.0:
+		get_tree().create_timer(dur).timeout.connect(func() -> void:
+			if is_instance_valid(hud) and hud.has_method("clear_banner"):
+				hud.clear_banner())

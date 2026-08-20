@@ -1,8 +1,9 @@
 extends "res://addons/gut/test.gd"
 
-## Beat 6 — criaturas otorgan habilidades (estados) y arena de cazadores.
+## Beat 6 — habilidades como estado del Player y arena de cazadores.
+## Las habilidades ya no las da un AbilityGiver genérico: las otorgan las
+## escenas narrativas (AlicantoRescate -> alas, YastayEncounter -> guanaco).
 
-const GIVER := preload("res://scenes/actors/AbilityGiver.tscn")
 const PLAYER := preload("res://scenes/actors/Player.tscn")
 const WAVE_ARENA := preload("res://scenes/actors/WaveArena.tscn")
 const ENEMY_FAST := preload("res://scenes/enemies/EnemyFast.tscn")
@@ -12,15 +13,6 @@ func before_each() -> void:
 
 func after_all() -> void:
 	GameManager.reset_progress()
-
-
-func test_giver_unlocks_ability() -> void:
-	var g := GIVER.instantiate()
-	add_child_autofree(g)
-	g.ability = "guanaco"
-	assert_false(GameManager.has_ability("guanaco"))
-	g._on_interacted(null)
-	assert_true(GameManager.has_ability("guanaco"))
 
 
 func test_wings_enables_glide_state() -> void:
@@ -105,13 +97,22 @@ func test_ability_visuals_toggle() -> void:
 	var p := PLAYER.instantiate()
 	add_child_autofree(p)
 	assert_false(p.get_node("Visual/Wings").visible, "alas ocultas por defecto")
-	assert_false(p.get_node("Visual/Guanaco").visible, "guanaco oculto por defecto")
 	p.can_glide = true
-	p.mounted = true
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	assert_true(p.get_node("Visual/Wings").visible, "alas visibles con can_glide")
-	assert_true(p.get_node("Visual/Guanaco").visible, "guanaco visible al montar")
+
+
+## El cubo café Visual/Guanaco quedó obsoleto: la montura ahora es el
+## GuanacoCompanion real, así que el placeholder no debe mostrarse nunca.
+func test_guanaco_placeholder_stays_hidden() -> void:
+	var p := PLAYER.instantiate()
+	add_child_autofree(p)
+	p.mounted = true
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert_false(p.get_node("Visual/Guanaco").visible,
+		"el cubo placeholder no se usa como montura")
 
 
 func test_arena_uses_configured_enemy_and_color() -> void:

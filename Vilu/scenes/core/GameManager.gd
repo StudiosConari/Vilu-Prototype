@@ -14,7 +14,7 @@ signal beat_changed(index: int)
 signal ability_unlocked(ability: String)
 
 const BEAT_COUNT := 8
-const ABILITIES := ["bow", "wings", "guanaco"]
+const ABILITIES := ["bow", "wings", "guanaco", "talisman_frag_1", "talisman_frag_2"]
 
 ## Debug: si no está vacío, Game arranca cargando esta zona (selector del título).
 var debug_start_zone := ""
@@ -41,9 +41,11 @@ func advance_beat() -> void:
 
 func has_ability(ability: String) -> bool:
 	match ability:
-		"bow": return Save.has_bow
-		"wings": return Save.has_wings
-		"guanaco": return Save.has_guanaco
+		"bow":           return Save.has_bow
+		"wings":         return Save.has_wings
+		"guanaco":       return Save.has_guanaco
+		"talisman_frag_1": return Save.has_talisman_1
+		"talisman_frag_2": return Save.has_talisman_2
 		_:
 			push_warning("GameManager: habilidad desconocida '%s'" % ability)
 			return false
@@ -54,9 +56,11 @@ func unlock(ability: String) -> void:
 	if has_ability(ability):
 		return
 	match ability:
-		"bow": Save.has_bow = true
-		"wings": Save.has_wings = true
-		"guanaco": Save.has_guanaco = true
+		"bow":             Save.has_bow = true
+		"wings":           Save.has_wings = true
+		"guanaco":         Save.has_guanaco = true
+		"talisman_frag_1": Save.has_talisman_1 = true
+		"talisman_frag_2": Save.has_talisman_2 = true
 		_:
 			push_warning("GameManager: no se puede desbloquear '%s'" % ability)
 			return
@@ -70,5 +74,7 @@ func reset_progress() -> void:
 	Save.has_bow = false
 	Save.has_wings = false
 	Save.has_guanaco = false
+	Save.has_talisman_1 = false
+	Save.has_talisman_2 = false
 	Save.save_progress()
 	beat_changed.emit(0)

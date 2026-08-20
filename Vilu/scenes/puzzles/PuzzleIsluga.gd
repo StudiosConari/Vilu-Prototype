@@ -9,6 +9,8 @@ extends Node3D
 ##     altura). Emilia los golpea (melee); Benjamín los suyos con flechas (fuera
 ##     de la plataforma). Cuando LOS DOS terminan sus 4 cubos, superan el desafío.
 
+const GUARDIAN_SCR := preload("res://scenes/actors/GuardianIsluga.gd")
+
 signal solved
 
 @export var advance_to_beat := 4
@@ -28,6 +30,7 @@ func _ready() -> void:
 	_emilia_total = _wire_cubes("EmiliaTopCubes", _on_emilia_top)
 	_benja_total = _wire_cubes("BenjaminTopCubes", _on_benja_top)
 	_hint("Isluga (cooperativo): subí por TU plataforma. Golpeá tu cubo para ACTIVAR el ascensor del OTRO. Arriba, cada uno abre sus 4 cubos de altura (1/2/3/4 golpes). Cuando los dos terminen, listo.")
+	_spawn_guardian()
 
 
 func _wire_elevator(cube_name: String, vert_name: String) -> void:
@@ -91,6 +94,13 @@ func emilia_progress() -> int:
 
 func benja_progress() -> int:
 	return _benja_done
+
+
+func _spawn_guardian() -> void:
+	var g := Node3D.new()
+	g.set_script(GUARDIAN_SCR)
+	g.position = Vector3(0.0, 12.5, -19.0)
+	add_child(g)
 
 
 func _hint(text: String) -> void:

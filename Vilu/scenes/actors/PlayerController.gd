@@ -26,6 +26,7 @@ signal melee_hit(step: int)
 signal arrow_fired
 
 const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
+const GUANACO_COMP_SCR := preload("res://scenes/actors/GuanacoCompanion.gd")
 
 enum AiMode { COMBAT, FROZEN }
 
@@ -90,6 +91,7 @@ var _ai_atk_cd := 0.0
 var _charging := false
 var _charge_t := 0.0
 var _energy_shown := -1
+var forced_run_dir := Vector3.ZERO  # cuando no es ZERO, el personaje corre en esa dirección sin input (huida)
 var _hold_pos := Vector3.ZERO      # puesto a defender en modo QUIETO
 var _guard_target: Node3D = null   # enemigo con el que el guardia se compromete
 
@@ -103,6 +105,7 @@ func _ready() -> void:
 	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void: input_locked = false)
 	can_glide = (not is_archer) and GameManager.has_ability("wings")
 	GameManager.ability_unlocked.connect(_on_ability_unlocked)
+	TravelManager.region_changed.connect(func(_r: String) -> void: forced_run_dir = Vector3.ZERO)
 
 
 func _on_ability_unlocked(ability: String) -> void:
@@ -127,14 +130,14 @@ func _physics_process(delta: float) -> void:
 		energy_changed.emit(_energy_shown, max_energy)
 
 	# --- Gravedad / planeo / corriente ascendente + reset de saltos ---
-	if active and in_updraft and can_glide and Input.is_physical_key_pressed(KEY_SPACE):
+	if active and in_updraft and can_glide and Input.is_action_pressed("jump"):
 		velocity.y = move_toward(velocity.y, updraft_speed, 40.0 * delta)   # Emilia sube en la corriente
 		_jumps_done = 0
 	elif is_on_floor():
 		_jumps_done = 0
 	else:
 		var g := gravity
-		if active and can_glide and Input.is_physical_key_pressed(KEY_SPACE) and velocity.y < 0.0:
+		if active and can_glide and Input.is_action_pressed("jump") and velocity.y < 0.0:
 			g *= glide_gravity_scale
 		velocity.y -= g * delta
 
@@ -144,17 +147,44 @@ func _physics_process(delta: float) -> void:
 		dir = Vector3.ZERO
 	elif active:
 		dir = _player_input()
+		# Strafe durante auto-run: el activo controla izquierda/derecha.
+		if forced_run_dir != Vector3.ZERO:
+			var ix := 0.0
+			if Input.is_action_pressed("move_right"): ix += 1.0
+			if Input.is_action_pressed("move_left"): ix -= 1.0
+			var right := forced_run_dir.cross(Vector3.UP).normalized()
+			dir = (forced_run_dir + right * ix * 0.5).normalized()
+	elif forced_run_dir != Vector3.ZERO:
+		dir = forced_run_dir   # huida forzada: corre sin pasar por _ai_behavior (evita ataques al aire)
 	elif ai_mode == AiMode.COMBAT:
 		dir = _ai_behavior()
 	else:
 		dir = _hold_behavior()   # QUIETO: defiende el puesto y vuelve
 
 	# La IA/guardia no se tira a los vacíos: si no hay piso adelante, se frena.
-	if not active and dir != Vector3.ZERO and not _has_ground_ahead(dir):
+	if not active and forced_run_dir == Vector3.ZERO and dir != Vector3.ZERO and not _has_ground_ahead(dir):
 		dir = Vector3.ZERO
 
+	# El personaje inactivo detecta obstáculos y salta solo (huida forzada o follow normal).
+	if not active and is_on_floor():
+		var check_dir := forced_run_dir if forced_run_dir != Vector3.ZERO else dir
+		if check_dir != Vector3.ZERO:
+			var space := get_world_3d().direct_space_state
+			for ry in [0.3, 0.7]:
+				var ori := global_position + Vector3(0.0, ry, 0.0)
+				var tgt := ori + check_dir.normalized() * 1.2
+				var q := PhysicsRayQueryParameters3D.create(ori, tgt)
+				q.collision_mask = 1
+				q.exclude = [get_rid()]
+				if not space.intersect_ray(q).is_empty():
+					velocity.y = jump_velocity
+					_jumps_done = 1
+					break
+
 	var speed := walk_speed
-	if active and not input_locked and Input.is_physical_key_pressed(KEY_SHIFT):
+	if forced_run_dir != Vector3.ZERO:
+		speed = run_speed
+	elif active and not input_locked and Input.is_action_pressed("run"):
 		speed = run_speed
 	if mounted:
 		speed *= 1.5
@@ -171,22 +201,29 @@ func _physics_process(delta: float) -> void:
 
 	if _wings_vis:
 		_wings_vis.visible = can_glide
+	# El cubo café placeholder ya no se usa: la montura es el guanaco compañero real.
 	if _guanaco_vis:
-		_guanaco_vis.visible = mounted
+		_guanaco_vis.visible = false
+
+	# Si el guanaco desapareció (cambio de zona, etc.) dejamos de estar montados.
+	if mounted and guanaco_companion() == null:
+		mounted = false
+	# Montado: el jinete se eleva para quedar sobre el lomo del guanaco.
+	_visual.position.y = lerp(_visual.position.y, 0.75 if mounted else 0.0, 12.0 * delta)
 
 
 # --- Control del jugador (WASD/salto/mount/interact) ---
 func _player_input() -> Vector3:
 	var iz := 0.0   # adelante/atrás (relativo a la cámara)
 	var ix := 0.0   # derecha/izquierda
-	if Input.is_physical_key_pressed(KEY_W): iz += 1.0
-	if Input.is_physical_key_pressed(KEY_S): iz -= 1.0
-	if Input.is_physical_key_pressed(KEY_D): ix += 1.0
-	if Input.is_physical_key_pressed(KEY_A): ix -= 1.0
+	if Input.is_action_pressed("move_forward"): iz += 1.0
+	if Input.is_action_pressed("move_back"): iz -= 1.0
+	if Input.is_action_pressed("move_right"): ix += 1.0
+	if Input.is_action_pressed("move_left"): ix -= 1.0
 	var dir := _camera_relative(ix, iz)
 
 	# Salto (doble con alas)
-	var jump_held := Input.is_physical_key_pressed(KEY_SPACE)
+	var jump_held := Input.is_action_pressed("jump")
 	if jump_held and not _jump_held_prev:
 		if is_on_floor():
 			velocity.y = jump_velocity * (1.15 if mounted else 1.0)
@@ -197,39 +234,72 @@ func _player_input() -> Vector3:
 	_jump_held_prev = jump_held
 
 	# Interacción (E)
-	var e_held := Input.is_physical_key_pressed(KEY_E)
+	var e_held := Input.is_action_pressed("interact")
 	if e_held and not _e_held_prev and _interactable != null and _interactable.has_method("interact"):
 		_interactable.interact(self)
 	_e_held_prev = e_held
 
-	# Montura guanaco (Q) — solo Benjamín
+	# Guanaco (Q) — solo Benjamín. Ciclo: invocar -> montar -> guardar.
 	if is_archer and GameManager.has_ability("guanaco"):
-		var q_held := Input.is_physical_key_pressed(KEY_Q)
+		var q_held := Input.is_action_pressed("guanaco")
 		if q_held and not _q_held_prev:
-			mounted = not mounted
-			_banner("Guanaco: MONTADO (Q para bajar)" if mounted else "Guanaco: a pie")
+			_cycle_guanaco()
 		_q_held_prev = q_held
 
 	return dir
 
 
+# --- Guanaco compañero (Benjamín, tras la bendición del Yastay) ---
+## Q alterna entre los tres estados: sin guanaco -> invocado -> montado -> guardado.
+func _cycle_guanaco() -> void:
+	var g := guanaco_companion()
+	if g == null:
+		_summon_guanaco()
+	elif not mounted:
+		mounted = true
+		if g.has_method("set_mounted"):
+			g.set_mounted(true)
+		_banner("Guanaco: MONTADO · [Q] guardar")
+	else:
+		mounted = false
+		if g.has_method("set_mounted"):
+			g.set_mounted(false)
+		g.queue_free()
+		_banner("Guanaco guardado · [Q] invocar")
+
+
+func _summon_guanaco() -> void:
+	var g := Node3D.new()
+	g.set_script(GUANACO_COMP_SCR)
+	get_tree().current_scene.add_child(g)
+	g.global_position = global_position + _visual.global_transform.basis.x * 1.8
+	_banner("Guanaco invocado · [Q] montar · [G] embestir")
+
+
+func guanaco_companion() -> Node3D:
+	for g in get_tree().get_nodes_in_group("guanaco_companion"):
+		if is_instance_valid(g):
+			return g
+	return null
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not active or input_locked:
 		return
-	# Clic izq: ataque (melee, o flecha normal/cargada del arquero).
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+	# Ataque (melee, o flecha normal/cargada del arquero).
+	if event.is_action_pressed("attack"):
 		if is_archer:
-			if event.pressed:
-				_charging = true
-				_charge_t = 0.0
-			else:
-				var charged := _charge_t >= charge_time
-				_charging = false
-				_shoot_arrow(charged)
-		elif event.pressed:
+			_charging = true
+			_charge_t = 0.0
+		else:
 			_melee_attack()
-	# F: flecha triple (Benjamín). El clic derecho quedó para rotar la cámara.
-	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F:
+	elif event.is_action_released("attack"):
+		if is_archer and _charging:
+			var charged := _charge_t >= charge_time
+			_charging = false
+			_shoot_arrow(charged)
+	# Flecha triple (Benjamín). El clic derecho quedó para rotar la cámara.
+	elif event.is_action_pressed("triple_arrow") and not event.is_echo():
 		if is_archer:
 			_triple_arrow()
 
@@ -396,12 +466,20 @@ func _ai_behavior() -> Vector3:
 		if is_archer and dist < 3.5:
 			return (-to).normalized()   # el arquero mantiene distancia
 		return Vector3.ZERO
-	# Sin enemigos: seguir al líder (personaje activo)
+	# Sin enemigos: ir al costado del líder (paralelo, no atrás).
 	var leader := _leader()
 	if leader != null:
-		var to: Vector3 = leader.global_position - global_position
+		var lv := Vector3(leader.velocity.x, 0.0, leader.velocity.z)
+		# Perpendicular derecha al movimiento; si el líder está quieto usa +X global.
+		var side: Vector3
+		if lv.length() > 0.5:
+			side = Vector3.UP.cross(lv.normalized())
+		else:
+			side = Vector3(1.0, 0.0, 0.0)
+		var target := leader.global_position + side * 1.5
+		var to := target - global_position
 		to.y = 0.0
-		if to.length() > 3.5:
+		if to.length() > 0.4:
 			return to.normalized()
 	return Vector3.ZERO
 

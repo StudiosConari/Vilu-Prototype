@@ -1,0 +1,106 @@
+extends Node3D
+
+## Guardián del Isluga — NPC en la plataforma superior que muestra el mapa de Chile.
+## PuzzleIsluga.gd lo instancia dinámicamente en _ready().
+
+const BALLOON       := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const INTERACT_SCR  := preload("res://scenes/actors/Interactable.gd")
+const MAP_SCR       := preload("res://scenes/ui/ChileMapUI.gd")
+
+const FIRST_TALK := "~ start
+Guardián: Bienvenidos al volcán Isluga. Soy su guardián.
+Guardián: Han cruzado el norte de Chile. El camino al sur les espera.
+Guardián: Pueden consultar el mapa de los volcanes sagrados.
+=> END
+"
+const RETURN_TALK := "~ start
+Guardián: El mapa los guía. Viajen a donde el fuego los llame.
+=> END
+"
+
+var _met := false
+
+
+func _ready() -> void:
+	_build()
+
+
+func _build() -> void:
+	# Material dorado con emisión
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color           = Color(0.95, 0.83, 0.28)
+	mat.emission_enabled       = true
+	mat.emission               = Color(0.28, 0.16, 0.03)
+	mat.emission_energy_multiplier = 1.6
+
+	# Cuerpo visual
+	var mi  := MeshInstance3D.new()
+	var cap := CapsuleMesh.new()
+	cap.radius = 0.35
+	cap.height = 1.6
+	mi.mesh = cap
+	mi.position.y = 0.8
+	mi.set_surface_override_material(0, mat)
+	add_child(mi)
+
+	# Texto flotante
+	var lbl          := Label3D.new()
+	lbl.text          = "Guardián del Isluga"
+	lbl.position.y    = 2.5
+	lbl.pixel_size    = 0.007
+	lbl.billboard     = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.modulate      = Color(0.95, 0.83, 0.28)
+	lbl.font_size     = 18
+	lbl.outline_size  = 6
+	lbl.outline_modulate = Color(0, 0, 0, 1)
+	add_child(lbl)
+
+	# Halo de luz
+	var light             := OmniLight3D.new()
+	light.position.y      = 1.0
+	light.light_color     = Color(1.0, 0.86, 0.28)
+	light.omni_range      = 4.5
+	light.light_energy    = 1.4
+	add_child(light)
+
+	# Zona de interacción (Interactable.gd maneja body_entered/exited)
+	var zone                  := Area3D.new()
+	zone.collision_layer      = 0
+	zone.collision_mask       = 2      # layer jugadores
+	zone.set_script(INTERACT_SCR)
+	zone.prompt               = "[E] Hablar con el Guardián"
+	add_child(zone)
+
+	var cs  := CollisionShape3D.new()
+	var sph := SphereShape3D.new()
+	sph.radius = 2.5
+	cs.shape = sph
+	zone.add_child(cs)
+
+	zone.interacted.connect(_on_interacted)
+
+
+func _on_interacted(_player: Node) -> void:
+	if not _met:
+		_met = true
+		_show_dialogue(FIRST_TALK)
+	else:
+		_show_dialogue(RETURN_TALK)
+
+
+func _show_dialogue(text: String) -> void:
+	var res := DialogueManager.create_resource_from_text(text)
+	# CONNECT_ONE_SHOT: abre el mapa solo cuando ESTE diálogo termina
+	DialogueManager.dialogue_ended.connect(_open_map.unbind(1), CONNECT_ONE_SHOT)
+	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
+
+
+func _open_map() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 20
+	get_tree().current_scene.add_child(layer)
+
+	var map: Control = MAP_SCR.new()
+	map.current_volcano_idx = 0    # Isluga = ubicación actual
+	map.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(map)

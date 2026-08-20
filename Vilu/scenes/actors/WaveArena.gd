@@ -10,6 +10,7 @@ signal cleared
 @export var enemy_a: PackedScene = preload("res://scenes/enemies/EnemyNormal.tscn")
 @export var enemy_b: PackedScene = preload("res://scenes/enemies/EnemyBig.tscn")
 @export var enemy_color: Color = Color(0.85, 0.15, 0.15)   # rojo minero por defecto
+@export var enemy_label := "Corruptos"   # nombre que aparece en el banner de oleada
 @export var waves: Array = [3, 4]   # cantidad de enemigos por oleada
 @export var b_every := 3            # cada N enemigos, uno del tipo B
 @export var auto_start := false
@@ -65,7 +66,7 @@ func _spawn_wave() -> void:
 		e.global_position = _spawn_point(i)
 		_enemies.append(e)
 		_alive += 1
-	_banner("Mineros corruptos — Oleada %d/%d" % [_wave + 1, waves.size()])
+	_banner("%s — Oleada %d/%d" % [enemy_label, _wave + 1, waves.size()])
 
 
 func _spawn_point(i: int) -> Vector3:

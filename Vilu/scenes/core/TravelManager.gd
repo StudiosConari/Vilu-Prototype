@@ -15,9 +15,12 @@ enum State { IDLE, TRAVELING }
 
 const REGIONS := {
 	"Region1_Tarapaca": "res://scenes/regions/Region1_Tarapaca.tscn",
+	"Mina": "res://scenes/regions/Mina.tscn",
+	"Poblado": "res://scenes/regions/Poblado.tscn",
 	"Region2_Volcan": "res://scenes/regions/Region2_Volcan.tscn",
+	"Region2_Alicanto": "res://scenes/regions/Region2_Alicanto.tscn",
+	"Region2_Yastay": "res://scenes/regions/Region2_Yastay.tscn",
 	"Isluga": "res://scenes/puzzles/Isluga.tscn",
-	"AscensoOjos": "res://scenes/puzzles/Ascenso.tscn",
 	"Cumbre": "res://scenes/puzzles/Cumbre.tscn",
 	"Final": "res://scenes/puzzles/Final.tscn",
 }
@@ -59,6 +62,23 @@ func travel_to(holder: Node, region_name: String) -> Node:
 	await _fade_to(1.0)
 	var region := load_region(holder, region_name)
 	state = State.TRAVELING  # load_region lo pone IDLE; mantener hasta aclarar
+	await _fade_to(0.0)
+	state = State.IDLE
+	return region
+
+
+## Igual que travel_to pero ejecuta on_loaded(region) mientras la pantalla está
+## negra, antes del fundido de vuelta — así el jugador ya está en posición correcta
+## cuando la imagen vuelve y no se ve el salto.
+func travel_to_then(holder: Node, region_name: String, on_loaded: Callable) -> Node:
+	if not is_valid_region(region_name):
+		push_warning("TravelManager: region desconocida '%s' (no-op)" % region_name)
+		return null
+	state = State.TRAVELING
+	await _fade_to(1.0)
+	var region := load_region(holder, region_name)
+	on_loaded.call(region)
+	state = State.TRAVELING
 	await _fade_to(0.0)
 	state = State.IDLE
 	return region

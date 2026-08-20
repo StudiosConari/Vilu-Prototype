@@ -1,11 +1,11 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene format=3 uid="uid://bikdfsn25qvqy"]
 
-[ext_resource type="Script" path="res://scenes/puzzles/PuzzleIsluga.gd" id="1_puzzle"]
+[ext_resource type="Script" uid="uid://vxfphkv1o4h6" path="res://scenes/puzzles/PuzzleIsluga.gd" id="1_puzzle"]
 [ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="2_terrain"]
 [ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="3_trigger"]
-[ext_resource type="Script" path="res://scenes/actors/RoleMovingPlatform.gd" id="4_rolemov"]
-[ext_resource type="Script" path="res://scenes/actors/VertPlatform.gd" id="5_vert"]
-[ext_resource type="Script" path="res://scenes/actors/HitCube.gd" id="6_cube"]
+[ext_resource type="Script" uid="uid://7qw5x1osfevx" path="res://scenes/actors/RoleMovingPlatform.gd" id="4_rolemov"]
+[ext_resource type="Script" uid="uid://laxq1dsyqbnt" path="res://scenes/actors/VertPlatform.gd" id="5_vert"]
+[ext_resource type="Script" uid="uid://dp1ohawnhearo" path="res://scenes/actors/HitCube.gd" id="6_cube"]
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="7_exit"]
 
 [sub_resource type="BoxMesh" id="mesh_plat"]
@@ -41,257 +41,276 @@ size = Vector3(1.4, 5, 1.4)
 [sub_resource type="BoxShape3D" id="shape_h5"]
 size = Vector3(1.4, 5, 1.4)
 
-[node name="Isluga" type="Node3D"]
+[node name="Isluga" type="Node3D" unique_id=387808961]
 script = ExtResource("1_puzzle")
 
-[node name="Ground" type="CSGBox3D" parent="."]
+[node name="Ground" type="CSGBox3D" parent="." unique_id=1280993647]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 4)
 use_collision = true
 size = Vector3(30, 1, 16)
 material = ExtResource("2_terrain")
 
-[node name="PlayerSpawn" type="Marker3D" parent="."]
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=602394335]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 8)
 
-[node name="EmiliaDock" type="Marker3D" parent="."]
+[node name="TravelSpawn" type="Marker3D" parent="." unique_id=700000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 12.5, -16)
+
+[node name="EmiliaDock" type="Marker3D" parent="." unique_id=108884045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 0)
 
-[node name="EmiliaHorizDest" type="Marker3D" parent="."]
+[node name="EmiliaHorizDest" type="Marker3D" parent="." unique_id=1095423440]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, 0)
 
-[node name="EmiliaHoriz" type="AnimatableBody3D" parent="."]
+[node name="EmiliaHoriz" type="AnimatableBody3D" parent="." unique_id=396376706]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 0)
-collision_layer = 1
 collision_mask = 0
 script = ExtResource("4_rolemov")
-for_archer = false
 dock = NodePath("../EmiliaDock")
 dest = NodePath("../EmiliaHorizDest")
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaHoriz"]
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaHoriz" unique_id=1853298774]
 mesh = SubResource("mesh_plat")
 surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaHoriz"]
+[node name="Shape" type="CollisionShape3D" parent="EmiliaHoriz" unique_id=1603368327]
 shape = SubResource("shape_plat")
 
-[node name="Rider" type="Area3D" parent="EmiliaHoriz"]
+[node name="Rider" type="Area3D" parent="EmiliaHoriz" unique_id=701110269]
 collision_layer = 0
 collision_mask = 2
 
-[node name="RiderShape" type="CollisionShape3D" parent="EmiliaHoriz/Rider"]
+[node name="RiderShape" type="CollisionShape3D" parent="EmiliaHoriz/Rider" unique_id=84573363]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("shape_rider")
 
-[node name="EmiliaFloor1" type="CSGBox3D" parent="."]
+[node name="EmiliaFloor1" type="CSGBox3D" parent="." unique_id=333627964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 5.5, -6)
 use_collision = true
 size = Vector3(8, 1, 8)
 material = ExtResource("2_terrain")
 
-[node name="EmiliaCube" type="StaticBody3D" parent="."]
+[node name="EmiliaCube" type="StaticBody3D" parent="." unique_id=720540949]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 7, -6)
 script = ExtResource("6_cube")
 hits_needed = 2
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaCube"]
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaCube" unique_id=1159986858]
 mesh = SubResource("mesh_h2")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaCube"]
+[node name="Shape" type="CollisionShape3D" parent="EmiliaCube" unique_id=1492014432]
 shape = SubResource("shape_h2")
 
-[node name="EmiliaVert" type="AnimatableBody3D" parent="."]
+[node name="EmiliaVert" type="AnimatableBody3D" parent="." unique_id=1511910587]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, -12)
-collision_layer = 1
 collision_mask = 0
 script = ExtResource("5_vert")
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaVert"]
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaVert" unique_id=1323980274]
 mesh = SubResource("mesh_plat")
 surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaVert"]
+[node name="Shape" type="CollisionShape3D" parent="EmiliaVert" unique_id=1007209641]
 shape = SubResource("shape_plat")
 
-[node name="EmiliaTop" type="CSGBox3D" parent="."]
+[node name="EmiliaTop" type="CSGBox3D" parent="." unique_id=1695176988]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 11.5, -19)
 use_collision = true
 size = Vector3(10, 1, 10)
 material = ExtResource("2_terrain")
 
-[node name="EmiliaTopCubes" type="Node3D" parent="."]
+[node name="EmiliaTopCubes" type="Node3D" parent="." unique_id=580446616]
 
-[node name="Cube1" type="StaticBody3D" parent="EmiliaTopCubes"]
+[node name="Cube1" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=1311628269]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 13, -19)
 script = ExtResource("6_cube")
-hits_needed = 1
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube1"]
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube1" unique_id=414075790]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.9058075)
 mesh = SubResource("mesh_h2")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube1"]
+[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube1" unique_id=1629844243]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.9058075)
 shape = SubResource("shape_h2")
 
-[node name="Cube2" type="StaticBody3D" parent="EmiliaTopCubes"]
+[node name="Cube2" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=645267548]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 13.5, -19)
 script = ExtResource("6_cube")
 hits_needed = 2
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube2"]
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube2" unique_id=159878436]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8791847, 0, 0.43024826)
 mesh = SubResource("mesh_h3")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube2"]
+[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube2" unique_id=131606666]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8791847, 0, 0.43024826)
 shape = SubResource("shape_h3")
 
-[node name="Cube3" type="StaticBody3D" parent="EmiliaTopCubes"]
+[node name="Cube3" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=1991789267]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 14, -19)
 script = ExtResource("6_cube")
 hits_needed = 3
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube3"]
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube3" unique_id=485719418]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6024122, 0, -1.9588051)
 mesh = SubResource("mesh_h4")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube3"]
+[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube3" unique_id=873486332]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6024122, 0, -1.9588051)
 shape = SubResource("shape_h4")
 
-[node name="Cube4" type="StaticBody3D" parent="EmiliaTopCubes"]
+[node name="Cube4" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=1361203634]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 14.5, -19)
 script = ExtResource("6_cube")
 hits_needed = 4
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube4"]
+[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube4" unique_id=1286961301]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.628829, 0, -2.7730865)
 mesh = SubResource("mesh_h5")
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube4"]
+[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube4" unique_id=599469177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.628829, 0, -2.7730865)
 shape = SubResource("shape_h5")
 
-[node name="BenjaminDock" type="Marker3D" parent="."]
+[node name="BenjaminDock" type="Marker3D" parent="." unique_id=1112766455]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 0)
 
-[node name="BenjaminHorizDest" type="Marker3D" parent="."]
+[node name="BenjaminHorizDest" type="Marker3D" parent="." unique_id=1218847177]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, 0)
 
-[node name="BenjaminHoriz" type="AnimatableBody3D" parent="."]
+[node name="BenjaminHoriz" type="AnimatableBody3D" parent="." unique_id=651879927]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 0)
-collision_layer = 1
 collision_mask = 0
 script = ExtResource("4_rolemov")
 for_archer = true
 dock = NodePath("../BenjaminDock")
 dest = NodePath("../BenjaminHorizDest")
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminHoriz"]
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminHoriz" unique_id=816990841]
 mesh = SubResource("mesh_plat")
 surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminHoriz"]
+[node name="Shape" type="CollisionShape3D" parent="BenjaminHoriz" unique_id=1853870028]
 shape = SubResource("shape_plat")
 
-[node name="Rider" type="Area3D" parent="BenjaminHoriz"]
+[node name="Rider" type="Area3D" parent="BenjaminHoriz" unique_id=969063033]
 collision_layer = 0
 collision_mask = 2
 
-[node name="RiderShape" type="CollisionShape3D" parent="BenjaminHoriz/Rider"]
+[node name="RiderShape" type="CollisionShape3D" parent="BenjaminHoriz/Rider" unique_id=442520620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("shape_rider")
 
-[node name="BenjaminFloor1" type="CSGBox3D" parent="."]
+[node name="BenjaminFloor1" type="CSGBox3D" parent="." unique_id=420532547]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.5, -6)
 use_collision = true
 size = Vector3(8, 1, 8)
 material = ExtResource("2_terrain")
 
-[node name="BenjaminCube" type="StaticBody3D" parent="."]
+[node name="BenjaminCube" type="StaticBody3D" parent="." unique_id=1608193779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 7, -6)
 script = ExtResource("6_cube")
 hits_needed = 2
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminCube"]
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminCube" unique_id=70604760]
 mesh = SubResource("mesh_h2")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminCube"]
+[node name="Shape" type="CollisionShape3D" parent="BenjaminCube" unique_id=475081696]
 shape = SubResource("shape_h2")
 
-[node name="BenjaminVert" type="AnimatableBody3D" parent="."]
+[node name="BenjaminVert" type="AnimatableBody3D" parent="." unique_id=458402743]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, -12)
-collision_layer = 1
 collision_mask = 0
 script = ExtResource("5_vert")
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminVert"]
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminVert" unique_id=1395502076]
 mesh = SubResource("mesh_plat")
 surface_material_override/0 = ExtResource("3_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminVert"]
+[node name="Shape" type="CollisionShape3D" parent="BenjaminVert" unique_id=409793842]
 shape = SubResource("shape_plat")
 
-[node name="BenjaminTop" type="CSGBox3D" parent="."]
+[node name="BenjaminTop" type="CSGBox3D" parent="." unique_id=592526036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 11.5, -19)
 use_collision = true
 size = Vector3(10, 1, 10)
 material = ExtResource("2_terrain")
 
-[node name="BenjaminTopCubes" type="Node3D" parent="."]
+[node name="BenjaminTopCubes" type="Node3D" parent="." unique_id=1783013679]
 
-[node name="Cube1" type="StaticBody3D" parent="BenjaminTopCubes"]
+[node name="Cube1" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=1625895500]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 13.2, -27)
 script = ExtResource("6_cube")
-hits_needed = 1
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube1"]
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube1" unique_id=1891801337]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24815655, 0, 0)
 mesh = SubResource("mesh_h2")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube1"]
+[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube1" unique_id=2105935587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24815655, 0, 0)
 shape = SubResource("shape_h2")
 
-[node name="Cube2" type="StaticBody3D" parent="BenjaminTopCubes"]
+[node name="Cube2" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=1820703417]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 13.2, -27)
 script = ExtResource("6_cube")
 hits_needed = 2
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube2"]
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube2" unique_id=1984043061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.384617, 0, 11.148655)
 mesh = SubResource("mesh_h3")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube2"]
+[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube2" unique_id=422228038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.384617, 0, 11.148655)
 shape = SubResource("shape_h3")
 
-[node name="Cube3" type="StaticBody3D" parent="BenjaminTopCubes"]
+[node name="Cube3" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=294857035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 13.2, -27)
 script = ExtResource("6_cube")
 hits_needed = 3
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube3"]
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube3" unique_id=2052159837]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9871597, 0, 5.5723553)
 mesh = SubResource("mesh_h4")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube3"]
+[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube3" unique_id=1915808304]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9871597, 0, 5.5723553)
 shape = SubResource("shape_h4")
 
-[node name="Cube4" type="StaticBody3D" parent="BenjaminTopCubes"]
+[node name="Cube4" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=1432622489]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 13.2, -27)
 script = ExtResource("6_cube")
 hits_needed = 4
 reset_on_overhit = true
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube4"]
+[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube4" unique_id=573120600]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30205154, 0, 0)
 mesh = SubResource("mesh_h5")
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube4"]
+[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube4" unique_id=1627606823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30205154, 0, 0)
 shape = SubResource("shape_h5")
 
-[node name="CenterTop" type="CSGBox3D" parent="."]
+[node name="CenterTop" type="CSGBox3D" parent="." unique_id=1449454768]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.5, -19)
 use_collision = true
 size = Vector3(12, 1, 10)
 material = ExtResource("2_terrain")
 
-[node name="ExitToAscenso" parent="." instance=ExtResource("7_exit")]
+[node name="ExitToAlicanto" parent="." unique_id=1886396076 instance=ExtResource("7_exit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -22)
-target_region = "AscensoOjos"
+target_region = "Region2_Alicanto"
 require_beat = 4
+
+[node name="ExitToPoblado" parent="." unique_id=1886396077 instance=ExtResource("7_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 14)
+target_region = "Poblado"
+require_beat = -1
+require_abilities = ["talisman_frag_2"]
+prompt = "[E] Bajar al poblado de la Bruja"
