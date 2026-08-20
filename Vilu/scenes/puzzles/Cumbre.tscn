@@ -1,15 +1,15 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene format=3 uid="uid://buhdkqidv7jdc"]
 
-[ext_resource type="Script" path="res://scenes/puzzles/CumbreCima.gd" id="1_cima"]
+[ext_resource type="Script" uid="uid://bqbik3tph44dc" path="res://scenes/puzzles/CumbreCima.gd" id="1_cima"]
 [ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="2_terrain"]
 [ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="3_prop"]
 [ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="4_trigger"]
-[ext_resource type="Script" path="res://scenes/actors/Updraft.gd" id="5_up"]
-[ext_resource type="Script" path="res://scenes/actors/RopeAnchor.gd" id="6_rope"]
-[ext_resource type="Script" path="res://scenes/actors/MovingPlatform.gd" id="7_mov"]
+[ext_resource type="Script" uid="uid://b1pxroad0bnps" path="res://scenes/actors/Updraft.gd" id="5_up"]
+[ext_resource type="Script" uid="uid://si83gt3dc80s" path="res://scenes/actors/RopeAnchor.gd" id="6_rope"]
+[ext_resource type="Script" uid="uid://lv0tm5s17lnb" path="res://scenes/actors/MovingPlatform.gd" id="7_mov"]
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="8_exit"]
-[ext_resource type="Script" path="res://scenes/actors/ArrowSwitch.gd" id="9_switch"]
-[ext_resource type="Script" path="res://scenes/actors/MovingWall.gd" id="10_wall"]
+[ext_resource type="Script" uid="uid://d38sav4jo7s75" path="res://scenes/actors/ArrowSwitch.gd" id="9_switch"]
+[ext_resource type="Script" uid="uid://dlppkkid1ly4f" path="res://scenes/actors/MovingWall.gd" id="10_wall"]
 
 [sub_resource type="BoxShape3D" id="shape_plate"]
 size = Vector3(2.5, 1.6, 2.5)
@@ -29,11 +29,8 @@ size = Vector3(5, 7, 4)
 [sub_resource type="BoxMesh" id="mesh_up1"]
 size = Vector3(5, 7, 4)
 
-[sub_resource type="BoxShape3D" id="shape_up2"]
-size = Vector3(5, 8, 4)
-
-[sub_resource type="BoxMesh" id="mesh_up2"]
-size = Vector3(5, 8, 4)
+[sub_resource type="BoxShape3D" id="shape_p1trig"]
+size = Vector3(7, 2, 6)
 
 [sub_resource type="BoxShape3D" id="shape_rope"]
 size = Vector3(2, 2, 2)
@@ -50,11 +47,11 @@ size = Vector3(4, 0.4, 4)
 [sub_resource type="BoxShape3D" id="shape_rider"]
 size = Vector3(3.6, 1.6, 3.6)
 
-[sub_resource type="BoxShape3D" id="shape_p1trig"]
-size = Vector3(7, 2, 6)
+[sub_resource type="BoxMesh" id="mesh_wall"]
+size = Vector3(3, 4, 0.6)
 
-[sub_resource type="BoxShape3D" id="shape_finaltrig"]
-size = Vector3(12, 3, 12)
+[sub_resource type="BoxShape3D" id="shape_wall"]
+size = Vector3(3, 4, 0.6)
 
 [sub_resource type="BoxMesh" id="mesh_switch"]
 size = Vector3(1.6, 1.6, 1.6)
@@ -62,208 +59,212 @@ size = Vector3(1.6, 1.6, 1.6)
 [sub_resource type="BoxShape3D" id="shape_switch"]
 size = Vector3(1.6, 1.6, 1.6)
 
-[sub_resource type="BoxMesh" id="mesh_wall"]
-size = Vector3(3, 4, 0.6)
+[sub_resource type="BoxShape3D" id="shape_up2"]
+size = Vector3(5, 8, 4)
 
-[sub_resource type="BoxShape3D" id="shape_wall"]
-size = Vector3(3, 4, 0.6)
+[sub_resource type="BoxMesh" id="mesh_up2"]
+size = Vector3(5, 8.030762, 4)
 
-[node name="Cumbre" type="Node3D"]
+[sub_resource type="BoxShape3D" id="shape_finaltrig"]
+size = Vector3(12, 3, 12)
+
+[node name="Cumbre" type="Node3D" unique_id=2072542553]
 script = ExtResource("1_cima")
 
-[node name="StartSlab" type="CSGBox3D" parent="."]
+[node name="StartSlab" type="CSGBox3D" parent="." unique_id=5556787]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 18)
 use_collision = true
 size = Vector3(16, 1, 18)
 material = ExtResource("2_terrain")
 
-[node name="PlayerSpawn" type="Marker3D" parent="."]
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=941184287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 22)
 
-[node name="MountPlate" type="Area3D" parent="."]
+[node name="TravelSpawn" type="Marker3D" parent="." unique_id=700000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 13.2, -14)
+
+[node name="MountPlate" type="Area3D" parent="." unique_id=1600259397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 16)
 collision_layer = 0
 collision_mask = 2
 
-[node name="PlateShape" type="CollisionShape3D" parent="MountPlate"]
+[node name="PlateShape" type="CollisionShape3D" parent="MountPlate" unique_id=1767086714]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("shape_plate")
 
-[node name="PlateMesh" type="MeshInstance3D" parent="MountPlate"]
+[node name="PlateMesh" type="MeshInstance3D" parent="MountPlate" unique_id=905884334]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
 mesh = SubResource("mesh_plate")
 surface_material_override/0 = ExtResource("4_trigger")
 
-[node name="Bridge" type="StaticBody3D" parent="."]
+[node name="Bridge" type="StaticBody3D" parent="." unique_id=685272632]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 2.5)
-collision_layer = 1
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Bridge"]
+[node name="Mesh" type="MeshInstance3D" parent="Bridge" unique_id=1542630953]
 mesh = SubResource("mesh_bridge")
 surface_material_override/0 = ExtResource("3_prop")
 
-[node name="Shape" type="CollisionShape3D" parent="Bridge"]
+[node name="Shape" type="CollisionShape3D" parent="Bridge" unique_id=2095640900]
 shape = SubResource("shape_bridge")
 
-[node name="MidLedge" type="CSGBox3D" parent="."]
+[node name="MidLedge" type="CSGBox3D" parent="." unique_id=1041968288]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -14)
 use_collision = true
 size = Vector3(22, 1, 20)
 material = ExtResource("2_terrain")
 
-[node name="Updraft1" type="Area3D" parent="."]
+[node name="Updraft1" type="Area3D" parent="." unique_id=347556408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -9)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 
-[node name="Shape" type="CollisionShape3D" parent="Updraft1"]
+[node name="Shape" type="CollisionShape3D" parent="Updraft1" unique_id=1117710040]
 shape = SubResource("shape_up1")
 
-[node name="Mesh" type="MeshInstance3D" parent="Updraft1"]
+[node name="Mesh" type="MeshInstance3D" parent="Updraft1" unique_id=443559505]
 mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
-[node name="Platform_1" type="CSGBox3D" parent="."]
+[node name="Platform_1" type="CSGBox3D" parent="." unique_id=422669885]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -14)
 use_collision = true
 size = Vector3(7, 1, 6)
 material = ExtResource("2_terrain")
 
-[node name="Platform1Trigger" type="Area3D" parent="."]
+[node name="Platform1Trigger" type="Area3D" parent="." unique_id=791808888]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -14)
 collision_layer = 0
 collision_mask = 2
 
-[node name="Shape" type="CollisionShape3D" parent="Platform1Trigger"]
+[node name="Shape" type="CollisionShape3D" parent="Platform1Trigger" unique_id=1953332961]
 shape = SubResource("shape_p1trig")
 
-[node name="Rope1" type="Area3D" parent="."]
+[node name="Rope1" type="Area3D" parent="." unique_id=941229560]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -11)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("6_rope")
 top_marker = NodePath("../RopeTop1")
 
-[node name="Shape" type="CollisionShape3D" parent="Rope1"]
+[node name="Shape" type="CollisionShape3D" parent="Rope1" unique_id=1032706078]
 shape = SubResource("shape_rope")
 
-[node name="Mesh" type="MeshInstance3D" parent="Rope1"]
+[node name="Mesh" type="MeshInstance3D" parent="Rope1" unique_id=616809203]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 mesh = SubResource("mesh_rope")
 surface_material_override/0 = ExtResource("3_prop")
 
-[node name="RopeTop1" type="Marker3D" parent="."]
+[node name="RopeTop1" type="Marker3D" parent="." unique_id=1824453110]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.3, -12)
 
-[node name="Dock1" type="Marker3D" parent="."]
+[node name="Dock1" type="Marker3D" parent="." unique_id=157693111]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 6.2, -14)
 
-[node name="Dest1" type="Marker3D" parent="."]
+[node name="Dest1" type="Marker3D" parent="." unique_id=1136635273]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 6.2, -14)
 
-[node name="MovingPlatform" type="AnimatableBody3D" parent="."]
+[node name="MovingPlatform" type="AnimatableBody3D" parent="." unique_id=1335418472]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 6.2, -14)
-collision_layer = 1
 collision_mask = 0
 script = ExtResource("7_mov")
 dock = NodePath("../Dock1")
 dest = NodePath("../Dest1")
 
-[node name="Mesh" type="MeshInstance3D" parent="MovingPlatform"]
+[node name="Mesh" type="MeshInstance3D" parent="MovingPlatform" unique_id=769647961]
 mesh = SubResource("mesh_movplat")
 surface_material_override/0 = ExtResource("4_trigger")
 
-[node name="Shape" type="CollisionShape3D" parent="MovingPlatform"]
+[node name="Shape" type="CollisionShape3D" parent="MovingPlatform" unique_id=752084329]
 shape = SubResource("shape_movplat")
 
-[node name="Rider" type="Area3D" parent="MovingPlatform"]
+[node name="Rider" type="Area3D" parent="MovingPlatform" unique_id=1969905280]
 collision_layer = 0
 collision_mask = 2
 
-[node name="RiderShape" type="CollisionShape3D" parent="MovingPlatform/Rider"]
+[node name="RiderShape" type="CollisionShape3D" parent="MovingPlatform/Rider" unique_id=697402882]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("shape_rider")
 
-[node name="Platform_2" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 5.5, -14)
+[node name="Platform_2" type="CSGBox3D" parent="." unique_id=726520396]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.549255, 5.5, -14)
 use_collision = true
-size = Vector3(10, 1, 10)
+size = Vector3(11.098511, 1, 10)
 material = ExtResource("2_terrain")
 
-[node name="MovingWall" type="AnimatableBody3D" parent="."]
+[node name="MovingWall" type="AnimatableBody3D" parent="." unique_id=1189479178]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 7, -20)
-collision_layer = 1
 collision_mask = 0
 script = ExtResource("10_wall")
 
-[node name="Mesh" type="MeshInstance3D" parent="MovingWall"]
+[node name="Mesh" type="MeshInstance3D" parent="MovingWall" unique_id=372467964]
 mesh = SubResource("mesh_wall")
 surface_material_override/0 = ExtResource("3_prop")
 
-[node name="Shape" type="CollisionShape3D" parent="MovingWall"]
+[node name="Shape" type="CollisionShape3D" parent="MovingWall" unique_id=323631687]
 shape = SubResource("shape_wall")
 
-[node name="ArrowSwitch" type="Area3D" parent="."]
+[node name="ArrowSwitch" type="Area3D" parent="." unique_id=391666460]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 7, -26)
 collision_layer = 0
-collision_mask = 1
 script = ExtResource("9_switch")
 
-[node name="Mesh" type="MeshInstance3D" parent="ArrowSwitch"]
+[node name="Mesh" type="MeshInstance3D" parent="ArrowSwitch" unique_id=2044071199]
 mesh = SubResource("mesh_switch")
 
-[node name="Shape" type="CollisionShape3D" parent="ArrowSwitch"]
+[node name="Shape" type="CollisionShape3D" parent="ArrowSwitch" unique_id=1778879065]
 shape = SubResource("shape_switch")
 
-[node name="Updraft2" type="Area3D" parent="."]
+[node name="Updraft2" type="Area3D" parent="." unique_id=2125916931]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 9.5, -14)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 active = false
 
-[node name="Shape" type="CollisionShape3D" parent="Updraft2"]
+[node name="Shape" type="CollisionShape3D" parent="Updraft2" unique_id=1230605528]
 shape = SubResource("shape_up2")
 
-[node name="Mesh" type="MeshInstance3D" parent="Updraft2"]
+[node name="Mesh" type="MeshInstance3D" parent="Updraft2" unique_id=1992685540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015380859, 0)
 mesh = SubResource("mesh_up2")
 surface_material_override/0 = ExtResource("4_trigger")
 
-[node name="FinalPlatform" type="CSGBox3D" parent="."]
+[node name="FinalPlatform" type="CSGBox3D" parent="." unique_id=1364781618]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 12.5, -14)
 use_collision = true
 size = Vector3(12, 1, 12)
 material = ExtResource("2_terrain")
 
-[node name="FinalTrigger" type="Area3D" parent="."]
+[node name="FinalTrigger" type="Area3D" parent="." unique_id=1299778874]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 13.7, -14)
 collision_layer = 0
 collision_mask = 2
 
-[node name="Shape" type="CollisionShape3D" parent="FinalTrigger"]
+[node name="Shape" type="CollisionShape3D" parent="FinalTrigger" unique_id=675186086]
 shape = SubResource("shape_finaltrig")
 
-[node name="Rope2" type="Area3D" parent="."]
+[node name="Rope2" type="Area3D" parent="." unique_id=69335770]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.5, 6.5, -14)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("6_rope")
 top_marker = NodePath("../RopeTop2")
 
-[node name="Shape" type="CollisionShape3D" parent="Rope2"]
+[node name="Shape" type="CollisionShape3D" parent="Rope2" unique_id=1859175617]
 shape = SubResource("shape_rope")
 
-[node name="Mesh" type="MeshInstance3D" parent="Rope2"]
+[node name="Mesh" type="MeshInstance3D" parent="Rope2" unique_id=2130314761]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 3, 0)
 mesh = SubResource("mesh_rope")
 surface_material_override/0 = ExtResource("3_prop")
 
-[node name="RopeTop2" type="Marker3D" parent="."]
+[node name="RopeTop2" type="Marker3D" parent="." unique_id=285890180]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 13.3, -14)
 
-[node name="ExitToEnd" parent="." instance=ExtResource("8_exit")]
+[node name="ExitToPoblado" parent="." unique_id=614572681 instance=ExtResource("8_exit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 13.5, -9)
-target_region = "Final"
-require_beat = 7
+target_region = "Poblado"
+require_beat = -1
+prompt = "[E] Bajar al poblado — llevarle la 2ª pieza a la Bruja"

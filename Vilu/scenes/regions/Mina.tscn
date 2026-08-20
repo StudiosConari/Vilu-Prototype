@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://mina_corrupta_01"]
+
+[ext_resource type="Script" path="res://scenes/actors/MinaCueva.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="2_exit"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(9.0, 4.0, 5.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
+size = Vector3(15.0, 6.0, 5.0)
+
+[node name="Mina" type="Node3D" unique_id=100000001]
+script = ExtResource("1_script")
+
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=100000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 4)
+
+[node name="ChupacabrasSpawnPoint" type="Marker3D" parent="." unique_id=100000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, -48)
+
+[node name="ExitToPoblado" parent="." instance=ExtResource("2_exit") unique_id=100000004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 10)
+target_region = "Poblado"
+require_beat = -1
+
+[node name="CombatTrigger" type="Area3D" parent="." unique_id=100000005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -18)
+collision_layer = 0
+collision_mask = 2
+monitoring = true
+
+[node name="CombatShape" type="CollisionShape3D" parent="CombatTrigger" unique_id=100000006]
+shape = SubResource("BoxShape3D_1")
+
+[node name="NestTrigger" type="Area3D" parent="." unique_id=100000007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0, -42)
+collision_layer = 0
+collision_mask = 2
+monitoring = true
+
+[node name="NestShape" type="CollisionShape3D" parent="NestTrigger" unique_id=100000008]
+shape = SubResource("BoxShape3D_2")

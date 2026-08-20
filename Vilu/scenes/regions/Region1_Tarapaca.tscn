@@ -1,44 +1,21 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://smbekfxb3up0"]
 
-[ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="1_terrain"]
-[ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="2_prop"]
-[ext_resource type="PackedScene" path="res://scenes/actors/Carmen.tscn" id="3_carmen"]
-[ext_resource type="PackedScene" path="res://scenes/actors/WaveArena.tscn" id="4_arena"]
-[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="5_exit"]
+[ext_resource type="Script" path="res://scenes/actors/FiestaDirector.gd" id="1_fiesta"]
+[ext_resource type="PackedScene" path="res://scenes/actors/Carmen.tscn" id="2_carmen"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="3_exit"]
 
 [node name="Region1_Tarapaca" type="Node3D"]
-
-[node name="Ground" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-size = Vector3(40, 1, 40)
-use_collision = true
-material = ExtResource("1_terrain")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
 
-[node name="CarmenSpawn" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
-
-[node name="Carmen" parent="." instance=ExtResource("3_carmen")]
+[node name="Carmen" parent="." instance=ExtResource("2_carmen")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 2)
 
-[node name="WaveArena" parent="." instance=ExtResource("4_arena")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
+[node name="FiestaDirector" type="Node3D" parent="."]
+script = ExtResource("1_fiesta")
 
-[node name="ExitToIsluga" parent="." instance=ExtResource("5_exit")]
+[node name="ExitToMina" parent="." instance=ExtResource("3_exit")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -19)
-target_region = "Isluga"
-require_beat = 3
-
-[node name="Prop_Rock" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.5, -2)
-size = Vector3(1.5, 1, 1.5)
-use_collision = true
-material = ExtResource("2_prop")
-
-[node name="Prop_Post" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -4)
-size = Vector3(0.6, 2, 0.6)
-use_collision = true
-material = ExtResource("2_prop")
+target_region = "Mina"
+require_beat = 2

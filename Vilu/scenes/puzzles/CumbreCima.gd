@@ -9,6 +9,8 @@ extends Node3D
 ##  3) CORRIENTE 2: Emilia sube a la plataforma FINAL y arma la CUERDA (Rope2);
 ##     Benjamín sube con E. Cuando LOS DOS están en la cima → Beat 7.
 
+const GUARDIAN_SCR := preload("res://scenes/actors/GuardianOjosSalado.gd")
+
 signal reached_summit
 
 @export var advance_to_beat := 7
@@ -40,6 +42,7 @@ func _ready() -> void:
 	if _arrow_switch and _arrow_switch.has_signal("activated"):
 		_arrow_switch.activated.connect(_on_switch_activated)
 	_hint("Cumbre: cruza el puente (guanaco). Emilia sube por la corriente (Espacio); Benjamín sube por la CUERDA (E). LOS DOS van en la plataforma móvil a la derecha. Ahí Benjamín le dispara al CUBO (esquivá la muralla) para activar la corriente; Emilia sube a la cima y le tira la cuerda a Benjamín.")
+	_spawn_guardian()
 
 
 func _process(_delta: float) -> void:
@@ -103,6 +106,13 @@ func _solve() -> void:
 
 func is_solved() -> bool:
 	return _solved
+
+
+func _spawn_guardian() -> void:
+	var g := Node3D.new()
+	g.set_script(GUARDIAN_SCR)
+	g.position = Vector3(36.0, 13.2, -17.0)   # plataforma final, costado del FinalTrigger
+	add_child(g)
 
 
 func _hint(text: String) -> void:

@@ -23,6 +23,8 @@ var beat_index := 0
 var has_bow := false
 var has_wings := false
 var has_guanaco := false
+var has_talisman_1 := false
+var has_talisman_2 := false
 
 
 func _ready() -> void:
@@ -35,6 +37,8 @@ func _ready() -> void:
 		has_bow = bool(c.get_value("g", "has_bow", false))
 		has_wings = bool(c.get_value("g", "has_wings", false))
 		has_guanaco = bool(c.get_value("g", "has_guanaco", false))
+		has_talisman_1 = bool(c.get_value("g", "has_talisman_1", false))
+		has_talisman_2 = bool(c.get_value("g", "has_talisman_2", false))
 
 
 func _write() -> void:
@@ -46,6 +50,8 @@ func _write() -> void:
 	c.set_value("g", "has_bow", has_bow)
 	c.set_value("g", "has_wings", has_wings)
 	c.set_value("g", "has_guanaco", has_guanaco)
+	c.set_value("g", "has_talisman_1", has_talisman_1)
+	c.set_value("g", "has_talisman_2", has_talisman_2)
 	c.save(PATH)
 
 

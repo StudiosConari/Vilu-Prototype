@@ -55,7 +55,7 @@ func test_party_persists_through_travel() -> void:
 	add_child_autofree(game)
 	await get_tree().process_frame
 	GameManager.set_beat(4)
-	await game.go_to("AscensoOjos")
+	await game.go_to("Poblado")
 	await get_tree().process_frame
 	assert_eq(game.party.size(), 2, "los 2 personajes persisten al viajar")
-	assert_true(TravelManager.current_region == "AscensoOjos")
+	assert_true(TravelManager.current_region == "Poblado")

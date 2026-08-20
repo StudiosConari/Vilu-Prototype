@@ -24,6 +24,7 @@ var _cam_yaw := 0.0
 var _cam_pitch := -0.6
 var _cam_focus := Vector3.ZERO
 var _cam_rotating := false
+var _cam_override: Node3D = null   # si está seteado, la cámara sigue a este nodo
 
 @export var fall_limit := -8.0   # por debajo de esto = cayó al vacío -> reinicia la zona
 var _resetting := false
@@ -81,11 +82,11 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 
 func _process(_delta: float) -> void:
 	# R = cambiar dejando al otro en IA de combate; T = dejándolo QUIETO (puzzles).
-	var r := Input.is_physical_key_pressed(KEY_R)
+	var r := Input.is_action_pressed("swap_ai")
 	if r and not _r_prev:
 		_swap(true)
 	_r_prev = r
-	var t := Input.is_physical_key_pressed(KEY_T)
+	var t := Input.is_action_pressed("swap_hold")
 	if t and not _t_prev:
 		_swap(false)
 	_t_prev = t
@@ -126,28 +127,59 @@ func _reset_zone() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Cámara: rueda = zoom, clic derecho (arrastrar) = orbitar alrededor del activo.
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-			cam_distance = clampf(cam_distance - cam_zoom_step, cam_zoom_min, cam_zoom_max)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-			cam_distance = clampf(cam_distance + cam_zoom_step, cam_zoom_min, cam_zoom_max)
-		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			_cam_rotating = event.pressed
+	if event.is_action_pressed("cam_zoom_in"):
+		cam_distance = clampf(cam_distance - cam_zoom_step, cam_zoom_min, cam_zoom_max)
+	elif event.is_action_pressed("cam_zoom_out"):
+		cam_distance = clampf(cam_distance + cam_zoom_step, cam_zoom_min, cam_zoom_max)
+	elif event.is_action_pressed("cam_orbit"):
+		_cam_rotating = true
+	elif event.is_action_released("cam_orbit"):
+		_cam_rotating = false
 	elif event is InputEventMouseMotion and _cam_rotating:
 		_cam_yaw -= event.relative.x * cam_rotate_speed
 		_cam_pitch = clampf(_cam_pitch - event.relative.y * cam_rotate_speed, -1.4, -0.15)
 
 
+## Hace que la cámara siga a otro nodo (un NPC en una escena guionada) en vez
+## del personaje activo. Con duration > 0 vuelve sola al jugador al terminar.
+func focus_camera_on(node: Node3D, duration := 0.0) -> void:
+	_cam_override = node
+	if duration > 0.0:
+		get_tree().create_timer(duration).timeout.connect(func() -> void:
+			if _cam_override == node:
+				_cam_override = null)
+
+
+func clear_camera_focus() -> void:
+	_cam_override = null
+
+
 func _update_camera() -> void:
 	var target := active_character()
+	if is_instance_valid(_cam_override):
+		target = _cam_override
 	if target == null or _camera == null:
 		return
 	_cam_focus = _cam_focus.lerp(target.global_position + Vector3(0.0, 1.5, 0.0), cam_follow_lerp)
 	var offset := Vector3(0.0, 0.0, cam_distance)
 	offset = offset.rotated(Vector3.RIGHT, _cam_pitch)
 	offset = offset.rotated(Vector3.UP, _cam_yaw)
-	_camera.global_position = _cam_focus + offset
+	_camera.global_position = _cam_wall_check(_cam_focus + offset)
 	_camera.look_at(_cam_focus, Vector3.UP)
+
+
+## Raycast desde el foco hacia la posición deseada. Si hay geometría en el camino,
+## mueve la cámara hasta el punto de impacto (con un pequeño margen) para que nunca
+## atraviese paredes ni techo.
+func _cam_wall_check(desired: Vector3) -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var params := PhysicsRayQueryParameters3D.create(_cam_focus, desired)
+	params.collision_mask = 1   # solo entorno (layer 1); jugadores/enemigos ignorados
+	var hit := space.intersect_ray(params)
+	if hit.is_empty():
+		return desired
+	# Retroceder 0.25 m desde el punto de impacto para evitar z-fighting
+	return hit["position"] - (desired - _cam_focus).normalized() * 0.25
 
 
 ## Compat: cambia dejando al otro en IA de combate.
@@ -197,11 +229,17 @@ func _apply_active() -> void:
 		hud.bind_player(act)
 
 
-## Reubica a todo el party cerca del Marker3D "PlayerSpawn" de la región.
-func _move_to_spawn(region: Node) -> void:
+## Reubica a todo el party cerca del spawn de la región.
+## use_travel_spawn=true: prefiere TravelSpawn (fast-travel desde el mapa).
+## use_travel_spawn=false: usa siempre PlayerSpawn (salida normal de zona).
+func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 	if region == null:
 		return
-	var spawn := region.get_node_or_null("PlayerSpawn") as Node3D
+	var spawn: Node3D = null
+	if use_travel_spawn:
+		spawn = region.get_node_or_null("TravelSpawn") as Node3D
+	if spawn == null:
+		spawn = region.get_node_or_null("PlayerSpawn") as Node3D
 	if spawn == null:
 		return
 	var offsets := [Vector3.ZERO, Vector3(2.5, 0, 0), Vector3(-2.5, 0, 0)]
@@ -212,17 +250,15 @@ func _move_to_spawn(region: Node) -> void:
 
 
 ## Viaja a otra zona/región (con fundido) y reubica al party en su spawn.
-func go_to(region_name: String) -> void:
-	# Limpiar avisos/instrucciones de la zona anterior.
+## use_travel_spawn=true solo para fast-travel desde el mapa (aterrizará junto al guardián).
+func go_to(region_name: String, use_travel_spawn: bool = false) -> void:
 	if hud:
 		if hud.has_method("clear_hint"):
 			hud.clear_hint()
 		if hud.has_method("clear_banner"):
 			hud.clear_banner()
-	var region := await TravelManager.travel_to(_region_holder, region_name)
-	_move_to_spawn(region)
-	# Al cambiar de zona, el compañero vuelve a IA de combate (no se queda
-	# "congelado" corriendo hacia un puesto de la zona anterior).
+	await TravelManager.travel_to_then(_region_holder, region_name,
+		func(r: Node) -> void: _move_to_spawn(r, use_travel_spawn))
 	for i in party.size():
 		if i != active_index and party[i].has_method("set_ai_mode"):
 			party[i].set_ai_mode(true)

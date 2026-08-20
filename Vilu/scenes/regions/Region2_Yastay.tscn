@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://region2_yastay_01"]
+
+[ext_resource type="Script" path="res://scenes/actors/YastayEncounter.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="2_exit"]
+
+[node name="Region2_Yastay" type="Node3D" unique_id=100000001]
+script = ExtResource("1_script")
+
+[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=100000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 15)
+
+[node name="ExitToCumbre" parent="." instance=ExtResource("2_exit") unique_id=100000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -18)
+target_region = "Cumbre"
+require_beat = -1
+require_abilities = ["guanaco"]
+prompt = "[E] Subir al Ojos del Salado"
