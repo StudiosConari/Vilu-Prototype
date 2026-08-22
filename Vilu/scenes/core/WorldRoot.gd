@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 ## Mundo abierto de VILU. Instancia TODAS las zonas al aire libre a la vez,
@@ -99,76 +100,112 @@ var _activas := {}        # id -> true si su guion está corriendo
 
 
 func _ready() -> void:
+	# EN EL EDITOR: las zonas se instancian recién al correr el juego, así que
+	# World.tscn se vería vacío y esculpir el terreno sería a ciegas. Acá se
+	# dibujan sólo siluetas con el nombre de cada zona, para saber dónde va
+	# cada cosa mientras se trabaja con Terrain3D.
+	# NO se instancian las zonas de verdad: sus _ready() correrían dentro del
+	# editor (diálogos, timers, spawns) y eso sería un desastre.
+	if Engine.is_editor_hint():
+		_previsualizar_zonas()
+		return
+
 	add_to_group("world")
-	_construir_terreno()
+	if terreno_csg_de_respaldo:
+		_construir_terreno()
 	_instanciar_zonas()
 	_construir_caminos()
 	_construir_boca_mina()
-	_construir_volcanes()
 
 
-## Isluga y Ojos del Salado son VOLCANES, pero sus escenas son sólo losas con
-## plataformas: sobre el terreno continuo se leen como escaleras flotando.
+## Previsualización de referencia para trabajar el terreno en el editor.
 ##
-## Se les construye un cono alrededor, en forma de CRÁTER: terrazas anulares
-## con el hueco central fijo y el borde exterior achicándose a medida que
-## suben. El puzzle ocurre dentro del hueco, así que el cerro nunca invade el
-## área jugable — ni las plataformas móviles ni los ascensores se traban.
-func _construir_volcanes() -> void:
-	var roca := StandardMaterial3D.new()
-	roca.albedo_color = Color(0.30, 0.26, 0.23)
-	var ceniza := StandardMaterial3D.new()
-	ceniza.albedo_color = Color(0.22, 0.19, 0.18)
+## Instancia las escenas REALES de cada zona. Es seguro porque en Godot los
+## scripts sin @tool no corren en el editor: aparece la geometría guardada en
+## el .tscn (las plataformas de la Cumbre, las del Isluga) pero ningún _ready()
+## se ejecuta, así que no se disparan diálogos, timers ni spawns.
+##
+## Contrapartida: las zonas que construyen su geometría POR SCRIPT (Poblado,
+## Alicanto, Yastay, La Tirana) van a verse vacías, porque su _build_*() sólo
+## corre en runtime. Para esas queda la silueta celeste como referencia.
+##
+## Todo se crea sin `owner`, así que no se guarda dentro de World.tscn.
+## Tipo explícito a propósito: con `:= true` más un setter, Godot serializaba
+## la propiedad como `null` en el .tscn, y al ser falso no se dibujaba nada.
+## Piso plano de CSG que sostiene al jugador mientras Terrain3D no tenga
+## terreno esculpido. Apagalo cuando corras tools/generar_terreno.gd: si no,
+## en las hondonadas el terreno baja por debajo de esta caja y aparece un
+## suelo plano falso asomando.
+@export var terreno_csg_de_respaldo: bool = true
 
-	# Isluga: el puzzle sube hacia el norte (z negativo local)
-	_cono(_pos_de("Isluga") + Vector3(0, 0, -6),
-		Vector2(20, 26), Vector2(46, 54), 13.0, 5, roca, 12.0)
-
-	# Ojos del Salado: más alto y el ascenso corre hacia el este
-	_cono(_pos_de("Cumbre") + Vector3(12, 0, -4),
-		Vector2(30, 24), Vector2(58, 52), 17.0, 6, ceniza, 12.0)
-
-
-## Un cono escalonado hueco. `interior` es el semitamaño del hueco central (no
-## se toca nunca), `base` el semitamaño exterior al ras del suelo, y cada paso
-## sube y estrecha el borde. `hueco_sur` abre una entrada en la cara sur para
-## que el camino entre al cráter.
-func _cono(centro: Vector3, interior: Vector2, base: Vector2,
-		altura: float, pasos: int, mat: Material, hueco_sur: float) -> void:
-	for i in pasos:
-		var t := float(i) / float(maxi(pasos - 1, 1))
-		var alto: float = altura * (float(i + 1) / float(pasos))
-		# El borde exterior se acerca al interior a medida que sube
-		var ext := base.lerp(interior + Vector2(6.0, 6.0), t)
-		var grosor_x: float = ext.x - interior.x
-		var grosor_z: float = ext.y - interior.y
-		if grosor_x <= 0.5 or grosor_z <= 0.5:
-			continue
-
-		var cy := alto * 0.5
-		var med_z: float = interior.y + grosor_z * 0.5
-		var med_x: float = interior.x + grosor_x * 0.5
-
-		# Cara norte (completa)
-		_roca(centro + Vector3(0, cy, -med_z), Vector3(ext.x * 2.0, alto, grosor_z), mat)
-		# Cara sur, partida para dejar entrar el camino
-		var mitad: float = (ext.x * 2.0 - hueco_sur) * 0.5
-		if mitad > 0.5:
-			var off: float = hueco_sur * 0.5 + mitad * 0.5
-			_roca(centro + Vector3(-off, cy, med_z), Vector3(mitad, alto, grosor_z), mat)
-			_roca(centro + Vector3( off, cy, med_z), Vector3(mitad, alto, grosor_z), mat)
-		# Caras este y oeste
-		_roca(centro + Vector3( med_x, cy, 0), Vector3(grosor_x, alto, interior.y * 2.0), mat)
-		_roca(centro + Vector3(-med_x, cy, 0), Vector3(grosor_x, alto, interior.y * 2.0), mat)
+## Tipo explícito a propósito: con `:= true` más un setter, Godot serializaba
+## la propiedad como `null` en el .tscn, y al ser falso no se dibujaba nada.
+@export var mostrar_zonas_en_editor: bool = true:
+	set(v):
+		mostrar_zonas_en_editor = v
+		if Engine.is_editor_hint() and is_inside_tree():
+			_previsualizar_zonas()
 
 
-func _roca(pos: Vector3, size: Vector3, mat: Material) -> void:
-	var b := CSGBox3D.new()
-	b.size = size
-	b.position = pos
-	b.use_collision = true
-	b.material_override = mat
-	add_child(b)
+func _previsualizar_zonas() -> void:
+	for hijo in get_children():
+		if hijo.name.begins_with("_preview"):
+			remove_child(hijo)
+			hijo.queue_free()
+
+	var raiz := Node3D.new()
+	raiz.name = "_preview"
+	add_child(raiz)
+
+	for z in ZONAS:
+		var r: float = float(z["radio"])
+		var centro: Vector3 = z["pos"]
+
+		# Geometría real de la zona (sin lógica: los scripts están dormidos)
+		if mostrar_zonas_en_editor:
+			var esc: PackedScene = load(z["escena"])
+			if esc != null:
+				var inst: Node3D = esc.instantiate()
+				inst.name = "_pv_" + str(z["id"])
+				raiz.add_child(inst)
+				inst.position = centro
+
+		# Silueta del área de activación
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.25, 0.85, 1.0, 0.18)
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+
+		var mi := MeshInstance3D.new()
+		var caja := BoxMesh.new()
+		caja.size = Vector3(r * 2.0, 0.3, r * 2.0)
+		mi.mesh = caja
+		mi.position = centro + Vector3(0, 0.15, 0)
+		mi.set_surface_override_material(0, mat)
+		raiz.add_child(mi)
+
+		var lbl := Label3D.new()
+		lbl.text = "%s\n%.0f m" % [z["id"], r]
+		lbl.font_size = 48
+		lbl.pixel_size = 0.05
+		lbl.position = centro + Vector3(0, 20, 0)
+		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lbl.modulate = Color(0.4, 0.95, 1.0)
+		lbl.outline_size = 12
+		lbl.outline_modulate = Color(0, 0, 0, 1)
+		raiz.add_child(lbl)
+
+	# Boca de la Mina
+	var m_lbl := Label3D.new()
+	m_lbl.text = "boca de la Mina"
+	m_lbl.font_size = 40
+	m_lbl.pixel_size = 0.05
+	m_lbl.position = BOCA_MINA + Vector3(0, 10, 0)
+	m_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	m_lbl.modulate = Color(1.0, 0.75, 0.35)
+	m_lbl.outline_size = 12
+	m_lbl.outline_modulate = Color(0, 0, 0, 1)
+	raiz.add_child(m_lbl)
 
 
 ## Suelo continuo bajo TODO el mapa. Sin esto las zonas quedan como losas
@@ -249,6 +286,8 @@ func mine_mouth() -> Vector3:
 
 
 func _process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	_revisar_zona_del_jugador()
 
 

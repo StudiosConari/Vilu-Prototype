@@ -1,6 +1,44 @@
-[gd_scene format=3 uid="uid://vilu_world_root_01"]
+[gd_scene format=3 uid="uid://bh0tu10huocrb"]
 
-[ext_resource type="Script" path="res://scenes/core/WorldRoot.gd" id="1_world"]
+[ext_resource type="Script" uid="uid://wmnvixf85mm6" path="res://scenes/core/WorldRoot.gd" id="1_world"]
+[ext_resource type="Terrain3DAssets" uid="uid://347pnk4gua0m" path="res://terrain_data/new_terrain_3d_assets.tres" id="2_jkw84"]
+[ext_resource type="Shader" uid="uid://biu6w43ct2i22" path="res://shaders/toon_terrain.gdshader" id="3_toon"]
+
+[sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_5ef10"]
+_shader_parameters = {
+&"Contorno_Luz": null,
+&"Franjas": null,
+&"Luz_Toon": null,
+&"Paleta": null,
+&"altura_cumbre": null,
+&"altura_roca": null,
+&"altura_tierra": null,
+&"color_cumbre": null,
+&"color_pampa": null,
+&"color_roca": null,
+&"color_tierra": null,
+&"dureza_corte": null,
+&"flat_terrain_normals": null,
+&"pasos_luz": null,
+&"pendiente_roca": null,
+&"piso_sombra": null,
+&"rim_ancho": null,
+&"rim_color": null,
+&"rim_fuerza": null,
+&"suavidad_franjas": null,
+&"suavidad_pendiente": null,
+&"tinte_sombra": null
+}
+shader_override_enabled = true
+shader_override = ExtResource("3_toon")
 
 [node name="World" type="Node3D" unique_id=100000001]
 script = ExtResource("1_world")
+terreno_csg_de_respaldo = null
+
+[node name="Terrain3D" type="Terrain3D" parent="." unique_id=2036271175]
+data_directory = "res://terrain_data"
+material = SubResource("Terrain3DMaterial_5ef10")
+assets = ExtResource("2_jkw84")
+top_level = true
+metadata/_edit_lock_ = true
