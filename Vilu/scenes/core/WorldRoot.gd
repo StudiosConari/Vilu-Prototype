@@ -22,6 +22,8 @@ signal zone_entered(id: String)
 signal zone_exited(id: String)
 
 const EXIT_SCENE := preload("res://scenes/actors/ZoneExit.tscn")
+const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
+const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
 
 ## Layout del mapa, con el POBLADO (bar + bruja) como centro y punto de partida:
 ##
@@ -36,37 +38,48 @@ const EXIT_SCENE := preload("res://scenes/actors/ZoneExit.tscn")
 ## `radio` es la distancia desde el centro a la que se considera que el jugador
 ## "está" en la zona, y con la que se activa su guion.
 const ZONAS := [
+## Todo el layout está corrido +55 en Z respecto del original, para liberar
+## espacio al NORTE y poder esculpir ahí el volcán del Isluga.
+##
+## LA CUMBRE ES LA EXCEPCIÓN: se queda en z=-125 porque su cráter de 20 m ya
+## está esculpido en el terreno, en coordenadas fijas del mundo. Moverla lo
+## dejaría desalineado y habría que rehacerlo.
 	{
 		"id": "Poblado",
 		"escena": "res://scenes/regions/Poblado.tscn",
-		"pos": Vector3(0, 0, 0),
+		"pos": Vector3(0, 0, 55),
 		"radio": 36.0,
 	},
 	{
 		"id": "Region1_Tarapaca",
 		"escena": "res://scenes/regions/Region1_Tarapaca.tscn",
-		"pos": Vector3(0, 0, 105),
+		"pos": Vector3(0, 0, 160),
 		"radio": 34.0,
 	},
 	{
 		"id": "Region2_Alicanto",
 		"escena": "res://scenes/regions/Region2_Alicanto.tscn",
-		"pos": Vector3(0, 0, -125),
+		"pos": Vector3(0, 0, -70),
 		"radio": 44.0,
 	},
 	{
+		# Movido al cuadrante este (región 0,-1), donde había terreno libre.
+		# Desde acá hay ~116 m hasta el borde del bloque en ambos ejes, así que
+		# entra un cráter tan grande como el de la Cumbre. Y queda a 285 m de
+		# ella, sin riesgo de que las faldas se toquen.
 		"id": "Isluga",
 		"escena": "res://scenes/puzzles/Isluga.tscn",
-		"pos": Vector3(0, 0, -235),
+		"pos": Vector3(140, 0, -140),
 		"radio": 32.0,
 	},
 	{
 		"id": "Region2_Yastay",
 		"escena": "res://scenes/regions/Region2_Yastay.tscn",
-		"pos": Vector3(-145, 0, 0),
+		"pos": Vector3(-145, 0, 55),
 		"radio": 34.0,
 	},
 	{
+		# NO MOVER: su cráter está esculpido a esta posición exacta.
 		"id": "Cumbre",
 		"escena": "res://scenes/puzzles/Cumbre.tscn",
 		"pos": Vector3(-145, 0, -125),
@@ -78,7 +91,8 @@ const ZONAS := [
 
 ## Boca de la Mina: al ESTE del poblado. Es un interior, así que no es una zona
 ## del mundo — sólo una entrada física con su ZoneExit.
-const BOCA_MINA := Vector3(88, 0, 0)
+## Sigue al Poblado en el corrimiento de +55 en Z.
+const BOCA_MINA := Vector3(88, 0, 55)
 
 ## Caminos que unen las zonas: [desde, hasta, ancho, hueco].
 ##
@@ -111,33 +125,52 @@ func _ready() -> void:
 		return
 
 	add_to_group("world")
+
+	# MODO EDICIÓN DE TERRENO: no se construye nada encima del terreno, para
+	# poder esculpirlo sin que props, muros ni empedrados tapen la vista.
+	# El juego queda sin contenido mientras esté activo: es un interruptor de
+	# trabajo, no un estado final.
+	if modo_edicion_terreno:
+		print("[mundo] MODO EDICIÓN DE TERRENO: sin zonas, caminos ni props.")
+		return
+
 	if terreno_csg_de_respaldo:
 		_construir_terreno()
 	_instanciar_zonas()
 	_construir_caminos()
 	_construir_boca_mina()
+	if sombreado_toon:
+		# Al final de todo: hay que vestir lo que ya está construido.
+		var n: int = TOON_SKIN.new().aplicar(self)
+		print("[mundo] materiales toon: %d" % n)
 
 
-## Previsualización de referencia para trabajar el terreno en el editor.
-##
-## Instancia las escenas REALES de cada zona. Es seguro porque en Godot los
-## scripts sin @tool no corren en el editor: aparece la geometría guardada en
-## el .tscn (las plataformas de la Cumbre, las del Isluga) pero ningún _ready()
-## se ejecuta, así que no se disparan diálogos, timers ni spawns.
-##
-## Contrapartida: las zonas que construyen su geometría POR SCRIPT (Poblado,
-## Alicanto, Yastay, La Tirana) van a verse vacías, porque su _build_*() sólo
-## corre en runtime. Para esas queda la silueta celeste como referencia.
-##
-## Todo se crea sin `owner`, así que no se guarda dentro de World.tscn.
-## Tipo explícito a propósito: con `:= true` más un setter, Godot serializaba
-## la propiedad como `null` en el .tscn, y al ser falso no se dibujaba nada.
-## Piso plano de CSG que sostiene al jugador mientras Terrain3D no tenga
-## terreno esculpido. Apagalo cuando corras tools/generar_terreno.gd: si no,
-## en las hondonadas el terreno baja por debajo de esta caja y aparece un
-## suelo plano falso asomando.
-@export var terreno_csg_de_respaldo: bool = true
+## Piso plano de CSG de emergencia. Queda APAGADO: ahora el suelo lo pone
+## Terrain3D, y esta caja se superponía con él produciendo el parpadeo de
+## z-fighting. Encendelo sólo si te quedás sin terreno y necesitás algo que
+## sostenga al jugador.
+@export var terreno_csg_de_respaldo: bool = false
 
+## MODO EDICIÓN DE TERRENO. Con esto encendido no se construye NADA sobre el
+## terreno al correr el juego: ni zonas, ni muros, ni caminos, ni props.
+##
+## Queda APAGADO por defecto para que el juego y los tests sigan funcionando.
+## Encendelo desde el inspector del nodo World cuando quieras correr el juego
+## y ver sólo el terreno.
+##
+## Ojo: para esculpir en el EDITOR no hace falta tocarlo — ahí las zonas, los
+## muros y los props no se construyen nunca, porque sus scripts no son @tool.
+## Lo que sí tapa la vista en el editor es `mostrar_zonas_en_editor`.
+@export var modo_edicion_terreno: bool = false
+
+
+## Convierte los materiales del mundo al sombreado toon escalonado, para que
+## casas y props no queden con luz PBR suave al lado del terreno cel-shaded.
+@export var sombreado_toon: bool = true
+
+## Dibuja en el editor la geometría real de cada zona, además de su silueta.
+## Apagalo si necesitás el terreno despejado para esculpir.
+##
 ## Tipo explícito a propósito: con `:= true` más un setter, Godot serializaba
 ## la propiedad como `null` en el .tscn, y al ser falso no se dibujaba nada.
 @export var mostrar_zonas_en_editor: bool = true:
@@ -147,6 +180,18 @@ func _ready() -> void:
 			_previsualizar_zonas()
 
 
+## Previsualización de referencia para trabajar en el editor.
+##
+## Instancia las escenas REALES de cada zona. Es seguro porque en Godot los
+## scripts sin @tool no corren en el editor: aparece la geometría guardada en
+## el .tscn (las plataformas de la Cumbre, las del Isluga) pero ningún _ready()
+## se ejecuta, así que no se disparan diálogos, timers ni spawns.
+##
+## Contrapartida: las zonas que construyen su geometría POR SCRIPT (Poblado,
+## Alicanto, Yastay, La Tirana) se ven vacías, porque su _build_*() sólo corre
+## en runtime. Para esas queda la silueta celeste como referencia.
+##
+## Todo se crea sin `owner`, así que no se guarda dentro de World.tscn.
 func _previsualizar_zonas() -> void:
 	for hijo in get_children():
 		if hijo.name.begins_with("_preview"):
@@ -195,7 +240,11 @@ func _previsualizar_zonas() -> void:
 		lbl.outline_modulate = Color(0, 0, 0, 1)
 		raiz.add_child(lbl)
 
-	# Boca de la Mina
+	# Boca de la Mina: el bulto real, igual que las zonas, para poder esculpir
+	# el terreno alrededor sabiendo dónde queda el socavón.
+	if mostrar_zonas_en_editor:
+		_geometria_boca_mina(raiz)
+
 	var m_lbl := Label3D.new()
 	m_lbl.text = "boca de la Mina"
 	m_lbl.font_size = 40
@@ -230,10 +279,29 @@ func _construir_terreno() -> void:
 ## Entrada a la Mina, al este del poblado. La Mina es un INTERIOR: no vive en
 ## el mundo, se carga aparte al cruzar este umbral.
 func _construir_boca_mina() -> void:
+	_geometria_boca_mina(self)
+
+	var salida := EXIT_SCENE.instantiate()
+	add_child(salida)
+	salida.position = BOCA_MINA + Vector3(-4.5, 2.0, 0.0)
+	salida.target_region = "Mina"
+	salida.require_beat = -1
+	salida.prompt = "[E] Entrar a la Mina"
+
+
+## Sólo el bulto visible de la boca: cerro, socavón, entable y cartel.
+##
+## Va aparte del ZoneExit para poder dibujarla también en el editor. Antes la
+## boca entera se construía sólo al correr el juego, así que en el editor no
+## había nada que ver donde va la Mina: se esculpía el terreno a ciegas ahí.
+## El ZoneExit no se previsualiza a propósito — es lógica, no paisaje.
+func _geometria_boca_mina(padre: Node3D) -> void:
+	# Colores claros a propósito: con el sombreado toon y su rampa de luz, un
+	# gris oscuro se convierte en una mancha negra sin forma legible.
 	var roca := StandardMaterial3D.new()
-	roca.albedo_color = Color(0.26, 0.23, 0.20)
+	roca.albedo_color = Color(0.62, 0.46, 0.34)
 	var negro := StandardMaterial3D.new()
-	negro.albedo_color = Color(0.04, 0.04, 0.05)
+	negro.albedo_color = Color(0.16, 0.12, 0.14)
 
 	# Cerro con el socavón
 	var cerro := CSGBox3D.new()
@@ -241,14 +309,14 @@ func _construir_boca_mina() -> void:
 	cerro.position = BOCA_MINA + Vector3(6.0, 3.5, 0.0)
 	cerro.use_collision = true
 	cerro.material_override = roca
-	add_child(cerro)
+	padre.add_child(cerro)
 
 	# Boca oscura (sólo visual, marca dónde entrar)
 	var boca := CSGBox3D.new()
 	boca.size = Vector3(1.0, 4.0, 5.0)
 	boca.position = BOCA_MINA + Vector3(-3.6, 2.0, 0.0)
 	boca.material_override = negro
-	add_child(boca)
+	padre.add_child(boca)
 
 	# Vigas del entable
 	for vz: float in [-2.6, 2.6]:
@@ -256,12 +324,12 @@ func _construir_boca_mina() -> void:
 		viga.size = Vector3(0.6, 4.4, 0.6)
 		viga.position = BOCA_MINA + Vector3(-3.8, 2.2, vz)
 		viga.material_override = roca
-		add_child(viga)
+		padre.add_child(viga)
 	var dintel := CSGBox3D.new()
 	dintel.size = Vector3(0.6, 0.6, 6.0)
 	dintel.position = BOCA_MINA + Vector3(-3.8, 4.5, 0.0)
 	dintel.material_override = roca
-	add_child(dintel)
+	padre.add_child(dintel)
 
 	var lbl := Label3D.new()
 	lbl.text = "Mina"
@@ -270,14 +338,7 @@ func _construir_boca_mina() -> void:
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.outline_size = 6
 	lbl.outline_modulate = Color(0, 0, 0, 1)
-	add_child(lbl)
-
-	var salida := EXIT_SCENE.instantiate()
-	add_child(salida)
-	salida.position = BOCA_MINA + Vector3(-4.5, 2.0, 0.0)
-	salida.target_region = "Mina"
-	salida.require_beat = -1
-	salida.prompt = "[E] Entrar a la Mina"
+	padre.add_child(lbl)
 
 
 ## Punto donde reaparece el jugador al salir de la Mina (frente a la boca).
@@ -311,9 +372,11 @@ func _instanciar_zonas() -> void:
 ## que las haría atravesar el piso de cada zona), con un solape de 4 m para que
 ## no quede una junta abierta por la que se caiga el jugador.
 func _construir_caminos() -> void:
-	var tierra := StandardMaterial3D.new()
-	tierra.albedo_color = Color(0.52, 0.44, 0.33)
 	const SOLAPE := 4.0
+	var piso := Node3D.new()
+	piso.name = "Caminos"
+	piso.set_script(PISO_BALDOSAS)
+	add_child(piso)
 
 	for c in CAMINOS:
 		var a: Vector3 = _pos_de(c[0])
@@ -339,24 +402,18 @@ func _construir_caminos() -> void:
 		var yaw := atan2(dir.x, dir.z)
 
 		if hueco <= 0.0 or hueco >= largo - 4.0:
-			_losa(desde + dir * (largo * 0.5), ancho, largo, yaw, tierra)
+			piso.camino(desde, desde + dir * largo, ancho)
 			continue
 
-		# Tramo con grieta: dos mitades y el vacío en el medio.
+		# Tramo con grieta: dos mitades empedradas y el vacío en el medio.
 		var tramo := (largo - hueco) * 0.5
-		_losa(desde + dir * (tramo * 0.5), ancho, tramo, yaw, tierra)
-		_losa(desde + dir * (largo - tramo * 0.5), ancho, tramo, yaw, tierra)
+		piso.camino(desde, desde + dir * tramo, ancho)
+		piso.camino(desde + dir * (largo - tramo), desde + dir * largo, ancho)
 		_cartel_grieta(desde + dir * (tramo - 2.0))
 
-
-func _losa(centro: Vector3, ancho: float, largo: float, yaw: float, mat: Material) -> void:
-	var b := CSGBox3D.new()
-	b.size = Vector3(ancho, 0.4, largo)
-	b.position = Vector3(centro.x, -0.45, centro.z)
-	b.rotation.y = yaw
-	b.use_collision = true
-	b.material_override = mat
-	add_child(b)
+	var n: int = piso.construir()
+	if n > 0:
+		print("[mundo] baldosas de camino: %d" % n)
 
 
 func _cartel_grieta(pos: Vector3) -> void:

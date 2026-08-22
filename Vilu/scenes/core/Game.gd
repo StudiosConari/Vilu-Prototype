@@ -8,6 +8,7 @@ extends Node3D
 const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
 const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 const WORLD_SCENE := preload("res://scenes/core/World.tscn")
+const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 
 ## Zonas que NO son parte del mundo continuo: se cargan aparte al entrar.
@@ -51,7 +52,11 @@ var _t_prev := false
 
 
 func _ready() -> void:
-	var start := "Poblado"   # el pueblo del bar y la bruja es el centro del mapa
+	# La historia abre en la fiesta de La Tirana, con Carmen: es la secuencia 1
+	# del relato. El Poblado es el centro geográfico del mapa, pero empezar ahí
+	# dejaba al jugador parado en mitad de la trama, con la Bruja pidiéndole un
+	# talismán que todavía no fue a buscar.
+	var start := "Region1_Tarapaca"
 	if GameManager.debug_start_zone != "":
 		start = GameManager.debug_start_zone
 		GameManager.debug_start_zone = ""
@@ -107,6 +112,9 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 		var ph := c.get_node_or_null("Visual/Placeholder")
 		if ph and ph.has_method("set_surface_override_material"):
 			ph.set_surface_override_material(0, mat)
+	# Mismo sombreado escalonado que el mundo: si no, los protagonistas quedan
+	# con luz PBR suave sobre un fondo cel-shaded y se ven pegoteados encima.
+	TOON_SKIN.new().aplicar(c)
 	return c
 
 
@@ -323,6 +331,9 @@ func enter_interior(id: String) -> void:
 		if world:
 			world.visible = false
 			world.process_mode = Node.PROCESS_MODE_DISABLED
+		# El interior se construye recién ahora, así que se lo viste acá.
+		if r != null:
+			TOON_SKIN.new().aplicar(r)
 		_move_to_spawn(r))
 
 

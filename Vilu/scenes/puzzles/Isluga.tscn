@@ -44,12 +44,6 @@ size = Vector3(1.4, 5, 1.4)
 [node name="Isluga" type="Node3D" unique_id=387808961]
 script = ExtResource("1_puzzle")
 
-[node name="Ground" type="CSGBox3D" parent="." unique_id=1280993647]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 4)
-use_collision = true
-size = Vector3(30, 1, 16)
-material = ExtResource("2_terrain")
-
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=602394335]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 8)
 
@@ -300,6 +294,6 @@ shape = SubResource("shape_h5")
 [node name="CenterTop" type="CSGBox3D" parent="." unique_id=1449454768]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.5, -19)
 use_collision = true
-size = Vector3(12, 1, 10)
+size = Vector3(10, 1, 10)
 material = ExtResource("2_terrain")
 

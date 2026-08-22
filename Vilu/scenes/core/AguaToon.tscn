@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://vilu_agua_toon"]
+
+[ext_resource type="Shader" path="res://shaders/agua_toon.gdshader" id="1_agua"]
+
+[sub_resource type="PlaneMesh" id="plano"]
+size = Vector2(40, 40)
+subdivide_width = 24
+subdivide_depth = 24
+
+[sub_resource type="ShaderMaterial" id="mat"]
+render_priority = 0
+shader = ExtResource("1_agua")
+
+[node name="AguaToon" type="MeshInstance3D"]
+mesh = SubResource("plano")
+surface_material_override/0 = SubResource("mat")
+cast_shadow = 0

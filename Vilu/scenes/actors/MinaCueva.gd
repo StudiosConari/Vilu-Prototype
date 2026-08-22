@@ -28,8 +28,10 @@ var _claw_fired     := false
 var _chase_active   := false
 var _chupacabras: CharacterBody3D = null
 var _chupa_vel      := Vector3.ZERO
-var _stall_z        := 0.0
+var _stall_pos      := Vector2.ZERO
 var _stall_frames   := 0
+## Desvío en grados que viene usando para rodear un obstáculo, 0 si va directo.
+var _desvio         := 0.0
 var _forced_players: Array = []
 var _alive          := 0
 var _chupa_hit_cd   := 0.0
@@ -182,8 +184,9 @@ func _start_chase() -> void:
 	c.global_position = Vector3(0.0, -1.5, -70.0)
 	_chupacabras = c
 	_chupa_vel   = Vector3.ZERO
-	_stall_z     = c.global_position.z
+	_stall_pos   = Vector2(c.global_position.x, c.global_position.z)
 	_stall_frames = 0
+	_desvio      = 0.0
 
 	# 8 mineros de escape (solo normales, unkillable)
 	var escape_pos: Array[Vector3] = [
@@ -267,13 +270,144 @@ func _spawn_debris(z: float) -> void:
 			hit.take_damage(20))
 
 
+## Velocidad de persecución, en m/s.
+const CHUPA_VELOCIDAD := 8.0
+## A menos de esto ya no hace falta acercarse más: lo agarra igual.
+const CHUPA_DISTANCIA_MINIMA := 1.0
+
+
+## ¿Hay paso libre en esta dirección? Mira a tres alturas, como el salto.
+func _paso_libre(c: CharacterBody3D, dir: Vector3, largo: float) -> bool:
+	var space := c.get_world_3d().direct_space_state
+	for ry in [0.15, 0.7, 1.4]:
+		var origin := c.global_position + Vector3(0.0, ry, 0.0)
+		var params := PhysicsRayQueryParameters3D.create(origin, origin + dir * largo)
+		params.collision_mask = 1
+		params.exclude = [c.get_rid()]
+		if not space.intersect_ray(params).is_empty():
+			return false
+	return true
+
+
+## Altura, medida sobre el origen del cuerpo, a la que se decide si un
+## obstáculo se salta o se rodea.
+##
+## El salto sale a 9.5 m/s con gravedad 22, así que sube 9.5²/(2·22) = 2.05 m.
+## Los pies de la cápsula están 0.55 sobre el origen. Un rayo a 2.6 pasa
+## justo por encima de lo más alto que puede coronar.
+const CHUPA_ALTURA_SALTO := 2.6
+
+
+## ¿Queda aire libre por encima del obstáculo, o sea que se puede saltar?
+func _hay_aire_arriba(c: CharacterBody3D, dir: Vector3, largo: float) -> bool:
+	var origin := c.global_position + Vector3(0.0, CHUPA_ALTURA_SALTO, 0.0)
+	var params := PhysicsRayQueryParameters3D.create(origin, origin + dir * largo)
+	params.collision_mask = 1
+	params.exclude = [c.get_rid()]
+	return c.get_world_3d().direct_space_state.intersect_ray(params).is_empty()
+
+
+## Desvíos que se prueban cuando el rumbo directo está tapado, en grados.
+## Van de menor a mayor para que sólo se aparte lo justo, y en pares para no
+## tener preferencia por un lado.
+const CHUPA_DESVIOS := [25.0, -25.0, 50.0, -50.0, 80.0, -80.0, 110.0, -110.0]
+## Largo de la sonda al elegir un desvío. Más larga que la de "¿puedo seguir
+## de frente?" a propósito: un hueco de 1.6 m puede ser un rincón sin salida.
+const CHUPA_SONDA_LARGA := 4.0
+
+
+## Rumbo a seguir: el directo si hay paso, y si no el desvío más chico que lo
+## haya.
+##
+## Apuntar en línea recta al jugador funciona en campo abierto, pero la mina es
+## un pasillo con estrechamientos: los bloques de z=-15.5 dejan libre sólo de
+## x=-3 a x=3. Persiguiendo a alguien parado en x=5, el chupacabras derivaba
+## hasta x=5 y se clavaba de frente contra el bloque, saltando eternamente
+## contra una pared de 6 m que no podía superar. Probar desvíos le permite
+## rodear el bloque hasta la boca del pasillo y seguir.
+##
+## No es pathfinding y no pretende serlo — para un túnel sin ramificaciones
+## alcanza. Si la mina llegara a tener bifurcaciones o callejones sin salida,
+## esto habría que cambiarlo por un NavigationAgent3D con su navmesh, porque un
+## abanico de rumbos se mete en cualquier cul-de-sac y no sabe salir.
+func _rumbo(c: CharacterBody3D, directo: Vector3) -> Vector3:
+	if _paso_libre(c, directo, 1.6):
+		return directo
+	# Antes de rodear: ¿es un escalón que puede saltar? Si por encima hay aire,
+	# sí, y hay que mantener el rumbo para que el detector de salto lo vea.
+	# Sin esto el abanico lo desviaba del escalón de salida del nido, que sí
+	# sabía superar, y se quedaba dando vueltas al pie.
+	if _hay_aire_arriba(c, directo, 1.6):
+		return directo
+	# Mantener el desvío que ya venía usando mientras siga despejado. Sin esta
+	# memoria el abanico decidía de cero cada cuadro y, delante de un pilar
+	# centrado, elegía +110° y -110° alternándose: se quedaba vibrando en el
+	# sitio en vez de rodearlo.
+	if _desvio != 0.0:
+		var seguir := directo.rotated(Vector3.UP, deg_to_rad(_desvio))
+		if _paso_libre(c, seguir, CHUPA_SONDA_LARGA):
+			return seguir
+
+	# Primero con sonda larga: así descarta las salidas que dan a una pared a
+	# dos metros. Elegir "la primera libre" a corta distancia lo metía en el
+	# lado angosto del pasillo, donde volvía a atascarse.
+	for grados: float in CHUPA_DESVIOS:
+		var alt := directo.rotated(Vector3.UP, deg_to_rad(grados))
+		if _paso_libre(c, alt, CHUPA_SONDA_LARGA):
+			_desvio = grados
+			return alt
+	# Si ninguna sirve a lo largo, con que haya hueco inmediato alcanza.
+	for grados: float in CHUPA_DESVIOS:
+		var alt := directo.rotated(Vector3.UP, deg_to_rad(grados))
+		if _paso_libre(c, alt, 1.6):
+			_desvio = grados
+			return alt
+	# Encerrado por todos lados: insistir de frente y dejar que salte.
+	_desvio = 0.0
+	return directo
+
+
+## Jugador más cercano al chupacabras, o null si no queda ninguno.
+func _presa_mas_cercana(desde: Vector3) -> Node3D:
+	var mejor: Node3D = null
+	var mejor_d := INF
+	for p in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(p) or not (p is Node3D):
+			continue
+		var d: float = desde.distance_squared_to((p as Node3D).global_position)
+		if d < mejor_d:
+			mejor_d = d
+			mejor = p
+	return mejor
+
+
 func _move_chupacabras(delta: float) -> void:
 	var c := _chupacabras
 	if not is_instance_valid(c):
 		return
 
-	_chupa_vel.x = 0.0
-	_chupa_vel.z = 8.0
+	# PERSIGUE al jugador en vez de correr recto por +Z.
+	#
+	# Antes era `x = 0, z = 8` fijo: cruzaba el túnel entero en línea recta sin
+	# mirar dónde estabas, y al llegar al muro del fondo de la cámara de entrada
+	# se incrustaba y se quedaba ahí. Con dirección real deja de ser un tren en
+	# un riel y no hay muro contra el que encajarse, porque nunca insiste contra
+	# algo que no está en su camino hacia vos.
+	var presa := _presa_mas_cercana(c.global_position)
+	if presa != null:
+		var d := presa.global_position - c.global_position
+		d.y = 0.0
+		if d.length() > CHUPA_DISTANCIA_MINIMA:
+			var dir := _rumbo(c, d.normalized()) * CHUPA_VELOCIDAD
+			_chupa_vel.x = dir.x
+			_chupa_vel.z = dir.z
+		else:
+			_chupa_vel.x = 0.0
+			_chupa_vel.z = 0.0
+	else:
+		# Sin nadie a quien seguir, se queda quieto en vez de empujar una pared.
+		_chupa_vel.x = 0.0
+		_chupa_vel.z = 0.0
 
 	if c.is_on_floor():
 		if _chupa_vel.y < 0.0:
@@ -281,27 +415,37 @@ func _move_chupacabras(delta: float) -> void:
 	else:
 		_chupa_vel.y -= 22.0 * delta
 
-	if c.is_on_floor():
-		var should_jump := false
-		var space := c.get_world_3d().direct_space_state
-		for ry in [0.15, 0.5, 0.9]:
-			var origin := c.global_position + Vector3(0.0, ry, 0.0)
-			var fwd    := origin + Vector3(0.0, 0.0, 1.4)
-			var params := PhysicsRayQueryParameters3D.create(origin, fwd)
-			params.collision_mask = 1
-			params.exclude = [c.get_rid()]
-			if not space.intersect_ray(params).is_empty():
-				should_jump = true
-				break
-		if absf(c.global_position.z - _stall_z) < 0.06:
-			_stall_frames += 1
-			if _stall_frames >= 8:
-				should_jump = true
-				_stall_frames = 0
-		else:
-			_stall_z = c.global_position.z
+	# El atasco se MIDE siempre, aunque esté en el aire: quedarse trabado contra
+	# una pared a media altura era justamente el caso que no se detectaba, porque
+	# toda esta lógica vivía dentro del `is_on_floor()`. Saltar, en cambio, sólo
+	# se puede desde el piso.
+	var avance := Vector2(c.global_position.x, c.global_position.z)
+	var atascado := false
+	if avance.distance_to(_stall_pos) < 0.06:
+		_stall_frames += 1
+		if _stall_frames >= 8:
+			atascado = true
 			_stall_frames = 0
+	else:
+		_stall_pos = avance
+		_stall_frames = 0
 
+	if c.is_on_floor():
+		var should_jump := atascado
+		if not should_jump:
+			# Rayos en la dirección REAL de avance, no en +Z fijo.
+			var dir := Vector3(_chupa_vel.x, 0.0, _chupa_vel.z)
+			if dir.length() > 0.01:
+				dir = dir.normalized() * 1.4
+				var space := c.get_world_3d().direct_space_state
+				for ry in [0.15, 0.5, 0.9]:
+					var origin := c.global_position + Vector3(0.0, ry, 0.0)
+					var params := PhysicsRayQueryParameters3D.create(origin, origin + dir)
+					params.collision_mask = 1
+					params.exclude = [c.get_rid()]
+					if not space.intersect_ray(params).is_empty():
+						should_jump = true
+						break
 		if should_jump:
 			_chupa_vel.y = 9.5
 
