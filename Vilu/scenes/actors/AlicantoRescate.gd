@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 ## Secuencia 6 — La prueba del Alicanto.
@@ -57,6 +58,9 @@ func _ready() -> void:
 	_build_canyon()
 	_build_gold_path()
 	_build_hurt_path()
+	# En el editor sólo se construye la quebrada; el hint es para el jugador.
+	if Engine.is_editor_hint():
+		return
 	_hint("Quebrada del Alicanto. El camino se bifurca más adelante.")
 
 

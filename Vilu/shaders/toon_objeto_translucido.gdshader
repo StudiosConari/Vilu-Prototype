@@ -1,0 +1,93 @@
+// Sombreado TOON para objetos comunes: casas, props, rocas, personajes.
+//
+// Complementa a toon_terrain.gdshader. Usa exactamente la misma rampa de luz
+// escalonada, para que un cactus y el suelo bajo sus pies reciban la luz igual
+// y la escena se lea como una sola ilustración.
+//
+// Soporta textura (los FBX de flora y roca la traen) o color plano (las cajas
+// de CSG de las casas y las cápsulas de los personajes).
+//
+// Se aplica con scenes/core/ToonSkin.gd, que recorre el árbol y convierte los
+// StandardMaterial3D conservando su color y su textura.
+//
+// VARIANTE TRANSLÚCIDA. Es idéntica a toon_objeto.gdshader salvo que escribe
+// ALPHA, lo que en Godot 4 manda el material a la cola transparente.
+//
+// ToonSkin la usa SÓLO para materiales que de verdad son translúcidos: hoy,
+// los triggers y las corrientes ascendentes a alpha 0.35. Todo lo demás va con
+// la versión opaca, porque un objeto en la cola transparente se ordena por
+// objeto en vez de por píxel y deja de tapar a los que tiene detrás.
+
+shader_type spatial;
+render_mode blend_mix, depth_draw_opaque, cull_back, specular_disabled;
+
+group_uniforms Color;
+uniform vec4 albedo : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform sampler2D textura_albedo : source_color, filter_linear_mipmap, repeat_enable;
+uniform bool usar_textura = false;
+// Sube la saturación del color base para acercarlo a la viveza del cómic.
+uniform float saturacion : hint_range(0.5, 2.5) = 1.25;
+group_uniforms;
+
+group_uniforms Luz_Toon;
+uniform int pasos_luz : hint_range(1, 6) = 3;
+uniform float dureza_corte : hint_range(0.001, 0.3) = 0.02;
+uniform float piso_sombra : hint_range(0.0, 0.8) = 0.35;
+uniform vec3 tinte_sombra : source_color = vec3(0.55, 0.60, 0.85);
+group_uniforms;
+
+group_uniforms Contorno_Luz;
+uniform float rim_fuerza : hint_range(0.0, 2.0) = 0.30;
+uniform float rim_ancho : hint_range(0.0, 1.0) = 0.6;
+uniform vec3 rim_color : source_color = vec3(1.0, 0.97, 0.85);
+group_uniforms;
+
+
+vec3 saturar(vec3 c, float k) {
+	float gris = dot(c, vec3(0.299, 0.587, 0.114));
+	return clamp(mix(vec3(gris), c, k), vec3(0.0), vec3(1.0));
+}
+
+
+void fragment() {
+	vec4 c = albedo;
+	if (usar_textura) {
+		c *= texture(textura_albedo, UV);
+	}
+	ALBEDO = saturar(c.rgb, saturacion);
+	ROUGHNESS = 1.0;
+	SPECULAR = 0.0;
+	ALPHA = c.a;
+}
+
+
+void light() {
+	vec3 N = normalize(NORMAL);
+	vec3 L = normalize(LIGHT);
+
+	// Media lambert: comprime el rango para que la cara oscura no se apague
+	float nl = dot(N, L) * 0.5 + 0.5;
+
+	// Escalonado: el corazón del cel shading
+	float pasos = float(pasos_luz);
+	float escalado = clamp(nl, 0.0, 1.0) * pasos;
+	float base = floor(escalado);
+	float resto = escalado - base;
+	float aa = max(fwidth(escalado) * 0.5, dureza_corte);
+	float banda = (base + smoothstep(0.5 - aa, 0.5 + aa, resto)) / pasos;
+
+	// La sombra proyectada también se corta duro, no degrada
+	float sombra = smoothstep(0.5 - dureza_corte * 4.0, 0.5 + dureza_corte * 4.0, ATTENUATION);
+	banda *= mix(piso_sombra, 1.0, sombra);
+
+	// Nunca a negro: la sombra se rellena con un tinte frío
+	float iluminacion = mix(piso_sombra, 1.0, banda);
+	vec3 tinte = mix(tinte_sombra, vec3(1.0), banda);
+
+	DIFFUSE_LIGHT += ALBEDO * LIGHT_COLOR * tinte * iluminacion;
+
+	// Luz de borde: despega la silueta del fondo
+	float rim = 1.0 - clamp(dot(N, normalize(VIEW)), 0.0, 1.0);
+	rim = smoothstep(1.0 - rim_ancho, 1.0, rim) * rim_fuerza;
+	DIFFUSE_LIGHT += rim_color * rim * clamp(dot(N, L), 0.0, 1.0);
+}

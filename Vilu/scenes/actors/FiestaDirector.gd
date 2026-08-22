@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 ## Directora de la Fiesta de La Tirana (Region1_Tarapaca).
@@ -5,6 +6,7 @@ extends Node3D
 ## pistas y contador de clues para que CarmenNPC decida si revelar su identidad.
 
 const INTERACT_SCRIPT := preload("res://scenes/actors/FestivalNPCInteract.gd")
+const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 
 # [pos_x, pos_z, burbuja flotante, pista al hablar]
 const NPC_DATA: Array = [
@@ -25,21 +27,40 @@ const NPC_DATA: Array = [
 	 ""],
 ]
 
+## Tildalo después de correr tools/fijar_geometria.gd: el decorado ya quedó
+## guardado como nodos dentro del .tscn, así que el script NO debe volver a
+## generarlo encima. A partir de ahí lo editás a mano en el editor.
+@export var geometria_fijada: bool = false
+
 var clues_given := 0
 
 
 func _ready() -> void:
+	# EN EL EDITOR: sólo la geometría de la fiesta, para verla al trabajar el
+	# terreno. No se registra en el grupo ni corre nada más.
+	if Engine.is_editor_hint():
+		if not geometria_fijada:
+			_build_festival()
+		return
+
 	add_to_group("fiesta_director")
-	_build_festival()
+	if not geometria_fijada:
+		_build_festival()
 
 
 func _build_festival() -> void:
 	var gold := _mat(Color(0.85, 0.65, 0.15, 1))
 	var red  := _mat(Color(0.72, 0.08, 0.08, 1))
-	var dark := _mat(Color(0.20, 0.15, 0.12, 1))
 
 	# ── Suelo de la plaza (reemplaza el terreno plano con un área más visual) ──
-	_box(Vector3(0, -0.5, 0), Vector3(40, 1, 40), dark)
+	# La plaza de la fiesta es empedrado de baldosas; el suelo base lo pone
+	# Terrain3D. Antes era una caja de CSG que se peleaba con el terreno.
+	var piso := Node3D.new()
+	piso.name = "PisoFiesta"
+	piso.set_script(PISO_BALDOSAS)
+	add_child(piso)
+	piso.plaza(Vector3.ZERO, 40.0, 40.0)
+	piso.construir()
 
 	# ── Postes de estandartes ────────────────────────────────────────────────
 	for sx in [-5.0, 5.0]:

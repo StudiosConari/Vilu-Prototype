@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://buhdkqidv7jdc"]
 
 [ext_resource type="Script" uid="uid://bqbik3tph44dc" path="res://scenes/puzzles/CumbreCima.gd" id="1_cima"]
-[ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="2_terrain"]
 [ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="3_prop"]
 [ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="4_trigger"]
 [ext_resource type="Script" uid="uid://b1pxroad0bnps" path="res://scenes/actors/Updraft.gd" id="5_up"]
@@ -71,12 +70,6 @@ size = Vector3(12, 3, 12)
 [node name="Cumbre" type="Node3D" unique_id=2072542553]
 script = ExtResource("1_cima")
 
-[node name="StartSlab" type="CSGBox3D" parent="." unique_id=5556787]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 18)
-use_collision = true
-size = Vector3(16, 1, 18)
-material = ExtResource("2_terrain")
-
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=941184287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 22)
 
@@ -108,12 +101,6 @@ surface_material_override/0 = ExtResource("3_prop")
 [node name="Shape" type="CollisionShape3D" parent="Bridge" unique_id=2095640900]
 shape = SubResource("shape_bridge")
 
-[node name="MidLedge" type="CSGBox3D" parent="." unique_id=1041968288]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -14)
-use_collision = true
-size = Vector3(22, 1, 20)
-material = ExtResource("2_terrain")
-
 [node name="Updraft1" type="Area3D" parent="." unique_id=347556408]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -9)
 collision_layer = 0
@@ -126,12 +113,6 @@ shape = SubResource("shape_up1")
 [node name="Mesh" type="MeshInstance3D" parent="Updraft1" unique_id=443559505]
 mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
-
-[node name="Platform_1" type="CSGBox3D" parent="." unique_id=422669885]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -14)
-use_collision = true
-size = Vector3(7, 1, 6)
-material = ExtResource("2_terrain")
 
 [node name="Platform1Trigger" type="Area3D" parent="." unique_id=791808888]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -14)
@@ -187,12 +168,6 @@ collision_mask = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("shape_rider")
 
-[node name="Platform_2" type="CSGBox3D" parent="." unique_id=726520396]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.549255, 5.5, -14)
-use_collision = true
-size = Vector3(11.098511, 1, 10)
-material = ExtResource("2_terrain")
-
 [node name="MovingWall" type="AnimatableBody3D" parent="." unique_id=1189479178]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 7, -20)
 collision_mask = 0
@@ -230,12 +205,6 @@ shape = SubResource("shape_up2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015380859, 0)
 mesh = SubResource("mesh_up2")
 surface_material_override/0 = ExtResource("4_trigger")
-
-[node name="FinalPlatform" type="CSGBox3D" parent="." unique_id=1364781618]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 12.5, -14)
-use_collision = true
-size = Vector3(12, 1, 12)
-material = ExtResource("2_terrain")
 
 [node name="FinalTrigger" type="Area3D" parent="." unique_id=1299778874]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 13.7, -14)

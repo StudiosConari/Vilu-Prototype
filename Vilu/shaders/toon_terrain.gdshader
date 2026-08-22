@@ -42,23 +42,53 @@ uniform highp sampler2DArray _control_maps : repeat_disable;
 uniform bool flat_terrain_normals = false;
 
 // ─── Paleta del altiplano ──────────────────────────────────────────────────
+// Paleta del desierto de Atacama, calcada de las referencias: arena cálida
+// abajo, tierra colorada al subir, roca violácea y cumbre clara.
 group_uniforms Paleta;
-uniform vec3 color_pampa : source_color = vec3(0.62, 0.60, 0.32);
-uniform vec3 color_tierra : source_color = vec3(0.55, 0.36, 0.22);
-uniform vec3 color_roca : source_color = vec3(0.38, 0.35, 0.36);
-uniform vec3 color_cumbre : source_color = vec3(0.90, 0.92, 0.95);
+uniform vec3 color_pampa : source_color = vec3(0.87, 0.65, 0.38);
+uniform vec3 color_tierra : source_color = vec3(0.80, 0.38, 0.18);
+uniform vec3 color_roca : source_color = vec3(0.55, 0.34, 0.31);
+uniform vec3 color_cumbre : source_color = vec3(0.58, 0.50, 0.62);
 group_uniforms;
 
 group_uniforms Franjas;
-// Alturas (en metros de mundo) donde cambia el color
-uniform float altura_tierra = 6.0;
-uniform float altura_roca = 18.0;
-uniform float altura_cumbre = 34.0;
+// Alturas (en metros de mundo) donde cambia el color.
+//
+// Calibradas contra el terreno real: medido, la mayoría de los muros del mapa
+// está entre 2 y 6 m, y sólo los cráteres llegan a 20. Con el primer corte a
+// 6 m los muros quedaban del mismo color que la arena del piso — o sea,
+// invisibles. Por eso la primera franja arranca bajo.
+uniform float altura_tierra = 1.8;
+uniform float altura_roca = 7.0;
+uniform float altura_cumbre = 16.0;
 // 0 = corte perfectamente duro (más anime), 1 = degradado suave
-uniform float suavidad_franjas : hint_range(0.0, 1.0) = 0.06;
-// Qué tan empinado tiene que estar para volverse roca
-uniform float pendiente_roca : hint_range(0.0, 1.0) = 0.55;
-uniform float suavidad_pendiente : hint_range(0.0, 0.5) = 0.08;
+uniform float suavidad_franjas : hint_range(0.0, 1.0) = 0.10;
+// Qué tan empinado tiene que estar para volverse roca. Bajo, para que la cara
+// de un muro se lea como roca aunque su cima sea baja.
+uniform float pendiente_roca : hint_range(0.0, 1.0) = 0.28;
+uniform float suavidad_pendiente : hint_range(0.0, 0.5) = 0.10;
+group_uniforms;
+
+// ─── Pintura manual ────────────────────────────────────────────────────────
+//
+// Terrain3D guarda en su "mapa de control" QUÉ TEXTURA pintaste en cada punto.
+// Este shader no usa las texturas (colorea por altura y pendiente), pero sí
+// puede leer ESE NÚMERO y asignarle un color plano.
+//
+// Resultado: pintás caminos y manchas con el pincel de textura de Terrain3D, y
+// salen en color liso, como en las referencias.
+//
+//   ranura 0  ->  automático: color por altura y pendiente (lo de siempre)
+//   ranura 1..5 -> el color fijo que elijas acá abajo
+//
+// La textura que tenga cargada cada ranura no importa: sólo cuenta su número.
+group_uniforms Pintura;
+uniform bool usar_pintura = true;
+uniform vec3 color_pintura_1 : source_color = vec3(0.72, 0.72, 0.70);  // cemento
+uniform vec3 color_pintura_2 : source_color = vec3(0.45, 0.42, 0.40);  // piedra oscura
+uniform vec3 color_pintura_3 : source_color = vec3(0.55, 0.62, 0.30);  // pasto
+uniform vec3 color_pintura_4 : source_color = vec3(0.88, 0.80, 0.55);  // arena clara
+uniform vec3 color_pintura_5 : source_color = vec3(0.30, 0.22, 0.20);  // tierra quemada
 group_uniforms;
 
 group_uniforms Luz_Toon;
@@ -145,6 +175,18 @@ void vertex() {
 ////////////////////////
 // Fragment
 ////////////////////////
+
+// Color asignado a cada ranura de textura de Terrain3D. La 0 devuelve el
+// color automático que le pasemos (altura y pendiente).
+vec3 color_de_ranura(int id, vec3 automatico) {
+	if (id == 1) { return color_pintura_1; }
+	if (id == 2) { return color_pintura_2; }
+	if (id == 3) { return color_pintura_3; }
+	if (id == 4) { return color_pintura_4; }
+	if (id == 5) { return color_pintura_5; }
+	return automatico;
+}
+
 
 // Transición entre franjas. Con suavidad ~0 el corte es duro (anime);
 // se le suma fwidth para que el borde no titile con la distancia.
@@ -233,6 +275,21 @@ void fragment() {
 	// Lo empinado siempre es roca pelada, sin importar a qué altura esté:
 	// es lo que hace que un cerro se lea como cerro y no como una loma pintada.
 	col = mix(col, color_roca, franja(inclinacion, pendiente_roca, suavidad_pendiente));
+
+	// ─── Pintura manual ───────────────────────────────────────────────────
+	// El mapa de control guarda, por punto, qué ranura de textura pintaste.
+	// Se toma la muestra MÁS CERCANA (no interpolada) a propósito: da bordes
+	// nítidos, que es lo que pide el estilo. Interpolar los daría difuminados.
+	if (usar_pintura) {
+		uint ctrl = floatBitsToUint(texelFetch(_control_maps, index[3], 0)).r;
+		int base_id = int(ctrl >> 27u & 0x1Fu);      // ranura pintada
+		int over_id = int(ctrl >> 22u & 0x1Fu);      // ranura superpuesta
+		float mezcla = float(ctrl >> 14u & 0xFFu) / 255.0;
+		// Corte duro en vez de degradado: por encima de la mitad manda la
+		// superpuesta, por debajo la base.
+		int id = mezcla > 0.5 ? over_id : base_id;
+		col = color_de_ranura(id, col);
+	}
 
 	ALBEDO = col;
 	ROUGHNESS = 1.0;

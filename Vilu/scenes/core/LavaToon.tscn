@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://vilu_lava_toon"]
+
+[ext_resource type="Shader" path="res://shaders/lava_toon.gdshader" id="1_lava"]
+
+[sub_resource type="PlaneMesh" id="plano"]
+size = Vector2(30, 30)
+subdivide_width = 20
+subdivide_depth = 20
+
+[sub_resource type="ShaderMaterial" id="mat"]
+render_priority = 0
+shader = ExtResource("1_lava")
+
+[node name="LavaToon" type="MeshInstance3D"]
+mesh = SubResource("plano")
+surface_material_override/0 = SubResource("mat")
+cast_shadow = 0
+
+[node name="LuzLava" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+light_color = Color(1, 0.51, 0.16, 1)
+light_energy = 2.5
+omni_range = 40.0

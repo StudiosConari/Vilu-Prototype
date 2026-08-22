@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 ## Beat 6 — Encuentro con el Yastay (guanaco gigante sagrado).
@@ -47,6 +48,8 @@ var _en_zona := false    # el jugador está dentro de la quebrada
 func _ready() -> void:
 	_build_arena()
 	_spawn_characters()
+	# En el editor queda ahí quieto: la secuencia arranca sólo con activate(),
+	# que llama WorldRoot cuando el jugador entra a la quebrada.
 
 
 ## MUNDO ABIERTO: la escena existe desde que arranca la partida, así que la
@@ -266,13 +269,14 @@ func _give_blessing() -> void:
 # ─── Construcción ─────────────────────────────────────────────────────────────
 
 func _build_arena() -> void:
-	var grass  := _mat(Color(0.38, 0.50, 0.28))
+
 	var rock   := _mat(Color(0.32, 0.28, 0.24))
 	var lava   := _mat(Color(0.62, 0.14, 0.04))
 	var border := _mat(Color(0.22, 0.20, 0.18))
 
 	# Suelo
-	_box(Vector3(0, -0.5, 0), Vector3(38, 1, 40), grass)
+	# Sin piso de CSG: el suelo lo pone Terrain3D. La caja anterior era coplanar
+	# con el terreno y producía z-fighting.
 
 	# Paredes de la quebrada. El poblado queda al ESTE y el Ojos del Salado al
 	# NORTE, así que esos dos lados llevan hueco de 14 m.

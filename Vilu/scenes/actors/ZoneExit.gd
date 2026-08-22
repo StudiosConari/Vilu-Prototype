@@ -7,13 +7,26 @@ extends Area3D
 @export var target_region := ""
 @export var require_beat := -1   # si >=0, solo activa cuando GameManager.get_beat() >= este
 @export var require_abilities: Array = []   # exige tener estas habilidades ("wings","guanaco")
-@export var prompt := ""          # si no está vacío, requiere pulsar [T] en vez de auto
+@export var prompt := ""          # si no está vacío, requiere pulsar [E] en vez de auto
 
-var _used := false
+## Se desarma al viajar y se rearma cuando el jugador se baja de encima.
+##
+## ANTES era un `_used` de un solo uso que nadie reseteaba: entrar a la Mina
+## lo dejaba en true PARA SIEMPRE y no se podía volver a entrar nunca. En el
+## diseño lineal no se notaba porque cada salida se cruzaba una vez y la
+## escena se reconstruía; en mundo abierto `enter_interior` sólo ESCONDE el
+## mundo, así que el mismo nodo —y el mismo latch— sobreviven a todo.
+##
+## Hace falta igual algún guardia, no basta con borrarlo: al salir de la Mina
+## reaparecés en (80, 0.5, 55), que cae DENTRO de este mismo trigger. Sin
+## guardia, salir te volvería a meter en un bucle. Con éste, el trigger queda
+## dormido hasta que te bajás de él.
+var _armado := true
 
 
 func _ready() -> void:
 	monitoring = true
+	set_physics_process(false)   # sólo hace falta mientras está desarmado
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 
@@ -26,7 +39,7 @@ func _has_abilities() -> bool:
 
 
 func _can_use() -> bool:
-	if _used or target_region == "":
+	if not _armado or target_region == "":
 		return false
 	if require_beat >= 0 and GameManager.get_beat() < require_beat:
 		return false
@@ -72,7 +85,25 @@ func interact(_player: Node) -> void:
 func _travel() -> void:
 	if not _can_use():
 		return
-	_used = true
+	_armado = false
+	set_physics_process(true)
 	var game := get_tree().get_first_node_in_group("game")
 	if game and game.has_method("go_to"):
 		game.go_to(target_region)
+
+
+## Rearma el trigger cuando el jugador ya no lo está pisando.
+##
+## Se consulta el solape en vez de escuchar `body_exited` a propósito: entrar a
+## un interior deja el mundo en PROCESS_MODE_DISABLED, y a través de ese apagón
+## las señales de entrada y salida no son de fiar. Preguntar por el solape sí
+## lo es. Sólo corre mientras está desarmado, así que no cuesta nada.
+func _physics_process(_delta: float) -> void:
+	if _armado:
+		set_physics_process(false)
+		return
+	for b in get_overlapping_bodies():
+		if b.is_in_group("player"):
+			return
+	_armado = true
+	set_physics_process(false)

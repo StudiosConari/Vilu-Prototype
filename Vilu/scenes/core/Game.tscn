@@ -1,8 +1,18 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/core/Game.gd" id="1_game"]
+[ext_resource type="PackedScene" path="res://scenes/core/ContornoToon.tscn" id="2_contorno"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.11, 0.47, 0.93, 1)
+sky_horizon_color = Color(0.62, 0.83, 0.98, 1)
+sky_curve = 0.22
+sky_energy_multiplier = 1.15
+ground_bottom_color = Color(0.72, 0.55, 0.36, 1)
+ground_horizon_color = Color(0.78, 0.66, 0.48, 1)
+ground_curve = 0.05
+sun_angle_max = 12.0
+sun_curve = 0.08
 
 [sub_resource type="Sky" id="sky"]
 sky_material = SubResource("sky_mat")
@@ -11,7 +21,27 @@ sky_material = SubResource("sky_mat")
 background_mode = 2
 sky = SubResource("sky")
 ambient_light_source = 3
+ambient_light_color = Color(0.72, 0.8, 1, 1)
+ambient_light_sky_contribution = 0.5
+ambient_light_energy = 0.85
 tonemap_mode = 2
+tonemap_white = 1.0
+ssao_enabled = false
+glow_enabled = false
+fog_enabled = true
+fog_light_color = Color(0.68, 0.78, 0.95, 1)
+fog_light_energy = 1.1
+fog_sun_scatter = 0.15
+fog_density = 0.0
+fog_sky_affect = 0.0
+fog_depth_enabled = true
+fog_depth_curve = 1.6
+fog_depth_begin = 120.0
+fog_depth_end = 420.0
+adjustment_enabled = true
+adjustment_brightness = 1.0
+adjustment_contrast = 1.05
+adjustment_saturation = 1.15
 
 [node name="Game" type="Node3D" groups=["game"]]
 script = ExtResource("1_game")
@@ -20,10 +50,21 @@ script = ExtResource("1_game")
 environment = SubResource("env")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.643, 0.766, 0, -0.766, 0.643, 0, 10, 0)
+transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 10, 0)
+light_energy = 1.15
 shadow_enabled = true
+shadow_blur = 0.4
+; Sesgo alto a propósito: la rampa de luz escalonada del shader toon convierte
+; cualquier ruido del mapa de sombras en manchas duras, blancas o negras. Con
+; iluminación PBR suave el mismo ruido pasaría desapercibido.
+shadow_bias = 0.16
+shadow_normal_bias = 4.0
+; Menor distancia = más resolución de sombra donde importa, menos acné.
+directional_shadow_max_distance = 110.0
 
 [node name="RegionHolder" type="Node3D" parent="."]
 
 [node name="Camera" type="Camera3D" parent="."]
 current = true
+
+[node name="ContornoToon" parent="Camera" instance=ExtResource("2_contorno")]

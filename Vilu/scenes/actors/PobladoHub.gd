@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 ## Poblado del altiplano — HUB narrativo. Se visita TRES veces y cambia según
@@ -15,6 +16,7 @@ extends Node3D
 const WITCH_SCR    := preload("res://scenes/actors/WitchNPC.gd")
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 const EXIT_SCENE   := preload("res://scenes/actors/ZoneExit.tscn")
+const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
 
 const TALK_BAR_1 := "~ start
@@ -57,6 +59,13 @@ var _exit: Node = null
 
 
 func _ready() -> void:
+	# EN EL EDITOR: sólo la geometría, para poder verla al trabajar el terreno.
+	# Nada más: el resto toca autoloads (GameManager, DialogueManager) que en el
+	# editor no están instanciados, y dispararía diálogos y señales.
+	if Engine.is_editor_hint():
+		_build_town()
+		return
+
 	_stage = _current_stage()
 	_build_town()
 	_spawn_witch()
@@ -250,18 +259,29 @@ func _bar_objective_done() -> void:
 # ─── Construcción del pueblo ────────────────────────────────────────────────
 
 func _build_town() -> void:
-	var dirt  := _mat(Color(0.46, 0.38, 0.28))
-	var adobe := _mat(Color(0.68, 0.56, 0.40))
-	var roof  := _mat(Color(0.35, 0.20, 0.14))
-	var wood  := _mat(Color(0.32, 0.22, 0.14))
-	var wall  := _mat(Color(0.24, 0.20, 0.16))
+	# Paleta aclarada para el sombreado toon: con la rampa de luz escalonada,
+	# los tonos oscuros colapsan a manchas negras sin forma legible.
+	var dirt  := _mat(Color(0.72, 0.58, 0.42))
+	var adobe := _mat(Color(0.86, 0.74, 0.56))
+	var roof  := _mat(Color(0.66, 0.34, 0.24))
+	var wood  := _mat(Color(0.58, 0.42, 0.28))
+	var wall  := _mat(Color(0.60, 0.50, 0.40))
 
 	# Plaza. MUNDO ABIERTO: el poblado es el centro del mapa y sale un camino
 	# por cada lado (sur a La Tirana, este a la Mina, norte al Alicanto, oeste
 	# al Yastay). Un muro con cuatro huecos ya no es un muro, así que en vez de
 	# cerrar el perímetro quedan sólo pilares en las esquinas: marcan el límite
 	# del pueblo sin cortar el paso.
-	_box(Vector3(0, -0.5, 0), Vector3(44, 1, 44), dirt)
+	# El piso ya no es una caja de CSG: era coplanar con el terreno de Terrain3D
+	# y los dos se peleaban por el mismo plano (z-fighting). Ahora es empedrado
+	# de baldosas apoyado unos centímetros por encima.
+	var piso := Node3D.new()
+	piso.name = "PisoPlaza"
+	piso.set_script(PISO_BALDOSAS)
+	add_child(piso)
+	piso.plaza(Vector3.ZERO, 44.0, 44.0)
+	piso.construir()
+
 	for px: float in [-21.0, 21.0]:
 		for pz: float in [-21.0, 21.0]:
 			_box(Vector3(px, 2.0, pz), Vector3(1.6, 5.0, 1.6), wall)

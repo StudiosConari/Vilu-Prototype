@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://pptg0r0wwul0"]
+
+[ext_resource type="Shader" uid="uid://dl6d3fhdkoiet" path="res://shaders/contorno_toon.gdshader" id="1_contorno"]
+
+[sub_resource type="QuadMesh" id="quad"]
+flip_faces = true
+size = Vector2(2, 2)
+
+[sub_resource type="ShaderMaterial" id="mat"]
+render_priority = 100
+shader = ExtResource("1_contorno")
+shader_parameter/color_linea = Color(0.08, 0.06, 0.1, 1)
+shader_parameter/grosor = 0.5
+shader_parameter/opacidad = 0.85
+shader_parameter/umbral_profundidad = 0.4
+shader_parameter/umbral_normal = 0.6
+shader_parameter/distancia_fin = 200.0
+
+[node name="ContornoToon" type="MeshInstance3D" unique_id=2037043289]
+cast_shadow = 0
+extra_cull_margin = 16384.0
+mesh = SubResource("quad")
+surface_material_override/0 = SubResource("mat")
