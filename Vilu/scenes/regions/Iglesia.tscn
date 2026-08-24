@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://vilu_iglesia_tirana"]
+
+[ext_resource type="Script" path="res://scenes/actors/IglesiaInterior.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="2_exit"]
+
+[node name="Iglesia" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="PlayerSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 19.5)
+
+[node name="SalidaALaTirana" parent="." instance=ExtResource("2_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 22.2)
+target_region = "Region1_Tarapaca"
+require_beat = -1

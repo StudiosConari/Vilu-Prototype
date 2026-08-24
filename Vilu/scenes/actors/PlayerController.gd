@@ -637,3 +637,13 @@ func is_dead() -> bool:
 func _banner(text: String) -> void:
 	if hud and hud.has_method("show_banner"):
 		hud.show_banner(text)
+
+
+## Orienta al personaje hacia un rumbo, en radianes.
+##
+## Sigue la convención de Godot y la del resto de este script: yaw 0 mira a -Z.
+## Lo usa Game al colocar la party en un punto de aparición, para que el rumbo
+## del Marker3D se respete en vez de arrastrar el que traía de la zona anterior.
+func orientar_hacia(yaw: float) -> void:
+	if _visual != null:
+		_visual.rotation.y = yaw

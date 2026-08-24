@@ -47,15 +47,30 @@ func _recorrer(n: Node) -> void:
 		_recorrer(c)
 
 
+## Escala de mundo del nodo, para compensar el contorno.
+##
+## `grow_amount` infla el casco invertido en espacio LOCAL, antes de aplicar la
+## transformación, así que la escala del nodo lo multiplica. Una iglesia puesta
+## a escala 21 se lleva un borde de 21 x 0.018 = 0.39 m: un manchón negro en vez
+## de una línea. Midiendo la escala se puede dividir y dejar el grosor igual
+## para todos, esté el modelo a escala 1 o a escala 30.
+func _escala_de(n: Node3D) -> float:
+	if not n.is_inside_tree():
+		return 1.0
+	var e: Vector3 = n.global_transform.basis.get_scale()
+	return maxf(maxf(absf(e.x), absf(e.y)), absf(e.z))
+
+
 func _vestir_mesh(mi: MeshInstance3D) -> void:
 	if mi.mesh == null:
 		return
+	var esc := _escala_de(mi)
 	for s in mi.mesh.get_surface_count():
 		# El override tiene prioridad; si no hay, el material va en la malla.
 		var origen: Material = mi.get_surface_override_material(s)
 		if origen == null:
 			origen = mi.mesh.surface_get_material(s)
-		var nuevo := _convertir(origen)
+		var nuevo := _convertir(origen, esc)
 		if nuevo != null:
 			mi.set_surface_override_material(s, nuevo)
 			_convertidos += 1
@@ -65,7 +80,7 @@ func _vestir_multimesh(mmi: MultiMeshInstance3D) -> void:
 	var origen: Material = mmi.material_override
 	if origen == null and mmi.multimesh != null and mmi.multimesh.mesh != null:
 		origen = mmi.multimesh.mesh.surface_get_material(0)
-	var nuevo := _convertir(origen)
+	var nuevo := _convertir(origen, _escala_de(mmi))
 	if nuevo != null:
 		mmi.material_override = nuevo
 		_convertidos += 1
@@ -74,19 +89,28 @@ func _vestir_multimesh(mmi: MultiMeshInstance3D) -> void:
 func _vestir_csg(c: CSGShape3D) -> void:
 	if not ("material_override" in c):
 		return
-	var nuevo := _convertir(c.material_override)
+	var nuevo := _convertir(c.material_override, _escala_de(c))
 	if nuevo != null:
 		c.material_override = nuevo
 		_convertidos += 1
 
 
 ## Crea (o reutiliza) el ShaderMaterial equivalente a un material estándar.
-func _convertir(origen: Material) -> ShaderMaterial:
+##
+## `escala` es la escala de mundo del nodo que lo va a llevar, y entra en la
+## clave de caché: dos objetos con el mismo material de origen pero a escalas
+## distintas necesitan contornos distintos, o el más grande se lleva un borde
+## proporcionalmente más gordo.
+func _convertir(origen: Material, escala := 1.0) -> ShaderMaterial:
 	# Ya convertido: no volver a envolverlo.
 	if origen is ShaderMaterial:
 		return null
 
-	var clave: String = str(origen.get_instance_id()) if origen != null else "__plano__"
+	# La escala se redondea a dos decimales para agrupar: si no, cada variación
+	# mínima crearía su propio material y la caché no serviría de nada.
+	var cubo := snappedf(maxf(escala, 0.01), 0.01)
+	var clave: String = "%s@%.2f" % [
+		str(origen.get_instance_id()) if origen != null else "__plano__", cubo]
 	if _cache.has(clave):
 		return _cache[clave]
 
@@ -111,7 +135,7 @@ func _convertir(origen: Material) -> ShaderMaterial:
 	else:
 		m.set_shader_parameter("usar_textura", false)
 
-	m.next_pass = _contorno()
+	m.next_pass = _contorno(cubo)
 
 	_cache[clave] = m
 	return m
@@ -125,18 +149,22 @@ func _convertir(origen: Material) -> ShaderMaterial:
 ## internas pero depende de la textura de profundidad, que no siempre trae
 ## datos utilizables. El casco invertido no depende de ningún buffer, así que
 ## la silueta sale siempre.
-var _contorno_mat: StandardMaterial3D = null
+## El grosor se DIVIDE por la escala del nodo, porque `grow_amount` trabaja en
+## espacio local y la transformación lo multiplica después. Así CONTORNO_GROSOR
+## significa siempre lo mismo —metros de mundo— sin importar a qué escala esté
+## puesto el modelo.
+var _contornos := {}   # escala -> StandardMaterial3D
 
-func _contorno() -> StandardMaterial3D:
-	if _contorno_mat != null:
-		return _contorno_mat
+func _contorno(escala: float) -> StandardMaterial3D:
+	if _contornos.has(escala):
+		return _contornos[escala]
 	var c := StandardMaterial3D.new()
 	c.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	c.albedo_color = CONTORNO_COLOR
 	c.cull_mode = BaseMaterial3D.CULL_FRONT      # sólo las caras de atrás
 	c.grow = true
-	c.grow_amount = CONTORNO_GROSOR              # inflado hacia afuera
+	c.grow_amount = CONTORNO_GROSOR / maxf(escala, 0.01)
 	c.disable_receive_shadows = true
 	c.no_depth_test = false
-	_contorno_mat = c
-	return _contorno_mat
+	_contornos[escala] = c
+	return c

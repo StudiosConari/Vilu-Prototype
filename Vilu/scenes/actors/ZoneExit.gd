@@ -9,6 +9,17 @@ extends Area3D
 @export var require_abilities: Array = []   # exige tener estas habilidades ("wings","guanaco")
 @export var prompt := ""          # si no está vacío, requiere pulsar [E] en vez de auto
 
+## Tamaño del área, en metros. En cero deja el que trae la escena.
+##
+## El de fábrica son 24 x 4 x 2: un muro ancho y de poco fondo, pensado para
+## cruzar el BORDE de una zona. Como puerta de un edificio eso dispara desde
+## media plaza, así que la iglesia y compañía piden algo como 8 x 5 x 3.
+##
+## Va como propiedad exportada y no como override del CollisionShape hijo
+## porque Godot no conserva bien esos overrides: al reguardar la escena desde
+## el editor se perdió dos veces y el trigger volvió solo a los 24 m.
+@export var tamano := Vector3.ZERO
+
 ## Se desarma al viajar y se rearma cuando el jugador se baja de encima.
 ##
 ## ANTES era un `_used` de un solo uso que nadie reseteaba: entrar a la Mina
@@ -27,8 +38,27 @@ var _armado := true
 func _ready() -> void:
 	monitoring = true
 	set_physics_process(false)   # sólo hace falta mientras está desarmado
+	_aplicar_tamano()
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
+
+
+func _aplicar_tamano() -> void:
+	if tamano == Vector3.ZERO:
+		return
+	for h in get_children():
+		if not (h is CollisionShape3D):
+			continue
+		var cs := h as CollisionShape3D
+		if not (cs.shape is BoxShape3D):
+			continue
+		# DUPLICAR antes de tocar: la forma viene de ZoneExit.tscn y es la MISMA
+		# instancia para todas las salidas del juego. Redimensionarla en sitio
+		# le cambiaría el tamaño a todas.
+		var caja: BoxShape3D = (cs.shape as BoxShape3D).duplicate()
+		caja.size = tamano
+		cs.shape = caja
+		return
 
 
 func _has_abilities() -> bool:

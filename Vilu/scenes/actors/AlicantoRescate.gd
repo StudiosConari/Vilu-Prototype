@@ -332,6 +332,13 @@ func _build_hurt_path() -> void:
 		"¡Alguien herido!")
 	_hurt.rotation.z = PI / 2.0   # tirada en el suelo
 
+	# En el EDITOR se previsualiza el paisaje, no la lógica: este script es
+	# @tool pero Interactable.gd no, así que ahí dentro la instancia no expone
+	# la señal `interacted` y conectarse a ella daba "Invalid access to property
+	# or key". La herida se ve igual sin su zona de interacción.
+	if Engine.is_editor_hint():
+		return
+
 	var zone             := Area3D.new()
 	zone.collision_layer = 0
 	zone.collision_mask  = 2

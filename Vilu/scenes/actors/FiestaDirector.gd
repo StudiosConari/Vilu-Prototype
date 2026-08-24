@@ -134,6 +134,16 @@ func _spawn_npc(pos: Vector3, bubble: String, clue: String, color: Color) -> voi
 	if clue == "":
 		return  # NPC decorativo sin pista
 
+	# En el EDITOR se previsualiza el paisaje, no la lógica.
+	#
+	# Este director es @tool para poder ver la fiesta al esculpir el terreno,
+	# pero FestivalNPCInteract.gd NO lo es: dentro del editor su script no
+	# corre, así que la instancia no expone `clue_triggered` y conectarse a esa
+	# señal reventaba con "Invalid access to property or key" una vez por NPC
+	# con pista. Un NPC sin su burbuja de diálogo se ve exactamente igual.
+	if Engine.is_editor_hint():
+		return
+
 	# Zona de interacción con pista
 	var area := Area3D.new()
 	area.set_script(INTERACT_SCRIPT)
