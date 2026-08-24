@@ -12,7 +12,15 @@ const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 
 ## Zonas que NO son parte del mundo continuo: se cargan aparte al entrar.
-const INTERIORES := ["Mina", "Final"]
+const INTERIORES := ["Mina", "Final", "Iglesia"]
+
+## Interiores a los que se entra por una PUERTA que está dentro de una zona.
+##
+## Se distinguen del resto porque al salir hay que devolver al jugador al umbral
+## por el que entró, no al punto de aparición de la zona. La Mina no está acá
+## porque tiene su propio punto curado (`mine_mouth()`), unos metros delante del
+## socavón, que queda mejor que el sitio exacto donde estabas parado.
+const INTERIORES_DE_PUERTA := ["Iglesia"]
 
 @onready var _region_holder: Node3D = $RegionHolder
 @onready var _camera: Camera3D = $Camera
@@ -290,11 +298,23 @@ func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 		spawn = region.get_node_or_null("PlayerSpawn") as Node3D
 	if spawn == null:
 		return
+	# El RUMBO del marcador también cuenta, no sólo su posición.
+	#
+	# Sin esto la party conserva el rumbo que traía de antes, y al cruzar una
+	# puerta quedás mirando justo hacia afuera: entrabas al santuario de espaldas
+	# a la nave. Un Marker3D sin rotar mira a -Z, que es la convención de Godot.
+	var yaw: float = spawn.global_rotation.y
 	var offsets := [Vector3.ZERO, Vector3(2.5, 0, 0), Vector3(-2.5, 0, 0)]
 	for i in party.size():
 		var off: Vector3 = offsets[i] if i < offsets.size() else Vector3(0, 0, i * 2.0)
 		party[i].global_position = spawn.global_position + off
 		party[i].velocity = Vector3.ZERO
+		if party[i].has_method("orientar_hacia"):
+			party[i].orientar_hacia(yaw)
+
+	# Y la cámara detrás, mirando lo mismo. Con _cam_yaw = 0 se pone en +Z y
+	# mira hacia -Z, o sea que coincide con el marcador sin rotar.
+	_cam_yaw = yaw
 
 
 ## Punto de entrada único para "ir a X". Enruta según el tipo de destino:
@@ -351,6 +371,11 @@ func exit_interior(zona: String, use_travel_spawn := false) -> void:
 		if world:
 			if _volviendo_de == "Mina" and world.has_method("mine_mouth"):
 				destino = world.mine_mouth()
+			elif _volviendo_de in INTERIORES_DE_PUERTA:
+				# Salís exactamente por donde entraste. Sin esto, cruzar la
+				# puerta de la iglesia te escupiría en el PlayerSpawn de la
+				# zona, o sea al otro lado de la plaza.
+				destino = _pos_antes_interior
 			else:
 				var marcador := "TravelSpawn" if use_travel_spawn else "PlayerSpawn"
 				destino = world.spawn_point(zona, marcador)

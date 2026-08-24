@@ -24,6 +24,14 @@ extends Node3D
 ## Apagalo para dejar todo atravesable de una (útil para probar recorridos).
 @export var activo: bool = true
 
+## Usa malla exacta para TODO lo que cuelgue de este nodo, sin tener que meter
+## cada malla en el grupo col_trimesh.
+##
+## Para un contenedor de piedras sueltas no sirve —serían miles de caras para
+## nada—, pero para un EDIFICIO es lo que hace falta: la envolvente convexa de
+## una iglesia le tapa la puerta y no se puede entrar.
+@export var trimesh_por_defecto: bool = false
+
 
 func _ready() -> void:
 	if not activo:
@@ -53,7 +61,7 @@ func _vestir(nodo: Node) -> int:
 		return total
 
 	var forma: Shape3D
-	if nodo.is_in_group("col_trimesh"):
+	if trimesh_por_defecto or nodo.is_in_group("col_trimesh"):
 		forma = mi.mesh.create_trimesh_shape()
 	else:
 		forma = mi.mesh.create_convex_shape(true, true)

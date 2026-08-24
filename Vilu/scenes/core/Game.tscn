@@ -59,8 +59,17 @@ shadow_blur = 0.4
 ; iluminación PBR suave el mismo ruido pasaría desapercibido.
 shadow_bias = 0.16
 shadow_normal_bias = 4.0
-; Menor distancia = más resolución de sombra donde importa, menos acné.
-directional_shadow_max_distance = 110.0
+; COMPROMISO. Más corto = más resolución de sombra por texel y menos acné, pero
+; el corte de las sombras se ve como un borde duro sobre la pampa: la sombra de
+; los cerros se interrumpe en seco a esta distancia, y como se mide desde la
+; cámara, el borde se mueve al saltar. Con la arena a (0.87,0.65,0.38) y el
+; piso_sombra del shader toon en 0.35, la zona sombreada da (0.30,0.23,0.13):
+; un café oscuro muy visible contra la arena.
+;
+; A 110 el borde caía en pleno campo de juego. A 260 cae dentro de la niebla
+; (empieza a 120 y cierra a 420), que lo disimula. Si vuelve a aparecer acné,
+; bajalo antes de tocar los sesgos.
+directional_shadow_max_distance = 260.0
 
 [node name="RegionHolder" type="Node3D" parent="."]
 
