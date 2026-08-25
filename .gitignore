@@ -17,3 +17,9 @@ exports/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Modelos crudos sin decimar: ~43 MB de geometría cada uno, 2.2 GB en total.
+# Salida directa de Tripo, sin optimizar. Se quedan sólo en disco: son
+# temporales y los reemplaza su versión decimada, que sí entra a git en
+# models/props/<categoría>/. Ver Vilu/models/props/_sin_optimizar/LEEME.md
+Vilu/models/props/_sin_optimizar/
