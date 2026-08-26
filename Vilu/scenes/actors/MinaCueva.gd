@@ -1,3 +1,4 @@
+@tool
 extends Node3D
 
 ## Zona Mina Corrupta — 4 secciones + persecución del Chupacabras.
@@ -37,10 +38,48 @@ var _alive          := 0
 var _chupa_hit_cd   := 0.0
 
 
+## Nombre del contenedor de previsualización. Se recrea al abrir la escena y
+## nunca se guarda en el .tscn, porque se añade sin asignarle `owner`.
+const PREVIEW_NODE := "__PreviaGeometria"
+
+## La geometría de la cueva se construye por código en tiempo de ejecución, así
+## que en el editor la escena aparecía vacía y no había forma de colocar props a
+## ojo. Con esto se dibuja la misma cueva como previsualización desmontable.
+@export var previsualizar_en_editor := true:
+	set(v):
+		previsualizar_en_editor = v
+		if Engine.is_editor_hint():
+			_refrescar_previa()
+
+## Destino de los nodos que crea _build_cave. En juego es la propia escena; en
+## el editor, el contenedor temporal.
+var _destino: Node = null
+
+
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		_refrescar_previa()
+		return
+	_destino = self
 	_build_cave()
 	_setup_triggers()
 	_spawn_talisman()
+
+
+func _refrescar_previa() -> void:
+	var viejo := get_node_or_null(PREVIEW_NODE)
+	if viejo:
+		remove_child(viejo)
+		viejo.free()
+	if not previsualizar_en_editor:
+		return
+	var cont := Node3D.new()
+	cont.name = PREVIEW_NODE
+	# sin owner: Godot no lo serializa al guardar la escena
+	add_child(cont)
+	_destino = cont
+	_build_cave()
+	_destino = self
 
 
 func _spawn_talisman() -> void:
@@ -618,7 +657,7 @@ func _box(pos: Vector3, size: Vector3, mat: Material) -> void:
 	b.position = pos
 	b.material_override = mat
 	b.use_collision = true
-	add_child(b)
+	(_destino if _destino else self).add_child(b)
 
 
 func _lamp(x: float, y: float, z: float, color: Color, range_: float) -> void:
@@ -627,7 +666,7 @@ func _lamp(x: float, y: float, z: float, color: Color, range_: float) -> void:
 	l.light_color = color
 	l.omni_range = range_
 	l.light_energy = 1.8
-	add_child(l)
+	(_destino if _destino else self).add_child(l)
 
 
 # ── HUD ──────────────────────────────────────────────────────────────────────
