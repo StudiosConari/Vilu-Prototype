@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" path="res://scenes/core/AguaToon.tscn" id="4_48jlu"]
 [ext_resource type="PackedScene" path="res://scenes/core/LavaToon.tscn" id="5_acowy"]
 [ext_resource type="Script" uid="uid://ciaq54loiaofa" path="res://scenes/core/PropsColision.gd" id="6_f7wa7"]
-[ext_resource type="PackedScene" uid="uid://davp1sv0cm22c" path="res://models/props/rocas/bloque_de_piedras.fbx" id="7_in13f"]
 [ext_resource type="PackedScene" uid="uid://bhsn1to8unfeg" path="res://models/props/rocas/fosil_escorpion.fbx" id="8_8j300"]
 [ext_resource type="PackedScene" uid="uid://ca3b8kkacrh6h" path="res://models/props/rocas/pila_de_rocas.fbx" id="9_28kfc"]
 [ext_resource type="PackedScene" uid="uid://2abnelx4ofj5" path="res://models/props/flora/raiz_de_arbol.fbx" id="10_cxvj3"]
@@ -65,31 +64,10 @@ transform = Transform3D(12.280546, 0, 0, 0, 0.8351757, 0, 0, 0, 13.125666, 0, -5
 transform = Transform3D(3.0735438, 0, 0, 0, 1, 0, 0, 0, 3.1202555, -142.64746, -1.5466537, -122.13057)
 
 [node name="LavaToon2" parent="." unique_id=1093428070 instance=ExtResource("5_acowy")]
-transform = Transform3D(3.0735438, 0, 0, 0, 1, 0, 0, 0, 2.6004336, 144.39935, -1.5466537, -141.78897)
+transform = Transform3D(3.4400396, 0, -0.15427195, 0, 0.99999994, 0, 0.16653843, 0, 3.1866608, 140.9125, -2.6548615, -131.04932)
 
 [node name="PropsMina" type="Node3D" parent="." unique_id=729908131]
 script = ExtResource("6_f7wa7")
-
-[node name="bloque_de_piedras" parent="PropsMina" unique_id=45931843 instance=ExtResource("7_in13f")]
-transform = Transform3D(-0.8492154, 0, 24.956314, 0, 13.522088, 0, -14.702206, 0, -1.441504, 90.08568, 0, 40.466084)
-
-[node name="bloque_de_piedras3" parent="PropsMina" unique_id=918284868 instance=ExtResource("7_in13f")]
-transform = Transform3D(-0.5981091, 0, 24.646608, 0, 13.522088, 0, -12.274251, 0, -1.2009984, 92.40317, 5.162447, 41.48359)
-
-[node name="bloque_de_piedras6" parent="PropsMina" unique_id=1936973444 instance=ExtResource("7_in13f")]
-transform = Transform3D(-0.5981091, 0, 24.646608, 0, 13.522088, 0, -12.274251, 0, -1.2009984, 92.40317, 11.088623, 43.334404)
-
-[node name="bloque_de_piedras5" parent="PropsMina" unique_id=729520845 instance=ExtResource("7_in13f")]
-transform = Transform3D(2.7170854, 0, -25.595282, 0, 23.40364, 0, 25.040415, 0, 2.777292, 89.78331, 8.166247, 54.53074)
-
-[node name="bloque_de_piedras4" parent="PropsMina" unique_id=1276534515 instance=ExtResource("7_in13f")]
-transform = Transform3D(0.501534, 0, 24.576048, 0, 13.522088, 0, -12.110226, 0, 1.0177951, 94.08084, 5.062129, 68.143684)
-
-[node name="bloque_de_piedras7" parent="PropsMina" unique_id=1796931822 instance=ExtResource("7_in13f")]
-transform = Transform3D(-0.58992225, 0, 24.567963, 0, 13.522088, 0, -12.106242, 0, -1.1971662, 94.08084, 10.792781, 64.30781)
-
-[node name="bloque_de_piedras2" parent="PropsMina" unique_id=1857705474 instance=ExtResource("7_in13f")]
-transform = Transform3D(2.2859087, 0, 21.848082, 0, 12.000001, 0, -12.87058, 0, 3.8803782, 88.91041, -0.13440132, 68.61408)
 
 [node name="fosil_escorpion" parent="PropsMina" unique_id=299429640 instance=ExtResource("8_8j300")]
 transform = Transform3D(3.8050935, 0, -3.9952366, 0, 3.8520458, 0, 4.0804996, 0, 3.7255852, 79.674, 0, 46.499)

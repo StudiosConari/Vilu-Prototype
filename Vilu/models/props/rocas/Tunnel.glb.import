@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cikqm63osv2v4"
-path="res://.godot/imported/Tunnel.glb-cc55c33135e4edaf092a3e261369d29f.scn"
+path="res://.godot/imported/Tunnel.glb-1f65ca9995b799169550c2ef8f813e20.scn"
 
 [deps]
 
-source_file="res://models/props/Tunnel.glb"
-dest_files=["res://.godot/imported/Tunnel.glb-cc55c33135e4edaf092a3e261369d29f.scn"]
+source_file="res://models/props/rocas/Tunnel.glb"
+dest_files=["res://.godot/imported/Tunnel.glb-1f65ca9995b799169550c2ef8f813e20.scn"]
 
 [params]
 
