@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dev35tb8hbf0v"
-path="res://.godot/imported/baldosa_de_tierra_agrietada_baldosa_de_tierra_agrietada_basecolor.jpg-c4c7a04b4f745b230c0fbb98ef7d6703.ctex"
+path.s3tc="res://.godot/imported/baldosa_de_tierra_agrietada_baldosa_de_tierra_agrietada_basecolor.jpg-c4c7a04b4f745b230c0fbb98ef7d6703.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "62144fccfc8bd4f4b725d475371a9100"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/mina/baldosa_de_tierra_agrietada_baldosa_de_tierra_agrietada_basecolor.jpg"
-dest_files=["res://.godot/imported/baldosa_de_tierra_agrietada_baldosa_de_tierra_agrietada_basecolor.jpg-c4c7a04b4f745b230c0fbb98ef7d6703.ctex"]
+dest_files=["res://.godot/imported/baldosa_de_tierra_agrietada_baldosa_de_tierra_agrietada_basecolor.jpg-c4c7a04b4f745b230c0fbb98ef7d6703.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

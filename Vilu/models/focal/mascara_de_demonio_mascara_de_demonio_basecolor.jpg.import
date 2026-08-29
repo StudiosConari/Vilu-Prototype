@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bafrrnnrd2vxo"
-path="res://.godot/imported/mascara_de_demonio_mascara_de_demonio_basecolor.jpg-bb2989dfd079f06bf8574747daba7c4a.ctex"
+path.s3tc="res://.godot/imported/mascara_de_demonio_mascara_de_demonio_basecolor.jpg-bb2989dfd079f06bf8574747daba7c4a.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "27a91adc53affb66cc86a58c58fdb669"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/focal/mascara_de_demonio_mascara_de_demonio_basecolor.jpg"
-dest_files=["res://.godot/imported/mascara_de_demonio_mascara_de_demonio_basecolor.jpg-bb2989dfd079f06bf8574747daba7c4a.ctex"]
+dest_files=["res://.godot/imported/mascara_de_demonio_mascara_de_demonio_basecolor.jpg-bb2989dfd079f06bf8574747daba7c4a.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

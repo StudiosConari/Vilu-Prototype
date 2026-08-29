@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://diht6xdx0xg8x"
-path="res://.godot/imported/comida_tradicional_comida_tradicional_basecolor.jpg-c45709382a0451d12e3ea66454ad39ed.ctex"
+path.s3tc="res://.godot/imported/comida_tradicional_comida_tradicional_basecolor.jpg-c45709382a0451d12e3ea66454ad39ed.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "0257a13ebb0f461e3398f79e34cc6a92"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/puesto/comida_tradicional_comida_tradicional_basecolor.jpg"
-dest_files=["res://.godot/imported/comida_tradicional_comida_tradicional_basecolor.jpg-c45709382a0451d12e3ea66454ad39ed.ctex"]
+dest_files=["res://.godot/imported/comida_tradicional_comida_tradicional_basecolor.jpg-c45709382a0451d12e3ea66454ad39ed.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

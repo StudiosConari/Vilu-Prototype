@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cu3aupok41q5v"
-path="res://.godot/imported/virgen_del_carmen_virgen_del_carmen_basecolor.jpg-a75967d36d2439e0ad72c2046487678d.ctex"
+path.s3tc="res://.godot/imported/virgen_del_carmen_virgen_del_carmen_basecolor.jpg-a75967d36d2439e0ad72c2046487678d.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "cf302fa19cb61eaae6be91de76726692"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/focal/virgen_del_carmen_virgen_del_carmen_basecolor.jpg"
-dest_files=["res://.godot/imported/virgen_del_carmen_virgen_del_carmen_basecolor.jpg-a75967d36d2439e0ad72c2046487678d.ctex"]
+dest_files=["res://.godot/imported/virgen_del_carmen_virgen_del_carmen_basecolor.jpg-a75967d36d2439e0ad72c2046487678d.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

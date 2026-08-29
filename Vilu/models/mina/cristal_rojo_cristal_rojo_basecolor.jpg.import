@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clvil0blvfcwb"
-path="res://.godot/imported/cristal_rojo_cristal_rojo_basecolor.jpg-1d331fc14827821fabdf64be404e3acd.ctex"
+path.s3tc="res://.godot/imported/cristal_rojo_cristal_rojo_basecolor.jpg-1d331fc14827821fabdf64be404e3acd.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "1f4ee5b9a5eae152c2364cafb21a28e4"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/mina/cristal_rojo_cristal_rojo_basecolor.jpg"
-dest_files=["res://.godot/imported/cristal_rojo_cristal_rojo_basecolor.jpg-1d331fc14827821fabdf64be404e3acd.ctex"]
+dest_files=["res://.godot/imported/cristal_rojo_cristal_rojo_basecolor.jpg-1d331fc14827821fabdf64be404e3acd.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

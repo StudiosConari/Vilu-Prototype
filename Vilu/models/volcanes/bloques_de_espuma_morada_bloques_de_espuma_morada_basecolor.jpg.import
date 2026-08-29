@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://1nxea61onl0o"
-path="res://.godot/imported/bloques_de_espuma_morada_bloques_de_espuma_morada_basecolor.jpg-28ac3681c6ce13c753b605e0091f25d8.ctex"
+path.s3tc="res://.godot/imported/bloques_de_espuma_morada_bloques_de_espuma_morada_basecolor.jpg-28ac3681c6ce13c753b605e0091f25d8.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "da0c97bef1ea304cdea9026c7b0e2b9d"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/volcanes/bloques_de_espuma_morada_bloques_de_espuma_morada_basecolor.jpg"
-dest_files=["res://.godot/imported/bloques_de_espuma_morada_bloques_de_espuma_morada_basecolor.jpg-28ac3681c6ce13c753b605e0091f25d8.ctex"]
+dest_files=["res://.godot/imported/bloques_de_espuma_morada_bloques_de_espuma_morada_basecolor.jpg-28ac3681c6ce13c753b605e0091f25d8.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

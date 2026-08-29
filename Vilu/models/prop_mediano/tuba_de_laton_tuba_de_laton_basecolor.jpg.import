@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bniukm46sc0m0"
-path="res://.godot/imported/tuba_de_laton_tuba_de_laton_basecolor.jpg-69dff0f2b07515157864bdb5114f68c5.ctex"
+path.s3tc="res://.godot/imported/tuba_de_laton_tuba_de_laton_basecolor.jpg-69dff0f2b07515157864bdb5114f68c5.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "0c1462444c0aa157f5f2da252cc628cc"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_mediano/tuba_de_laton_tuba_de_laton_basecolor.jpg"
-dest_files=["res://.godot/imported/tuba_de_laton_tuba_de_laton_basecolor.jpg-69dff0f2b07515157864bdb5114f68c5.ctex"]
+dest_files=["res://.godot/imported/tuba_de_laton_tuba_de_laton_basecolor.jpg-69dff0f2b07515157864bdb5114f68c5.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

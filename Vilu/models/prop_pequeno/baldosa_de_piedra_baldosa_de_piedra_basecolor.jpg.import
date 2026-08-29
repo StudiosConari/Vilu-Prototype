@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://uqhvg8udkxcy"
-path="res://.godot/imported/baldosa_de_piedra_baldosa_de_piedra_basecolor.jpg-087c6742de9022f1aab5b8c7cddc2ee5.ctex"
+path.s3tc="res://.godot/imported/baldosa_de_piedra_baldosa_de_piedra_basecolor.jpg-087c6742de9022f1aab5b8c7cddc2ee5.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "392cee4008d4927fb96ff22e1ea96b9f"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_pequeno/baldosa_de_piedra_baldosa_de_piedra_basecolor.jpg"
-dest_files=["res://.godot/imported/baldosa_de_piedra_baldosa_de_piedra_basecolor.jpg-087c6742de9022f1aab5b8c7cddc2ee5.ctex"]
+dest_files=["res://.godot/imported/baldosa_de_piedra_baldosa_de_piedra_basecolor.jpg-087c6742de9022f1aab5b8c7cddc2ee5.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

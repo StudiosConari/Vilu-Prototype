@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c1d76m6s8cm0l"
-path="res://.godot/imported/puente_de_piedra_del_desierto_puente_de_piedra_del_desierto_basecolor.jpg-76bbac02585012f37eb1f4ddaeaca926.ctex"
+path.s3tc="res://.godot/imported/puente_de_piedra_del_desierto_puente_de_piedra_del_desierto_basecolor.jpg-76bbac02585012f37eb1f4ddaeaca926.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "459114bd2fb7d2aee8bce07c31037444"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/edificio/puente_de_piedra_del_desierto_puente_de_piedra_del_desierto_basecolor.jpg"
-dest_files=["res://.godot/imported/puente_de_piedra_del_desierto_puente_de_piedra_del_desierto_basecolor.jpg-76bbac02585012f37eb1f4ddaeaca926.ctex"]
+dest_files=["res://.godot/imported/puente_de_piedra_del_desierto_puente_de_piedra_del_desierto_basecolor.jpg-76bbac02585012f37eb1f4ddaeaca926.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

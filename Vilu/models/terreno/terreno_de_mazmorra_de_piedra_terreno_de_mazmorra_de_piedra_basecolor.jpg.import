@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ltqvvjxfajd4"
-path="res://.godot/imported/terreno_de_mazmorra_de_piedra_terreno_de_mazmorra_de_piedra_basecolor.jpg-afea4d9e19f7c481132eafd5a73a7091.ctex"
+path.s3tc="res://.godot/imported/terreno_de_mazmorra_de_piedra_terreno_de_mazmorra_de_piedra_basecolor.jpg-afea4d9e19f7c481132eafd5a73a7091.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7d79cc64acf26dd17d5a9d044d11aa9c"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/terreno/terreno_de_mazmorra_de_piedra_terreno_de_mazmorra_de_piedra_basecolor.jpg"
-dest_files=["res://.godot/imported/terreno_de_mazmorra_de_piedra_terreno_de_mazmorra_de_piedra_basecolor.jpg-afea4d9e19f7c481132eafd5a73a7091.ctex"]
+dest_files=["res://.godot/imported/terreno_de_mazmorra_de_piedra_terreno_de_mazmorra_de_piedra_basecolor.jpg-afea4d9e19f7c481132eafd5a73a7091.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
