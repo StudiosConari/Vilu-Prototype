@@ -1,4 +1,3 @@
-@tool
 extends Node3D
 
 ## Zona Mina Corrupta — 4 secciones + persecución del Chupacabras.
@@ -38,48 +37,14 @@ var _alive          := 0
 var _chupa_hit_cd   := 0.0
 
 
-## Nombre del contenedor de previsualización. Se recrea al abrir la escena y
-## nunca se guarda en el .tscn, porque se añade sin asignarle `owner`.
-const PREVIEW_NODE := "__PreviaGeometria"
-
-## La geometría de la cueva se construye por código en tiempo de ejecución, así
-## que en el editor la escena aparecía vacía y no había forma de colocar props a
-## ojo. Con esto se dibuja la misma cueva como previsualización desmontable.
-@export var previsualizar_en_editor := true:
-	set(v):
-		previsualizar_en_editor = v
-		if Engine.is_editor_hint():
-			_refrescar_previa()
-
-## Destino de los nodos que crea _build_cave. En juego es la propia escena; en
-## el editor, el contenedor temporal.
-var _destino: Node = null
-
+# La cueva se construía por código con cajas CSG, y en el editor se dibujaba
+# como previsualización para poder colocar props a ojo. Ese andamiaje ya no hace
+# falta: la mina está montada a mano en Mina.tscn con los assets de verdad.
+# Aquí solo queda la lógica de juego -combate, garras, persecución-.
 
 func _ready() -> void:
-	if Engine.is_editor_hint():
-		_refrescar_previa()
-		return
-	_destino = self
-	_build_cave()
 	_setup_triggers()
 	_spawn_talisman()
-
-
-func _refrescar_previa() -> void:
-	var viejo := get_node_or_null(PREVIEW_NODE)
-	if viejo:
-		remove_child(viejo)
-		viejo.free()
-	if not previsualizar_en_editor:
-		return
-	var cont := Node3D.new()
-	cont.name = PREVIEW_NODE
-	# sin owner: Godot no lo serializa al guardar la escena
-	add_child(cont)
-	_destino = cont
-	_build_cave()
-	_destino = self
 
 
 func _spawn_talisman() -> void:
@@ -533,140 +498,6 @@ func _stop_chase() -> void:
 		_chupacabras.queue_free()
 		_chupacabras = null
 	_banner("El Chupacabras se esconde en las sombras… La salida está cerca.", 4.0)
-
-
-# ─── Geometría CSG ───────────────────────────────────────────────────────────
-#
-# Eje Z: Z=0 boca de la cueva, interior hacia Z negativo.
-#
-# S1 Entrada       Z= 0 → -15   ancho 7m   alto 4m
-# S2 Combate       Z=-15 → -38   ancho 13m  alto 5m
-# S3 Garras        Z=-38 → -56   ancho 5m   alto 4m
-# Rampa            Z=-56 → -59   descenso a Y=-2
-# S4 Nido          Z=-59 → -76   ancho 16m  alto 7m (piso Y=-2)
-
-func _build_cave() -> void:
-	var rock := _mat(Color(0.27, 0.20, 0.15))
-	var dark := _mat(Color(0.15, 0.11, 0.08))
-
-	# ── Plataforma exterior (Z = -2 a +13) ───────────────────────────────────
-	_box(Vector3(0.0, -0.5, 5.5), Vector3(14.0, 1.0, 15.0), rock)
-	_ceil( 0.0, 4.5,  5.5, 14.0, 15.0, rock)
-	_box(Vector3( 0.0, 2.5, 13.5), Vector3(14.0, 6.0, 1.0), rock)
-	_box(Vector3(-7.0, 2.5,  5.5), Vector3(1.0,  6.0, 16.0), rock)
-	_box(Vector3( 7.0, 2.5,  5.5), Vector3(1.0,  6.0, 16.0), rock)
-
-	# ── Dintel / boca de la cueva (Z ≈ 0) ───────────────────────────────────
-	_box(Vector3( 0.0, 3.8,  1.0), Vector3(9.0, 2.4, 2.2), rock)
-	_box(Vector3(-5.0, 1.5,  1.0), Vector3(3.0, 4.0, 2.2), rock)
-	_box(Vector3( 5.0, 1.5,  1.0), Vector3(3.0, 4.0, 2.2), rock)
-	_box(Vector3(-5.0, 4.1,  1.0), Vector3(3.0, 1.2, 2.2), rock)
-	_box(Vector3( 5.0, 4.1,  1.0), Vector3(3.0, 1.2, 2.2), rock)
-
-	# ── S1 Entrada (Z=0 → -15, ancho 7, alto 4) ──────────────────────────
-	_floor( 0.0, 0.0, -7.5,  7.0, 15.0, rock)
-	_ceil(  0.0, 4.0, -7.5,  7.0, 15.0, rock)
-	_wall(-3.5, 2.0,  -7.5, 15.0, rock)
-	_wall( 3.5, 2.0,  -7.5, 15.0, rock)
-
-	# S1 obstáculos de entrada
-	# Viga baja Z=-7: saltar (borde inferior Y=0, tope Y=1.1)
-	_box(Vector3(0.0, 0.55, -7.0), Vector3(7.0, 1.1, 1.4), rock)
-	# Pilar derecho Z=-12: esquivar por la izquierda
-	_box(Vector3(2.0, 1.8, -12.0), Vector3(2.5, 3.6, 1.6), rock)
-
-	# ── Transición S1→S2 (rellena jambas del ensanche) ───────────────────
-	_box(Vector3(-5.0, 2.5, -15.5), Vector3(4.0, 6.0, 2.0), rock)
-	_box(Vector3( 5.0, 2.5, -15.5), Vector3(4.0, 6.0, 2.0), rock)
-
-	# ── S2 Sala de combate (Z=-15 → -38, ancho 13, alto 5) ───────────────
-	_floor( 0.0, 0.0, -26.5, 13.0, 23.0, rock)
-	_ceil(  0.0, 5.0, -26.5, 13.0, 23.0, rock)
-	_wall(-6.5, 2.5,  -26.5, 23.0, rock)
-	_wall( 6.5, 2.5,  -26.5, 23.0, rock)
-
-	# Columnas de cobertura en S2
-	_box(Vector3(-4.0, 2.0, -22.0), Vector3(1.5, 4.5, 1.5), rock)
-	_box(Vector3( 4.0, 2.0, -31.0), Vector3(1.5, 4.5, 1.5), rock)
-
-	# ── Transición S2→S3 (estrecha de 13m a 5m) ──────────────────────────
-	_box(Vector3(-4.5, 2.5, -39.0), Vector3(4.0, 6.0, 3.0), rock)
-	_box(Vector3( 4.5, 2.5, -39.0), Vector3(4.0, 6.0, 3.0), rock)
-
-	# ── S3 Pasillo de garras (Z=-38 → -56, ancho 5, alto 4) ──────────────
-	_floor( 0.0, 0.0, -47.0, 5.0, 18.0, rock)
-	_ceil(  0.0, 4.0, -47.0, 5.0, 18.0, rock)
-	_wall(-2.5, 2.0,  -47.0, 18.0, rock)
-	_wall( 2.5, 2.0,  -47.0, 18.0, rock)
-
-	# Marcas de garras en las paredes (4 por lado, color rojo sangre)
-	var red_mark := _mat(Color(0.70, 0.05, 0.05))
-	for z_pos: float in [-40.0, -44.0, -48.0, -52.0]:
-		_box(Vector3(-1.95, 1.5, z_pos), Vector3(0.15, 1.5, 1.5), red_mark)
-		_box(Vector3( 1.95, 1.5, z_pos), Vector3(0.15, 1.5, 1.5), red_mark)
-
-	# ── Rampa S3→S4 (Z=-56 → -59, desciende a Y=-2) ──────────────────────
-	_box(Vector3(0.0, -1.0, -57.5), Vector3(5.0, 1.0, 3.0), dark)
-	_box(Vector3(0.0,  4.0, -57.5), Vector3(5.0, 1.0, 3.0), dark)
-	_wall(-2.5, 1.0, -57.5, 3.0, dark)
-	_wall( 2.5, 1.0, -57.5, 3.0, dark)
-
-	# Relleno transición S3→S4 (ensanche de 5m a 16m)
-	_box(Vector3(-5.75, 2.5, -57.5), Vector3(6.5, 8.0, 5.0), dark)
-	_box(Vector3( 5.75, 2.5, -57.5), Vector3(6.5, 8.0, 5.0), dark)
-
-	# ── S4 Cámara del nido (Z=-59 → -76, piso Y=-2, alto 7m) ─────────────
-	_box(Vector3(0.0, -2.5, -67.5), Vector3(16.0, 1.0, 17.0), dark)  # suelo
-	_box(Vector3(0.0,  5.5, -67.5), Vector3(16.0, 1.0, 17.0), dark)  # techo
-	_box(Vector3(-8.5, 1.5, -67.5), Vector3(1.0,  9.0, 17.0), dark)  # pared izq
-	_box(Vector3( 8.5, 1.5, -67.5), Vector3(1.0,  9.0, 17.0), dark)  # pared der
-	_box(Vector3( 0.0, 1.5, -77.0), Vector3(18.0, 9.0,  1.0), dark)  # fondo
-
-	# ── Iluminación ───────────────────────────────────────────────────────
-	_lamp(-2.0, 2.5,  -4.0, Color(0.95, 0.60, 0.20), 8.0)
-	_lamp( 2.0, 2.5, -12.0, Color(0.90, 0.55, 0.15), 7.0)
-	_lamp(-4.0, 3.0, -22.0, Color(0.90, 0.50, 0.15), 9.0)
-	_lamp( 4.0, 3.0, -32.0, Color(0.85, 0.45, 0.10), 8.0)
-	_lamp( 0.0, 2.5, -47.0, Color(0.60, 0.10, 0.10), 7.0)  # pasillo garras
-	_lamp( 0.0, 2.0, -67.0, Color(0.22, 0.05, 0.45), 14.0) # nido violeta
-
-
-# ── Helpers de geometría ─────────────────────────────────────────────────────
-
-func _mat(c: Color) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.albedo_color = c
-	return m
-
-
-func _floor(x: float, y: float, z: float, w: float, l: float, mat: Material) -> void:
-	_box(Vector3(x, y - 0.5, z), Vector3(w, 1.0, l), mat)
-
-
-func _ceil(x: float, y: float, z: float, w: float, l: float, mat: Material) -> void:
-	_box(Vector3(x, y + 0.5, z), Vector3(w, 1.0, l), mat)
-
-
-func _wall(x: float, y: float, z: float, length: float, mat: Material) -> void:
-	_box(Vector3(x, y, z), Vector3(1.0, 6.0, length), mat)
-
-
-func _box(pos: Vector3, size: Vector3, mat: Material) -> void:
-	var b := CSGBox3D.new()
-	b.size = size
-	b.position = pos
-	b.material_override = mat
-	b.use_collision = true
-	(_destino if _destino else self).add_child(b)
-
-
-func _lamp(x: float, y: float, z: float, color: Color, range_: float) -> void:
-	var l := OmniLight3D.new()
-	l.position = Vector3(x, y, z)
-	l.light_color = color
-	l.omni_range = range_
-	l.light_energy = 1.8
-	(_destino if _destino else self).add_child(l)
 
 
 # ── HUD ──────────────────────────────────────────────────────────────────────
