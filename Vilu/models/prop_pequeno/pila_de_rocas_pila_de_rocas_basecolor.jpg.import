@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dujcolpn65ku"
-path="res://.godot/imported/pila_de_rocas_pila_de_rocas_basecolor.jpg-60395e39c21776db2f2f16f1f2174063.ctex"
+path.s3tc="res://.godot/imported/pila_de_rocas_pila_de_rocas_basecolor.jpg-60395e39c21776db2f2f16f1f2174063.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5053ffafe5382e22c85c0b698c3ec129"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_pequeno/pila_de_rocas_pila_de_rocas_basecolor.jpg"
-dest_files=["res://.godot/imported/pila_de_rocas_pila_de_rocas_basecolor.jpg-60395e39c21776db2f2f16f1f2174063.ctex"]
+dest_files=["res://.godot/imported/pila_de_rocas_pila_de_rocas_basecolor.jpg-60395e39c21776db2f2f16f1f2174063.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

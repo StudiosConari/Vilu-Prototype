@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://233w8w7vef4h"
-path="res://.godot/imported/cactus_verde_cactus_verde_basecolor.jpg-10d49c77fd5ed294c7b8038019543b1d.ctex"
+path.s3tc="res://.godot/imported/cactus_verde_cactus_verde_basecolor.jpg-10d49c77fd5ed294c7b8038019543b1d.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "18ce74c163d482632ce1e9c8e026a6eb"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_mediano/cactus_verde_cactus_verde_basecolor.jpg"
-dest_files=["res://.godot/imported/cactus_verde_cactus_verde_basecolor.jpg-10d49c77fd5ed294c7b8038019543b1d.ctex"]
+dest_files=["res://.godot/imported/cactus_verde_cactus_verde_basecolor.jpg-10d49c77fd5ed294c7b8038019543b1d.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

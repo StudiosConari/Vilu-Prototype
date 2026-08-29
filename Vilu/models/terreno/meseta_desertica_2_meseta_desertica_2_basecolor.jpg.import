@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://drlia7e0obhsv"
-path="res://.godot/imported/meseta_desertica_2_meseta_desertica_2_basecolor.jpg-8913924f75c4c43181e0a06cc45041c8.ctex"
+path.s3tc="res://.godot/imported/meseta_desertica_2_meseta_desertica_2_basecolor.jpg-8913924f75c4c43181e0a06cc45041c8.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "64f69bd7afe9e5dbc023ba0b589462fa"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/terreno/meseta_desertica_2_meseta_desertica_2_basecolor.jpg"
-dest_files=["res://.godot/imported/meseta_desertica_2_meseta_desertica_2_basecolor.jpg-8913924f75c4c43181e0a06cc45041c8.ctex"]
+dest_files=["res://.godot/imported/meseta_desertica_2_meseta_desertica_2_basecolor.jpg-8913924f75c4c43181e0a06cc45041c8.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

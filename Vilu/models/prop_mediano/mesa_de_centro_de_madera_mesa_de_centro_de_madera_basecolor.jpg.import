@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://difq735mg8rtq"
-path="res://.godot/imported/mesa_de_centro_de_madera_mesa_de_centro_de_madera_basecolor.jpg-f569c65429c6937a65cd520b5ba30adb.ctex"
+path.s3tc="res://.godot/imported/mesa_de_centro_de_madera_mesa_de_centro_de_madera_basecolor.jpg-f569c65429c6937a65cd520b5ba30adb.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "1357c2d45f6c29df2fc256f4b8901740"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_mediano/mesa_de_centro_de_madera_mesa_de_centro_de_madera_basecolor.jpg"
-dest_files=["res://.godot/imported/mesa_de_centro_de_madera_mesa_de_centro_de_madera_basecolor.jpg-f569c65429c6937a65cd520b5ba30adb.ctex"]
+dest_files=["res://.godot/imported/mesa_de_centro_de_madera_mesa_de_centro_de_madera_basecolor.jpg-f569c65429c6937a65cd520b5ba30adb.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bgila6n800o8x"
-path="res://.godot/imported/monolito_de_roca_monolito_de_roca_basecolor.jpg-924c90ef20a3f5d71ad672d594f5a4df.ctex"
+path.s3tc="res://.godot/imported/monolito_de_roca_monolito_de_roca_basecolor.jpg-924c90ef20a3f5d71ad672d594f5a4df.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "4fb6c63ea47adb1f30b9015aa514740d"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_mediano/monolito_de_roca_monolito_de_roca_basecolor.jpg"
-dest_files=["res://.godot/imported/monolito_de_roca_monolito_de_roca_basecolor.jpg-924c90ef20a3f5d71ad672d594f5a4df.ctex"]
+dest_files=["res://.godot/imported/monolito_de_roca_monolito_de_roca_basecolor.jpg-924c90ef20a3f5d71ad672d594f5a4df.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

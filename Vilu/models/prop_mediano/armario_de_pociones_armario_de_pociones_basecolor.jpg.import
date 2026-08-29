@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dxvipp24qv6y3"
-path="res://.godot/imported/armario_de_pociones_armario_de_pociones_basecolor.jpg-3450a7d98f1decdb37adfadd6a0ffefa.ctex"
+path.s3tc="res://.godot/imported/armario_de_pociones_armario_de_pociones_basecolor.jpg-3450a7d98f1decdb37adfadd6a0ffefa.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "aa7b9f227b389d3f5f447bc7c65e583c"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_mediano/armario_de_pociones_armario_de_pociones_basecolor.jpg"
-dest_files=["res://.godot/imported/armario_de_pociones_armario_de_pociones_basecolor.jpg-3450a7d98f1decdb37adfadd6a0ffefa.ctex"]
+dest_files=["res://.godot/imported/armario_de_pociones_armario_de_pociones_basecolor.jpg-3450a7d98f1decdb37adfadd6a0ffefa.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

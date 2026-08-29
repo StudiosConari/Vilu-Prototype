@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ry748sac2jxw"
-path="res://.godot/imported/exhibicion_de_joyeria_de_fantasia_exhibicion_de_joyeria_de_fantasia_basecolor.jpg-432a931a2b44b7e21f2eb3602399a913.ctex"
+path.s3tc="res://.godot/imported/exhibicion_de_joyeria_de_fantasia_exhibicion_de_joyeria_de_fantasia_basecolor.jpg-432a931a2b44b7e21f2eb3602399a913.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d79a746564ce457de3a329ed8eed93ba"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_mediano/exhibicion_de_joyeria_de_fantasia_exhibicion_de_joyeria_de_fantasia_basecolor.jpg"
-dest_files=["res://.godot/imported/exhibicion_de_joyeria_de_fantasia_exhibicion_de_joyeria_de_fantasia_basecolor.jpg-432a931a2b44b7e21f2eb3602399a913.ctex"]
+dest_files=["res://.godot/imported/exhibicion_de_joyeria_de_fantasia_exhibicion_de_joyeria_de_fantasia_basecolor.jpg-432a931a2b44b7e21f2eb3602399a913.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

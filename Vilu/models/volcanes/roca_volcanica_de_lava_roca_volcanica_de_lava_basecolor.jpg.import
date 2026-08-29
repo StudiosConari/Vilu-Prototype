@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b8cxt446k58aw"
-path="res://.godot/imported/roca_volcanica_de_lava_roca_volcanica_de_lava_basecolor.jpg-501f4721540d13c8a8665d8769021110.ctex"
+path.s3tc="res://.godot/imported/roca_volcanica_de_lava_roca_volcanica_de_lava_basecolor.jpg-501f4721540d13c8a8665d8769021110.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "c7fe91bdbfada9e9494ec51e3dab4d9c"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/volcanes/roca_volcanica_de_lava_roca_volcanica_de_lava_basecolor.jpg"
-dest_files=["res://.godot/imported/roca_volcanica_de_lava_roca_volcanica_de_lava_basecolor.jpg-501f4721540d13c8a8665d8769021110.ctex"]
+dest_files=["res://.godot/imported/roca_volcanica_de_lava_roca_volcanica_de_lava_basecolor.jpg-501f4721540d13c8a8665d8769021110.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

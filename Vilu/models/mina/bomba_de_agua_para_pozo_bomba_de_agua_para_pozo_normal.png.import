@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://x5roox6k12kr"
-path="res://.godot/imported/bomba_de_agua_para_pozo_bomba_de_agua_para_pozo_normal.png-28354a4f874b7c5d6299491d602629d8.ctex"
+path.s3tc="res://.godot/imported/bomba_de_agua_para_pozo_bomba_de_agua_para_pozo_normal.png-28354a4f874b7c5d6299491d602629d8.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "2478a857088911cebbbe7f3d0f661fa0"
@@ -14,22 +15,22 @@ generator_parameters={
 [deps]
 
 source_file="res://models/mina/bomba_de_agua_para_pozo_bomba_de_agua_para_pozo_normal.png"
-dest_files=["res://.godot/imported/bomba_de_agua_para_pozo_bomba_de_agua_para_pozo_normal.png-28354a4f874b7c5d6299491d602629d8.ctex"]
+dest_files=["res://.godot/imported/bomba_de_agua_para_pozo_bomba_de_agua_para_pozo_normal.png-28354a4f874b7c5d6299491d602629d8.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=0
-roughness/src_normal=""
+roughness/mode=1
+roughness/src_normal="res://models/mina/bomba_de_agua_para_pozo_bomba_de_agua_para_pozo_normal.png"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

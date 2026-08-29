@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bo0jehnv4jy4"
-path="res://.godot/imported/macetero_de_madera_macetero_de_madera_basecolor.jpg-6e1892a05785877500698e286b1d049f.ctex"
+path.s3tc="res://.godot/imported/macetero_de_madera_macetero_de_madera_basecolor.jpg-6e1892a05785877500698e286b1d049f.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "b67a7d90a1bcaff5a5faad346fa5f892"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_pequeno/macetero_de_madera_macetero_de_madera_basecolor.jpg"
-dest_files=["res://.godot/imported/macetero_de_madera_macetero_de_madera_basecolor.jpg-6e1892a05785877500698e286b1d049f.ctex"]
+dest_files=["res://.godot/imported/macetero_de_madera_macetero_de_madera_basecolor.jpg-6e1892a05785877500698e286b1d049f.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

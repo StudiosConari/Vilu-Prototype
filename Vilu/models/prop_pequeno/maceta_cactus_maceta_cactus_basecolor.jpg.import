@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://4qhwy7owrvbi"
-path="res://.godot/imported/maceta_cactus_maceta_cactus_basecolor.jpg-b6b67b9dcaf89c31d89a3f5c9221ec5b.ctex"
+path.s3tc="res://.godot/imported/maceta_cactus_maceta_cactus_basecolor.jpg-b6b67b9dcaf89c31d89a3f5c9221ec5b.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "f4a733a7574c27b76bece856ad4a2d48"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://models/prop_pequeno/maceta_cactus_maceta_cactus_basecolor.jpg"
-dest_files=["res://.godot/imported/maceta_cactus_maceta_cactus_basecolor.jpg-b6b67b9dcaf89c31d89a3f5c9221ec5b.ctex"]
+dest_files=["res://.godot/imported/maceta_cactus_maceta_cactus_basecolor.jpg-b6b67b9dcaf89c31d89a3f5c9221ec5b.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
@@ -40,4 +41,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0
