@@ -10,6 +10,8 @@
 [ext_resource type="PackedScene" uid="uid://ca3b8kkacrh6h" path="res://models/props/rocas/pila_de_rocas.fbx" id="9_28kfc"]
 [ext_resource type="PackedScene" uid="uid://2abnelx4ofj5" path="res://models/props/flora/raiz_de_arbol.fbx" id="10_cxvj3"]
 [ext_resource type="PackedScene" uid="uid://ds37g1t35x2kt" path="res://models/props/flora/arbusto.fbx" id="11_emhlx"]
+[ext_resource type="PackedScene" uid="uid://ct5t6ucgc07u" path="res://models/volcanes/crater_2.glb" id="11_in13f"]
+[ext_resource type="PackedScene" uid="uid://b82v1qpby6jvb" path="res://models/volcanes/escalera_de_roca.glb" id="12_8j300"]
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_5ef10"]
 _shader_parameters = {
@@ -86,3 +88,9 @@ transform = Transform3D(-3.862965, 0, -2.7189236, 0, 5.5822654, 0, 1.5791252, 0,
 
 [node name="arbusto2" parent="PropsMina" unique_id=995941916 instance=ExtResource("11_emhlx")]
 transform = Transform3D(-3.4502075, 0, 4.0424347, 0, 5.5822654, 0, -2.3478084, 0, -5.9405375, 82.159676, 0, 60.021183)
+
+[node name="crater_22" parent="." unique_id=1624610948 instance=ExtResource("11_in13f")]
+transform = Transform3D(12.295445, 0, 0, 0, 12.295445, 0, 0, 0, 12.295445, 138.49112, -16.123829, -125.88233)
+
+[node name="escalera_de_roca2" parent="." unique_id=1159353490 instance=ExtResource("12_8j300")]
+transform = Transform3D(13.668176, 0, 0, 0, 13.436947, 2.503499, 0, -2.503499, 13.436947, 138.3503, -5.7063046, -53.33314)
