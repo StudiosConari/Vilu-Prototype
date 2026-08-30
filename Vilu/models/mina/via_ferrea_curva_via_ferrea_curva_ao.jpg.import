@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bn7as44fri0tl"
-path.s3tc="res://.godot/imported/rueda_de_carro_de_madera_rueda_de_carro_de_madera_normal.png-d428b2eca869cdab5655a37617a5c814.s3tc.ctex"
+uid="uid://dlll1hvurxwqv"
+path.s3tc="res://.godot/imported/via_ferrea_curva_via_ferrea_curva_ao.jpg-a84236b29883393c5995eace93f211af.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "ae59074fd8e70fbfbf5200760c64aac5"
+"md5": "f3cf030b38afa623279bb94761febe26"
 }
 
 [deps]
 
-source_file="res://models/mina/rueda_de_carro_de_madera_rueda_de_carro_de_madera_normal.png"
-dest_files=["res://.godot/imported/rueda_de_carro_de_madera_rueda_de_carro_de_madera_normal.png-d428b2eca869cdab5655a37617a5c814.s3tc.ctex"]
+source_file="res://models/mina/via_ferrea_curva_via_ferrea_curva_ao.jpg"
+dest_files=["res://.godot/imported/via_ferrea_curva_via_ferrea_curva_ao.jpg-a84236b29883393c5995eace93f211af.s3tc.ctex"]
 
 [params]
 
@@ -25,12 +25,12 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=1
+compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=1
-roughness/src_normal="res://models/mina/rueda_de_carro_de_madera_rueda_de_carro_de_madera_normal.png"
+roughness/mode=8
+roughness/src_normal="res://models/mina/via_ferrea_curva_via_ferrea_curva_normal.png"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2

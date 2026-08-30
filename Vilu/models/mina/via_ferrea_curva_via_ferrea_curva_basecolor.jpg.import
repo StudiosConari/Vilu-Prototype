@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cb72wqm4ivljg"
-path.s3tc="res://.godot/imported/via_ferrea_via_ferrea_basecolor.jpg-0ba91d8aeef80b752605059fc6f2d72f.s3tc.ctex"
+uid="uid://d0pp4vlobgavv"
+path.s3tc="res://.godot/imported/via_ferrea_curva_via_ferrea_curva_basecolor.jpg-4b7e565a38ef67575617f749faa6b8ad.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "440f4c0a28704cbcd89b70f9f63b397f"
+"md5": "8ac8823f8c63c5713b9d62fc7008f270"
 }
 
 [deps]
 
-source_file="res://models/mina/via_ferrea_via_ferrea_basecolor.jpg"
-dest_files=["res://.godot/imported/via_ferrea_via_ferrea_basecolor.jpg-0ba91d8aeef80b752605059fc6f2d72f.s3tc.ctex"]
+source_file="res://models/mina/via_ferrea_curva_via_ferrea_curva_basecolor.jpg"
+dest_files=["res://.godot/imported/via_ferrea_curva_via_ferrea_curva_basecolor.jpg-4b7e565a38ef67575617f749faa6b8ad.s3tc.ctex"]
 
 [params]
 

@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cukjpnstgj8ce"
-path="res://.godot/imported/rueda_de_carro_de_madera.glb-bd403eec01139b9498b4e01fd66d1afe.scn"
+uid="uid://do64kv6qubqv6"
+path="res://.godot/imported/via_ferrea_curva.glb-f0edc56e62a575a27b97093065e4345f.scn"
 
 [deps]
 
-source_file="res://models/mina/rueda_de_carro_de_madera.glb"
-dest_files=["res://.godot/imported/rueda_de_carro_de_madera.glb-bd403eec01139b9498b4e01fd66d1afe.scn"]
+source_file="res://models/mina/via_ferrea_curva.glb"
+dest_files=["res://.godot/imported/via_ferrea_curva.glb-f0edc56e62a575a27b97093065e4345f.scn"]
 
 [params]
 

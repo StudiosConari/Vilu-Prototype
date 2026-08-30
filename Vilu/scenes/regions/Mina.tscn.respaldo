@@ -14,7 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://57x4kchcpgl7" path="res://models/prop_pequeno/antorcha_de_pared.glb" id="10_bovvr"]
 [ext_resource type="PackedScene" uid="uid://ce24ex45k41je" path="res://models/prop_pequeno/linterna.glb" id="10_cfy0s"]
 [ext_resource type="PackedScene" uid="uid://bpernua86gmvl" path="res://models/mina/via_ferrea.glb" id="10_mw60a"]
-[ext_resource type="PackedScene" uid="uid://do64kv6qubqv6" path="res://models/mina/via_ferrea_curva.glb" id="11_5jpnj"]
+[ext_resource type="PackedScene" path="res://models/mina/via_ferrea_curva.glb" id="11_5jpnj"]
 [ext_resource type="PackedScene" uid="uid://ifw6gy78woeq" path="res://models/mina/cristal_rojo.glb" id="12_rfbf5"]
 [ext_resource type="PackedScene" uid="uid://bgts5grhh1h2x" path="res://models/mina/cristal_purpura.glb" id="13_ym7rh"]
 [ext_resource type="PackedScene" uid="uid://lunpskrp166g" path="res://models/mina/vagoneta_minera.glb" id="14_a8omq"]
@@ -29,9 +29,10 @@
 [ext_resource type="PackedScene" uid="uid://j67t4lquirws" path="res://models/prop_mediano/barriles.glb" id="26_728im"]
 [ext_resource type="PackedScene" uid="uid://blg1gkvp6thlx" path="res://models/focal/cristal_azul.glb" id="27_h471q"]
 [ext_resource type="PackedScene" uid="uid://b3b7bcx8mu380" path="res://models/focal/cristal_morado.glb" id="28_xrsi8"]
+[ext_resource type="PackedScene" uid="uid://bhimghyb0nnk0" path="res://models/focal/talisman_de_ojo_negro.glb" id="30_p8tqm"]
 [ext_resource type="PackedScene" uid="uid://c4iq2gltvacaj" path="res://models/prop_pequeno/marcas_de_garra.glb" id="31_6jiwt"]
 [ext_resource type="PackedScene" uid="uid://c51gf8i0hixmp" path="res://models/prop_pequeno/marca_de_pata.glb" id="32_fiygc"]
-[ext_resource type="Script" uid="uid://cj6gdv2cb2h44" path="res://scenes/actors/Destructible.gd" id="33_destr"]
+[ext_resource type="Script" path="res://scenes/actors/Destructible.gd" id="33_destr"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(9, 4, 5)
@@ -453,43 +454,43 @@ transform = Transform3D(0.016265582, 0, 1.5187086, 0, 1.5187956, 0, -1.5187086, 
 transform = Transform3D(0.016265582, 0, 1.5187086, 0, 1.5187956, 0, -1.5187086, 0, 0.016265582, 0.32129955, 0, -51.440098)
 
 [node name="via_ferrea_curva2" parent="DecoPiso/Linea Ferrea" unique_id=21064707 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(1.96838, 0, 0.16803, 0, 1.86792, 0, -0.170462, 0, 1.9403, 2.219694, -0.039477352, -4.307991)
+transform = Transform3D(1.0537795, 0, 0.08995568, 0, 1.0000001, 0, -0.09125732, 0, 1.038749, 2.219694, -0.039477352, -4.307991)
 
 [node name="via_ferrea_curva5" parent="DecoPiso/Linea Ferrea" unique_id=991194915 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(0.873903, 0, -1.96362, 0, 1.86792, 0, 1.5732, 0, 1.09078, -2.0320485, -0.039477352, -4.372767)
+transform = Transform3D(0.46784705, 0, -1.0512309, 0, 1.0000001, 0, 0.8422158, 0, 0.5839539, -2.0320485, -0.039477352, -4.372767)
 
 [node name="via_ferrea_curva3" parent="DecoPiso/Linea Ferrea" unique_id=2111198426 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(0.920889, 0, -1.6153, 0, 1.86792, 0, 1.5877, 0, 0.936897, 23.08227, -0.039477352, -4.23583)
+transform = Transform3D(0.49300107, 0, -0.8647592, 0, 1.0000001, 0, 0.8499832, 0, 0.50157136, 23.08227, -0.039477352, -4.23583)
 
 [node name="via_ferrea_curva4" parent="DecoPiso/Linea Ferrea" unique_id=302419593 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(-0.707913, 0, 1.72287, 0, 1.86792, 0, -1.69343, 0, -0.720219, 26.833916, -0.039477352, 1.1681366)
+transform = Transform3D(-0.37898383, 0, 0.9223431, 0, 1.0000002, 0, -0.9065831, 0, -0.38557196, 26.833916, -0.039477352, 1.1681366)
 
 [node name="via_ferrea_curva6" parent="DecoPiso/Linea Ferrea" unique_id=992502396 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(-0.970829, 0, 1.59582, 0, 1.86792, 0, -1.59582, 0, -0.970829, -18.193295, 0, -6.092731)
+transform = Transform3D(-0.5197368, 0, 0.85432637, 0, 1, 0, -0.85432637, 0, -0.5197368, -18.193295, 0, -6.092731)
 
 [node name="via_ferrea_curva7" parent="DecoPiso/Linea Ferrea" unique_id=1142324463 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(1.67823, 0, 0.321099, 0, 1.70867, 0, -0.321099, 0, 1.67823, -18.448322, 0, -11.556713)
+transform = Transform3D(0.89844525, 0, 0.17190157, 0, 0.9147426, 0, -0.17190157, 0, 0.89844525, -18.448322, 0, -11.556713)
 
 [node name="via_ferrea_curva8" parent="DecoPiso/Linea Ferrea" unique_id=94508796 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(0.634962, 0, 1.61085, 0, 1.73148, 0, -1.61085, 0, 0.634962, -19.790257, -0.0022076964, -8.51997)
+transform = Transform3D(0.3399291, 0, 0.86237574, 0, 0.926954, 0, -0.86237574, 0, 0.3399291, -19.790257, -0.0022076964, -8.51997)
 
 [node name="via_ferrea_curva12" parent="DecoPiso/Linea Ferrea" unique_id=51475053 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(-0.926568, 0, 1.55156, 0, 1.86792, 0, -1.52306, 0, -0.943902, -19.158966, 0, -19.178974)
+transform = Transform3D(-0.4960413, 0, 0.83063084, 0, 1, 0, -0.8153764, 0, -0.50532144, -19.158966, 0, -19.178974)
 
 [node name="via_ferrea_curva13" parent="DecoPiso/Linea Ferrea" unique_id=1618962946 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(1.69506, 0, 0.304269, 0, 1.70867, 0, -0.324319, 0, 1.59026, -19.413994, 0, -24.351368)
+transform = Transform3D(0.9074554, 0, 0.16289142, 0, 0.9147426, 0, -0.1736255, 0, 0.8513536, -19.413994, 0, -24.351368)
 
 [node name="via_ferrea_curva14" parent="DecoPiso/Linea Ferrea" unique_id=1413698771 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(0.603438, 0, 1.64238, 0, 1.73148, 0, -1.53088, 0, 0.647388, -20.755928, -0.0022076964, -21.47668)
+transform = Transform3D(0.32305247, 0, 0.87925243, 0, 0.926954, 0, -0.81956095, 0, 0.34658152, -20.755928, -0.0022076964, -21.47668)
 
 [node name="via_ferrea_curva9" parent="DecoPiso/Linea Ferrea" unique_id=404264595 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(0.870381, 0, -1.37226, 0, 1.86792, 0, 1.24126, 0, 0.962243, -14.552979, 0, -17.9349)
+transform = Transform3D(0.4659615, 0, -0.7346453, 0, 1, 0, 0.6645115, 0, 0.51513994, -14.552979, 0, -17.9349)
 
 [node name="via_ferrea_curva10" parent="DecoPiso/Linea Ferrea" unique_id=1181333167 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(-1.71857, 0, -0.199688, 0, 1.70867, 0, 0.227661, 0, -1.50741, -14.415044, 0, -13.241522)
+transform = Transform3D(-0.9200444, 0, -0.1069035, 0, 0.9147426, 0, 0.12187921, 0, -0.80699545, -14.415044, 0, -13.241522)
 
 [node name="via_ferrea_curva11" parent="DecoPiso/Linea Ferrea" unique_id=1618325988 instance=ExtResource("11_5jpnj")]
-transform = Transform3D(-0.653031, 0, -1.64502, 0, 1.73148, 0, 1.41337, 0, -0.760064, -12.901273, -0.0022076964, -15.868245)
+transform = Transform3D(-0.34960255, 0, -0.8806685, 0, 0.92695385, 0, 0.7566518, 0, -0.40690312, -12.901273, -0.0022076964, -15.868245)
 
 [node name="Cristales" type="Node3D" parent="DecoPiso" unique_id=1259976186]
 
@@ -823,6 +824,9 @@ otorga = "talisman_frag_1"
 mensaje = "Fragmento de talisman encontrado"
 recompensa = NodePath("../talisman_de_ojo_negro2")
 
+[node name="talisman_de_ojo_negro2" parent="." unique_id=1980488574 instance=ExtResource("30_p8tqm")]
+transform = Transform3D(9.986728, 0, 0, 0, 9.986728, 0, 0, 0, 9.986728, 0.26767024, 3.3162103, -52.384274)
+
 [node name="marcas_de_garra2" parent="." unique_id=368483130 instance=ExtResource("31_6jiwt")]
 transform = Transform3D(0.0003605187, 0, -0.6251873, 0, 5.7094417, 0, 6.392503, 0, 3.5263598e-05, 4.4158626, 1.5630908, -49.996044)
 
@@ -906,44 +910,3 @@ transform = Transform3D(2.7352931, -0.20447901, 0.017123532, 0.007150666, -0.133
 
 [node name="marca_de_pata21" parent="." unique_id=1877999049 instance=ExtResource("32_fiygc")]
 transform = Transform3D(2.7352931, -0.20447901, 0.017123532, 0.007150666, -0.13377573, -2.7397058, 0.20507014, 2.7320733, -0.13286777, 3.0718746, 0.24010153, -42.670506)
-
-[node name="Techo" type="Node3D" parent="." unique_id=1563147629]
-
-[node name="techo_baldosa_de_tierra_agrietada2" parent="Techo" unique_id=1412141125 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(16.193682, 0, 0, 0, 1.4785938e-06, 2.0098312, 0, -11.275428, 2.6355752e-07, -18.127033, 7.777, -1.7999725)
-
-[node name="techo_baldosa_de_tierra_agrietada3" parent="Techo" unique_id=727158087 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(16.193682, 0, 0, 0, 1.4785938e-06, 2.0098312, 0, -11.275428, 2.6355752e-07, -18.127033, 7.777, -15.3406725)
-
-[node name="techo_baldosa_de_tierra_agrietada4" parent="Techo" unique_id=1974609281 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(14.934022, 0, 0, 0, 1.6756983e-06, 2.0098312, 0, -12.778502, 2.6355752e-07, 0.20639992, 7.777, -13.554276)
-
-[node name="techo_baldosa_de_tierra_agrietada12" parent="Techo" unique_id=923725649 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(14.934022, 0, 0, 0, 1.308219e-06, 2.0098312, 0, -9.976188, 2.6355752e-07, 0.20639992, 7.7769995, -64.66295)
-
-[node name="techo_baldosa_de_tierra_agrietada13" parent="Techo" unique_id=1844496261 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(14.934022, 0, 0, 0, 1.555644e-06, 2.0098312, 0, -11.862995, 2.6355752e-07, 0.20639992, 7.777, -28.731026)
-
-[node name="techo_baldosa_de_tierra_agrietada15" parent="Techo" unique_id=552873804 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(8.250376, 0, 0, 0, 1.4785938e-06, 2.0098312, 0, -11.275428, 2.6355752e-07, 0.20639992, 7.777, -41.84955)
-
-[node name="techo_baldosa_de_tierra_agrietada14" parent="Techo" unique_id=1146230906 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(14.934022, 0, 0, 0, 1.2533865e-06, 2.0098312, 0, -9.558046, 2.6355752e-07, 0.20639992, 7.777, -53.270176)
-
-[node name="techo_baldosa_de_tierra_agrietada8" parent="Techo" unique_id=125195633 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(-0.2586064, 11.307938, -8.784349e-08, -1.5774365e-06, 4.80168e-07, 2.009831, 18.04377, 0.16206728, 1.7444601e-07, 21.368126, 7.7770004, -4.584461)
-
-[node name="techo_baldosa_de_tierra_agrietada9" parent="Techo" unique_id=707718223 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(-0.25817993, 12.646924, -8.784349e-08, -1.5748349e-06, 5.370253e-07, 2.009831, 18.014011, 0.18125787, 1.7444601e-07, 34.26472, 7.7770004, -4.584461)
-
-[node name="techo_baldosa_de_tierra_agrietada10" parent="Techo" unique_id=1144246146 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(-0.057197426, 3.3722591, -8.784349e-08, -3.4889038e-07, 1.4319598e-07, 2.009831, 3.9908407, 0.0483318, 1.7444601e-07, 39.9707, 7.7770014, -17.005974)
-
-[node name="techo_baldosa_de_tierra_agrietada7" parent="Techo" unique_id=520924939 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(11.923451, 0.05990297, -9.556561e-10, -1.1339652e-08, 7.221039e-07, 2.0098314, 0.1297105, -5.5064945, 2.6355235e-07, 14.89392, 7.777001, -1.6975193)
-
-[node name="techo_baldosa_de_tierra_agrietada5" parent="Techo" unique_id=897704386 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(14.934022, 0, 0, 0, 1.7679697e-06, 2.0098312, 0, -13.482143, 2.6355752e-07, 0.20639992, 7.777, 2.4616697)
-
-[node name="techo_baldosa_de_tierra_agrietada6" parent="Techo" unique_id=1579194582 instance=ExtResource("6_kh1ie")]
-transform = Transform3D(14.934022, 0, 0, 0, 1.4785938e-06, 2.0098312, 0, -11.275428, 2.6355752e-07, 0.20639992, 7.777, 16.136452)

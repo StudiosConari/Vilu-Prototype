@@ -261,7 +261,6 @@ func _bar_objective_done() -> void:
 func _build_town() -> void:
 	# Paleta aclarada para el sombreado toon: con la rampa de luz escalonada,
 	# los tonos oscuros colapsan a manchas negras sin forma legible.
-	var dirt  := _mat(Color(0.72, 0.58, 0.42))
 	var adobe := _mat(Color(0.86, 0.74, 0.56))
 	var roof  := _mat(Color(0.66, 0.34, 0.24))
 	var wood  := _mat(Color(0.58, 0.42, 0.28))

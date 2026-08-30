@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cb72wqm4ivljg"
-path.s3tc="res://.godot/imported/via_ferrea_via_ferrea_basecolor.jpg-0ba91d8aeef80b752605059fc6f2d72f.s3tc.ctex"
+uid="uid://cvtwrvm8br5of"
+path.s3tc="res://.godot/imported/via_ferrea_curva_via_ferrea_curva_normal.png-7f228fcc7c89359c4b8abb34d75a8b8f.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "440f4c0a28704cbcd89b70f9f63b397f"
+"md5": "665ceb84eb4cfbcf6b7a379fbd9d2ca1"
 }
 
 [deps]
 
-source_file="res://models/mina/via_ferrea_via_ferrea_basecolor.jpg"
-dest_files=["res://.godot/imported/via_ferrea_via_ferrea_basecolor.jpg-0ba91d8aeef80b752605059fc6f2d72f.s3tc.ctex"]
+source_file="res://models/mina/via_ferrea_curva_via_ferrea_curva_normal.png"
+dest_files=["res://.godot/imported/via_ferrea_curva_via_ferrea_curva_normal.png-7f228fcc7c89359c4b8abb34d75a8b8f.s3tc.ctex"]
 
 [params]
 
@@ -25,12 +25,12 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=0
-roughness/src_normal=""
+roughness/mode=1
+roughness/src_normal="res://models/mina/via_ferrea_curva_via_ferrea_curva_normal.png"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2

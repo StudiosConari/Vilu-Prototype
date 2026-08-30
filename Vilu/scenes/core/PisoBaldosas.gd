@@ -118,9 +118,9 @@ func construir() -> int:
 		mm.instance_count = lista.size()
 		var caja_malla: AABB = mm.mesh.get_aabb()
 		for i in lista.size():
-			var tr: Transform3D = lista[i]
-			mm.set_instance_transform(i, tr)
-			var mundo: AABB = tr * caja_malla
+			var trans: Transform3D = lista[i]
+			mm.set_instance_transform(i, trans)
+			var mundo: AABB = trans * caja_malla
 			tope = maxf(tope, mundo.position.y + mundo.size.y)
 
 		var mmi := MultiMeshInstance3D.new()
