@@ -91,6 +91,20 @@ class_name AjustesToon
 		rim_color = v
 		emit_changed()
 
+## Fuerza del rim EN EL TERRENO, aparte de la de los objetos.
+##
+## En un prop el rim sirve: despega su silueta del fondo. En una llanura no hay
+## silueta que despegar, y como el término es aditivo y casi blanco, lo único
+## que hace es lavar el suelo hacia el blanco justo donde se lo mira a rasante.
+## Peor aún: depende del ángulo de visión, así que el lavado se DESPLAZA al
+## caminar, y como la arena ya tiene el canal rojo al tope, ese brillo de más
+## solo puede subir verde y azul y el salto se lee como una mancha de bordes
+## duros. Por eso arranca en 0.
+@export_range(0.0, 2.0, 0.01) var rim_terreno := 0.0:
+	set(v):
+		rim_terreno = v
+		emit_changed()
+
 @export_group("Contorno del objeto")
 ## La silueta negra que rodea cada modelo, hecha por casco invertido.
 @export var contorno_activo := true:
@@ -192,6 +206,6 @@ func aplicar_a_terreno(mat: Resource) -> void:
 	mat.set_shader_param("piso_sombra", piso_sombra)
 	mat.set_shader_param("sombra_suavidad", sombra_suavidad)
 	mat.set_shader_param("tinte_sombra", tinte_sombra)
-	mat.set_shader_param("rim_fuerza", rim_fuerza)
+	mat.set_shader_param("rim_fuerza", rim_terreno)
 	mat.set_shader_param("rim_ancho", rim_ancho)
 	mat.set_shader_param("rim_color", rim_color)

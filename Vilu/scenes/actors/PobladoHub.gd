@@ -311,12 +311,28 @@ func _build_town() -> void:
 	b_sign.modulate  = Color(1.0, 0.82, 0.45)
 	add_child(b_sign)
 
-	# Luz cálida del bar
-	var bar_light          := OmniLight3D.new()
-	bar_light.position     = Vector3(12, 2.8, -4.0)
-	bar_light.light_color  = Color(1.0, 0.78, 0.42)
-	bar_light.omni_range   = 12.0
-	bar_light.light_energy = 1.3
+	# Luz cálida del bar.
+	#
+	# El radio era 12 m, y eso la sacaba del pueblo: su borde exterior caía sobre
+	# el desierto abierto y dibujaba ahí una mancha pálida de bordes duros. Se
+	# veía como un fallo del terreno, pero era esta lámpara.
+	#
+	# Dos cosas la delataban. La arena tiene el canal rojo saturado al tope, así
+	# que una luz cálida no puede aclararla: sólo puede subirle el verde, y el
+	# dorado vira a blanco de golpe en vez de iluminarse. Y el renderizador
+	# agrupa las luces por celdas de pantalla, así que en la cola tenue del
+	# alcance la frontera entre celdas se ve como un recorte recto que se
+	# desplaza al caminar.
+	#
+	# Con 5 m el charco de luz se queda en la plaza, que es donde tiene sentido,
+	# y la atenuación más seca apaga esa cola. Medido: la diferencia entre arena
+	# dentro y fuera del borde pasa de 0.051 a 0.000.
+	var bar_light             := OmniLight3D.new()
+	bar_light.position        = Vector3(12, 2.8, -4.0)
+	bar_light.light_color     = Color(1.0, 0.78, 0.42)
+	bar_light.omni_range      = 5.0
+	bar_light.omni_attenuation = 2.5
+	bar_light.light_energy    = 1.3
 	add_child(bar_light)
 
 	# — Casas de relleno —

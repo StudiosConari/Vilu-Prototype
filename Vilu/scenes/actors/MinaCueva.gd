@@ -9,7 +9,10 @@ extends Node3D
 ##
 ## Durante la huida: 8 mineros normales + 4 bloques de derrumbe del techo.
 
-const ENEMY_NORMAL    := preload("res://scenes/enemies/EnemyNormal.tscn")
+const ENEMY_NORMAL    := preload("res://scenes/enemies/MineroCorrupto.tscn")
+const CHUPACABRAS     := preload("res://models/personaje/chupacabras.glb")
+const ENCAJAR         := preload("res://scenes/core/EncajarModelo.gd")
+const TOON_SKIN       := preload("res://scenes/core/ToonSkin.gd")
 const BALLOON         := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
 const TALISMAN_SCR    := preload("res://scenes/actors/TalismanFragment.gd")
 
@@ -286,6 +289,7 @@ func _start_combat() -> void:
 		e.base_color = miner_color
 		e.died.connect(_on_miner_died)
 		add_child(e)
+		TOON_SKIN.new().aplicar(e)
 		e.global_position = _sitio_libre(pos)
 
 
@@ -332,23 +336,20 @@ func _start_chase() -> void:
 	c.collision_layer = 4
 	c.collision_mask  = 1
 
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = chupa_color
-	var mi := MeshInstance3D.new()
-	var cm := CapsuleMesh.new()
-	cm.radius = 0.65
-	cm.height = 2.4
-	mi.mesh = cm
-	mi.position.y = 1.2
-	mi.set_surface_override_material(0, mat)
-	c.add_child(mi)
+	# Modelo real. Se encaja midiendo su caja envolvente en vez de confiar en el
+	# tamaño del archivo, y se le pasa el sombreado toon a mano: la mina entera
+	# lo recibe al cargarse, pero el Chupacabras nace después, en plena huida.
+	var visual: Node3D = CHUPACABRAS.instantiate()
+	c.add_child(visual)
+	ENCAJAR.encajar(visual, 2.4)
+	TOON_SKIN.new().aplicar(visual)
 
 	var lbl := Label3D.new()
 	lbl.text = "CHUPACABRAS"
 	lbl.position.y = 3.0
 	lbl.pixel_size = 0.009
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.modulate = Color(0.9, 0.3, 1.0, 1)
+	lbl.modulate = chupa_color.lightened(0.55)
 	lbl.font_size = 22
 	lbl.outline_size = 8
 	c.add_child(lbl)
@@ -393,6 +394,7 @@ func _start_chase() -> void:
 		m.speed      = 1.5
 		m.max_health = 999.0
 		add_child(m)
+		TOON_SKIN.new().aplicar(m)
 		m.global_position = _sitio_libre(pos)
 		m.remove_from_group("enemies")  # el compañero no los ataca durante la huida
 

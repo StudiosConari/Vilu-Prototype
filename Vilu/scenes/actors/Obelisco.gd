@@ -18,6 +18,13 @@ const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 ## Prop que cae al activarlo. Vacío = no derriba nada (sólo se enciende).
 @export var barrera: NodePath
 
+## Algo que se despierta al activarlo: lo que estaba encerrado detrás.
+##
+## Va aparte de `barrera` porque no siempre coinciden —una barrera puede tapar
+## un pasillo vacío— y porque lo de detrás no tiene por qué ser un enemigo: basta
+## con que tenga un método `despertar()`.
+@export var despierta: NodePath
+
 ## Texto del cartel del HUD mientras estás al lado.
 @export var prompt := "[E] Activar el obelisco"
 
@@ -62,6 +69,7 @@ func _on_interacted(jugador: Node) -> void:
 	_activado = true
 	_encender()
 	_derribar()
+	_despertar_a_lo_de_detras()
 	if mensaje != "":
 		_cartel(mensaje)
 	Sfx.play_at("fire", global_position, -3.0, 1.6)
@@ -86,6 +94,17 @@ func _encender() -> void:
 	var f := global_transform.basis.get_scale()
 	luz.position.y = 1.2 / maxf(f.y, 0.001)
 	create_tween().tween_property(luz, "light_energy", 2.4, 0.5)
+
+
+func _despertar_a_lo_de_detras() -> void:
+	if despierta.is_empty():
+		return
+	var n := get_node_or_null(despierta)
+	if n == null:
+		push_warning("Obelisco en %s: no encuentro '%s' para despertar" % [name, despierta])
+		return
+	if n.has_method("despertar"):
+		n.call("despertar")
 
 
 func _derribar() -> void:

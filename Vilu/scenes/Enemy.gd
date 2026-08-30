@@ -19,7 +19,30 @@ extends CharacterBody3D
 @export var burn_dps: float = 9.0
 
 const PROJECTILE := preload("res://scenes/Projectile.gd")
+const ENCAJAR := preload("res://scenes/core/EncajarModelo.gd")
 @export var windup_time: float = 0.6  # aviso antes de golpear (para esquivar)
+
+@export_group("Aspecto")
+## Modelo real del enemigo. Vacío = la cápsula de siempre.
+##
+## Se mide su caja envolvente y se escala a `altura_visual`, en vez de confiar
+## en el tamaño con el que viene el archivo: así cambiar de modelo no descoloca
+## al enemigo ni obliga a recalcular nada a mano.
+@export var modelo: PackedScene
+## Altura del modelo en metros. En 0 se respeta su tamaño original.
+@export var altura_visual := 0.0
+
+@export_group("Sueño")
+## Segundos que deja dormido al personaje alcanzado por el golpe de ÁREA.
+## En 0 el golpe sólo hace daño.
+@export var duerme := 0.0
+
+@export_group("Estado inicial")
+## Arranca inerte: ni se mueve, ni es objetivo, ni se le puede pegar.
+##
+## Para enemigos encerrados que un mecanismo libera después —Lola detrás de la
+## barrera de cuerda—. Se despierta llamando a `despertar()`.
+@export var dormido := false
 @export var charge_windup: float = 0.9
 @export var charge_speed: float = 15.0
 @export var charge_dur: float = 0.5
@@ -37,7 +60,14 @@ var _burn_acc := 0.0
 var _knockback := Vector3.ZERO
 var _flash := 0.0
 var _mat: StandardMaterial3D
-var _body: MeshInstance3D
+## Nodo al que se le aplican los aplastamientos y estirones del telegrafiado.
+## Con cápsula es la propia malla; con modelo es un envoltorio, para que la
+## animación no pise la escala con la que el modelo se ajusta a su altura.
+var _body: Node3D
+## Capa transparente sobre el modelo, para el destello del golpe y la quemadura.
+## La cápsula pinta su propio material; un modelo importado trae los suyos y no
+## se le pueden tocar sin estropear su textura.
+var _capa: StandardMaterial3D
 var _telegraph: MeshInstance3D
 var _tel_mat: StandardMaterial3D
 # Embestida del jefe (no cancelable): 0 nada, 1 aviso, 2 embistiendo.
@@ -68,6 +98,11 @@ func _ready() -> void:
 	add_to_group("enemies")
 	collision_layer = 4
 	collision_mask = 1 | 2 | 4
+	if dormido:
+		# Ni objetivo ni golpeable mientras siga encerrado: sin esto el
+		# compañero la elige de blanco y dispara flechas a través de la barrera.
+		remove_from_group("enemies")
+		collision_layer = 0
 	health = max_health
 	_build_visual()
 	var col := CollisionShape3D.new()
@@ -124,6 +159,9 @@ func _build_visual() -> void:
 	var sf := scale_factor
 	_mat = StandardMaterial3D.new()
 	_mat.albedo_color = base_color
+	if modelo != null:
+		_montar_modelo(sf)
+		return
 	var body := MeshInstance3D.new()
 	var cap := CapsuleMesh.new()
 	cap.radius = 0.4 * sf
@@ -144,6 +182,75 @@ func _build_visual() -> void:
 		eye.material_override = eye_mat
 		eye.position = Vector3(sx * sf, 1.15 * sf, 0.33 * sf)
 		add_child(eye)
+
+
+## Cuelga el modelo importado, ajustado a su altura y apoyado en el suelo.
+##
+## El envoltorio intermedio no es capricho: el telegrafiado aplasta y estira a
+## `_body`, y si eso cayera sobre el modelo pisaría la escala con la que se
+## ajusta su altura. Separando las dos cosas cada una manda sobre lo suyo.
+func _montar_modelo(sf: float) -> void:
+	_body = Node3D.new()
+	add_child(_body)
+
+	var raiz: Node3D = modelo.instantiate()
+	_body.add_child(raiz)
+	ENCAJAR.encajar(raiz, altura_visual * sf if altura_visual > 0.0 else 0.0)
+
+	# Capa para el destello y la quemadura. Va como material_overlay: dibuja el
+	# modelo una segunda vez encima sin tocar sus materiales, así que la textura
+	# no se pierde y al apagarla no queda rastro.
+	_capa = StandardMaterial3D.new()
+	_capa.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_capa.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_capa.albedo_color = Color(1, 1, 1, 0)
+	for m in ENCAJAR.mallas(raiz):
+		m.material_overlay = _capa
+
+
+## Lleva el destello y la quemadura a la capa del modelo.
+##
+## El resto del script escribe esos estados en `_mat`, que es el material de la
+## cápsula. Con modelo esa cápsula no existe, así que en vez de repartir
+## condicionales por todo el bucle se leen de ahí una vez por cuadro.
+func _pintar() -> void:
+	if _capa == null:
+		return
+	var c := Color(1, 1, 1, 0)
+	if _flash > 0.0:
+		c = Color(1, 1, 1, 0.7)
+	elif _mat.emission_enabled:
+		c = Color(_mat.emission.r, _mat.emission.g, _mat.emission.b,
+			clampf(_mat.emission_energy_multiplier * 0.22, 0.0, 0.55))
+	_capa.albedo_color = c
+
+
+## Golpe de ÁREA: alcanza a todo el que esté dentro, no sólo al objetivo.
+##
+## `_hit_target` sigue existiendo para el ataque normal, que es de uno contra
+## uno; si el aplastamiento usara aquel, con los dos personajes dentro del
+## círculo sólo se llevaría el golpe uno.
+func _golpe_de_area(radio: float, dmg: float) -> void:
+	for p in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(p) or not (p is Node3D):
+			continue
+		var to_p: Vector3 = (p as Node3D).global_position - global_position
+		if Vector2(to_p.x, to_p.z).length() > radio or absf(to_p.y) > 1.8:
+			continue
+		if p.has_method("take_damage"):
+			p.take_damage(dmg, global_position)
+		if duerme > 0.0 and p.has_method("dormir"):
+			p.dormir(duerme)
+
+
+## Lo llama el mecanismo que la libera (el obelisco, en la mina).
+func despertar() -> void:
+	if not dormido:
+		return
+	dormido = false
+	collision_layer = 4
+	add_to_group("enemies")
+	Sfx.play_at("boss", global_position, 2.0, 0.7)
 
 
 func set_slowed(t: float, factor: float) -> void:
@@ -238,7 +345,7 @@ func _process_charge(delta: float) -> Vector3:
 			_body.scale = Vector3.ONE
 			_charge_state = 0
 			_cd = attack_cooldown
-			_hit_target(attack_range * 2.4 * 1.05, damage * 2.2)
+			_golpe_de_area(attack_range * 2.4 * 1.05, damage * 2.2)
 		return Vector3.ZERO
 	if _charge_state == 1:  # aviso: quieto, super armadura (no cancelable)
 		_charge_t -= delta
@@ -298,6 +405,13 @@ func _spawn_damage_number(amount: float, big: bool) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if dormido:
+		# Inerte, pero con gravedad: si no, quedaría flotando donde se la puso.
+		velocity.x = 0.0
+		velocity.z = 0.0
+		velocity.y = -0.1 if is_on_floor() else velocity.y - 18.0 * delta
+		move_and_slide()
+		return
 	_cd = maxf(0.0, _cd - delta)
 	_stun = maxf(0.0, _stun - delta)
 	if _slow_time > 0.0:
@@ -403,4 +517,5 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= 18.0 * delta
 	else:
 		velocity.y = -0.1
+	_pintar()
 	move_and_slide()
