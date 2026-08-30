@@ -37,6 +37,18 @@ const ENCAJAR := preload("res://scenes/core/EncajarModelo.gd")
 ## En 0 el golpe sólo hace daño.
 @export var duerme := 0.0
 
+## Segundos entre un ataque de área y el siguiente.
+##
+## En 0 se mantiene la regla vieja de los jefes: uno de cada tres golpes es el
+## especial. Eso ata el ataque al número de veces que llegó a pegarte, o sea que
+## no hay forma de preverlo. Con un valor manda el reloj: el área sale cada
+## tantos segundos y entre medias pega normal, que es lo que la hace legible.
+@export var cooldown_area := 0.0
+
+## Color del círculo del ataque de área. Rojo para el sueño de Lola; el naranja
+## de fábrica es el del aplastamiento corriente.
+@export var color_area := Color(1.0, 0.4, 0.05)
+
 @export_group("Estado inicial")
 ## Arranca inerte: ni se mueve, ni es objetivo, ni se le puede pegar.
 ##
@@ -55,6 +67,7 @@ var _slow_time := 0.0
 var _slow_factor := 1.0
 var _windup := 0.0
 var _boss_atk := 0
+var _cd_area := 0.0
 var _burn_time := 0.0
 var _burn_acc := 0.0
 var _knockback := Vector3.ZERO
@@ -104,6 +117,10 @@ func _ready() -> void:
 		remove_from_group("enemies")
 		collision_layer = 0
 	health = max_health
+	# Arranca en cuenta atrás para que el primer golpe sea el básico. La cuenta
+	# sólo corre cuando está activa, así que un enemigo encerrado no llega ya
+	# cargado el día que lo sueltan.
+	_cd_area = cooldown_area
 	_build_visual()
 	var col := CollisionShape3D.new()
 	var cap := CapsuleShape3D.new()
@@ -325,6 +342,16 @@ func _shoot() -> void:
 	Sfx.play_at("fire", global_position, -5.0)
 
 
+## ¿Toca el ataque especial —embestida o aplastamiento— en vez del básico?
+func _toca_especial() -> bool:
+	if cooldown_area <= 0.0:
+		return _boss_atk % 3 == 0
+	if _cd_area > 0.0:
+		return false
+	_cd_area = cooldown_area
+	return true
+
+
 func _start_slam() -> void:
 	_charge_state = 3
 	_charge_t = charge_windup * 1.15
@@ -337,7 +364,8 @@ func _process_charge(delta: float) -> Vector3:
 	if _charge_state == 3:  # APLASTAMIENTO de area (super armadura)
 		_charge_t -= delta
 		var st: float = clampf(1.0 - _charge_t / (charge_windup * 1.15), 0.0, 1.0)
-		_tel_mat.albedo_color = Color(1.0, 0.4, 0.05, lerpf(0.2, 0.65, st))
+		_tel_mat.albedo_color = Color(color_area.r, color_area.g, color_area.b,
+			lerpf(0.2, 0.65, st))
 		_body.scale = Vector3.ONE.lerp(Vector3(1.35, 0.6, 1.35), st)
 		if _charge_t <= 0.0:
 			_telegraph.visible = false
@@ -413,6 +441,9 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 	_cd = maxf(0.0, _cd - delta)
+	# El reloj del área corre sólo estando activa: así un enemigo encerrado no
+	# llega ya cargado el día que lo sueltan.
+	_cd_area = maxf(0.0, _cd_area - delta)
 	_stun = maxf(0.0, _stun - delta)
 	if _slow_time > 0.0:
 		_slow_time = maxf(0.0, _slow_time - delta)
@@ -486,14 +517,13 @@ func _physics_process(delta: float) -> void:
 	elif dist > attack_range * 0.9:
 		desired = to.normalized() * speed
 	elif _cd <= 0.0 and is_instance_valid(_target):
-		if is_boss and (_boss_atk + 1) % 3 == 0:
-			_boss_atk += 1
+		_boss_atk += 1
+		if is_boss and _toca_especial():
 			if boss_kind == 1:
 				_start_slam()
 			else:
 				_start_charge()
 		else:
-			_boss_atk += 1
 			_windup = windup_time
 			_telegraph.visible = true
 
