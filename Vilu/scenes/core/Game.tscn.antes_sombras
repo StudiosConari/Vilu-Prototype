@@ -48,11 +48,10 @@ environment = SubResource("env")
 transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 10, 0)
 light_energy = 1.15
 shadow_enabled = true
-shadow_bias = 0.05
-shadow_normal_bias = 1.0
+shadow_bias = 0.16
+shadow_normal_bias = 4.0
 shadow_blur = 0.4
-directional_shadow_blend_splits = true
-directional_shadow_max_distance = 160.0
+directional_shadow_max_distance = 260.0
 
 [node name="RegionHolder" type="Node3D" parent="." unique_id=928719257]
 

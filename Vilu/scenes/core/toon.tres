@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AjustesToon" format=3 uid="uid://cdhi5m1cp2boc"]
+
+[ext_resource type="Script" uid="uid://50rw4bjhhhql" path="res://scenes/core/AjustesToon.gd" id="1_ajustes"]
+
+[resource]
+script = ExtResource("1_ajustes")
+saturacion = 0.8
+tinte_sombra = Color(0.74, 0.77, 0.9, 1)
+contorno_activo = false
+contorno_grosor = 0.005
+pantalla_opacidad = 0.0
+pantalla_umbral_profundidad = 0.01
+pantalla_umbral_normal = 0.05
+pantalla_distancia_fin = 20.0
