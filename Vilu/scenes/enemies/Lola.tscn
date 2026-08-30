@@ -20,4 +20,6 @@ charge_windup = 1.1
 modelo = ExtResource("2_modelo")
 altura_visual = 1.7
 duerme = 4.0
+cooldown_area = 6.0
+color_area = Color(1, 0.08, 0.08, 1)
 dormido = true

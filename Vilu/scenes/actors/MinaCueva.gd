@@ -9,7 +9,9 @@ extends Node3D
 ##
 ## Durante la huida: 8 mineros normales + 4 bloques de derrumbe del techo.
 
-const ENEMY_NORMAL    := preload("res://scenes/enemies/MineroCorrupto.tscn")
+## Los mineros corruptos: mismas caracteristicas que EnemyNormal pero con su
+## modelo. Se usan tanto en el combate como en la huida.
+const MINERO          := preload("res://scenes/enemies/MineroCorrupto.tscn")
 const CHUPACABRAS     := preload("res://models/personaje/chupacabras.glb")
 const ENCAJAR         := preload("res://scenes/core/EncajarModelo.gd")
 const TOON_SKIN       := preload("res://scenes/core/ToonSkin.gd")
@@ -90,7 +92,7 @@ func _precalentar_shaders() -> void:
 	var punto := get_node_or_null("PlayerSpawn") as Node3D
 	var pos := punto.global_position if punto else Vector3.ZERO
 
-	var e: CharacterBody3D = ENEMY_NORMAL.instantiate()
+	var e: CharacterBody3D = MINERO.instantiate()
 	e.base_color = miner_color
 	add_child(e)
 	e.global_position = pos
@@ -285,7 +287,7 @@ func _start_combat() -> void:
 	spawns = _puntos_de("SpawnsCombate", spawns)
 	_alive = spawns.size()
 	for pos in spawns:
-		var e: CharacterBody3D = ENEMY_NORMAL.instantiate()
+		var e: CharacterBody3D = MINERO.instantiate()
 		e.base_color = miner_color
 		e.died.connect(_on_miner_died)
 		add_child(e)
@@ -389,7 +391,7 @@ func _start_chase() -> void:
 	]
 	escape_pos = _puntos_de("SpawnsHuida", escape_pos)
 	for pos in escape_pos:
-		var m: CharacterBody3D = ENEMY_NORMAL.instantiate()
+		var m: CharacterBody3D = MINERO.instantiate()
 		m.base_color = miner_color
 		m.speed      = 1.5
 		m.max_health = 999.0
