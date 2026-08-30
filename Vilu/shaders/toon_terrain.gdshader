@@ -96,6 +96,12 @@ group_uniforms Luz_Toon;
 uniform int pasos_luz : hint_range(1, 6) = 3;
 // Qué tan blando es el borde entre escalones. Chico = corte duro.
 uniform float dureza_corte : hint_range(0.001, 0.3) = 0.02;
+// Ancho del degradado en el BORDE de la sombra proyectada, aparte del de las
+// bandas de luz. Antes salia de dureza_corte x4, o sea que afinar el corte del
+// cel shading afilaba tambien el borde de sombra, y ahi es donde se nota: el
+// filtro de sombras entrega una penumbra de varios metros y un corte estrecho
+// la colapsa contra la reticula del mapa, en escalones.
+uniform float sombra_suavidad : hint_range(0.01, 0.5) = 0.08;
 // Cuánta luz recibe la cara en sombra (no negra: el anime rellena la sombra)
 uniform float piso_sombra : hint_range(0.0, 0.8) = 0.35;
 // Tinte de la sombra: el anime la tira a azul/violeta, no a negro
@@ -316,7 +322,7 @@ void light() {
 	float banda = (base + smoothstep(0.5 - aa, 0.5 + aa, resto)) / pasos;
 
 	// La sombra proyectada también se corta duro
-	float sombra = smoothstep(0.5 - dureza_corte * 4.0, 0.5 + dureza_corte * 4.0, ATTENUATION);
+	float sombra = smoothstep(0.5 - sombra_suavidad, 0.5 + sombra_suavidad, ATTENUATION);
 	banda *= mix(piso_sombra, 1.0, sombra);
 
 	// Nunca a negro: se rellena con un tinte frío, como en el cel tradicional

@@ -24,6 +24,9 @@ Emilia: Sea lo que sea, está muy cerca.
 @export var chupa_color := Color(0.07, 0.02, 0.14)
 
 var _combat_cleared := false
+## Ya se soltó la tanda de mineros. Distinto de `_combat_cleared`, que es "ya
+## los mataste": entre una cosa y la otra pasa todo el combate.
+var _combat_started := false
 var _claw_fired     := false
 var _chase_active   := false
 var _chupacabras: CharacterBody3D = null
@@ -53,6 +56,22 @@ func _ready() -> void:
 	_precalentar_shaders()
 
 
+## Al descargarse la mina se apaga la huida forzada.
+##
+## `_stop_chase` corre cuando el jugador cruza la boca, pero salir de un interior
+## no pasa por `TravelManager.load_region`, así que la señal `region_changed`
+## —la que le limpia `forced_run_dir` al PlayerController— nunca se emite. Si la
+## salida se cruzaba en el mismo cuadro en que arrancaba el viaje, el personaje
+## se llevaba la carrera automática puesta al poblado y seguía corriendo solo
+## para siempre. Los jugadores sobreviven a esta escena, así que hay que
+## devolverles el control desde acá.
+func _exit_tree() -> void:
+	for p in _forced_players:
+		if is_instance_valid(p) and "forced_run_dir" in p:
+			p.forced_run_dir = Vector3.ZERO
+	_forced_players.clear()
+
+
 ## Dibuja una vez, a escondidas, cada material que aparecerá de golpe más tarde.
 ##
 ## El proyecto usa Forward+, que compila el shader la primera vez que un
@@ -74,6 +93,10 @@ func _precalentar_shaders() -> void:
 	e.global_position = pos
 	e.remove_from_group("enemies")     # que nadie lo tome por un objetivo real
 	e.process_mode = Node.PROCESS_MODE_DISABLED
+	# Sin colision: aparece en el punto de entrada y solaparia con el suelo,
+	# justo lo que este arreglo trata de evitar.
+	e.collision_layer = 0
+	e.collision_mask = 0
 	for hijo in e.get_children():
 		if hijo is MeshInstance3D:
 			(hijo as MeshInstance3D).visible = true   # incluido el telegrafiado
@@ -95,12 +118,22 @@ func _precalentar_shaders() -> void:
 
 
 func _spawn_talisman() -> void:
+	# Sólo si la escena lo pide con un marcador.
+	#
+	# Antes se creaba siempre, en coordenadas fijas heredadas de la cueva que se
+	# generaba por código. La mina de ahora trae el talismán como modelo puesto a
+	# mano sobre la barricada de tablones, y es esa barricada la que concede la
+	# habilidad al romperse: el panel flotante sobraba, brillando en mitad del
+	# pasillo. Con un Marker3D llamado TalismanSpawn vuelve, donde se lo ponga.
+	var marca := get_node_or_null("TalismanSpawn") as Node3D
+	if marca == null:
+		return
 	if GameManager.has_ability("talisman_frag_1"):
 		return   # ya fue recogido en una sesión anterior
 	var t := Area3D.new()
 	t.set_script(TALISMAN_SCR)
-	t.position = Vector3(0.0, 1.2, -44.0)   # S3, centro del pasillo de garras
 	add_child(t)
+	t.global_position = marca.global_position
 
 
 # La persecución lanza rayos, así que va en _physics_process y no en _process.
@@ -113,7 +146,11 @@ func _physics_process(delta: float) -> void:
 		return
 	for p in get_tree().get_nodes_in_group("player"):
 		if is_instance_valid(p) and p.get("active") == true:
-			if p.global_position.z > -2.0:
+			# El umbral sale de la salida real, no de un numero fijo: al escalar la
+			# mina un -2.0 escrito a mano deja de significar "llegaste a la boca".
+			var salida := get_node_or_null("ExitToPoblado") as Node3D
+			var meta := (salida.global_position.z - 1.0) if salida else -1.0
+			if p.global_position.z > meta:
 				_stop_chase()
 				return
 	if is_instance_valid(_chupacabras):
@@ -123,10 +160,26 @@ func _physics_process(delta: float) -> void:
 
 # ─── Triggers dinámicos ───────────────────────────────────────────────────────
 
+## Disparadores del nivel.
+##
+## Se prefieren los Area3D que traiga la escena. Las coordenadas de más abajo
+## venían de la cueva que se construía por código, y ya fallaron dos veces: al
+## rehacer la mina a mano y otra vez al reescalarla. Con el disparador puesto en
+## la escena, mover o escalar el nivel lo arrastra consigo y no hay nada que
+## sincronizar.
 func _setup_triggers() -> void:
-	_make_trigger(Vector3(0.0, 2.0, -17.0), Vector3(14.0, 5.0,  4.0), _on_combat_enter)
-	_make_trigger(Vector3(0.0, 2.0, -47.0), Vector3( 6.0, 4.0,  6.0), _on_claw_enter)
-	_make_trigger(Vector3(0.0, 1.5, -60.0), Vector3(17.0, 8.0,  4.0), _on_nest_enter)
+	_trigger("CombatTrigger", Vector3(0.0, 1.4, -11.9), Vector3(9.8, 3.5, 2.8), _on_combat_enter)
+	_trigger("ClawTrigger",   Vector3(0.0, 1.5, -30.0), Vector3(6.3, 3.5, 2.8), _on_claw_enter)
+	_trigger("NestTrigger",   Vector3(0.0, 1.05, -42.0), Vector3(11.9, 5.6, 2.8), _on_nest_enter)
+
+
+func _trigger(nombre: String, pos: Vector3, size: Vector3, callback: Callable) -> void:
+	var area := get_node_or_null(nombre) as Area3D
+	if area != null:
+		area.collision_mask = 2
+		area.body_entered.connect(callback)
+		return
+	_make_trigger(pos, size, callback)
 
 
 func _make_trigger(pos: Vector3, size: Vector3, callback: Callable) -> void:
@@ -146,26 +199,94 @@ func _make_trigger(pos: Vector3, size: Vector3, callback: Callable) -> void:
 # ─── Combate (S2) ─────────────────────────────────────────────────────────────
 
 func _on_combat_enter(body: Node3D) -> void:
-	if body.is_in_group("player") and not _combat_cleared:
+	if body.is_in_group("player"):
 		_start_combat()
 
 
+## Puntos de aparición tomados de la escena, si el nivel los trae puestos.
+##
+## Las coordenadas fijas de más abajo venían de la cueva que se construía por
+## código. Al rehacer la mina a mano dejaron de corresponder: siete de las trece
+## caían dentro de un muro. Un CharacterBody3D solapado con geometría estática
+## intenta despenetrarse en cada cuadro de física, y con cinco u ocho a la vez
+## eso hunde los fps y deja todo pegado.
+##
+## Basta con crear un Node3D con el nombre indicado y colgarle Marker3D dentro.
+func _puntos_de(contenedor: String, respaldo: Array[Vector3]) -> Array[Vector3]:
+	var nodo := get_node_or_null(contenedor)
+	if nodo == null:
+		return respaldo
+	var out: Array[Vector3] = []
+	for m in nodo.get_children():
+		if m is Node3D:
+			out.append((m as Node3D).global_position)
+	return out if not out.is_empty() else respaldo
+
+
+## Baja el punto hasta el suelo y lo aparta si está dentro de algo.
+##
+## Segunda red de seguridad: aunque los puntos vengan de marcadores, es fácil
+## dejar uno rozando un muro al colocarlo a ojo. Aquí se comprueba y se corrige,
+## así que colocar los marcadores no exige precisión.
+func _sitio_libre(pos: Vector3) -> Vector3:
+	var espacio := get_world_3d().direct_space_state
+	var capsula := CapsuleShape3D.new()
+	capsula.radius = 0.45
+	capsula.height = 1.5
+
+	var consulta := PhysicsShapeQueryParameters3D.new()
+	consulta.shape = capsula
+	consulta.collision_mask = 1
+
+	# En orden: el sitio pedido, luego anillos cada vez más abiertos alrededor.
+	var candidatos: Array[Vector3] = [pos]
+	for radio in [1.0, 2.0, 3.5, 5.0, 7.0]:
+		for grados in [0, 45, 90, 135, 180, 225, 270, 315]:
+			var a := deg_to_rad(float(grados))
+			candidatos.append(pos + Vector3(cos(a), 0.0, sin(a)) * radio)
+
+	for c in candidatos:
+		var rayo := PhysicsRayQueryParameters3D.create(c + Vector3(0, 4, 0), c - Vector3(0, 60, 0))
+		rayo.collision_mask = 1
+		var golpe := espacio.intersect_ray(rayo)
+		if golpe.is_empty():
+			continue                      # ahí no hay suelo: caería al vacío
+		var apoyado: Vector3 = golpe["position"] + Vector3(0, 0.1, 0)
+		consulta.transform = Transform3D(Basis(), apoyado + Vector3(0, 0.8, 0))
+		if espacio.intersect_shape(consulta, 1).is_empty():
+			return apoyado
+	push_warning("MinaCueva: no encontré sitio libre cerca de %s" % pos)
+	return pos
+
+
+## Suelta la tanda de mineros. Una sola vez por visita.
+##
+## El pestillo va acá y no en el disparador porque hay DOS formas de entrar más
+## de una vez. La obvia es volver sobre tus pasos: `body_entered` se emite en
+## cada entrada al área, y mirar `_combat_cleared` no alcanza porque eso no es
+## true hasta que muere el quinto. La otra es que Emilia y Benjamín están los
+## dos en el grupo "player", así que una única pasada del par ya disparaba el
+## área dos veces y salían diez mineros.
 func _start_combat() -> void:
+	if _combat_started:
+		return
+	_combat_started = true
 	_banner("¡Mineros corruptos en la mina!")
 	var spawns: Array[Vector3] = [
-		Vector3(-4.0, 0.5, -19.0),
-		Vector3( 5.0, 0.5, -23.0),
-		Vector3(-3.0, 0.5, -28.0),
-		Vector3( 4.5, 0.5, -32.0),
-		Vector3( 0.0, 0.5, -36.0),
+		Vector3(-2.8,  0.35, -13.3),
+		Vector3( 3.5,  0.35, -16.1),
+		Vector3(-2.1,  0.35, -19.6),
+		Vector3( 3.15, 0.35, -22.4),
+		Vector3( 0.0,  0.35, -25.2),
 	]
+	spawns = _puntos_de("SpawnsCombate", spawns)
 	_alive = spawns.size()
 	for pos in spawns:
 		var e: CharacterBody3D = ENEMY_NORMAL.instantiate()
 		e.base_color = miner_color
 		e.died.connect(_on_miner_died)
 		add_child(e)
-		e.global_position = pos
+		e.global_position = _sitio_libre(pos)
 
 
 func _on_miner_died(_pos: Vector3, _xp: int) -> void:
@@ -185,6 +306,8 @@ func _on_claw_enter(body: Node3D) -> void:
 
 
 func _trigger_claw_dialogue() -> void:
+	if _claw_fired:
+		return
 	_claw_fired = true
 	Sfx.play("boss", -4.0, 0.30)
 	var res := DialogueManager.create_resource_from_text(DIALOGUE_GARRAS)
@@ -199,6 +322,8 @@ func _on_nest_enter(body: Node3D) -> void:
 
 
 func _start_chase() -> void:
+	if _chase_active:
+		return   # el pestillo vive acá, igual que en _start_combat
 	_chase_active = true
 	_banner("¡HUYE!")
 	Sfx.play("boss", 3.0, 0.55)
@@ -237,7 +362,11 @@ func _start_chase() -> void:
 	c.add_child(cs)
 
 	add_child(c)
-	c.global_position = Vector3(0.0, -1.5, -70.0)
+	# Tambien venia de la cueva generada: el nido estaba a Y=-2. Se busca sitio
+	# igual que con los mineros, y si el nivel trae un ChupacabrasSpawnPoint se
+	# usa ese.
+	var marca := get_node_or_null("ChupacabrasSpawnPoint") as Node3D
+	c.global_position = _sitio_libre(marca.global_position if marca else Vector3(0.0, -1.05, -49.0))
 	_chupacabras = c
 	_chupa_vel   = Vector3.ZERO
 	_stall_pos   = Vector2(c.global_position.x, c.global_position.z)
@@ -248,22 +377,23 @@ func _start_chase() -> void:
 
 	# 8 mineros de escape (solo normales, unkillable)
 	var escape_pos: Array[Vector3] = [
-		Vector3( 2.5, 0.5, -52.0),
-		Vector3(-2.0, 0.5, -46.0),
-		Vector3( 3.0, 0.5, -39.0),
-		Vector3(-3.5, 0.5, -31.0),
-		Vector3( 2.0, 0.5, -24.0),
-		Vector3(-2.5, 0.5, -17.0),
-		Vector3( 1.5, 0.5, -10.0),
-		Vector3(-1.5, 0.5,  -5.0),
+		Vector3( 1.75, 0.35, -36.4),
+		Vector3(-1.4,  0.35, -32.2),
+		Vector3( 2.1,  0.35, -27.3),
+		Vector3(-2.45, 0.35, -21.7),
+		Vector3( 1.4,  0.35, -16.8),
+		Vector3(-1.75, 0.35, -11.9),
+		Vector3( 1.05, 0.35,  -7.0),
+		Vector3(-1.05, 0.35,  -3.5),
 	]
+	escape_pos = _puntos_de("SpawnsHuida", escape_pos)
 	for pos in escape_pos:
 		var m: CharacterBody3D = ENEMY_NORMAL.instantiate()
 		m.base_color = miner_color
 		m.speed      = 1.5
 		m.max_health = 999.0
 		add_child(m)
-		m.global_position = pos
+		m.global_position = _sitio_libre(pos)
 		m.remove_from_group("enemies")  # el compañero no los ataca durante la huida
 
 	# Bloques de derrumbe del techo (staggered)

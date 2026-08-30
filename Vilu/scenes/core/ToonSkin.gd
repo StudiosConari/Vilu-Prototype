@@ -20,20 +20,65 @@ const SHADER := preload("res://shaders/toon_objeto.gdshader")
 ## escribir profundidad y de tapar a lo que tiene detrás.
 const SHADER_TRANSLUCIDO := preload("res://shaders/toon_objeto_translucido.gdshader")
 
-## Grosor del contorno de casco invertido, en metros de mundo.
-const CONTORNO_GROSOR := 0.018
-const CONTORNO_COLOR := Color(0.07, 0.05, 0.09)
+## Mandos del estilo. Antes eran los valores por defecto del shader más dos
+## constantes de acá, o sea que ajustar el aspecto pedía tocar código. Ahora
+## salen de un recurso que se edita en el inspector.
+const AJUSTES_POR_DEFECTO := preload("res://scenes/core/toon.tres")
+
+## Qué ajustes usa esta pasada. Se puede dar otro en `aplicar`.
+##
+## Tipado como Resource y no como AjustesToon a propósito: el nombre global de
+## una clase vive en el caché que arma el EDITOR, así que un proyecto recién
+## clonado -o abierto antes de que Godot reescanee- no lo conoce todavía y el
+## script entero no compila. Con Resource funciona siempre.
+var ajustes: Resource = AJUSTES_POR_DEFECTO
 
 ## Cachea por material de origen: dos props del mismo modelo comparten el
 ## ShaderMaterial en vez de crear uno por instancia.
 var _cache := {}
 var _convertidos := 0
 
+## Todo lo que se ha creado en la partida, en referencias débiles, para poder
+## repintarlo si los ajustes cambian con el juego andando.
+##
+## Va estático porque ToonSkin se usa y se tira -`ToonSkin.new().aplicar(x)`-,
+## así que la instancia no sobrevive para recordar nada. Las referencias son
+## débiles para que un material de una región ya descargada no quede sujeto.
+static var _vivos: Array = []       # [WeakRef(ShaderMaterial)]
+static var _cascos: Array = []      # [[WeakRef(StandardMaterial3D), escala]]
 
-func aplicar(raiz: Node) -> int:
+
+func aplicar(raiz: Node, cuales: Resource = null) -> int:
+	if cuales != null:
+		ajustes = cuales
 	_convertidos = 0
 	_recorrer(raiz)
 	return _convertidos
+
+
+## Repinta todo lo ya creado con los ajustes dados. La llama Game cuando el
+## recurso avisa de un cambio, para poder afinar el estilo sin reiniciar.
+static func refrescar(a: Resource) -> void:
+	if a == null:
+		return
+	var quedan: Array = []
+	for w: WeakRef in _vivos:
+		var m := w.get_ref() as ShaderMaterial
+		if m == null:
+			continue
+		quedan.append(w)
+		a.aplicar_a_material(m)
+	_vivos = quedan
+
+	var quedan_cascos: Array = []
+	for par: Array in _cascos:
+		var c := (par[0] as WeakRef).get_ref() as StandardMaterial3D
+		if c == null:
+			continue
+		quedan_cascos.append(par)
+		c.albedo_color = a.contorno_color
+		c.grow_amount = a.contorno_grosor / maxf(par[1], 0.01)
+	_cascos = quedan_cascos
 
 
 func _recorrer(n: Node) -> void:
@@ -135,6 +180,10 @@ func _convertir(origen: Material, escala := 1.0) -> ShaderMaterial:
 	else:
 		m.set_shader_parameter("usar_textura", false)
 
+	if ajustes != null:
+		ajustes.aplicar_a_material(m)
+	_vivos.append(weakref(m))
+
 	m.next_pass = _contorno(cubo)
 
 	_cache[clave] = m
@@ -150,21 +199,25 @@ func _convertir(origen: Material, escala := 1.0) -> ShaderMaterial:
 ## datos utilizables. El casco invertido no depende de ningún buffer, así que
 ## la silueta sale siempre.
 ## El grosor se DIVIDE por la escala del nodo, porque `grow_amount` trabaja en
-## espacio local y la transformación lo multiplica después. Así CONTORNO_GROSOR
-## significa siempre lo mismo —metros de mundo— sin importar a qué escala esté
-## puesto el modelo.
+## espacio local y la transformación lo multiplica después. Así
+## `ajustes.contorno_grosor` significa siempre lo mismo —metros de mundo— sin
+## importar a qué escala esté puesto el modelo.
 var _contornos := {}   # escala -> StandardMaterial3D
 
 func _contorno(escala: float) -> StandardMaterial3D:
+	if ajustes != null and not ajustes.contorno_activo:
+		return null                              # sin silueta: el estilo más suave
 	if _contornos.has(escala):
 		return _contornos[escala]
+	var grosor: float = ajustes.contorno_grosor if ajustes else 0.018
 	var c := StandardMaterial3D.new()
 	c.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	c.albedo_color = CONTORNO_COLOR
+	c.albedo_color = ajustes.contorno_color if ajustes else Color(0.07, 0.05, 0.09)
 	c.cull_mode = BaseMaterial3D.CULL_FRONT      # sólo las caras de atrás
 	c.grow = true
-	c.grow_amount = CONTORNO_GROSOR / maxf(escala, 0.01)
+	c.grow_amount = grosor / maxf(escala, 0.01)
 	c.disable_receive_shadows = true
 	c.no_depth_test = false
 	_contornos[escala] = c
+	_cascos.append([weakref(c), escala])
 	return c

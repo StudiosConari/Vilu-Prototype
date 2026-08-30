@@ -25,6 +25,13 @@ const INTERIORES_DE_PUERTA := ["Iglesia"]
 @onready var _region_holder: Node3D = $RegionHolder
 @onready var _camera: Camera3D = $Camera
 
+@export_group("Estilo")
+## Todos los mandos del sombreado toon: saturación, escalones de luz, tinte de
+## sombra y los dos contornos. Se editan abriendo el archivo en el inspector, y
+## con el juego corriendo se pueden mover desde el árbol Remoto para verlo en
+## el acto.
+@export var ajustes_toon: Resource = preload("res://scenes/core/toon.tres")
+
 @export_group("Cámara")
 @export var cam_distance := 18.0
 @export var cam_zoom_min := 4.0
@@ -81,10 +88,43 @@ func _ready() -> void:
 	if not world.has_zone(start):
 		enter_interior(start)
 
+	_aplicar_estilo()
+	if ajustes_toon != null and not ajustes_toon.changed.is_connected(_aplicar_estilo):
+		ajustes_toon.changed.connect(_aplicar_estilo)
+
 	var act := active_character()
 	if act != null:
 		_cam_focus = act.global_position + Vector3(0.0, 1.5, 0.0)
 	_update_camera()
+
+
+## Empuja los ajustes de estilo a lo que ya está en pantalla.
+##
+## Corre al arrancar y otra vez cada vez que el recurso avisa de un cambio. Eso
+## último es lo que permite afinar el toon con el juego andando —desde el árbol
+## Remoto, nodo Game— en vez de reiniciar por cada valor que se prueba.
+##
+## Son dos destinos distintos: los materiales de los objetos, que los repinta
+## ToonSkin, y el contorno de post-proceso, que es un material suelto colgado
+## de la cámara.
+func _aplicar_estilo() -> void:
+	if ajustes_toon == null:
+		return
+	TOON_SKIN.refrescar(ajustes_toon)
+
+	# El suelo lo pone Terrain3D con su propio shader, así que no pasa por
+	# ToonSkin y hay que empujarle los valores aparte.
+	if world:
+		var terreno := world.get_node_or_null("Terrain3D")
+		if terreno:
+			ajustes_toon.aplicar_a_terreno(terreno.get("material"))
+
+	var borde := get_node_or_null("Camera/ContornoToon") as MeshInstance3D
+	if borde == null:
+		return
+	var m := borde.get_surface_override_material(0) as ShaderMaterial
+	if m != null:
+		ajustes_toon.aplicar_a_pantalla(m)
 
 
 func _spawn_party_open(zona: String) -> void:
@@ -122,7 +162,7 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 			ph.set_surface_override_material(0, mat)
 	# Mismo sombreado escalonado que el mundo: si no, los protagonistas quedan
 	# con luz PBR suave sobre un fondo cel-shaded y se ven pegoteados encima.
-	TOON_SKIN.new().aplicar(c)
+	TOON_SKIN.new().aplicar(c, ajustes_toon)
 	return c
 
 
@@ -353,7 +393,7 @@ func enter_interior(id: String) -> void:
 			world.process_mode = Node.PROCESS_MODE_DISABLED
 		# El interior se construye recién ahora, así que se lo viste acá.
 		if r != null:
-			TOON_SKIN.new().aplicar(r)
+			TOON_SKIN.new().aplicar(r, ajustes_toon)
 		_move_to_spawn(r))
 
 

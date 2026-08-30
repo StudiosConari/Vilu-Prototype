@@ -186,6 +186,8 @@ func _physics_process(delta: float) -> void:
 		speed = run_speed
 	elif active and not input_locked and Input.is_action_pressed("run"):
 		speed = run_speed
+	elif not active and ai_mode == AiMode.COMBAT:
+		speed = _velocidad_de_escolta()
 	if mounted:
 		speed *= 1.5
 
@@ -445,6 +447,41 @@ func _squash() -> void:
 
 
 # --- IA de combate del compañero (ataques básicos + esquiva) ---
+## A partir de esta distancia del líder el compañero deja de caminar y trota.
+const ESCOLTA_TROTE := 3.0
+## Y a partir de ésta corre más rápido que nadie, para recuperar terreno.
+const ESCOLTA_SPRINT := 8.0
+## Cuánto se le permite pasarse de run_speed mientras recupera.
+const ESCOLTA_SOBREPASO := 1.3
+
+
+## Velocidad del compañero, acompasada a la del líder.
+##
+## Iba siempre a walk_speed (4.0) mientras el activo corre a run_speed (7.5) con
+## Shift: bastaba con mantener la tecla apretada para dejarlo atrás y perderlo de
+## vista, y en la huida de la mina se quedaba con el Chupacabras.
+##
+## Tres tramos. Al lado camina, para que no vaya dando tirones cuando el líder
+## se para. Descolgado corre. Y ya lejos corre un poco MÁS rápido que el
+## máximo del jugador, que es la única forma de recortar distancia en vez de
+## conservar la que quedó; el sobrepaso se apaga solo a los 8 m, así que nunca
+## se le echa encima.
+func _velocidad_de_escolta() -> float:
+	var lider := _leader()
+	if lider == null:
+		return walk_speed
+	var d := Vector2(lider.global_position.x - global_position.x,
+		lider.global_position.z - global_position.z).length()
+	if d >= ESCOLTA_SPRINT:
+		return run_speed * ESCOLTA_SOBREPASO
+	if d >= ESCOLTA_TROTE:
+		return run_speed
+	# Pegado, pero el líder viene lanzado: igualarle el paso antes de descolgarse,
+	# en vez de esperar a estar a tres metros para reaccionar.
+	var vl := Vector2(lider.velocity.x, lider.velocity.z).length()
+	return clampf(vl, walk_speed, run_speed)
+
+
 func _ai_behavior() -> Vector3:
 	var enemy := _nearest_enemy()
 	if enemy != null:
