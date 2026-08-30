@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://y5uixxkgaayk"
-path.s3tc="res://.godot/imported/baldosa_de_tierra_y_piedras_baldosa_de_tierra_y_piedras_normal.png-51446b82eccc0e0e7a20f914ea2f5a92.s3tc.ctex"
+uid="uid://djc8y2jn3avy"
+path.s3tc="res://.godot/imported/marcas_de_garra_marcas_de_garra_normal.png-728d374213ae92e370a908865d4b6e2c.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "c9b6a90add4315064cc7a73cd2d9dcc7"
+"md5": "15863316fcd502aee84fa287fa48ebcb"
 }
 
 [deps]
 
-source_file="res://models/prop_pequeno/baldosa_de_tierra_y_piedras_baldosa_de_tierra_y_piedras_normal.png"
-dest_files=["res://.godot/imported/baldosa_de_tierra_y_piedras_baldosa_de_tierra_y_piedras_normal.png-51446b82eccc0e0e7a20f914ea2f5a92.s3tc.ctex"]
+source_file="res://models/prop_pequeno/marcas_de_garra_marcas_de_garra_normal.png"
+dest_files=["res://.godot/imported/marcas_de_garra_marcas_de_garra_normal.png-728d374213ae92e370a908865d4b6e2c.s3tc.ctex"]
 
 [params]
 
@@ -30,7 +30,7 @@ compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
 roughness/mode=1
-roughness/src_normal="res://models/prop_pequeno/baldosa_de_tierra_y_piedras_baldosa_de_tierra_y_piedras_normal.png"
+roughness/src_normal="res://models/prop_pequeno/marcas_de_garra_marcas_de_garra_normal.png"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2
