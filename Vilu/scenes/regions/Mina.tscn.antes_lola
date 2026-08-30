@@ -35,7 +35,6 @@
 [ext_resource type="Script" uid="uid://cj6gdv2cb2h44" path="res://scenes/actors/Destructible.gd" id="33_destr"]
 [ext_resource type="Script" uid="uid://bthuynql51b8u" path="res://scenes/actors/Obelisco.gd" id="34_obel"]
 [ext_resource type="Script" uid="uid://dor5uvl0x8q5t" path="res://scenes/actors/Antorcha.gd" id="35_antor"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/Lola.tscn" id="36_lola"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(9, 4, 5)
@@ -774,7 +773,6 @@ transform = Transform3D(1.3664426, 0, 1.6555511, 0, 2.1466286, 0, -1.6555511, 0,
 transform = Transform3D(2.052623, 0, 0, 0, 2.052623, 0, 0, 0, 2.052623, 40.905884, 2.6184635, -17.104233)
 script = ExtResource("34_obel")
 barrera = NodePath("../barrera_de_cuerda_de_madera1")
-despierta = NodePath("../../Lola")
 
 [node name="afloramiento_rocoso2" parent="Props" unique_id=1644225604 instance=ExtResource("20_6jiwt")]
 transform = Transform3D(0.29058278, 0, 0.94877535, 0, 1.4870589, 0, -1.3444031, 0, 0.20507076, -7.4148765, 2.7472649, -11.178841)
@@ -1061,6 +1059,3 @@ transform = Transform3D(1.9147052, -0.14313531, 0.011986472, 0.005005466, -0.093
 
 [node name="marca_de_pata21" parent="Chupacabras" unique_id=1877999049 instance=ExtResource("32_fiygc")]
 transform = Transform3D(1.9147052, -0.14313531, 0.011986472, 0.005005466, -0.09364301, -1.917794, 0.1435491, 1.9124513, -0.09300744, 2.1503122, 0.16807108, -29.869354)
-
-[node name="Lola" parent="." unique_id=100000050 instance=ExtResource("36_lola")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 1, -17)

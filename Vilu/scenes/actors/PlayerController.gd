@@ -143,7 +143,15 @@ func _physics_process(delta: float) -> void:
 
 	# --- Dirección según el modo ---
 	var dir := Vector3.ZERO
-	if input_locked:
+	if _dormido > 0.0:
+		# Dormido: ni input ni IA. La rama va PRIMERO para que ni siquiera se
+		# llame a `_player_input`, que es donde viven el salto y los ataques:
+		# con sólo anular la dirección seguirías pudiendo atacar durmiendo.
+		_dormido -= delta
+		if _dormido <= 0.0:
+			_despertar()
+		dir = Vector3.ZERO
+	elif input_locked:
 		dir = Vector3.ZERO
 	elif active:
 		dir = _player_input()
@@ -212,6 +220,47 @@ func _physics_process(delta: float) -> void:
 		mounted = false
 	# Montado: el jinete se eleva para quedar sobre el lomo del guanaco.
 	_visual.position.y = lerp(_visual.position.y, 0.75 if mounted else 0.0, 12.0 * delta)
+
+
+## Cuánto queda dormido, en segundos. 0 = despierto.
+var _dormido := 0.0
+var _zzz: Label3D = null
+
+
+## Lo deja fuera de combate un rato. Lo llama el golpe de área de Lola.
+##
+## Se queda con el sueño MÁS LARGO en vez de sumarlos: dos golpes seguidos no
+## deberían encadenar veinte segundos de no poder jugar.
+func dormir(segundos: float) -> void:
+	if segundos <= 0.0:
+		return
+	_dormido = maxf(_dormido, segundos)
+	_charging = false
+	if _zzz == null:
+		_zzz = Label3D.new()
+		_zzz.text = "Zzz"
+		_zzz.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_zzz.modulate = Color(0.75, 0.85, 1.0)
+		_zzz.outline_size = 8
+		_zzz.font_size = 28
+		_zzz.position = Vector3(0.0, 2.0, 0.0)
+		add_child(_zzz)
+	_zzz.visible = true
+	# Se desploma de lado: el cartel solo se lee raro si el personaje sigue
+	# tieso y mirando al frente.
+	create_tween().tween_property(_visual, "rotation:z", deg_to_rad(-70.0), 0.35)
+
+
+func _despertar() -> void:
+	_dormido = 0.0
+	if _zzz:
+		_zzz.visible = false
+	create_tween().tween_property(_visual, "rotation:z", 0.0, 0.3)
+
+
+## true mientras esté dormido. Lo consulta el HUD y la IA del compañero.
+func esta_dormido() -> bool:
+	return _dormido > 0.0
 
 
 # --- Control del jugador (WASD/salto/mount/interact) ---

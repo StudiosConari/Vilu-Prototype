@@ -40,7 +40,7 @@ _shader_parameters = {
 &"piso_sombra": 0.48,
 &"rim_ancho": 0.55,
 &"rim_color": Color(1, 0.97, 0.85, 1),
-&"rim_fuerza": 0.16,
+&"rim_fuerza": 0.0,
 &"suavidad_franjas": null,
 &"suavidad_pendiente": null,
 &"tinte_sombra": Color(0.74, 0.77, 0.9, 1),
