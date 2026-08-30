@@ -32,6 +32,11 @@ var _stall_pos      := Vector2.ZERO
 var _stall_frames   := 0
 ## Desvío en grados que viene usando para rodear un obstáculo, 0 si va directo.
 var _desvio         := 0.0
+
+## Cada cuantos cuadros de fisica se vuelve a abrir el abanico de rayos.
+const CUADROS_ENTRE_RUMBOS := 5
+var _cuadros_rumbo  := 0
+var _rumbo_ultimo   := Vector3.ZERO
 var _forced_players: Array = []
 var _alive          := 0
 var _chupa_hit_cd   := 0.0
@@ -45,6 +50,48 @@ var _chupa_hit_cd   := 0.0
 func _ready() -> void:
 	_setup_triggers()
 	_spawn_talisman()
+	_precalentar_shaders()
+
+
+## Dibuja una vez, a escondidas, cada material que aparecerá de golpe más tarde.
+##
+## El proyecto usa Forward+, que compila el shader la primera vez que un
+## material se dibuja. Al entrar los cinco mineros —o los ocho de la huida, más
+## el Chupacabras— aparecían a la vez varias combinaciones nuevas: transparencia
+## sin sombreado y sin descarte de caras para el disco de telegrafiado, y texto
+## en cartelera para la etiqueta. Compilarlas en mitad del combate congelaba el
+## cuadro.
+##
+## Esto corre dentro del fundido de TravelManager, con la pantalla tapada, así
+## que la compilación ocurre ahí y el jugador no la ve.
+func _precalentar_shaders() -> void:
+	var punto := get_node_or_null("PlayerSpawn") as Node3D
+	var pos := punto.global_position if punto else Vector3.ZERO
+
+	var e: CharacterBody3D = ENEMY_NORMAL.instantiate()
+	e.base_color = miner_color
+	add_child(e)
+	e.global_position = pos
+	e.remove_from_group("enemies")     # que nadie lo tome por un objetivo real
+	e.process_mode = Node.PROCESS_MODE_DISABLED
+	for hijo in e.get_children():
+		if hijo is MeshInstance3D:
+			(hijo as MeshInstance3D).visible = true   # incluido el telegrafiado
+
+	# La etiqueta en cartelera del Chupacabras es otra variante distinta.
+	var lbl := Label3D.new()
+	lbl.text = "."
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.outline_size = 8
+	add_child(lbl)
+	lbl.global_position = pos
+
+	# Dos cuadros: uno para que entren en la cola de dibujado y otro para que se
+	# complete la compilación antes de retirarlos.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	e.queue_free()
+	lbl.queue_free()
 
 
 func _spawn_talisman() -> void:
@@ -56,7 +103,12 @@ func _spawn_talisman() -> void:
 	add_child(t)
 
 
-func _process(delta: float) -> void:
+# La persecución lanza rayos, así que va en _physics_process y no en _process.
+# En _process corría una vez por cuadro renderizado: cuanto mejor el equipo, más
+# rayos por segundo, y en la mina hay 230 cuerpos de colisión contra los que
+# chocar. Aquí corre a la frecuencia fija de física y el coste deja de depender
+# de los fps.
+func _physics_process(delta: float) -> void:
 	if not _chase_active:
 		return
 	for p in get_tree().get_nodes_in_group("player"):
@@ -191,6 +243,8 @@ func _start_chase() -> void:
 	_stall_pos   = Vector2(c.global_position.x, c.global_position.z)
 	_stall_frames = 0
 	_desvio      = 0.0
+	_rumbo_ultimo = Vector3.ZERO
+	_cuadros_rumbo = 0
 
 	# 8 mineros de escape (solo normales, unkillable)
 	var escape_pos: Array[Vector3] = [
@@ -402,7 +456,19 @@ func _move_chupacabras(delta: float) -> void:
 		var d := presa.global_position - c.global_position
 		d.y = 0.0
 		if d.length() > CHUPA_DISTANCIA_MINIMA:
-			var dir := _rumbo(c, d.normalized()) * CHUPA_VELOCIDAD
+			# El rumbo no se recalcula cada cuadro. _rumbo llega a lanzar 55
+			# rayos cuando tiene que abrir el abanico entero, y decidir doce
+			# veces por segundo es de sobra para una bestia que corre a 8 m/s:
+			# en el intervalo avanza medio metro. Entre recálculos se reutiliza
+			# la última dirección, girada hacia la presa, para que siga curvando
+			# tras ella y no vaya a trompicones.
+			_cuadros_rumbo -= 1
+			if _cuadros_rumbo <= 0 or _rumbo_ultimo == Vector3.ZERO:
+				_rumbo_ultimo = _rumbo(c, d.normalized())
+				_cuadros_rumbo = CUADROS_ENTRE_RUMBOS
+			else:
+				_rumbo_ultimo = _rumbo_ultimo.lerp(d.normalized(), 0.35).normalized()
+			var dir := _rumbo_ultimo * CHUPA_VELOCIDAD
 			_chupa_vel.x = dir.x
 			_chupa_vel.z = dir.z
 		else:

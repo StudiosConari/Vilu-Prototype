@@ -399,7 +399,6 @@ func _construir_caminos() -> void:
 		var desde := a + dir * ra
 		var ancho := float(c[2])
 		var hueco := float(c[3]) if c.size() > 3 else 0.0
-		var yaw := atan2(dir.x, dir.z)
 
 		if hueco <= 0.0 or hueco >= largo - 4.0:
 			piso.camino(desde, desde + dir * largo, ancho)
