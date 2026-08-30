@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://ckoj7o35015jv" path="res://models/mina/grupo_de_cristales_azules.glb" id="7_qp7t5"]
 [ext_resource type="PackedScene" uid="uid://dt8dxd0xqwtv1" path="res://models/mina/vagoneta_de_mina.glb" id="8_kcvqm"]
 [ext_resource type="PackedScene" uid="uid://ctn6us28y7vsh" path="res://models/mina/arco_de_madera.glb" id="9_bovvr"]
+[ext_resource type="PackedScene" uid="uid://57x4kchcpgl7" path="res://models/prop_pequeno/antorcha_de_pared.glb" id="10_bovvr"]
 [ext_resource type="PackedScene" uid="uid://bpernua86gmvl" path="res://models/mina/via_ferrea.glb" id="10_mw60a"]
 [ext_resource type="PackedScene" uid="uid://cukjpnstgj8ce" path="res://models/mina/rueda_de_carro_de_madera.glb" id="11_5jpnj"]
 [ext_resource type="PackedScene" uid="uid://ifw6gy78woeq" path="res://models/mina/cristal_rojo.glb" id="12_rfbf5"]
@@ -17,6 +18,7 @@
 [ext_resource type="PackedScene" uid="uid://d4hr2qt1y7htr" path="res://models/mina/barrera_de_cuerda_de_madera.glb" id="15_oubx4"]
 [ext_resource type="PackedScene" uid="uid://dxoc0kbo6iwwq" path="res://models/mina/letrero_de_madera.glb" id="16_7eyjp"]
 [ext_resource type="PackedScene" uid="uid://bnreiro12fyqw" path="res://models/mina/palanca_industrial.glb" id="17_lnyhv"]
+[ext_resource type="PackedScene" uid="uid://bf5ar4pl23nph" path="res://models/focal/obelisko.glb" id="19_mw60a"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(9, 4, 5)
@@ -343,6 +345,10 @@ transform = Transform3D(5.0051494, 0, 0.015281082, 0, 2.911823, 0, -0.06146886, 
 [node name="arco_de_madera4" parent="DecoMurallas" unique_id=660653891 instance=ExtResource("9_bovvr")]
 transform = Transform3D(5.0051494, 0, 0.015281082, 0, 2.911823, 0, -0.06146886, 0, 1.2442741, 0.1443677, 0, -21.419197)
 
+[node name="antorcha_de_pared3" parent="DecoMurallas" unique_id=157072281 instance=ExtResource("10_bovvr")]
+transform = Transform3D(0.16171114, 0, -4.963447, 0, 4.9660807, 0, 4.963447, 0, 0.16171114, 30.223919, 3.8128247, -1.4665773)
+visible = false
+
 [node name="DecoPiso" type="Node3D" parent="." unique_id=1376392937]
 
 [node name="Linea Ferrea" type="Node3D" parent="DecoPiso" unique_id=867195713]
@@ -471,3 +477,6 @@ transform = Transform3D(2.1593356, 0, 0, 0, 2.1593356, 0, 0, 0, 2.1593356, -4.17
 
 [node name="palanca_industrial3" parent="Props" unique_id=1531106917 instance=ExtResource("17_lnyhv")]
 transform = Transform3D(2.1593356, 0, 0, 0, 2.1593356, 0, 0, 0, 2.1593356, 2.8367043, 2.6184635, -9.077473)
+
+[node name="obelisko2" parent="." unique_id=1358502024 instance=ExtResource("19_mw60a")]
+transform = Transform3D(2.052623, 0, 0, 0, 2.052623, 0, 0, 0, 2.052623, 41.946926, 0, -17.104233)
