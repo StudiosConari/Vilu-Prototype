@@ -163,31 +163,45 @@ func _physics_process(delta: float) -> void:
 			var right := forced_run_dir.cross(Vector3.UP).normalized()
 			dir = (forced_run_dir + right * ix * 0.5).normalized()
 	elif forced_run_dir != Vector3.ZERO:
-		dir = forced_run_dir   # huida forzada: corre sin pasar por _ai_behavior (evita ataques al aire)
+		# Huida forzada: corre sin pasar por _ai_behavior (evita ataques al aire).
+		# Pero sí por la esquiva: la mina está llena de pilares y correr a ciegas
+		# en línea recta es justamente lo que lo dejaba clavado contra uno.
+		dir = _rumbo_esquivando(forced_run_dir)
 	elif ai_mode == AiMode.COMBAT:
-		dir = _ai_behavior()
+		dir = _rumbo_esquivando(_ai_behavior())
 	else:
 		dir = _hold_behavior()   # QUIETO: defiende el puesto y vuelve
 
-	# La IA/guardia no se tira a los vacíos: si no hay piso adelante, se frena.
-	if not active and forced_run_dir == Vector3.ZERO and dir != Vector3.ZERO and not _has_ground_ahead(dir):
-		dir = Vector3.ZERO
+	# La IA/guardia no se tira a los vacíos... salvo que enfrente haya donde caer.
+	#
+	# Frenarse en seco en cada borde deja al compañero plantado al filo de una
+	# plataforma con la siguiente a dos metros y a la misma altura, que es lo que
+	# pasaba en el volcán. Antes de rendirse se mira si el suelo vuelve a
+	# aparecer dentro de lo que alcanza un salto.
+	var saltar_hueco := false
+	if not active and forced_run_dir == Vector3.ZERO and dir != Vector3.ZERO \
+			and not _has_ground_ahead(dir):
+		if _hay_donde_caer(dir):
+			saltar_hueco = true
+		else:
+			dir = Vector3.ZERO
 
-	# El personaje inactivo detecta obstáculos y salta solo (huida forzada o follow normal).
+	# El personaje inactivo salta los estorbos bajos (huida forzada o follow).
+	#
+	# Sólo si por encima hay hueco. Antes saltaba ante cualquier cosa que tuviera
+	# delante, muros y barreras incluidos: se quedaba dando botes contra ellos
+	# indefinidamente, sin tocar el suelo y sin avanzar. Si lo de delante llega a
+	# la altura del pecho no es un escalón, es una pared, y de eso se encarga la
+	# esquiva.
 	if not active and is_on_floor():
+		_cruzando_hueco = false        # tocó suelo: el cruce terminó
 		var check_dir := forced_run_dir if forced_run_dir != Vector3.ZERO else dir
-		if check_dir != Vector3.ZERO:
-			var space := get_world_3d().direct_space_state
-			for ry in [0.3, 0.7]:
-				var ori := global_position + Vector3(0.0, ry, 0.0)
-				var tgt := ori + check_dir.normalized() * 1.2
-				var q := PhysicsRayQueryParameters3D.create(ori, tgt)
-				q.collision_mask = 1
-				q.exclude = [get_rid()]
-				if not space.intersect_ray(q).is_empty():
-					velocity.y = jump_velocity
-					_jumps_done = 1
-					break
+		var estorbo: bool = check_dir != Vector3.ZERO and _estorbo_bajo(check_dir) \
+			and _paso_libre(check_dir, 1.4)
+		if saltar_hueco or estorbo:
+			velocity.y = jump_velocity
+			_jumps_done = 1
+			_cruzando_hueco = saltar_hueco
 
 	var speed := walk_speed
 	if forced_run_dir != Vector3.ZERO:
@@ -196,12 +210,28 @@ func _physics_process(delta: float) -> void:
 		speed = run_speed
 	elif not active and ai_mode == AiMode.COMBAT:
 		speed = _velocidad_de_escolta()
+	# Cruzando un hueco hace falta carrerilla: el salto dura ~0.67 s, y a paso de
+	# caminar eso son 2.7 m de alcance. Con la velocidad de correr pasan de 5 m,
+	# que es lo que hay entre las plataformas del volcán.
+	if not active and _cruzando_hueco:
+		speed = maxf(speed, run_speed)
 	if mounted:
 		speed *= 1.5
 
 	velocity.x = move_toward(velocity.x, dir.x * speed, acceleration * speed * delta)
 	velocity.z = move_toward(velocity.z, dir.z * speed, acceleration * speed * delta)
 	move_and_slide()
+
+	# El rescate SÓLO mientras sigue al líder.
+	#
+	# En modo QUIETO —la [T], para resolver puzzles cada uno por su lado— el
+	# compañero está lejos a propósito, y teletransportarlo de vuelta hacía
+	# imposibles esos puzzles. Tampoco se le rescata en el aire: cruzando un
+	# hueco está lejos y sin avanzar en horizontal, que es exactamente lo que el
+	# detector confunde con estar atascado.
+	if not active and ai_mode == AiMode.COMBAT and forced_run_dir == Vector3.ZERO \
+			and not _cruzando_hueco:
+		_vigilar_atasco(delta)
 
 	# --- Encarar el movimiento (solo el Visual rota; -Z adelante) ---
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
@@ -529,6 +559,244 @@ func _velocidad_de_escolta() -> float:
 	# en vez de esperar a estar a tres metros para reaccionar.
 	var vl := Vector2(lider.velocity.x, lider.velocity.z).length()
 	return clampf(vl, walk_speed, run_speed)
+
+
+# ─── Esquiva del compañero ────────────────────────────────────────────────────
+
+## Desvíos que prueba cuando tiene algo delante, en grados. De menor a mayor
+## para apartarse lo justo, y en pares para no tener manía a un lado.
+const ESQUIVA_DESVIOS := [30.0, -30.0, 55.0, -55.0, 85.0, -85.0, 120.0, -120.0, 150.0, -150.0]
+## Sonda de "¿puedo seguir de frente?", en metros.
+const ESQUIVA_SONDA := 1.3
+## Sonda al elegir desvío. Más larga a propósito: un hueco de un metro puede ser
+## un rincón sin salida, y meterse ahí es cambiar un atasco por otro.
+const ESQUIVA_SONDA_LARGA := 3.0
+## Alturas a las que mira, en metros sobre los pies.
+##
+## Deliberadamente por ENCIMA de lo que puede saltar. El salto sube 6²/(2·18) =
+## 1.0 m, así que las vías y las cajas bajas ya las supera solo y mirarlas aquí
+## sólo conseguiría que las rodease dando un absurdo rodeo. A 1.1 y 1.6 sólo
+## aparece lo que de verdad no puede pasar: pilares, vagonetas, muros.
+const ESQUIVA_ALTURAS := [1.1, 1.6]
+## Cada cuántos cuadros de física se vuelve a abrir el abanico. Entre medias se
+## reutiliza el último rumbo: son hasta 36 rayos y decidir 15 veces por segundo
+## sobra para alguien que camina a 4 m/s.
+const ESQUIVA_CUADROS := 4
+## Segundos sin acercarse tras los que se le devuelve junto al líder.
+const ESQUIVA_RESCATE := 3.0
+## Y sólo si está al menos a esta distancia: teletransportarlo a dos pasos se
+## vería como un fallo. A cuatro metros y medio ya está fuera del hombro del
+## jugador, que es donde se le busca con la vista.
+const ESQUIVA_RESCATE_DIST := 4.5
+
+## Desvío que viene usando, en grados. 0 = va de frente.
+var _desvio := 0.0
+var _cuadros_rumbo := 0
+var _rumbo_ultimo := Vector3.ZERO
+var _atasco := 0.0
+var _pos_previa := Vector3.ZERO
+## Lo más cerca que ha llegado del líder en este tramo.
+var _mejor_dist := INF
+
+
+## Rumbo del compañero, rodeando lo que tenga delante.
+##
+## `_ai_behavior` devuelve la dirección DESEADA, en línea recta hacia el líder o
+## hacia el enemigo. En campo abierto basta, pero la mina está llena de pilares,
+## vagonetas y vigas: el compañero se clavaba contra uno y se quedaba ahí
+## empujando para siempre.
+##
+## Esto es dirección asistida, no búsqueda de camino. Rodea un obstáculo suelto,
+## que es lo que pasa el 95% de las veces. Para un laberinto de verdad haría
+## falta un NavigationAgent3D con su navmesh; de los callejones sin salida se
+## encarga el rescate de más abajo.
+func _rumbo_esquivando(deseado: Vector3) -> Vector3:
+	if deseado == Vector3.ZERO:
+		_desvio = 0.0
+		_rumbo_ultimo = Vector3.ZERO
+		return deseado
+
+	_cuadros_rumbo -= 1
+	if _cuadros_rumbo > 0 and _rumbo_ultimo != Vector3.ZERO:
+		# Entre recálculos se reutiliza el rumbo, girado hacia donde quiere ir,
+		# para que curve en vez de avanzar a trompicones.
+		_rumbo_ultimo = _rumbo_ultimo.lerp(deseado, 0.4).normalized()
+		return _rumbo_ultimo
+	_cuadros_rumbo = ESQUIVA_CUADROS
+	_rumbo_ultimo = _elegir_rumbo(deseado)
+	return _rumbo_ultimo
+
+
+func _elegir_rumbo(deseado: Vector3) -> Vector3:
+	if _paso_libre(deseado, ESQUIVA_SONDA):
+		_desvio = 0.0
+		return deseado
+	# Mantener el desvío que ya venía usando mientras siga despejado. Sin esta
+	# memoria, delante de un pilar centrado elige +30° y -30° alternándose y se
+	# queda vibrando en el sitio en vez de rodearlo.
+	if _desvio != 0.0:
+		var seguir := deseado.rotated(Vector3.UP, deg_to_rad(_desvio))
+		if _paso_libre(seguir, ESQUIVA_SONDA_LARGA):
+			return seguir
+	for grados: float in ESQUIVA_DESVIOS:
+		var alt := deseado.rotated(Vector3.UP, deg_to_rad(grados))
+		if _paso_libre(alt, ESQUIVA_SONDA_LARGA):
+			_desvio = grados
+			return alt
+	# Ninguna salida aguanta la sonda larga: con que haya hueco inmediato vale.
+	for grados: float in ESQUIVA_DESVIOS:
+		var alt := deseado.rotated(Vector3.UP, deg_to_rad(grados))
+		if _paso_libre(alt, ESQUIVA_SONDA):
+			_desvio = grados
+			return alt
+	# Encerrado por todos lados: insistir de frente y que lo saque el rescate.
+	_desvio = 0.0
+	return deseado
+
+
+func _paso_libre(dir: Vector3, largo: float) -> bool:
+	var espacio := get_world_3d().direct_space_state
+	var d := dir.normalized()
+	for ry: float in ESQUIVA_ALTURAS:
+		var o := global_position + Vector3(0.0, ry, 0.0)
+		var q := PhysicsRayQueryParameters3D.create(o, o + d * largo)
+		q.collision_mask = 1
+		q.exclude = [get_rid()]
+		if not espacio.intersect_ray(q).is_empty():
+			return false
+	return true
+
+
+## Alcance del salto en horizontal, en metros.
+##
+## El salto sale a 6 m/s con gravedad 18: sube 6²/(2·18) = 1.0 m y está 2·6/18 =
+## 0.67 s en el aire. A la velocidad de correr (7.5) eso son 5 m de alcance
+## teórico; se comprueba hasta 4.2 para dejar margen al aterrizaje.
+const HUECO_ALCANCE := 4.2
+## Desnivel que admite el otro lado. Más abajo también vale —se cae y ya—, pero
+## por encima de esto no llega.
+const HUECO_DESNIVEL := 0.9
+
+
+## ¿Hay suelo al otro lado del hueco, dentro de lo que alcanza el salto?
+##
+## Se muestrea a distancias crecientes y se busca el PRIMER punto con suelo a una
+## altura alcanzable. Además el aire de en medio tiene que estar despejado: si lo
+## que hay delante es un muro con suelo detrás, saltar sólo sirve para chocar.
+func _hay_donde_caer(dir: Vector3) -> bool:
+	if not _paso_libre(dir, HUECO_ALCANCE * 0.6):
+		return false
+	var espacio := get_world_3d().direct_space_state
+	var d := dir.normalized()
+	var y0 := global_position.y
+	var dist := 1.4
+	while dist <= HUECO_ALCANCE:
+		var p := global_position + d * dist
+		var q := PhysicsRayQueryParameters3D.create(
+			p + Vector3(0.0, HUECO_DESNIVEL, 0.0), p - Vector3(0.0, 2.5, 0.0))
+		q.collision_mask = 1
+		q.exclude = [get_rid()]
+		var h := espacio.intersect_ray(q)
+		if not h.is_empty():
+			var y1: float = (h["position"] as Vector3).y
+			if y1 - y0 <= HUECO_DESNIVEL:
+				return true
+		dist += 0.6
+	return false
+
+
+## Va cruzando un hueco de un salto: mientras dure necesita velocidad de carrera
+## y no se le puede dar por atascado.
+var _cruzando_hueco := false
+
+
+## ¿Hay algo a la altura de los pies o las rodillas en esa dirección?
+func _estorbo_bajo(dir: Vector3) -> bool:
+	var espacio := get_world_3d().direct_space_state
+	var d := dir.normalized()
+	for ry: float in [0.3, 0.7]:
+		var o := global_position + Vector3(0.0, ry, 0.0)
+		var q := PhysicsRayQueryParameters3D.create(o, o + d * 1.2)
+		q.collision_mask = 1
+		q.exclude = [get_rid()]
+		if not espacio.intersect_ray(q).is_empty():
+			return true
+	return false
+
+
+## Cuenta el tiempo que lleva sin acercarse al líder.
+##
+## Lo que importa no es si se MUEVE, sino si ACERCA. Un compañero rebotando
+## contra una barrera se mueve todo el rato —salta, cae, se desplaza de lado— y
+## un detector basado en desplazamiento nunca lo daría por atascado, que es
+## justo lo que pasaba. Midiendo la mejor distancia alcanzada no hay escapatoria:
+## si en dos segundos y medio no ha recortado ni treinta centímetros, no va a
+## llegar por sí solo.
+func _vigilar_atasco(delta: float) -> void:
+	_pos_previa = global_position
+	var lider := _leader()
+	if lider == null:
+		_atasco = 0.0
+		_mejor_dist = INF
+		return
+	var d := Vector2(lider.global_position.x - global_position.x,
+		lider.global_position.z - global_position.z).length()
+	if d < ESCOLTA_TROTE:
+		_atasco = 0.0
+		_mejor_dist = INF     # ya llegó: la marca se reinicia para el próximo tramo
+		return
+	if d < _mejor_dist - 0.3:
+		_mejor_dist = d
+		_atasco = 0.0
+		return
+	_atasco += delta
+	if _atasco >= ESQUIVA_RESCATE and d >= ESQUIVA_RESCATE_DIST:
+		_atasco = 0.0
+		_mejor_dist = INF
+		_rescatar(lider)
+
+
+## Lo devuelve junto al líder cuando ya no hay salida.
+##
+## Es la red de abajo, no el mecanismo principal: la esquiva rodea lo que se
+## puede rodear y esto sólo entra cuando de verdad quedó encerrado —encajado
+## entre una vagoneta y el muro, o al otro lado de una barrera que cayó—. Se le
+## deja a la espalda del líder y sólo estando a más de seis metros, para que no
+## se le vea aparecer de la nada.
+func _rescatar(lider: Node3D) -> void:
+	var espacio := get_world_3d().direct_space_state
+	var atras := -Vector3(lider.velocity.x, 0.0, lider.velocity.z)
+	if atras.length() < 0.5:
+		atras = Vector3(0.0, 0.0, 1.0)
+	atras = atras.normalized()
+
+	var forma := CapsuleShape3D.new()
+	forma.radius = 0.45
+	forma.height = 1.5
+	var consulta := PhysicsShapeQueryParameters3D.new()
+	consulta.shape = forma
+	consulta.collision_mask = 1
+	consulta.exclude = [get_rid()]
+
+	for grados: int in [0, 40, -40, 80, -80, 140, -140, 180]:
+		var a := atras.rotated(Vector3.UP, deg_to_rad(float(grados)))
+		for radio: float in [1.6, 2.6]:
+			var p: Vector3 = lider.global_position + a * radio
+			var rayo := PhysicsRayQueryParameters3D.create(
+				p + Vector3(0, 3, 0), p - Vector3(0, 12, 0))
+			rayo.collision_mask = 1
+			var suelo := espacio.intersect_ray(rayo)
+			if suelo.is_empty():
+				continue                      # ahí no hay piso: caería al vacío
+			var apoyo: Vector3 = (suelo["position"] as Vector3) + Vector3(0, 0.1, 0)
+			consulta.transform = Transform3D(Basis(), apoyo + Vector3(0, 0.8, 0))
+			if not espacio.intersect_shape(consulta, 1).is_empty():
+				continue                      # ocupado
+			global_position = apoyo
+			velocity = Vector3.ZERO
+			_desvio = 0.0
+			_rumbo_ultimo = Vector3.ZERO
+			return
 
 
 func _ai_behavior() -> Vector3:

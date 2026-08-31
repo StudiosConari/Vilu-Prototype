@@ -625,7 +625,7 @@ transform = Transform3D(0.9700614, 0, -2.3704386, 0, 2.5612493, 0, 2.3704386, 0,
 transform = Transform3D(-0.19860516, 0, -1.7522892, 0, 1.7635082, 0, 1.7522892, 0, -0.19860516, 7.430194, 0, -12.264858)
 
 [node name="cristal_rojo2" parent="DecoPiso/Cristales" unique_id=647566244 instance=ExtResource("12_rfbf5")]
-transform = Transform3D(2.2156384, 0, 0, 0, 2.2156384, 0, 0, 0, 2.2156384, 5.397611, -0.3760624, -17.175402)
+transform = Transform3D(2.2156384, 0, 0, 0, 2.2156384, 0, 0, 0, 2.2156384, 5.704354, -0.3760624, -17.175402)
 
 [node name="cristal_rojo3" parent="DecoPiso/Cristales" unique_id=2113178535 instance=ExtResource("12_rfbf5")]
 transform = Transform3D(2.2156384, 0, 0, 0, 2.2156384, 0, 0, 0, 2.2156384, 7.6912355, -0.3850864, -14.038588)
