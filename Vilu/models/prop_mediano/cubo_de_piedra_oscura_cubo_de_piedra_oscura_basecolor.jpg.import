@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://brcyt6pw650og"
-path.s3tc="res://.godot/imported/lola_lola_normal.png-b2c7ed8810b2d6f0cf1c186c42a7ec33.s3tc.ctex"
+uid="uid://x37l3ftji4hb"
+path.s3tc="res://.godot/imported/cubo_de_piedra_oscura_cubo_de_piedra_oscura_basecolor.jpg-5150295dda820445c031c37d532e2aa7.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "ddd6b82005c76bfc8e8ce074948998ed"
+"md5": "9f8f3a9255e898ee15e5b5afca782bf8"
 }
 
 [deps]
 
-source_file="res://models/personaje/lola_lola_normal.png"
-dest_files=["res://.godot/imported/lola_lola_normal.png-b2c7ed8810b2d6f0cf1c186c42a7ec33.s3tc.ctex"]
+source_file="res://models/prop_mediano/cubo_de_piedra_oscura_cubo_de_piedra_oscura_basecolor.jpg"
+dest_files=["res://.godot/imported/cubo_de_piedra_oscura_cubo_de_piedra_oscura_basecolor.jpg-5150295dda820445c031c37d532e2aa7.s3tc.ctex"]
 
 [params]
 
@@ -25,12 +25,12 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=1
+compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=1
-roughness/src_normal="res://models/personaje/lola_lola_normal.png"
+roughness/mode=0
+roughness/src_normal=""
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2
