@@ -117,6 +117,10 @@ func _on_interacted(_player: Node) -> void:
 	if f1 and f2:
 		if not _met_complete:
 			_met_complete = true
+			# Si llega con los dos de una, cuenta también la primera entrega:
+			# el logro es "llevarle el fragmento", no "hacer dos viajes".
+			GameManager.conceder("talisman_1")
+			GameManager.conceder("talisman_2")
 			_met_with_frag = true
 			revealed_ocultists.emit()
 			_show(TALK_BOTH)
@@ -126,6 +130,7 @@ func _on_interacted(_player: Node) -> void:
 		_show(TALK_NONE)
 	elif not _met_with_frag:
 		_met_with_frag = true
+		GameManager.conceder("talisman_1")
 		_show(TALK_FRAG)
 	else:
 		_show(TALK_WAIT)

@@ -32,6 +32,22 @@ const ENCAJAR := preload("res://scenes/core/EncajarModelo.gd")
 ## Altura del modelo en metros. En 0 se respeta su tamaño original.
 @export var altura_visual := 0.0
 
+## Giro del modelo, en grados, para que mire hacia donde camina.
+##
+## Godot da por hecho que el frente de un modelo es su -Z. Los que vienen de
+## otras herramientas suelen mirar al +Z, y entonces el bicho persigue de
+## espaldas. 180 le da la vuelta.
+@export var giro_modelo := 0.0
+
+@export_group("Animación")
+## Nombres de las animaciones DENTRO del modelo. Vacío = no se usa ésa.
+##
+## El modelo del minero llega de AccuRig/ActorCore con Zombie_Rise, Zombie_Walk
+## y Zombie_Scratch ya horneadas sobre su esqueleto.
+@export var anim_aparecer := ""
+@export var anim_caminar := ""
+@export var anim_atacar := ""
+
 @export_group("Sueño")
 ## Segundos que deja dormido al personaje alcanzado por el golpe de ÁREA.
 ## En 0 el golpe sólo hace daño.
@@ -81,6 +97,13 @@ var _body: Node3D
 ## La cápsula pinta su propio material; un modelo importado trae los suyos y no
 ## se le pueden tocar sin estropear su textura.
 var _capa: StandardMaterial3D
+var _anim: AnimationPlayer = null
+## Segundos que le quedan de aparición. Mientras dure no se mueve ni ataca.
+var _apareciendo := 0.0
+## El primer encare, el del cuadro en que aparece, va seco y sin suavizado.
+var _sin_encarar := true
+## Está en mitad de un zarpazo y hay que dejarlo terminar.
+var _atacando := false
 var _telegraph: MeshInstance3D
 var _tel_mat: StandardMaterial3D
 # Embestida del jefe (no cancelable): 0 nada, 1 aviso, 2 embistiendo.
@@ -159,17 +182,10 @@ func _ready() -> void:
 		_charge_tel.material_override = _charge_mat
 		_charge_tel.visible = false
 		add_child(_charge_tel)
-		var lbl := Label3D.new()
-		lbl.text = boss_name
-		lbl.position = Vector3(0, 1.9 * scale_factor, 0)
-		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lbl.fixed_size = true  # tamaño constante en pantalla (no crece cerca)
-		lbl.no_depth_test = true
-		lbl.font_size = 40
-		lbl.outline_size = 10
-		lbl.modulate = Color(1.0, 0.4, 0.3)
-		lbl.pixel_size = 0.0016
-		add_child(lbl)
+		# Aquí iba un Label3D con el nombre del jefe. Se quitó: con
+		# `no_depth_test` se leía a través de la roca y anunciaba a Lola desde
+		# que cargabas la mina, encerrada y todo. `boss_name` se conserva por si
+		# el nombre lo muestra un día la barra del HUD, que sí sabe cuándo toca.
 
 
 func _build_visual() -> void:
@@ -224,6 +240,22 @@ func _montar_modelo(sf: float) -> void:
 	for m in ENCAJAR.mallas(raiz):
 		m.material_overlay = _capa
 
+	_anim = _buscar(raiz, "AnimationPlayer") as AnimationPlayer
+	if _anim == null:
+		return
+	# El importador de glTF trae las animaciones sin repetición. El paso TIENE
+	# que repetirse o el bicho da una zancada y se queda tieso.
+	if anim_caminar != "" and _anim.has_animation(anim_caminar):
+		_anim.get_animation(anim_caminar).loop_mode = Animation.LOOP_LINEAR
+	if anim_aparecer != "" and _anim.has_animation(anim_aparecer):
+		_apareciendo = _anim.get_animation(anim_aparecer).length
+		_anim.play(anim_aparecer)
+		# Mientras brota no es ni objetivo ni blanco. Sin esto el compañero le
+		# vacía el carcaj encima y los mata antes de que terminen de salir del
+		# suelo, que es justo la entrada que se quería mostrar.
+		remove_from_group("enemies")
+		collision_layer = 0
+
 
 ## Lleva el destello y la quemadura a la capa del modelo.
 ##
@@ -240,6 +272,66 @@ func _pintar() -> void:
 		c = Color(_mat.emission.r, _mat.emission.g, _mat.emission.b,
 			clampf(_mat.emission_energy_multiplier * 0.22, 0.0, 0.55))
 	_capa.albedo_color = c
+
+
+## Gira el modelo hacia una dirección, suavizado.
+##
+## Rota el envoltorio, no el cuerpo físico: la cápsula de colisión es redonda y
+## girarla no aporta nada, pero sí desalinearía el telegrafiado y el knockback,
+## que se calculan en ejes del mundo.
+func _encarar(delta: float, hacia: Vector3) -> void:
+	if _body == null:
+		return
+	if Vector2(hacia.x, hacia.z).length() < 0.05:
+		return
+	var objetivo: float = atan2(-hacia.x, -hacia.z) + deg_to_rad(giro_modelo)
+	if _sin_encarar:
+		# El primero va seco. Brotar mirando a otro lado y corregirse despues
+		# delata el truco: se ve al bicho girar solo. De ahi en adelante si se
+		# suaviza, que es cuando el giro cuenta como reaccion al jugador.
+		_sin_encarar = false
+		_body.rotation.y = objetivo
+		return
+	_body.rotation.y = lerp_angle(_body.rotation.y, objetivo, 9.0 * delta)
+
+
+func _buscar(n: Node, clase: String) -> Node:
+	for c in n.get_children():
+		if c.is_class(clase):
+			return c
+		var hondo := _buscar(c, clase)
+		if hondo:
+			return hondo
+	return null
+
+
+## Elige qué animación toca según lo que el bicho esté haciendo.
+##
+## Prioridad: aparecer > atacar > caminar. El zarpazo se deja TERMINAR aunque el
+## telegrafiado ya haya pasado —dura 1.8 s contra los 0.6 del aviso— porque
+## cortarlo a media zancada se ve peor que la pequeña demora.
+##
+## No hay animación de reposo, así que quieto se PAUSA el paso. Dejarlo caminando
+## en el sitio es lo que peor se lee de todo.
+func _animar(mov: Vector3) -> void:
+	if _anim == null:
+		return
+	var quiere_atacar: bool = (_windup > 0.0 or _charge_state > 0) and anim_atacar != "" \
+		and _anim.has_animation(anim_atacar)
+	if quiere_atacar and not _atacando:
+		_atacando = true
+		_anim.speed_scale = 1.0
+		_anim.play(anim_atacar)
+		return
+	if _atacando:
+		if _anim.is_playing() and _anim.current_animation == anim_atacar:
+			return
+		_atacando = false
+	if anim_caminar == "" or not _anim.has_animation(anim_caminar):
+		return
+	if _anim.current_animation != anim_caminar:
+		_anim.play(anim_caminar)
+	_anim.speed_scale = 0.0 if Vector2(mov.x, mov.z).length() < 0.05 else 1.0
 
 
 ## Golpe de ÁREA: alcanza a todo el que esté dentro, no sólo al objetivo.
@@ -433,7 +525,29 @@ func _spawn_damage_number(amount: float, big: bool) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _apareciendo > 0.0:
+		# Saliendo de la tierra: ni se mueve, ni ataca, ni se le puede tocar.
+		_apareciendo -= delta
+		if _apareciendo <= 0.0:
+			# Ya está fuera: a partir de aquí cuenta como enemigo de verdad.
+			add_to_group("enemies")
+			collision_layer = 4
+		# Brota ya encarado, y sigue a la presa mientras sale: la animacion dura
+		# un par de segundos y el jugador se mueve durante ella.
+		var presa := _nearest_player()
+		if is_instance_valid(presa):
+			var rumbo := presa.global_position - global_position
+			rumbo.y = 0.0
+			_encarar(delta, rumbo)
+		velocity.x = 0.0
+		velocity.z = 0.0
+		velocity.y = -0.1 if is_on_floor() else velocity.y - 18.0 * delta
+		move_and_slide()
+		return
 	if dormido:
+		# Conserva la orientacion con la que se le dejo en la escena. El encare
+		# seco se gasta aqui para que al despertar gire suave, sin el tiron.
+		_sin_encarar = false
 		# Inerte, pero con gravedad: si no, quedaría flotando donde se la puso.
 		velocity.x = 0.0
 		velocity.z = 0.0
@@ -548,4 +662,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = -0.1
 	_pintar()
+	_animar(desired)
+	# Mirar a la presa si la hay; si no, hacia donde se camina. Se prefiere la
+	# presa porque atacando se está quieto, y quedarse pegando de lado es
+	# exactamente lo que se ve mal.
+	_encarar(delta, to if dist > 0.05 else desired)
 	move_and_slide()

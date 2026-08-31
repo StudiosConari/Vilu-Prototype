@@ -109,6 +109,7 @@ func _on_dialogue_ended(_res: Resource) -> void:
 		GameManager.unlock("bow")
 		if GameManager.get_beat() < 2:
 			GameManager.set_beat(2)
+		GameManager.conceder("tirana")
 
 
 func _show(text: String) -> void:

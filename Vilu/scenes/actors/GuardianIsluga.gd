@@ -6,6 +6,12 @@ extends Node3D
 const BALLOON       := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
 const INTERACT_SCR  := preload("res://scenes/actors/Interactable.gd")
 const MAP_SCR       := preload("res://scenes/ui/ChileMapUI.gd")
+const MODELO        := preload("res://models/personaje/guardian_del_isluga.glb")
+const ENCAJAR       := preload("res://scenes/core/EncajarModelo.gd")
+
+## Alto del guardián en metros. El glb mide 2.20 m de fábrica; 4.09 es el
+## tamaño con el que ya estaba puesto a mano en la escena del Isluga.
+const ALTO          := 4.09
 
 const FIRST_TALK := "~ start
 Guardián: Bienvenidos al volcán Isluga. Soy su guardián.
@@ -26,27 +32,15 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	# Material dorado con emisión
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color           = Color(0.95, 0.83, 0.28)
-	mat.emission_enabled       = true
-	mat.emission               = Color(0.28, 0.16, 0.03)
-	mat.emission_energy_multiplier = 1.6
-
-	# Cuerpo visual
-	var mi  := MeshInstance3D.new()
-	var cap := CapsuleMesh.new()
-	cap.radius = 0.35
-	cap.height = 1.6
-	mi.mesh = cap
-	mi.position.y = 0.8
-	mi.set_surface_override_material(0, mat)
-	add_child(mi)
+	# Cuerpo visual: el modelo, apoyado en el suelo y escalado al alto de arriba.
+	var raiz: Node3D = MODELO.instantiate()
+	add_child(raiz)
+	ENCAJAR.encajar(raiz, ALTO)
 
 	# Texto flotante
 	var lbl          := Label3D.new()
 	lbl.text          = "Guardián del Isluga"
-	lbl.position.y    = 2.5
+	lbl.position.y    = ALTO + 0.5
 	lbl.pixel_size    = 0.007
 	lbl.billboard     = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.modulate      = Color(0.95, 0.83, 0.28)
@@ -54,14 +48,6 @@ func _build() -> void:
 	lbl.outline_size  = 6
 	lbl.outline_modulate = Color(0, 0, 0, 1)
 	add_child(lbl)
-
-	# Halo de luz
-	var light             := OmniLight3D.new()
-	light.position.y      = 1.0
-	light.light_color     = Color(1.0, 0.86, 0.28)
-	light.omni_range      = 4.5
-	light.light_energy    = 1.4
-	add_child(light)
 
 	# Zona de interacción (Interactable.gd maneja body_entered/exited)
 	var zone                  := Area3D.new()
@@ -73,7 +59,7 @@ func _build() -> void:
 
 	var cs  := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
-	sph.radius = 2.5
+	sph.radius = 3.2
 	cs.shape = sph
 	zone.add_child(cs)
 
@@ -92,7 +78,29 @@ func _show_dialogue(text: String) -> void:
 	var res := DialogueManager.create_resource_from_text(text)
 	# CONNECT_ONE_SHOT: abre el mapa solo cuando ESTE diálogo termina
 	DialogueManager.dialogue_ended.connect(_open_map.unbind(1), CONNECT_ONE_SHOT)
+	DialogueManager.dialogue_ended.connect(_abrir_salida.unbind(1), CONNECT_ONE_SHOT)
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
+
+
+## Levanta el camino de salida del cráter al terminar la charla.
+##
+## Se busca por grupo y no por ruta: al guardián lo instancia PuzzleIsluga
+## dentro de la escena del puzzle y el camino cuelga de World.tscn, así que no
+## hay una ruta relativa estable entre los dos.
+##
+## Repetir la charla no hace nada: `activar()` sólo actúa la primera vez.
+func _abrir_salida() -> void:
+	# El propio guardián cierra el desafío: lo instancia PuzzleIsluga como hijo
+	# suyo, así que el padre es el puzzle.
+	var puzzle := get_parent()
+	if puzzle and puzzle.has_method("superar"):
+		puzzle.superar()
+	var camino := get_tree().get_first_node_in_group("camino_salida")
+	if camino == null:
+		push_warning("Guardián del Isluga: no encuentro el camino de salida")
+		return
+	if camino.has_method("activar"):
+		camino.activar()
 
 
 func _open_map() -> void:

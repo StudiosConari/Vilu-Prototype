@@ -12,9 +12,37 @@ extends Node
 
 signal beat_changed(index: int)
 signal ability_unlocked(ability: String)
+signal logro_obtenido(id: String)
+## Se emite una sola vez, cuando cae el último logro que faltaba.
+signal prototipo_superado
 
 const BEAT_COUNT := 8
 const ABILITIES := ["bow", "wings", "guanaco", "talisman_frag_1", "talisman_frag_2"]
+
+## Los logros del prototipo, EN ORDEN DE JUEGO. Tenerlos todos es superarlo.
+##
+## El orden importa para la pantalla de logros; la lógica no depende de él, cada
+## uno se concede por su cuenta desde donde ocurre.
+const LOGROS := [
+	{"id": "tirana",      "titulo": "La Tirana",
+	 "pista": "Descubrir a la Tirana y aprender el combo de 4 golpes y el disparo triple"},
+	{"id": "mina",        "titulo": "Escape de la mina",
+	 "pista": "Salir de la mina después de ver al Chupacabras"},
+	{"id": "talisman_1",  "titulo": "El primer talismán",
+	 "pista": "Llevarle a la bruja el primer fragmento"},
+	{"id": "isluga",      "titulo": "Volcán Isluga",
+	 "pista": "Hablar con el guardián del Isluga"},
+	{"id": "alicanto",    "titulo": "El Alicanto",
+	 "pista": "Rescatar al Alicanto"},
+	{"id": "yastay",      "titulo": "El Yastay",
+	 "pista": "Superar al Yastay"},
+	{"id": "ojos_salado", "titulo": "Ojos del Salado",
+	 "pista": "Llegar a la cima del Ojos del Salado"},
+	{"id": "talisman_2",  "titulo": "El segundo talismán",
+	 "pista": "Llevarle a la bruja el segundo fragmento"},
+	{"id": "chupacabras", "titulo": "El Chupacabras",
+	 "pista": "Vencer al Chupacabras"},
+]
 
 ## Debug: si no está vacío, Game arranca cargando esta zona (selector del título).
 var debug_start_zone := ""
@@ -68,6 +96,48 @@ func unlock(ability: String) -> void:
 	ability_unlocked.emit(ability)
 
 
+func tiene_logro(id: String) -> bool:
+	return Save.logros.has(id)
+
+
+## Cuántos lleva, para el contador del HUD.
+func logros_obtenidos() -> int:
+	return Save.logros.size()
+
+
+func prototipo_completo() -> bool:
+	for l in LOGROS:
+		if not tiene_logro(l["id"]):
+			return false
+	return true
+
+
+## Devuelve la ficha de un logro, o un diccionario vacío si el id no existe.
+func logro(id: String) -> Dictionary:
+	for l in LOGROS:
+		if l["id"] == id:
+			return l
+	return {}
+
+
+## Concede un logro y persiste. Repetirlo no hace nada, así que los puntos que
+## lo llaman no necesitan llevar su propia bandera de "ya lo di".
+##
+## `prototipo_superado` se emite DESPUÉS de `logro_obtenido`, para que el HUD
+## alcance a mostrar el último logro antes del cierre.
+func conceder(id: String) -> void:
+	if logro(id).is_empty():
+		push_warning("GameManager: logro desconocido '%s'" % id)
+		return
+	if tiene_logro(id):
+		return
+	Save.logros.append(id)
+	Save.save_progress()
+	logro_obtenido.emit(id)
+	if prototipo_completo():
+		prototipo_superado.emit()
+
+
 ## Reinicia el progreso (util para tests y para "Nueva partida").
 func reset_progress() -> void:
 	Save.beat_index = 0
@@ -76,5 +146,6 @@ func reset_progress() -> void:
 	Save.has_guanaco = false
 	Save.has_talisman_1 = false
 	Save.has_talisman_2 = false
+	Save.logros = PackedStringArray()
 	Save.save_progress()
 	beat_changed.emit(0)

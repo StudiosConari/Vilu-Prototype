@@ -68,7 +68,13 @@ const ZONAS := [
 		# entra un cráter tan grande como el de la Cumbre. Y queda a 285 m de
 		# ella, sin riesgo de que las faldas se toquen.
 		"id": "Isluga",
-		"escena": "res://scenes/puzzles/Isluga.tscn",
+		# Construida a mano DENTRO de World.tscn, no en una escena aparte. Sin
+		# esto se instanciaba encima un duplicado de puzzles/Isluga.tscn, y como
+		# el nombre "Isluga" ya estaba tomado, Godot se lo cambiaba a algo como
+		# "@Node3D@179": dos Islugas superpuestos y el registro apuntando al que
+		# no se veía en el árbol.
+		"inline": true,
+		"escena": "",
 		"pos": Vector3(140, 0, -140),
 		"radio": 32.0,
 	},
@@ -103,7 +109,11 @@ const BOCA_MINA := Vector3(88, 0, 55)
 const CAMINOS := [
 	["Poblado", "Region1_Tarapaca", 9.0, 0.0],     # sur
 	["Poblado", "Region2_Alicanto", 9.0, 0.0],     # norte
-	["Region2_Alicanto", "Isluga", 9.0, 0.0],      # norte lejano
+	# Alicanto -> Isluga: QUITADO. Ese tramo terminaba dentro del cráter, y como
+	# ahí el terreno está esculpido hacia abajo, las baldosas quedaban flotando
+	# sobre la lava. El acceso al volcán son ahora las plataformas puestas a
+	# mano, no un camino empedrado. Para recuperarlo:
+	#   ["Region2_Alicanto", "Isluga", 9.0, 0.0],
 	["Poblado", "Region2_Yastay", 9.0, 0.0],       # oeste
 	["Region2_Yastay", "Cumbre", 9.0, 9.0],        # grieta: pide ALAS
 ]
@@ -180,6 +190,24 @@ func _ready() -> void:
 			_previsualizar_zonas()
 
 
+## Marcalo para volver a leer las escenas de las zonas. Se apaga solo: es un
+## botón, no un ajuste.
+##
+## La previsualización se arma UNA vez, al abrir World.tscn, instanciando una
+## copia de cada escena de zona. Si editás y guardás Isluga.tscn con World.tscn
+## abierta, acá se sigue viendo la versión vieja: son dos copias distintas y
+## Godot no refresca las que crea un script —sólo las que están instanciadas de
+## verdad en el .tscn, y éstas no lo están a propósito, para no engordar el
+## archivo con geometría que es sólo de referencia—.
+##
+## Antes había que cerrar World.tscn y volver a abrirla.
+@export var refrescar_zonas: bool = false:
+	set(v):
+		refrescar_zonas = false          # vuelve solo a su sitio
+		if v and Engine.is_editor_hint() and is_inside_tree():
+			_previsualizar_zonas()
+
+
 ## Previsualización de referencia para trabajar en el editor.
 ##
 ## Instancia las escenas REALES de cada zona. Es seguro porque en Godot los
@@ -207,8 +235,13 @@ func _previsualizar_zonas() -> void:
 		var centro: Vector3 = z["pos"]
 
 		# Geometría real de la zona (sin lógica: los scripts están dormidos)
-		if mostrar_zonas_en_editor:
-			var esc: PackedScene = load(z["escena"])
+		if mostrar_zonas_en_editor and not z.get("inline", false):
+			# Sin caché: si la escena de la zona se acaba de guardar, `load` a
+			# secas puede devolver la copia que el editor tenía en memoria y el
+			# refresco no serviría de nada. Esto sólo corre en el editor, así que
+			# releer el archivo no le cuesta al juego.
+			var esc: PackedScene = ResourceLoader.load(
+				z["escena"], "PackedScene", ResourceLoader.CACHE_MODE_IGNORE_DEEP)
 			if esc != null:
 				var inst: Node3D = esc.instantiate()
 				inst.name = "_pv_" + str(z["id"])
@@ -356,6 +389,14 @@ func _process(_delta: float) -> void:
 
 func _instanciar_zonas() -> void:
 	for z in ZONAS:
+		if z.get("inline", false):
+			var ya := get_node_or_null(NodePath(z["id"])) as Node3D
+			if ya == null:
+				push_warning("WorldRoot: la zona '%s' se declara inline pero no está en World.tscn" % z["id"])
+				continue
+			_zonas[z["id"]] = ya
+			_activas[z["id"]] = false
+			continue
 		var esc: PackedScene = load(z["escena"])
 		if esc == null:
 			push_warning("WorldRoot: no se pudo cargar %s" % z["escena"])

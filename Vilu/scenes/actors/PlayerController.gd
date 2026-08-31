@@ -145,8 +145,9 @@ func _physics_process(delta: float) -> void:
 	var dir := Vector3.ZERO
 	if _dormido > 0.0:
 		# Dormido: ni input ni IA. La rama va PRIMERO para que ni siquiera se
-		# llame a `_player_input`, que es donde viven el salto y los ataques:
-		# con sólo anular la dirección seguirías pudiendo atacar durmiendo.
+		# llame a `_player_input`, que es donde vive el salto: con sólo anular
+		# la dirección seguirías saltando dormido. Los ataques NO pasan por
+		# aquí —viven en `_unhandled_input`— y se cortan con su propia guarda.
 		_dormido -= delta
 		if _dormido <= 0.0:
 			_despertar()
@@ -365,7 +366,10 @@ func guanaco_companion() -> Node3D:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not active or input_locked:
+	# El sueno se comprueba aqui tambien: esta funcion NO pasa por el bloque de
+	# direccion de _physics_process, corre por su cuenta al llegar el evento.
+	# Sin esta guarda se sigue pegando y disparando tirado en el suelo.
+	if not active or input_locked or _dormido > 0.0:
 		return
 	# Ataque (melee, o flecha normal/cargada del arquero).
 	if event.is_action_pressed("attack"):
@@ -673,9 +677,16 @@ func _paso_libre(dir: Vector3, largo: float) -> bool:
 ## 0.67 s en el aire. A la velocidad de correr (7.5) eso son 5 m de alcance
 ## teórico; se comprueba hasta 4.2 para dejar margen al aterrizaje.
 const HUECO_ALCANCE := 4.2
-## Desnivel que admite el otro lado. Más abajo también vale —se cae y ya—, pero
-## por encima de esto no llega.
+## Cuánto puede SUBIR el otro lado y seguir siendo alcanzable de un salto.
 const HUECO_DESNIVEL := 0.9
+## Y cuánto puede BAJAR.
+##
+## Este límite es el que evita los suicidios. Antes admitía cualquier cosa hasta
+## 2.5 m por debajo, con el argumento de que caerse tampoco es grave. En el
+## volcán sí lo es: bajo la lava hay terreno sólido, así que el rayo encontraba
+## "sitio donde aterrizar" al otro lado del borde y el compañero se tiraba a la
+## lava tan contento. Un escalón de 1.2 m se baja; más abajo, no es un escalón.
+const HUECO_CAIDA := 1.2
 
 
 ## ¿Hay suelo al otro lado del hueco, dentro de lo que alcanza el salto?
@@ -692,14 +703,16 @@ func _hay_donde_caer(dir: Vector3) -> bool:
 	var dist := 1.4
 	while dist <= HUECO_ALCANCE:
 		var p := global_position + d * dist
+		# El rayo no baja más de lo que se admite como aterrizaje: si bajara
+		# más, encontraría el fondo del cráter y lo daría por bueno.
 		var q := PhysicsRayQueryParameters3D.create(
-			p + Vector3(0.0, HUECO_DESNIVEL, 0.0), p - Vector3(0.0, 2.5, 0.0))
+			p + Vector3(0.0, HUECO_DESNIVEL, 0.0), p - Vector3(0.0, HUECO_CAIDA, 0.0))
 		q.collision_mask = 1
 		q.exclude = [get_rid()]
 		var h := espacio.intersect_ray(q)
 		if not h.is_empty():
-			var y1: float = (h["position"] as Vector3).y
-			if y1 - y0 <= HUECO_DESNIVEL:
+			var salto: float = (h["position"] as Vector3).y - y0
+			if salto <= HUECO_DESNIVEL and salto >= -HUECO_CAIDA:
 				return true
 		dist += 0.6
 	return false
@@ -853,6 +866,21 @@ func _ai_attack(enemy: Node3D) -> void:
 		Sfx.play_at("punch", global_position, -7.0)
 
 
+## Hay tiro despejado hasta el enemigo, o hay roca en medio?
+##
+## Sin esto el blanco se elige por distancia pura y la IA dispara contra el
+## muro: en la mina, despierta Lola, queda a pocos metros al otro lado de la
+## pared y el companero la toma de blanco igual. Se mide de pecho a pecho, no
+## de origen a origen: los origenes estan en los pies y el propio suelo
+## cortaria el rayo. Solo tapa el entorno; ni enemigos ni personajes.
+func _hay_tiro(e: Node3D) -> bool:
+	var alto := Vector3(0, 0.9, 0)
+	var q := PhysicsRayQueryParameters3D.create(
+		global_position + alto, e.global_position + alto)
+	q.collision_mask = 1
+	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
 func _nearest_enemy(max_dist := 12.0) -> Node3D:
 	var best: Node3D = null
 	var bd := 1e9
@@ -860,9 +888,13 @@ func _nearest_enemy(max_dist := 12.0) -> Node3D:
 		if not is_instance_valid(e):
 			continue
 		var d := global_position.distance_to(e.global_position)
-		if d < bd:
-			bd = d
-			best = e
+		# La distancia primero: al que ya no puede ganar no se le tira el rayo.
+		if d >= bd:
+			continue
+		if not _hay_tiro(e):
+			continue
+		bd = d
+		best = e
 	if best != null and bd <= max_dist:
 		return best
 	return null

@@ -101,6 +101,7 @@ func _solve() -> void:
 	_hint("¡Cima de VILU alcanzada por los dos!")
 	if GameManager.get_beat() < advance_to_beat:
 		GameManager.set_beat(advance_to_beat)
+	GameManager.conceder("ojos_salado")
 	reached_summit.emit()
 
 

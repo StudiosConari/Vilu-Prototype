@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/Enemy.gd" id="1_enemy"]
-[ext_resource type="PackedScene" path="res://models/personaje/minero_corrupto.glb" id="2_modelo"]
+[ext_resource type="PackedScene" path="res://models/personaje/minero_corrupto_anim.glb" id="2_modelo"]
 
 [node name="MineroCorrupto" type="CharacterBody3D"]
 script = ExtResource("1_enemy")
@@ -14,3 +14,7 @@ scale_factor = 1.0
 windup_time = 0.6
 modelo = ExtResource("2_modelo")
 altura_visual = 1.8
+giro_modelo = 180.0
+anim_aparecer = "Zombie_Rise"
+anim_caminar = "Zombie_Walk"
+anim_atacar = "Zombie_Scratch"

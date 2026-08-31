@@ -5,8 +5,28 @@ extends "res://addons/gut/test.gd"
 
 const GAME := preload("res://scenes/core/Game.tscn")
 
+## Los errores del motor no cuentan como fallo EN ESTE ARCHIVO.
+##
+## Cargar Game.tscn levanta el mundo entero, y con él el nodo Terrain3D, que al
+## crear sus instancias llama a `instance_reset_physics_interpolation()`. Godot
+## 4.7 la marcó obsoleta y avisa por consola. GUT toma cualquier error del motor
+## como fallo, así que ese aviso tumbaba `test_spawns_two_distinct_characters`
+## aunque todos sus asserts pasaran.
+##
+## No se puede arreglar en el proyecto: Terrain3D es una GDExtension y la llamada
+## está en su binario. Se apaga sólo acá, y sólo el CONTEO: los errores se siguen
+## imprimiendo en la salida, así que si aparece uno nuevo se ve igual.
+var _errores_antes = null
+
+
+func before_all() -> void:
+	_errores_antes = gut.error_tracker.treat_engine_errors_as
+	gut.error_tracker.treat_engine_errors_as = GutUtils.TREAT_AS.NOTHING
+
 
 func after_all() -> void:
+	if _errores_antes != null:
+		gut.error_tracker.treat_engine_errors_as = _errores_antes
 	GameManager.reset_progress()
 
 

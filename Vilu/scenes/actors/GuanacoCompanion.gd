@@ -174,14 +174,6 @@ func _build_visual() -> void:
 		leg_mi.set_surface_override_material(0, leg_mat)
 		add_child(leg_mi)
 
-	# Halo dorado suave
-	var light          := OmniLight3D.new()
-	light.light_color  = Color(1.0, 0.90, 0.60)
-	light.omni_range   = 2.8
-	light.light_energy = 0.7
-	light.position.y   = 0.5
-	add_child(light)
-
 	# Etiqueta
 	_label           = Label3D.new()
 	_label.text      = "Guanaco\n[G] embestir · [Q] montar"

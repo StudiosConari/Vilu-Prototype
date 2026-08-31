@@ -28,6 +28,11 @@ const CAPA_GOLPEABLE := 4
 ## Se recoge al destruir el prop, no al tocarlo.
 @export var recompensa: NodePath
 
+## Nodo al que se avisa al romper esto, con que tenga un método `despertar()`.
+## Lo usan los tablones que encierran a Lola: hasta que no caen, ella no se
+## mueve del sitio. Mismo trato que el `despierta` del obelisco.
+@export var despierta: NodePath
+
 ## Si ya se tenía la habilidad de una partida anterior, el prop arranca roto.
 @export var recordar_si_ya_se_obtuvo := true
 
@@ -99,10 +104,24 @@ func _romper(con_efecto: bool) -> void:
 		if mensaje != "":
 			_cartel(mensaje)
 		_desaparecer_recompensa()
+		_despertar_a_lo_de_detras()
 	if _cuerpo:
 		_cuerpo.queue_free()
 	if _malla:
 		_malla.queue_free()
+
+
+## Sólo se llama al romperlo de verdad. Si el prop arranca roto por una partida
+## anterior, lo de detrás se queda quieto: no hubo golpe que lo despertara.
+func _despertar_a_lo_de_detras() -> void:
+	if despierta.is_empty():
+		return
+	var n := get_node_or_null(despierta)
+	if n == null:
+		push_warning("Destructible en %s: no encuentro '%s' para despertar" % [name, despierta])
+		return
+	if n.has_method("despertar"):
+		n.call("despertar")
 
 
 func _desaparecer_recompensa() -> void:

@@ -9,6 +9,14 @@ const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
 const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
 const WORLD_SCENE := preload("res://scenes/core/World.tscn")
 const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
+const PANTALLA_LOGROS := preload("res://scenes/ui/PantallaLogros.gd")
+
+## Segundos entre que cae el último logro y que aparece el cierre.
+##
+## No es adorno: el logro que cierra el prototipo es vencer al Chupacabras, y
+## saltar a la pantalla en el mismo cuadro en que muere se come el momento. Con
+## esta pausa se ve caer al bicho y leer su cartel antes del corte.
+const ESPERA_CIERRE := 3.5
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 
 ## Zonas que NO son parte del mundo continuo: se cargan aparte al entrar.
@@ -23,6 +31,9 @@ const INTERIORES := ["Mina", "Final", "Iglesia"]
 const INTERIORES_DE_PUERTA := ["Iglesia"]
 
 @onready var _region_holder: Node3D = $RegionHolder
+
+## Para que el cierre no se abra dos veces si la señal llegara repetida.
+var _cierre_mostrado := false
 @onready var _camera: Camera3D = $Camera
 
 @export_group("Estilo")
@@ -45,6 +56,13 @@ var _cam_pitch := -0.6
 var _cam_focus := Vector3.ZERO
 var _cam_rotating := false
 var _cam_override: Node3D = null   # si está seteado, la cámara sigue a este nodo
+## Distancia pedida por un enfoque guionado. 0 = la de siempre.
+var _cam_dist_deseada := 0.0
+## Distancia REAL, que persigue a la pedida. Se interpola aparte porque saltar
+## de 18 m a 2 en un cuadro se ve como un corte de plano, no como un acercamiento.
+var _cam_dist_actual := -1.0
+## Altura del punto al que mira la cámara, sobre el objetivo.
+var _cam_alto := 1.5
 
 @export var fall_limit := -8.0   # por debajo de esto = cayó al vacío -> reinicia la zona
 var _resetting := false
@@ -82,6 +100,10 @@ func _ready() -> void:
 
 	hud = HUD_SCENE.instantiate()
 	add_child(hud)
+	# El cierre se engancha una sola vez y vive lo que viva la partida: el último
+	# logro puede caer en cualquier zona, no sólo en la mina.
+	if not GameManager.prototipo_superado.is_connected(_al_superar_el_prototipo):
+		GameManager.prototipo_superado.connect(_al_superar_el_prototipo)
 	_spawn_party_open(start)
 
 	# Arrancar en un interior (Mina/Final) desde el selector de debug.
@@ -238,16 +260,22 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## Hace que la cámara siga a otro nodo (un NPC en una escena guionada) en vez
 ## del personaje activo. Con duration > 0 vuelve sola al jugador al terminar.
-func focus_camera_on(node: Node3D, duration := 0.0) -> void:
+## `distancia` en 0 deja la de siempre; con un valor menor la cámara se acerca,
+## y `altura` sube el punto al que mira —1.5 es el pecho, 1.7 la cara—.
+func focus_camera_on(node: Node3D, duration := 0.0, distancia := 0.0, altura := 1.5) -> void:
 	_cam_override = node
+	_cam_dist_deseada = distancia
+	_cam_alto = altura
 	if duration > 0.0:
 		get_tree().create_timer(duration).timeout.connect(func() -> void:
 			if _cam_override == node:
-				_cam_override = null)
+				clear_camera_focus())
 
 
 func clear_camera_focus() -> void:
 	_cam_override = null
+	_cam_dist_deseada = 0.0
+	_cam_alto = 1.5
 
 
 func _update_camera() -> void:
@@ -256,8 +284,12 @@ func _update_camera() -> void:
 		target = _cam_override
 	if target == null or _camera == null:
 		return
-	_cam_focus = _cam_focus.lerp(target.global_position + Vector3(0.0, 1.5, 0.0), cam_follow_lerp)
-	var offset := Vector3(0.0, 0.0, cam_distance)
+	_cam_focus = _cam_focus.lerp(target.global_position + Vector3(0.0, _cam_alto, 0.0), cam_follow_lerp)
+	var quiero: float = _cam_dist_deseada if _cam_dist_deseada > 0.0 else cam_distance
+	if _cam_dist_actual < 0.0:
+		_cam_dist_actual = quiero
+	_cam_dist_actual = lerpf(_cam_dist_actual, quiero, cam_follow_lerp)
+	var offset := Vector3(0.0, 0.0, _cam_dist_actual)
 	offset = offset.rotated(Vector3.RIGHT, _cam_pitch)
 	offset = offset.rotated(Vector3.UP, _cam_yaw)
 	_camera.global_position = _cam_wall_check(_cam_focus + offset)
@@ -384,6 +416,17 @@ func go_to(region_name: String, use_travel_spawn: bool = false) -> void:
 
 
 ## Entra a un interior: oculta el mundo y carga la escena en el holder.
+## Cierre del prototipo. Lo dispara GameManager al caer el noveno logro.
+func _al_superar_el_prototipo() -> void:
+	if _cierre_mostrado:
+		return
+	_cierre_mostrado = true
+	get_tree().create_timer(ESPERA_CIERRE).timeout.connect(
+		func() -> void:
+			if is_instance_valid(self):
+				PANTALLA_LOGROS.mostrar(self))
+
+
 func enter_interior(id: String) -> void:
 	_pos_antes_interior = active_character().global_position if active_character() else _respawn_pos
 	await TravelManager.travel_to_then(_region_holder, id, func(r: Node) -> void:
