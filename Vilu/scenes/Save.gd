@@ -26,6 +26,10 @@ var has_guanaco := false
 var has_talisman_1 := false
 var has_talisman_2 := false
 
+## Logros conseguidos, por id. Va como lista y no como un bool por logro para
+## que agregar uno nuevo no obligue a tocar el guardado en tres sitios.
+var logros: PackedStringArray = PackedStringArray()
+
 
 func _ready() -> void:
 	var c := ConfigFile.new()
@@ -39,6 +43,7 @@ func _ready() -> void:
 		has_guanaco = bool(c.get_value("g", "has_guanaco", false))
 		has_talisman_1 = bool(c.get_value("g", "has_talisman_1", false))
 		has_talisman_2 = bool(c.get_value("g", "has_talisman_2", false))
+		logros = PackedStringArray(c.get_value("g", "logros", PackedStringArray()))
 
 
 func _write() -> void:
@@ -52,6 +57,7 @@ func _write() -> void:
 	c.set_value("g", "has_guanaco", has_guanaco)
 	c.set_value("g", "has_talisman_1", has_talisman_1)
 	c.set_value("g", "has_talisman_2", has_talisman_2)
+	c.set_value("g", "logros", logros)
 	c.save(PATH)
 
 

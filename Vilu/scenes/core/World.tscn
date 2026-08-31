@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/core/AguaToon.tscn" id="4_48jlu"]
 [ext_resource type="PackedScene" path="res://scenes/core/LavaToon.tscn" id="5_acowy"]
 [ext_resource type="Script" uid="uid://ciaq54loiaofa" path="res://scenes/core/PropsColision.gd" id="6_f7wa7"]
+[ext_resource type="PackedScene" uid="uid://bxf4c8k6njm0t" path="res://models/terreno/montana_de_baja_poligonalidad.glb" id="6_ic35k"]
 [ext_resource type="PackedScene" uid="uid://bhsn1to8unfeg" path="res://models/props/rocas/fosil_escorpion.fbx" id="8_8j300"]
 [ext_resource type="PackedScene" uid="uid://ca3b8kkacrh6h" path="res://models/props/rocas/pila_de_rocas.fbx" id="9_28kfc"]
 [ext_resource type="PackedScene" uid="uid://2abnelx4ofj5" path="res://models/props/flora/raiz_de_arbol.fbx" id="10_cxvj3"]
@@ -19,8 +20,21 @@
 [ext_resource type="PackedScene" uid="uid://bxy804wef4bss" path="res://models/volcanes/bloques_de_espuma_morada.glb" id="17_sqi8t"]
 [ext_resource type="PackedScene" uid="uid://bjdkagvdy58t" path="res://models/volcanes/bloque_de_arcilla_purpura.glb" id="18_tfpjw"]
 [ext_resource type="PackedScene" uid="uid://dq5dn05gt75hn" path="res://models/volcanes/bloque_de_espuma_morada.glb" id="19_v7qhh"]
-[ext_resource type="PackedScene" uid="uid://dxg4vf6ccq6gu" path="res://models/volcanes/grupo_de_cristales_naranjas.glb" id="20_axsq4"]
 [ext_resource type="PackedScene" uid="uid://shye3cc2cxhe" path="res://models/prop_mediano/cubo_de_piedra_oscura.glb" id="21_x6p8r"]
+[ext_resource type="PackedScene" uid="uid://baeu1jfo1r0tw" path="res://models/volcanes/bloque_de_piedra_purpura.glb" id="24_tfpjw"]
+[ext_resource type="Script" uid="uid://0h7dta48ifid" path="res://scenes/actors/PlataformaMovil.gd" id="90_plataforma"]
+[ext_resource type="Script" uid="uid://bhbsm1evq7wtp" path="res://scenes/actors/BloqueQueSeHunde.gd" id="91_hunde"]
+[ext_resource type="Script" uid="uid://bq0mblbemd1e4" path="res://scenes/actors/InterruptorGolpeable.gd" id="92_interruptor"]
+[ext_resource type="Script" uid="uid://7yd12l1fn45f" path="res://scenes/actors/CaminoDeSalida.gd" id="92_salida"]
+[ext_resource type="Script" uid="uid://chf1bghotg52e" path="res://scenes/actors/BloqueCondicionado.gd" id="93_condicionado"]
+[ext_resource type="PackedScene" uid="uid://ccd2nesc3wups" path="res://models/prop_mediano/brasero_oscuro.glb" id="isl1_brasero_oscuro"]
+[ext_resource type="PackedScene" uid="uid://dxg4vf6ccq6gu" path="res://models/volcanes/grupo_de_cristales_naranjas.glb" id="isl2_grupo_de_cristales_naranjas"]
+[ext_resource type="Script" uid="uid://vxfphkv1o4h6" path="res://scenes/puzzles/PuzzleIsluga.gd" id="isl3_PuzzleIsluga"]
+[ext_resource type="Script" uid="uid://7qw5x1osfevx" path="res://scenes/actors/RoleMovingPlatform.gd" id="isl4_RoleMovingPlatform"]
+[ext_resource type="Script" uid="uid://laxq1dsyqbnt" path="res://scenes/actors/VertPlatform.gd" id="isl5_VertPlatform"]
+[ext_resource type="Script" uid="uid://dp1ohawnhearo" path="res://scenes/actors/HitCube.gd" id="isl6_HitCube"]
+[ext_resource type="PackedScene" uid="uid://x4wpud8u5s2e" path="res://models/focal/obelisko_oscuro.glb" id="isl7_obelisko_oscuro"]
+[ext_resource type="PackedScene" uid="uid://db4pbyihwnkuf" path="res://models/focal/portal_isluga.glb" id="isl8_portal_isluga"]
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_5ef10"]
 _shader_parameters = {
@@ -59,6 +73,15 @@ world_background = 0
 shader_override_enabled = true
 shader_override = ExtResource("3_toon")
 
+[sub_resource type="BoxShape3D" id="isl_shape_plat"]
+size = Vector3(4, 0.4, 4)
+
+[sub_resource type="BoxShape3D" id="isl_shape_rider"]
+size = Vector3(3.6, 1.6, 3.6)
+
+[sub_resource type="BoxShape3D" id="isl_shape_h2"]
+size = Vector3(1.4, 2, 1.4)
+
 [node name="World" type="Node3D" unique_id=100000001]
 script = ExtResource("1_world")
 
@@ -70,250 +93,759 @@ top_level = true
 metadata/_edit_lock_ = true
 
 [node name="AguaToon" parent="." unique_id=1444918785 instance=ExtResource("4_48jlu")]
-transform = Transform3D(12.280546, 0, 0, 0, 0.8351757, 0, 0, 0, 13.125666, 0, -5.418274, 5.867859)
+transform = Transform3D(12.987836, 0, 0, 0, 0.8351757, 0, 0, 0, 13.125666, -1.3339233, -5.418274, 5.867859)
 
 [node name="LavaToon" parent="." unique_id=726686684 instance=ExtResource("5_acowy")]
 transform = Transform3D(3.0735438, 0, 0, 0, 1, 0, 0, 0, 3.1202555, -142.64746, -1.5466537, -122.13057)
 
-[node name="LavaToon2" parent="." unique_id=1093428070 instance=ExtResource("5_acowy")]
-transform = Transform3D(3.6123664, 0, -0.15617609, 0, 0.99999994, 0, 0.17488107, 0, 3.2259932, 140.9125, -2.284071, -121.91993)
+[node name="Desierto" type="Node3D" parent="." unique_id=267526383]
 
-[node name="PropsMina" type="Node3D" parent="." unique_id=729908131]
+[node name="montana_de_baja_poligonalidad2" parent="Desierto" unique_id=2105239581 instance=ExtResource("6_ic35k")]
+transform = Transform3D(1.6497321, 0, 0, 0, 1.6497321, 0, 0, 0, 1.6497321, 173.41788, 0.12000306, 223.00737)
+
+[node name="montana_de_baja_poligonalidad4" parent="Desierto" unique_id=1920722560 instance=ExtResource("6_ic35k")]
+transform = Transform3D(1.6497321, 0, 0, 0, 0.981553, 0, 0, 0, 1.0639112, 84.14827, 0.12000306, 266.80066)
+
+[node name="montana_de_baja_poligonalidad5" parent="Desierto" unique_id=1570352812 instance=ExtResource("6_ic35k")]
+transform = Transform3D(1.6497321, 0, 0, 0, 0.981553, 0, 0, 0, 0.9604352, -96.899445, 0.12000306, 266.80066)
+
+[node name="montana_de_baja_poligonalidad6" parent="Desierto" unique_id=942104008 instance=ExtResource("6_ic35k")]
+transform = Transform3D(1.6497321, 0, 0, 0, 0.6288598, 0, 0, 0, 0.97635216, -5.5106506, 0.12000306, 266.80066)
+
+[node name="montana_de_baja_poligonalidad9" parent="Desierto" unique_id=1405321160 instance=ExtResource("6_ic35k")]
+transform = Transform3D(5.073467, 0, 0, 0, 1.6658112, 0, 0, 0, 0.50866437, -5.5106506, -10.167419, 298.46426)
+
+[node name="montana_de_baja_poligonalidad10" parent="Desierto" unique_id=2138097593 instance=ExtResource("6_ic35k")]
+transform = Transform3D(2.6675882, 0, 0, 0, 1.215047, 0, 0, 0, 0.50866437, -146.53232, -10.167419, 298.46426)
+
+[node name="montana_de_baja_poligonalidad11" parent="Desierto" unique_id=1324767527 instance=ExtResource("6_ic35k")]
+transform = Transform3D(2.6675882, 0, 0, 0, 1.215047, 0, 0, 0, 0.50866437, 126.765625, -10.167419, 298.46426)
+
+[node name="montana_de_baja_poligonalidad7" parent="Desierto" unique_id=764333140 instance=ExtResource("6_ic35k")]
+transform = Transform3D(0.9560016, 0, 0, 0, 0.47139564, 0, 0, 0, 0.9199659, 95.80053, 0.12000306, 214.27292)
+
+[node name="montana_de_baja_poligonalidad8" parent="Desierto" unique_id=91738885 instance=ExtResource("6_ic35k")]
+transform = Transform3D(0.9560016, 0, 0, 0, 0.47139564, 0, 0, 0, 0.9199659, -116.573616, 0.12000306, 226.64453)
+
+[node name="montana_de_baja_poligonalidad3" parent="Desierto" unique_id=1702258424 instance=ExtResource("6_ic35k")]
+transform = Transform3D(1.6497321, 0, 0, 0, 1.6497321, 0, 0, 0, 1.6497321, -209.99527, 0.12000306, 230.91185)
+
+[node name="Mina" type="Node3D" parent="." unique_id=729908131]
 script = ExtResource("6_f7wa7")
 
-[node name="fosil_escorpion" parent="PropsMina" unique_id=299429640 instance=ExtResource("8_8j300")]
+[node name="fosil_escorpion" parent="Mina" unique_id=299429640 instance=ExtResource("8_8j300")]
 transform = Transform3D(3.8050935, 0, -3.9952366, 0, 3.8520458, 0, 4.0804996, 0, 3.7255852, 79.674, 0, 46.499)
 
-[node name="pila_de_rocas" parent="PropsMina" unique_id=1734908248 instance=ExtResource("9_28kfc")]
+[node name="pila_de_rocas" parent="Mina" unique_id=1734908248 instance=ExtResource("9_28kfc")]
 transform = Transform3D(1.9881563, 0, 0, 0, 3.5597982, 0, 0, 0, 1.7892859, 82.531, 0, 51.80041)
 
-[node name="pila_de_rocas2" parent="PropsMina" unique_id=679014700 instance=ExtResource("9_28kfc")]
+[node name="pila_de_rocas2" parent="Mina" unique_id=679014700 instance=ExtResource("9_28kfc")]
 transform = Transform3D(1.9881563, 0, 0, 0, 3.5597982, 0, 0, 0, 1.7892859, 82.531, 0, 57.903328)
 
-[node name="raiz_de_arbol" parent="PropsMina" unique_id=1562682185 instance=ExtResource("10_cxvj3")]
+[node name="raiz_de_arbol" parent="Mina" unique_id=1562682185 instance=ExtResource("10_cxvj3")]
 transform = Transform3D(2.8785758, 0, 1.1342456, 0, 7.360332, 0, -4.5592256, 0, 0.7161329, 79.72015, 0, 62.6475)
 
-[node name="arbusto" parent="PropsMina" unique_id=1333762131 instance=ExtResource("11_emhlx")]
+[node name="arbusto" parent="Mina" unique_id=1333762131 instance=ExtResource("11_emhlx")]
 transform = Transform3D(-3.862965, 0, -2.7189236, 0, 5.5822654, 0, 1.5791252, 0, -6.651219, 82.159676, 0, 49.059753)
 
-[node name="arbusto2" parent="PropsMina" unique_id=995941916 instance=ExtResource("11_emhlx")]
+[node name="arbusto2" parent="Mina" unique_id=995941916 instance=ExtResource("11_emhlx")]
 transform = Transform3D(-3.4502075, 0, 4.0424347, 0, 5.5822654, 0, -2.3478084, 0, -5.9405375, 82.159676, 0, 60.021183)
 
-[node name="crater_22" parent="." unique_id=1624610948 instance=ExtResource("11_in13f")]
+[node name="Isluga" type="Node3D" parent="." unique_id=1094049887]
+script = ExtResource("isl3_PuzzleIsluga")
+
+[node name="crater_22" parent="Isluga" unique_id=1624610948 instance=ExtResource("11_in13f")]
 transform = Transform3D(12.287385, 0, 0.44513765, 0, 12.295445, 0, -0.44513765, 0, 12.287385, 138.49112, -16.123829, -125.88233)
 
-[node name="escalera_de_roca2" parent="." unique_id=1159353490 instance=ExtResource("12_8j300")]
+[node name="escalera_de_roca2" parent="Isluga" unique_id=1159353490 instance=ExtResource("12_8j300")]
 transform = Transform3D(19.642174, 0, 0, 0, 15.651835, 2.916165, 0, -2.916165, 15.651835, 140.09943, -7.474062, -53.97528)
 
-[node name="baldosa_de_piedra_de_lava_purpura2" parent="." unique_id=810677777 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura2" parent="Isluga" unique_id=810677777 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.27637, -2.4354672, -80.637985)
 
-[node name="baldosa_de_piedra_de_lava_purpura3" parent="." unique_id=804928842 instance=ExtResource("13_ymt1f")]
-transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.27637, -2.4354672, -85.57962)
+[node name="baldosa_de_piedra_de_lava_purpura3" parent="Isluga" unique_id=804928842 instance=ExtResource("13_ymt1f")]
+transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.27637, -2.4354672, -86.70652)
 
-[node name="baldosa_de_piedra_de_lava_purpura9" parent="." unique_id=1739109930 instance=ExtResource("13_ymt1f")]
-transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.27637, -2.4354672, -90.60919)
+[node name="baldosa_de_piedra_de_lava_purpura10" parent="Isluga" unique_id=192008161 instance=ExtResource("13_ymt1f")]
+transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 134.20088, -2.4354672, -88.76203)
 
-[node name="baldosa_de_piedra_de_lava_purpura10" parent="." unique_id=192008161 instance=ExtResource("13_ymt1f")]
-transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 134.75505, -2.4354672, -89.16354)
-
-[node name="baldosa_de_piedra_de_lava_purpura11" parent="." unique_id=1010999461 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura11" parent="Isluga" unique_id=1010999461 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 132.96768, -2.4354672, -94.73222)
 
-[node name="baldosa_de_piedra_de_lava_purpura12" parent="." unique_id=1055258733 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura12" parent="Isluga" unique_id=1055258733 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 126.636475, -2.4354672, -95.87176)
 
-[node name="baldosa_de_piedra_de_lava_purpura13" parent="." unique_id=324988513 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura13" parent="Isluga" unique_id=324988513 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 122.13754, -2.4354672, -100.07057)
 
-[node name="baldosa_de_piedra_de_lava_purpura4" parent="." unique_id=436477763 instance=ExtResource("13_ymt1f")]
-transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 146.07811, -2.4354672, -88.03975)
+[node name="baldosa_de_piedra_de_lava_purpura4" parent="Isluga" unique_id=436477763 instance=ExtResource("13_ymt1f")]
+transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 146.07811, -2.4354672, -88.29573)
 
-[node name="baldosa_de_piedra_de_lava_purpura5" parent="." unique_id=701098819 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura5" parent="Isluga" unique_id=701098819 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 150.1654, -2.4354672, -83.2487)
 
-[node name="baldosa_de_piedra_de_lava_purpura6" parent="." unique_id=602058138 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura6" parent="Isluga" unique_id=602058138 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 155.03311, -2.4354672, -87.68512)
 
-[node name="baldosa_de_piedra_de_lava_purpura7" parent="." unique_id=894675972 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura7" parent="Isluga" unique_id=894675972 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 155.03311, -2.4354672, -92.98813)
 
-[node name="baldosa_de_piedra_de_lava_purpura8" parent="." unique_id=1328823139 instance=ExtResource("13_ymt1f")]
+[node name="baldosa_de_piedra_de_lava_purpura8" parent="Isluga" unique_id=1328823139 instance=ExtResource("13_ymt1f")]
 transform = Transform3D(2.8463209, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 150.51752, -2.4354672, -96.836945)
 
-[node name="roca_volcanica_de_lava2" parent="." unique_id=513037970 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava2" parent="Isluga" unique_id=513037970 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(-5.7241774, 0, 8.760842, 0, 10.465113, 0, -8.760842, 0, -5.7241774, 109.28524, -2.7650776, -86.29824)
 
-[node name="roca_volcanica_de_lava4" parent="." unique_id=574328726 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava4" parent="Isluga" unique_id=574328726 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(7.857538, 0, 12.202881, 0, 14.513829, 0, -12.202881, 0, 7.857538, 109.28524, -2.7650776, -154.21806)
 
-[node name="roca_volcanica_de_lava3" parent="." unique_id=660218148 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava3" parent="Isluga" unique_id=660218148 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(-0.7471857, 0, 6.5235076, 0, 6.5661583, 0, -6.5235076, 0, -0.7471857, 107.26636, -2.7650776, -117.05735)
 
-[node name="roca_volcanica_de_lava5" parent="." unique_id=1071189545 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava5" parent="Isluga" unique_id=1071189545 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(-5.6282787, 0, 3.381849, 0, 6.5661573, 0, -3.381849, 0, -5.6282787, 122.23078, -2.7650776, -82.8038)
 
-[node name="grupo_de_rocas_de_lava2" parent="." unique_id=1143186049 instance=ExtResource("15_axsq4")]
+[node name="grupo_de_rocas_de_lava2" parent="Isluga" unique_id=1143186049 instance=ExtResource("15_axsq4")]
 transform = Transform3D(3.2847347, 0, 0, 0, 3.2847347, 0, 0, 0, 3.2847347, 103.277695, -2.4373045, -102.39409)
 
-[node name="grupo_de_rocas_de_lava3" parent="." unique_id=1998690396 instance=ExtResource("15_axsq4")]
+[node name="grupo_de_rocas_de_lava3" parent="Isluga" unique_id=1998690396 instance=ExtResource("15_axsq4")]
 transform = Transform3D(1.5045562, 0, 3.5505617, 0, 3.920084, 0, -2.919896, 0, 1.8295239, 104.25981, -2.4373045, -132.49734)
 
-[node name="roca_volcanica2" parent="." unique_id=1930924378 instance=ExtResource("16_x6p8r")]
+[node name="roca_volcanica2" parent="Isluga" unique_id=1930924378 instance=ExtResource("16_x6p8r")]
 transform = Transform3D(4.4675264, 0, 0, 0, 4.4675264, 0, 0, 0, 4.4675264, 114.32102, -3.0444875, -99.90969)
 
-[node name="roca_volcanica3" parent="." unique_id=1901648082 instance=ExtResource("16_x6p8r")]
+[node name="roca_volcanica3" parent="Isluga" unique_id=1901648082 instance=ExtResource("16_x6p8r")]
 transform = Transform3D(-4.312709, 0, -1.1659054, 0, 4.4675264, 0, 1.1659054, 0, -4.312709, 114.32102, -3.0444875, -137.9826)
 
-[node name="roca_volcanica_de_lava6" parent="." unique_id=770213571 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava6" parent="Isluga" unique_id=770213571 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(5.404571, 0, -8.961538, 0, 10.465112, 0, 8.961538, 0, 5.404571, 172.75557, -2.7650776, -156.2869)
 
-[node name="roca_volcanica_de_lava7" parent="." unique_id=1499240689 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava7" parent="Isluga" unique_id=1499240689 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(-8.292421, 0, -11.911632, 0, 14.513829, 0, 11.911632, 0, -8.292421, 170.30663, -2.7650776, -88.411224)
 
-[node name="roca_volcanica_de_lava8" parent="." unique_id=1762765568 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava8" parent="Isluga" unique_id=1762765568 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(0.5114856, 0, -6.5462065, 0, 6.5661573, 0, 6.5462065, 0, 0.5114856, 173.66408, -2.7650776, -125.47498)
 
-[node name="roca_volcanica_de_lava10" parent="." unique_id=973314788 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava10" parent="Isluga" unique_id=973314788 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(-0.13452774, 0, -3.516371, 0, 3.5189428, 0, 3.516371, 0, -0.13452774, 150.56592, -2.7650776, -88.661415)
 
-[node name="roca_volcanica_de_lava12" parent="." unique_id=1200203475 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava12" parent="Isluga" unique_id=1200203475 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(-0.8258322, 0, 3.4206672, 0, 3.5189428, 0, -3.4206672, 0, -0.8258322, 128.59688, -2.7650776, -90.635704)
 
-[node name="roca_volcanica_de_lava13" parent="." unique_id=735964971 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava13" parent="Isluga" unique_id=735964971 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(0.10674554, 0, 3.517324, 0, 3.5189433, 0, -3.517324, 0, 0.10674554, 124.60916, -2.7650776, -114.42603)
 
-[node name="roca_volcanica_de_lava11" parent="." unique_id=178245005 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava11" parent="Isluga" unique_id=178245005 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(-0.09514191, 0, -2.486879, 0, 2.488698, 0, 2.486879, 0, -0.09514191, 155.34422, -2.7650776, -97.254715)
 
-[node name="roca_volcanica_de_lava9" parent="." unique_id=1311900320 instance=ExtResource("14_7i6o5")]
+[node name="roca_volcanica_de_lava9" parent="Isluga" unique_id=1311900320 instance=ExtResource("14_7i6o5")]
 transform = Transform3D(5.5026817, 0, -3.5825858, 0, 6.5661573, 0, 3.5825858, 0, 5.5026817, 159.94446, -2.7650776, -160.24582)
 
-[node name="grupo_de_rocas_de_lava4" parent="." unique_id=386687574 instance=ExtResource("15_axsq4")]
+[node name="grupo_de_rocas_de_lava4" parent="Isluga" unique_id=386687574 instance=ExtResource("15_axsq4")]
 transform = Transform3D(-3.282599, 0, 0.11843577, 0, 3.2847347, 0, -0.11843577, 0, -3.282599, 178.17886, -2.4373045, -139.9849)
 
-[node name="grupo_de_rocas_de_lava5" parent="." unique_id=1793379702 instance=ExtResource("15_axsq4")]
+[node name="grupo_de_rocas_de_lava5" parent="Isluga" unique_id=1793379702 instance=ExtResource("15_axsq4")]
 transform = Transform3D(-1.6088588, 0, -3.4822867, 0, 3.9200838, 0, 2.8637483, 0, -1.9563547, 176.11197, -2.4373045, -109.93662)
 
-[node name="roca_volcanica4" parent="." unique_id=302768199 instance=ExtResource("16_x6p8r")]
+[node name="roca_volcanica4" parent="Isluga" unique_id=302768199 instance=ExtResource("16_x6p8r")]
 transform = Transform3D(-4.4646215, 0, 0.161083, 0, 4.4675264, 0, -0.161083, 0, -4.4646215, 167.2323, -3.0444875, -142.86588)
 
-[node name="roca_volcanica5" parent="." unique_id=131853821 instance=ExtResource("16_x6p8r")]
+[node name="roca_volcanica5" parent="Isluga" unique_id=131853821 instance=ExtResource("16_x6p8r")]
 transform = Transform3D(4.351943, 0, 1.0096464, 0, 4.467526, 0, -1.0096464, 0, 4.351943, 165.85953, -3.0444875, -104.8177)
 
-[node name="roca_volcanica6" parent="." unique_id=1096248466 instance=ExtResource("16_x6p8r")]
-transform = Transform3D(-1.465168, 0, -2.8189447, 0, 3.1769743, 0, 2.8189447, 0, -1.465168, 138.77692, -3.0444875, -97.34454)
+[node name="roca_volcanica6" parent="Isluga" unique_id=1096248466 instance=ExtResource("16_x6p8r")]
+transform = Transform3D(-3.974647, 0, 2.5090108, 0, 4.7003136, 0, -2.5090108, 0, -3.974647, 140.50253, -3.0444875, -94.611336)
 
-[node name="bloques_de_espuma_morada3" parent="." unique_id=623805301 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 146.65274, -2.2762222, -100.67808)
+[node name="bloques_de_espuma_morada6" parent="Isluga" unique_id=449608623 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 141.4156, -2.2762222, -100.67808)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada4" parent="." unique_id=1230659259 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 150.44453, -2.2762222, -100.67808)
+[node name="bloques_de_espuma_morada27" parent="Isluga" unique_id=623805301 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.13829, -2.2762222, -100.67808)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada5" parent="." unique_id=988016554 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 154.4571, -2.2762222, -100.67808)
+[node name="bloques_de_espuma_morada28" parent="Isluga" unique_id=1998769323 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.51947, -2.2762222, -100.67808)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada7" parent="." unique_id=341665751 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 158.58205, -2.2762222, -103.731834)
+[node name="bloques_de_espuma_morada29" parent="Isluga" unique_id=2091365108 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 155.61758, -2.2762222, -100.67808)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada8" parent="." unique_id=1851776016 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 158.58205, -2.2762222, -106.68263)
+[node name="bloques_de_espuma_morada30" parent="Isluga" unique_id=892690180 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 160.39568, -2.2762222, -100.67808)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada9" parent="." unique_id=1780447967 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 158.58205, -2.2762222, -109.73389)
+[node name="bloques_de_espuma_morada31" parent="Isluga" unique_id=514008452 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 160.39568, -2.2762222, -104.89323)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada10" parent="." unique_id=846646486 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 158.58205, -2.2762222, -112.80919)
+[node name="bloques_de_espuma_morada32" parent="Isluga" unique_id=475650669 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 160.39568, -2.2762222, -109.17537)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada11" parent="." unique_id=2004148198 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 154.63577, -2.2762222, -112.80919)
+[node name="bloques_de_espuma_morada33" parent="Isluga" unique_id=404533294 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 160.39568, -2.2762222, -113.10777)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada25" parent="." unique_id=1767483980 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 150.61095, -2.2762222, -112.80919)
+[node name="bloques_de_espuma_morada34" parent="Isluga" unique_id=648018869 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 160.39568, -2.2762222, -116.942856)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada12" parent="." unique_id=2000328493 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 146.55652, -2.2762222, -112.80919)
+[node name="bloques_de_espuma_morada35" parent="Isluga" unique_id=326113823 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 155.18246, -2.2762222, -116.942856)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada13" parent="." unique_id=1755184846 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 143.07355, -2.2762222, -112.80919)
+[node name="bloques_de_espuma_morada36" parent="Isluga" unique_id=1040210850 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.50609, -2.2762222, -116.942856)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada14" parent="." unique_id=1513029892 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 143.11542, -2.2762222, -109.712234)
+[node name="bloques_de_espuma_morada37" parent="Isluga" unique_id=769728239 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.00041, -2.2762222, -116.942856)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada15" parent="." unique_id=2103034350 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 143.12395, -2.2762222, -106.72572)
+[node name="bloques_de_espuma_morada38" parent="Isluga" unique_id=120684005 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 141.47351, -2.2762222, -116.942856)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada16" parent="." unique_id=2013862414 instance=ExtResource("17_sqi8t")]
-transform = Transform3D(0.3013239, 0, 0, 0, 0.27679273, 0, 0, 0, 0.3013239, 143.11513, -2.2762222, -103.83882)
+[node name="bloques_de_espuma_morada39" parent="Isluga" unique_id=417067630 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 141.47351, -2.2762222, -112.90771)
+script = ExtResource("91_hunde")
 
-[node name="bloque_de_arcilla_purpura3" parent="." unique_id=1636623086 instance=ExtResource("18_tfpjw")]
-transform = Transform3D(0.50124997, 0, 0.22134346, 0, 0.5479457, 0, -0.22134346, 0, 0.50124997, 143.07397, -2.4271116, -100.736206)
+[node name="bloques_de_espuma_morada40" parent="Isluga" unique_id=620966754 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 141.47351, -2.2762222, -108.87424)
+script = ExtResource("91_hunde")
 
-[node name="bloque_de_arcilla_purpura11" parent="." unique_id=866491092 instance=ExtResource("18_tfpjw")]
-transform = Transform3D(0.4969642, 0, 0.2308054, 0, 0.5479457, 0, -0.2308054, 0, 0.4969642, 158.65475, -2.4271116, -100.736206)
+[node name="bloques_de_espuma_morada41" parent="Isluga" unique_id=1811401334 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 141.47351, -2.2762222, -104.86236)
+script = ExtResource("91_hunde")
 
-[node name="bloque_de_arcilla_purpura4" parent="." unique_id=1937206533 instance=ExtResource("18_tfpjw")]
+[node name="bloque_de_arcilla_purpura4" parent="Isluga" unique_id=1937206533 instance=ExtResource("18_tfpjw")]
 transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 122.29504, -2.341817, -104.42684)
 
-[node name="bloque_de_arcilla_purpura5" parent="." unique_id=554519382 instance=ExtResource("18_tfpjw")]
+[node name="bloque_de_arcilla_purpura5" parent="Isluga" unique_id=554519382 instance=ExtResource("18_tfpjw")]
 transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 129.54665, -2.346616, -104.42684)
+script = ExtResource("90_plataforma")
+destino = NodePath("../bloque_de_espuma_morada2")
 
-[node name="bloque_de_arcilla_purpura6" parent="." unique_id=1719200746 instance=ExtResource("18_tfpjw")]
+[node name="bloque_de_arcilla_purpura6" parent="Isluga" unique_id=1719200746 instance=ExtResource("18_tfpjw")]
 transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 128.14099, 0.09918761, -110.25363)
+script = ExtResource("90_plataforma")
+modo = 1
+recorrido_suelto = Vector3(-7.10365, 0, 0)
 
-[node name="bloque_de_arcilla_purpura7" parent="." unique_id=1591554682 instance=ExtResource("18_tfpjw")]
-transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 121.853485, 0.09918761, -120.14863)
+[node name="bloque_de_arcilla_purpura7" parent="Isluga" unique_id=1591554682 instance=ExtResource("18_tfpjw")]
+transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 121.853485, 0.09918761, -128.69382)
+script = ExtResource("90_plataforma")
+modo = 1
+recorrido_suelto = Vector3(0, 0, 8.54519)
 
-[node name="bloque_de_arcilla_purpura8" parent="." unique_id=997347222 instance=ExtResource("18_tfpjw")]
-transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 126.02322, 0.09918761, -128.65726)
+[node name="bloque_de_arcilla_purpura8" parent="Isluga" unique_id=997347222 instance=ExtResource("18_tfpjw")]
+transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 126.02322, 0.09918761, -120.00025)
+script = ExtResource("90_plataforma")
+modo = 1
+recorrido_suelto = Vector3(0, 0, -8.65701)
 
-[node name="bloque_de_arcilla_purpura9" parent="." unique_id=1601213787 instance=ExtResource("18_tfpjw")]
-transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 130.04266, 0.09918761, -120.05326)
+[node name="bloque_de_arcilla_purpura9" parent="Isluga" unique_id=1601213787 instance=ExtResource("18_tfpjw")]
+transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 130.04266, 0.09918761, -128.76813)
+script = ExtResource("90_plataforma")
+modo = 1
+recorrido_suelto = Vector3(0, 0, 8.71487)
 
-[node name="bloque_de_arcilla_purpura10" parent="." unique_id=1647514944 instance=ExtResource("18_tfpjw")]
-transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 133.93274, 0.09918761, -128.81868)
+[node name="bloque_de_arcilla_purpura10" parent="Isluga" unique_id=1647514944 instance=ExtResource("18_tfpjw")]
+transform = Transform3D(0.90640366, 0, 0.4224126, 0, 1, 0, -0.4224126, 0, 0.90640366, 133.93274, 0.09918761, -119.971275)
+script = ExtResource("90_plataforma")
+modo = 1
+recorrido_suelto = Vector3(0, 0, -8.84741)
+recorrido_alterno = Vector3(0, 0, -7.05188)
 
-[node name="bloques_de_espuma_morada2" parent="." unique_id=1507733000 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada2" parent="Isluga" unique_id=1507733000 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 126.243965, -2.209919, -104.78121)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada17" parent="." unique_id=1607701075 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada17" parent="Isluga" unique_id=1607701075 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 133.94357, 0.12176895, -110.712494)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada18" parent="." unique_id=621891093 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada18" parent="Isluga" unique_id=621891093 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 133.94357, 0.12176895, -113.42934)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada19" parent="." unique_id=427847764 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada19" parent="Isluga" unique_id=427847764 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 131.12354, 0.12176895, -113.42934)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada20" parent="." unique_id=345576389 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada20" parent="Isluga" unique_id=345576389 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 128.2435, 0.12176895, -113.42934)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada21" parent="." unique_id=401921073 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada21" parent="Isluga" unique_id=401921073 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 120.93207, 0.12176895, -113.42934)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada22" parent="." unique_id=296898344 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada22" parent="Isluga" unique_id=296898344 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 118.28886, 0.12176895, -113.42934)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada23" parent="." unique_id=1641707461 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada23" parent="Isluga" unique_id=1641707461 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 115.01055, 0.12176895, -120.1794)
+script = ExtResource("91_hunde")
 
-[node name="bloques_de_espuma_morada24" parent="." unique_id=352550892 instance=ExtResource("17_sqi8t")]
+[node name="bloques_de_espuma_morada24" parent="Isluga" unique_id=352550892 instance=ExtResource("17_sqi8t")]
 transform = Transform3D(0.370753, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 118.13078, 0.12176895, -120.1794)
+script = ExtResource("91_hunde")
 
-[node name="bloque_de_espuma_morada2" parent="." unique_id=1301342508 instance=ExtResource("19_v7qhh")]
+[node name="bloque_de_espuma_morada2" parent="Isluga" unique_id=1301342508 instance=ExtResource("19_v7qhh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 133.53476, 0.8727714, -106.22931)
 
-[node name="bloque_de_espuma_morada3" parent="." unique_id=1650059111 instance=ExtResource("19_v7qhh")]
+[node name="bloque_de_espuma_morada3" parent="Isluga" unique_id=1650059111 instance=ExtResource("19_v7qhh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 115.008194, 0.2885226, -114.9973)
 
-[node name="bloque_de_espuma_morada4" parent="." unique_id=2020493792 instance=ExtResource("19_v7qhh")]
+[node name="bloque_de_espuma_morada4" parent="Isluga" unique_id=2020493792 instance=ExtResource("19_v7qhh")]
 transform = Transform3D(-0.009081708, 0, 0.99995875, 0, 1, 0, -0.99995875, 0, -0.009081708, 115.52432, 0.2885226, -128.40472)
 
-[node name="crater_23" parent="." unique_id=68530422 instance=ExtResource("11_in13f")]
-transform = Transform3D(-0.8929184, 0, -0.045048777, 0, 1.3399817, 0, 0.045048777, 0, -0.8929184, 150.70398, -4.366973, -106.72387)
+[node name="crater_23" parent="Isluga" unique_id=68530422 instance=ExtResource("11_in13f")]
+transform = Transform3D(-1.0913459, 0, -0.055059675, 0, 2.1043613, 0, 0.055059675, 0, -1.0913459, 150.70398, -5.467058, -108.85663)
 
-[node name="grupo_de_cristales_naranjas2" parent="." unique_id=1654026912 instance=ExtResource("20_axsq4")]
-transform = Transform3D(0.14821799, 0, 0.9889547, 0, 1, 0, -0.9889547, 0, 0.14821799, 113.83951, 1.2833291, -128.47958)
+[node name="cubo_de_piedra_oscura2" parent="Isluga" unique_id=1585180597 instance=ExtResource("21_x6p8r")]
+transform = Transform3D(1, 0, 0, 0, 0.021286845, 0.9997735, 0, -0.9997735, 0.021286845, 150.5873, -1.3987769, -108.41851)
+script = ExtResource("92_interruptor")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
 
-[node name="cubo_de_piedra_oscura2" parent="." unique_id=1585180597 instance=ExtResource("21_x6p8r")]
-transform = Transform3D(1, 0, 0, 0, 0.15254381, 0.9882967, 0, -0.9882967, 0.15254381, 150.5873, -1.6236166, -108.02955)
+[node name="cubo_de_piedra_oscura3" parent="Isluga" unique_id=979594912 instance=ExtResource("21_x6p8r")]
+transform = Transform3D(1, 0, 0, 0, 0.028091367, 0.9996055, 0, -0.9996055, 0.028091367, 160.42558, -1.3170412, -97.322975)
+script = ExtResource("92_interruptor")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura4" parent="Isluga" unique_id=1615374305 instance=ExtResource("21_x6p8r")]
+transform = Transform3D(-0.009262703, -0.99956256, 0.02809016, -5.818656e-11, 0.028091371, 0.9996056, -0.9999572, 0.009259049, -0.00026020198, 165.38937, -1.3170412, -116.7189)
+script = ExtResource("92_interruptor")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura5" parent="Isluga" unique_id=1143322851 instance=ExtResource("21_x6p8r")]
+transform = Transform3D(-0.9999945, 0.0033383453, -9.381563e-05, -1.560873e-12, 0.028091375, 0.99960583, 0.003339664, 0.9996001, -0.028091213, 141.41258, -1.3170412, -120.25809)
+script = ExtResource("92_interruptor")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura6" parent="Isluga" unique_id=1133774084 instance=ExtResource("21_x6p8r")]
+transform = Transform3D(-0.012258158, 0.9995306, -0.02808926, 4.659736e-12, 0.02809138, 0.99960595, 0.9999251, 0.012253327, -0.00034434858, 137.75876, -1.3170412, -100.73966)
+script = ExtResource("92_interruptor")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura7" parent="Isluga" unique_id=1753641214 instance=ExtResource("21_x6p8r")]
+transform = Transform3D(0.033825096, 0.6350295, 0, -0.6350295, 0.033825096, 0, 0, 0, 0.6359297, 114.04706, 1.9030151, -128.36449)
+script = ExtResource("92_interruptor")
+objetivo = NodePath("../bloque_de_arcilla_purpura10")
+mensaje = "La plataforma cambia de rumbo"
+
+[node name="bloque_de_espuma_morada5" parent="Isluga" unique_id=1961717696 instance=ExtResource("19_v7qhh")]
+transform = Transform3D(1.7453525, 0, 0, 0, 0.5495895, 0, 0, 0, 0.73454154, 150.54655, -2.2375028, -121.138176)
+script = ExtResource("93_condicionado")
+objetivos = Array[NodePath]([NodePath("../cubo_de_piedra_oscura2"), NodePath("../cubo_de_piedra_oscura3"), NodePath("../cubo_de_piedra_oscura4"), NodePath("../cubo_de_piedra_oscura5"), NodePath("../cubo_de_piedra_oscura6")])
+oculta_tambien = Array[NodePath]([NodePath("../Bloques en cadena")])
+mensaje = "El camino se abre"
+
+[node name="Bloques en cadena" type="Node3D" parent="Isluga" unique_id=581126748]
+
+[node name="bloques_de_espuma_morada42" parent="Isluga/Bloques en cadena" unique_id=1467578778 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.50609, -2.2762222, -125.798294)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada43")
+
+[node name="bloques_de_espuma_morada64" parent="Isluga/Bloques en cadena" unique_id=855179245 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.50609, -2.2762222, -123.8785)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada42")
+
+[node name="bloques_de_espuma_morada43" parent="Isluga/Bloques en cadena" unique_id=785091081 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 152.71579, -2.2762222, -125.798294)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada44")
+
+[node name="bloques_de_espuma_morada44" parent="Isluga/Bloques en cadena" unique_id=826737572 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 154.92445, -2.2762222, -125.798294)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada45")
+
+[node name="bloques_de_espuma_morada45" parent="Isluga/Bloques en cadena" unique_id=596368076 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -125.798294)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada65")
+
+[node name="bloques_de_espuma_morada65" parent="Isluga/Bloques en cadena" unique_id=1653785802 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -123.835884)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada66")
+
+[node name="bloques_de_espuma_morada66" parent="Isluga/Bloques en cadena" unique_id=933443927 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -121.88764)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada67")
+
+[node name="bloques_de_espuma_morada67" parent="Isluga/Bloques en cadena" unique_id=392799032 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -119.98414)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada68")
+
+[node name="bloques_de_espuma_morada68" parent="Isluga/Bloques en cadena" unique_id=794847453 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 159.36989, -2.2762222, -119.98414)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada69")
+
+[node name="bloques_de_espuma_morada69" parent="Isluga/Bloques en cadena" unique_id=4468863 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 161.56071, -2.2762222, -119.98414)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada70")
+
+[node name="bloques_de_espuma_morada70" parent="Isluga/Bloques en cadena" unique_id=1334230649 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.71432, -2.2762222, -119.98414)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada71")
+
+[node name="bloques_de_espuma_morada71" parent="Isluga/Bloques en cadena" unique_id=1074344469 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.71432, -2.2762222, -121.87667)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada72")
+
+[node name="bloques_de_espuma_morada72" parent="Isluga/Bloques en cadena" unique_id=638398125 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.71432, -2.2762222, -123.841156)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada48")
+
+[node name="bloques_de_espuma_morada48" parent="Isluga/Bloques en cadena" unique_id=771106289 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -125.798294)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada49")
+
+[node name="bloques_de_espuma_morada49" parent="Isluga/Bloques en cadena" unique_id=1645498898 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -127.686)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada50")
+
+[node name="bloques_de_espuma_morada50" parent="Isluga/Bloques en cadena" unique_id=1194569542 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -129.63324)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada51")
+
+[node name="bloques_de_espuma_morada51" parent="Isluga/Bloques en cadena" unique_id=89299983 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -131.54033)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada52")
+
+[node name="bloques_de_espuma_morada52" parent="Isluga/Bloques en cadena" unique_id=846193199 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -133.4858)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada53")
+
+[node name="bloques_de_espuma_morada53" parent="Isluga/Bloques en cadena" unique_id=1895042652 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 161.53473, -2.2762222, -133.4858)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada54")
+
+[node name="bloques_de_espuma_morada54" parent="Isluga/Bloques en cadena" unique_id=537869396 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 159.28152, -2.2762222, -133.4858)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada55")
+
+[node name="bloques_de_espuma_morada55" parent="Isluga/Bloques en cadena" unique_id=977782154 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.18033, -2.2762222, -133.4858)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada56")
+
+[node name="bloques_de_espuma_morada56" parent="Isluga/Bloques en cadena" unique_id=554016846 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.18033, -2.2762222, -131.58534)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada57")
+
+[node name="bloques_de_espuma_morada57" parent="Isluga/Bloques en cadena" unique_id=1326065183 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 155.04248, -2.2762222, -131.58534)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada58")
+
+[node name="bloques_de_espuma_morada58" parent="Isluga/Bloques en cadena" unique_id=376399671 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 152.8156, -2.2762222, -131.58534)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada59")
+
+[node name="bloques_de_espuma_morada59" parent="Isluga/Bloques en cadena" unique_id=1506221531 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.69478, -2.2762222, -131.58534)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada60")
+
+[node name="bloques_de_espuma_morada60" parent="Isluga/Bloques en cadena" unique_id=761223624 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 148.49669, -2.2762222, -131.58534)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada61")
+
+[node name="bloques_de_espuma_morada61" parent="Isluga/Bloques en cadena" unique_id=983103115 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -131.58534)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada62")
+
+[node name="bloques_de_espuma_morada62" parent="Isluga/Bloques en cadena" unique_id=1748131497 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -133.59525)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada63")
+
+[node name="bloques_de_espuma_morada63" parent="Isluga/Bloques en cadena" unique_id=1512217304 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -135.52121)
+script = ExtResource("91_hunde")
+siguiente = NodePath("../bloques_de_espuma_morada73")
+
+[node name="bloques_de_espuma_morada73" parent="Isluga/Bloques en cadena" unique_id=1131246689 instance=ExtResource("17_sqi8t")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -137.50586)
+script = ExtResource("91_hunde")
+
+[node name="bloque_de_piedra_purpura2" parent="Isluga" unique_id=1245486608 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1, 0, 0, 0, 0.58986616, 0, 0, 0, 0.8661172, 148.6115, -2.4668112, -137.53914)
+script = ExtResource("90_plataforma")
+modo = 2
+recorrido_suelto = Vector3(0, 2.5264728, 0)
+
+[node name="Salida" type="Node3D" parent="Isluga" unique_id=1733441786 groups=["camino_salida"]]
+script = ExtResource("92_salida")
+
+[node name="bloque_de_piedra_purpura3" parent="Isluga/Salida" unique_id=1799394445 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -151.79492)
+
+[node name="bloque_de_piedra_purpura4" parent="Isluga/Salida" unique_id=742409494 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -147.92647)
+
+[node name="bloque_de_piedra_purpura5" parent="Isluga/Salida" unique_id=2040564307 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -144.06042)
+
+[node name="bloque_de_piedra_purpura6" parent="Isluga/Salida" unique_id=1160721729 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -140.19522)
+
+[node name="bloque_de_piedra_purpura7" parent="Isluga/Salida" unique_id=80564293 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -136.38292)
+
+[node name="bloque_de_piedra_purpura8" parent="Isluga/Salida" unique_id=1520478831 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -132.59709)
+
+[node name="bloque_de_piedra_purpura9" parent="Isluga/Salida" unique_id=405848518 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -128.78546)
+
+[node name="bloque_de_piedra_purpura10" parent="Isluga/Salida" unique_id=1571025622 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -124.97752)
+
+[node name="bloque_de_piedra_purpura11" parent="Isluga/Salida" unique_id=159250097 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -121.22176)
+
+[node name="bloque_de_piedra_purpura12" parent="Isluga/Salida" unique_id=1842260876 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -117.44133)
+
+[node name="bloque_de_piedra_purpura13" parent="Isluga/Salida" unique_id=387636730 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -113.69046)
+
+[node name="bloque_de_piedra_purpura14" parent="Isluga/Salida" unique_id=680326572 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -109.84121)
+
+[node name="bloque_de_piedra_purpura15" parent="Isluga/Salida" unique_id=2030479876 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -106.12907)
+
+[node name="bloque_de_piedra_purpura16" parent="Isluga/Salida" unique_id=1990506311 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -102.34805)
+
+[node name="bloque_de_piedra_purpura17" parent="Isluga/Salida" unique_id=1651436319 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -98.67067)
+
+[node name="bloque_de_piedra_purpura18" parent="Isluga/Salida" unique_id=524825156 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -94.89235)
+
+[node name="bloque_de_piedra_purpura19" parent="Isluga/Salida" unique_id=635175537 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -91.183304)
+
+[node name="bloque_de_piedra_purpura20" parent="Isluga/Salida" unique_id=1284132428 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -87.34233)
+
+[node name="bloque_de_piedra_purpura21" parent="Isluga/Salida" unique_id=485467049 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -83.7371)
+
+[node name="bloque_de_piedra_purpura22" parent="Isluga/Salida" unique_id=1855148481 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -79.86483)
+
+[node name="bloque_de_piedra_purpura23" parent="Isluga/Salida" unique_id=586139124 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -76.020744)
+
+[node name="LavaToon2" parent="Isluga" unique_id=1093428070 instance=ExtResource("5_acowy")]
+transform = Transform3D(3.6123664, 0, -0.15617609, 0, 0.99999994, 0, 0.17488107, 0, 3.2259932, 140.88039, -2.284069, -121.92168)
+skeleton = NodePath("../..")
+
+[node name="PlayerSpawn" type="Marker3D" parent="Isluga" unique_id=602394335]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, 3.8248558, -63.94537)
+
+[node name="TravelSpawn" type="Marker3D" parent="Isluga" unique_id=700000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 142.5, 12.5, -156)
+
+[node name="EmiliaDock" type="Marker3D" parent="Isluga" unique_id=108884045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 0.2, -140)
+
+[node name="EmiliaHorizDest" type="Marker3D" parent="Isluga" unique_id=1095423440]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 6.2, -140)
+
+[node name="EmiliaHoriz" type="AnimatableBody3D" parent="Isluga" unique_id=396376706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 0.2, -140)
+collision_mask = 0
+script = ExtResource("isl4_RoleMovingPlatform")
+dock = NodePath("../EmiliaDock")
+dest = NodePath("../EmiliaHorizDest")
+
+[node name="bloque_de_piedra_purpura4" parent="Isluga/EmiliaHoriz" unique_id=900000001 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, -0.034685135, 0, 0.008725405)
+
+[node name="Shape" type="CollisionShape3D" parent="Isluga/EmiliaHoriz" unique_id=1603368327]
+shape = SubResource("isl_shape_plat")
+
+[node name="Rider" type="Area3D" parent="Isluga/EmiliaHoriz" unique_id=701110269]
+collision_layer = 0
+collision_mask = 2
+
+[node name="RiderShape" type="CollisionShape3D" parent="Isluga/EmiliaHoriz/Rider" unique_id=84573363]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("isl_shape_rider")
+
+[node name="EmiliaCube" type="StaticBody3D" parent="Isluga" unique_id=720540949]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 7, -146)
+script = ExtResource("isl6_HitCube")
+activacion = 1
+prompt = "[E] Activar el obelisco"
+
+[node name="baldosa_de_piedra_de_lava_purpura2" parent="Isluga/EmiliaCube" unique_id=900000002 instance=ExtResource("13_ymt1f")]
+transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.3835835, -0.117708206, -1.8872695, -0.19831467)
+
+[node name="obelisko_oscuro1" parent="Isluga/EmiliaCube" unique_id=812692296 instance=ExtResource("isl7_obelisko_oscuro")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06805706, -0.8055315, -1.1089182)
+
+[node name="Shape" type="CollisionShape3D" parent="Isluga/EmiliaCube" unique_id=1492014432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5568161)
+shape = SubResource("isl_shape_h2")
+
+[node name="EmiliaVert" type="AnimatableBody3D" parent="Isluga" unique_id=1511910587]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130, 6.2, -152)
+collision_mask = 0
+script = ExtResource("isl5_VertPlatform")
+
+[node name="bloque_de_piedra_purpura5" parent="Isluga/EmiliaVert" unique_id=2018142121 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, -0.034685135, -0.18931293, -0.09869003)
+
+[node name="Shape" type="CollisionShape3D" parent="Isluga/EmiliaVert" unique_id=1007209641]
+shape = SubResource("isl_shape_plat")
+
+[node name="BenjaminDock" type="Marker3D" parent="Isluga" unique_id=1112766455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0.2, -140)
+
+[node name="BenjaminHorizDest" type="Marker3D" parent="Isluga" unique_id=1218847177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 6.2, -140)
+
+[node name="BenjaminHoriz" type="AnimatableBody3D" parent="Isluga" unique_id=651879927]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0.2, -140)
+collision_mask = 0
+script = ExtResource("isl4_RoleMovingPlatform")
+for_archer = true
+dock = NodePath("../BenjaminDock")
+dest = NodePath("../BenjaminHorizDest")
+
+[node name="bloque_de_piedra_purpura5" parent="Isluga/BenjaminHoriz" unique_id=1860682759 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, 1.9477797, 0, 0.008725405)
+
+[node name="Shape" type="CollisionShape3D" parent="Isluga/BenjaminHoriz" unique_id=1853870028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9129591, 0, 0)
+shape = SubResource("isl_shape_plat")
+
+[node name="Rider" type="Area3D" parent="Isluga/BenjaminHoriz" unique_id=969063033]
+collision_layer = 0
+collision_mask = 2
+
+[node name="RiderShape" type="CollisionShape3D" parent="Isluga/BenjaminHoriz/Rider" unique_id=442520620]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9129591, 1, 0)
+shape = SubResource("isl_shape_rider")
+
+[node name="BenjaminCube" type="StaticBody3D" parent="Isluga" unique_id=1608193779]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 152, 7, -146)
+script = ExtResource("isl6_HitCube")
+activacion = 1
+prompt = "[E] Activar el obelisco"
+
+[node name="baldosa_de_piedra_de_lava_purpura3" parent="Isluga/BenjaminCube" unique_id=24076407 instance=ExtResource("13_ymt1f")]
+transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.4358597, 0.12043953, -1.8872695, -0.19831467)
+
+[node name="Shape" type="CollisionShape3D" parent="Isluga/BenjaminCube" unique_id=475081696]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.0941896)
+shape = SubResource("isl_shape_h2")
+
+[node name="obelisko_oscuro2" parent="Isluga/BenjaminCube" unique_id=251378117 instance=ExtResource("isl7_obelisko_oscuro")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1514368, -0.8125477, -0.88896275)
+
+[node name="BenjaminVert" type="AnimatableBody3D" parent="Isluga" unique_id=458402743]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 6.2, -152)
+collision_mask = 0
+script = ExtResource("isl5_VertPlatform")
+
+[node name="bloque_de_piedra_purpura6" parent="Isluga/BenjaminVert" unique_id=1884722642 instance=ExtResource("24_tfpjw")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, 2.3067226, -0.18931293, -0.09869003)
+
+[node name="Shape" type="CollisionShape3D" parent="Isluga/BenjaminVert" unique_id=409793842]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.219305, 0, 0)
+shape = SubResource("isl_shape_plat")
+
+[node name="bloque_de_espuma_morada_puzzle" parent="Isluga" unique_id=900000003 instance=ExtResource("19_v7qhh")]
+transform = Transform3D(0.065626755, 0, -6.7242017, 0, 1.0869792, 0, 4.871985, 0, 0.09057652, 139.25441, 10.972622, -158.90129)
+
+[node name="portal_isluga2" parent="Isluga" unique_id=1618892134 instance=ExtResource("isl8_portal_isluga")]
+transform = Transform3D(1.8436146, 0, 0, 0, 1.8436146, 0, 0, 0, 1.8436146, 139.67128, 12.052724, -162.17932)
+
+[node name="brasero_oscuro2" parent="Isluga" unique_id=2049782038 instance=ExtResource("isl1_brasero_oscuro")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 124.51076, 12.048319, -162.35399)
+
+[node name="brasero_oscuro6" parent="Isluga" unique_id=170783464 instance=ExtResource("isl1_brasero_oscuro")]
+transform = Transform3D(1.8611367, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, 135.25578, 12.048319, -159.89021)
+
+[node name="brasero_oscuro7" parent="Isluga" unique_id=2116707789 instance=ExtResource("isl1_brasero_oscuro")]
+transform = Transform3D(1.8611367, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, 143.808, 12.048319, -159.89021)
+
+[node name="brasero_oscuro3" parent="Isluga" unique_id=271515689 instance=ExtResource("isl1_brasero_oscuro")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 124.65469, 12.048319, -155.44542)
+
+[node name="brasero_oscuro4" parent="Isluga" unique_id=1211385038 instance=ExtResource("isl1_brasero_oscuro")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 153.9305, 12.048319, -155.90439)
+
+[node name="brasero_oscuro5" parent="Isluga" unique_id=10840532 instance=ExtResource("isl1_brasero_oscuro")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 153.9305, 12.048319, -162.33105)
+
+[node name="grupo_de_cristales_naranjas4" parent="Isluga" unique_id=1654026912 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(0.045505248, 0, 2.072735, 0, 2.0732346, 0, -2.072735, 0, 0.045505248, 124.59429, 12.052428, -158.55205)
+
+[node name="grupo_de_cristales_naranjas5" parent="Isluga" unique_id=1616257335 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 128.02597, 12.052428, -162.58363)
+
+[node name="grupo_de_cristales_naranjas6" parent="Isluga" unique_id=2110693173 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 130.9353, 12.052428, -162.58363)
+
+[node name="grupo_de_cristales_naranjas7" parent="Isluga" unique_id=2083503422 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 133.82765, 12.052428, -162.58363)
+
+[node name="grupo_de_cristales_naranjas8" parent="Isluga" unique_id=620903979 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 145.2548, 12.052428, -162.58363)
+
+[node name="grupo_de_cristales_naranjas9" parent="Isluga" unique_id=1867459516 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 148.16545, 12.052428, -162.58363)
+
+[node name="grupo_de_cristales_naranjas10" parent="Isluga" unique_id=1339880481 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 151.07835, 12.052428, -162.58363)
+
+[node name="grupo_de_cristales_naranjas11" parent="Isluga" unique_id=1869612923 instance=ExtResource("isl2_grupo_de_cristales_naranjas")]
+transform = Transform3D(-0.02122368, 0, -2.0731263, 0, 2.073235, 0, 2.0731263, 0, -0.02122368, 154.28857, 12.052428, -158.82231)
+
+[node name="Ojos del Salado" type="Node3D" parent="." unique_id=1578642676]
+
+[node name="Pueblo" type="Node3D" parent="." unique_id=1562789021]
+
+[node name="Yastay" type="Node3D" parent="." unique_id=1695544417]
+
+[node name="Alicanto" type="Node3D" parent="." unique_id=1761306800]

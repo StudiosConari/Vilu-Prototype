@@ -254,6 +254,7 @@ func _give_blessing() -> void:
 	GameManager.unlock("guanaco")
 	if GameManager.get_beat() < 6:
 		GameManager.set_beat(6)
+	GameManager.conceder("yastay")
 
 	_banner("Bendición del Guanaco obtenida. El paso al volcán está abierto.", 7.0)
 	_hint("[Q] invocar/montar/guardar guanaco · [G] embestir · [E] revisar los cuerpos · portal al norte")

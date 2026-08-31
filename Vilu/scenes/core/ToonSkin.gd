@@ -202,6 +202,11 @@ func _convertir(origen: Material, escala := 1.0) -> ShaderMaterial:
 ## espacio local y la transformación lo multiplica después. Así
 ## `ajustes.contorno_grosor` significa siempre lo mismo —metros de mundo— sin
 ## importar a qué escala esté puesto el modelo.
+## Grosor del contorno en METROS DE MUNDO cuando no se le pasa un AjustesToon.
+## Vive acá y no como número suelto porque es el contrato que comprueba
+## test_toonskin: el borde tiene que medir lo mismo a cualquier escala.
+const CONTORNO_GROSOR := 0.018
+
 var _contornos := {}   # escala -> StandardMaterial3D
 
 func _contorno(escala: float) -> StandardMaterial3D:
@@ -209,7 +214,7 @@ func _contorno(escala: float) -> StandardMaterial3D:
 		return null                              # sin silueta: el estilo más suave
 	if _contornos.has(escala):
 		return _contornos[escala]
-	var grosor: float = ajustes.contorno_grosor if ajustes else 0.018
+	var grosor: float = ajustes.contorno_grosor if ajustes else CONTORNO_GROSOR
 	var c := StandardMaterial3D.new()
 	c.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	c.albedo_color = ajustes.contorno_color if ajustes else Color(0.07, 0.05, 0.09)

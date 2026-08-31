@@ -19,6 +19,7 @@ windup_time = 0.7
 charge_windup = 1.1
 modelo = ExtResource("2_modelo")
 altura_visual = 1.7
+giro_modelo = 180.0
 duerme = 4.0
 cooldown_area = 6.0
 color_area = Color(1, 0.08, 0.08, 1)

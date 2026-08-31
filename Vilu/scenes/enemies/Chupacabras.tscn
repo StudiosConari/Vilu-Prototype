@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/Enemy.gd" id="1_enemy"]
+[ext_resource type="PackedScene" path="res://models/personaje/chupacabras.glb" id="2_modelo"]
+
+[node name="Chupacabras" type="CharacterBody3D"]
+script = ExtResource("1_enemy")
+max_health = 260.0
+speed = 5.0
+damage = 18.0
+attack_range = 2.4
+attack_cooldown = 1.4
+base_color = Color(0.16, 0.13, 0.18, 1)
+scale_factor = 1.4
+is_boss = true
+boss_name = "CHUPACABRAS"
+boss_kind = 0
+windup_time = 0.55
+charge_windup = 1.0
+modelo = ExtResource("2_modelo")
+altura_visual = 2.4
+giro_modelo = 180.0

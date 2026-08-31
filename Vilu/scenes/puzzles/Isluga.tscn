@@ -1,16 +1,16 @@
 [gd_scene format=3 uid="uid://bikdfsn25qvqy"]
 
 [ext_resource type="Script" uid="uid://vxfphkv1o4h6" path="res://scenes/puzzles/PuzzleIsluga.gd" id="1_puzzle"]
-[ext_resource type="Material" path="res://art_placeholders/mat_terrain.tres" id="2_terrain"]
-[ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="3_trigger"]
+[ext_resource type="PackedScene" uid="uid://kdn7lps6dx77" path="res://models/volcanes/baldosa_de_piedra_de_lava_purpura.glb" id="3_rri60"]
 [ext_resource type="Script" uid="uid://7qw5x1osfevx" path="res://scenes/actors/RoleMovingPlatform.gd" id="4_rolemov"]
 [ext_resource type="Script" uid="uid://laxq1dsyqbnt" path="res://scenes/actors/VertPlatform.gd" id="5_vert"]
 [ext_resource type="Script" uid="uid://dp1ohawnhearo" path="res://scenes/actors/HitCube.gd" id="6_cube"]
+[ext_resource type="PackedScene" uid="uid://x4wpud8u5s2e" path="res://models/focal/obelisko_oscuro.glb" id="6_eoxpm"]
 [ext_resource type="PackedScene" uid="uid://baeu1jfo1r0tw" path="res://models/volcanes/bloque_de_piedra_purpura.glb" id="7_rri60"]
-[ext_resource type="PackedScene" uid="uid://bf5ar4pl23nph" path="res://models/focal/obelisko.glb" id="8_eoxpm"]
-
-[sub_resource type="BoxMesh" id="mesh_plat"]
-size = Vector3(4, 0.4, 4)
+[ext_resource type="PackedScene" uid="uid://dq5dn05gt75hn" path="res://models/volcanes/bloque_de_espuma_morada.glb" id="8_getua"]
+[ext_resource type="PackedScene" uid="uid://db4pbyihwnkuf" path="res://models/focal/portal_isluga.glb" id="9_yxnhm"]
+[ext_resource type="PackedScene" uid="uid://ccd2nesc3wups" path="res://models/prop_mediano/brasero_oscuro.glb" id="10_k5c33"]
+[ext_resource type="PackedScene" uid="uid://dxg4vf6ccq6gu" path="res://models/volcanes/grupo_de_cristales_naranjas.glb" id="11_qkxls"]
 
 [sub_resource type="BoxShape3D" id="shape_plat"]
 size = Vector3(4, 0.4, 4)
@@ -20,27 +20,6 @@ size = Vector3(3.6, 1.6, 3.6)
 
 [sub_resource type="BoxShape3D" id="shape_h2"]
 size = Vector3(1.4, 2, 1.4)
-
-[sub_resource type="BoxMesh" id="mesh_h2"]
-size = Vector3(1.4, 2, 1.4)
-
-[sub_resource type="BoxMesh" id="mesh_h3"]
-size = Vector3(1.4, 3, 1.4)
-
-[sub_resource type="BoxShape3D" id="shape_h3"]
-size = Vector3(1.4, 3, 1.4)
-
-[sub_resource type="BoxMesh" id="mesh_h4"]
-size = Vector3(1.4, 4, 1.4)
-
-[sub_resource type="BoxShape3D" id="shape_h4"]
-size = Vector3(1.4, 4, 1.4)
-
-[sub_resource type="BoxMesh" id="mesh_h5"]
-size = Vector3(1.4, 5, 1.4)
-
-[sub_resource type="BoxShape3D" id="shape_h5"]
-size = Vector3(1.4, 5, 1.4)
 
 [node name="Isluga" type="Node3D" unique_id=387808961]
 script = ExtResource("1_puzzle")
@@ -64,9 +43,8 @@ script = ExtResource("4_rolemov")
 dock = NodePath("../EmiliaDock")
 dest = NodePath("../EmiliaHorizDest")
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaHoriz" unique_id=1853298774]
-mesh = SubResource("mesh_plat")
-surface_material_override/0 = ExtResource("3_trigger")
+[node name="bloque_de_piedra_purpura4" parent="EmiliaHoriz" unique_id=1245486608 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, -0.034685135, 0, 0.008725405)
 
 [node name="Shape" type="CollisionShape3D" parent="EmiliaHoriz" unique_id=1603368327]
 shape = SubResource("shape_plat")
@@ -82,9 +60,17 @@ shape = SubResource("shape_rider")
 [node name="EmiliaCube" type="StaticBody3D" parent="." unique_id=720540949]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 7, -6)
 script = ExtResource("6_cube")
-hits_needed = 2
+activacion = 1
+prompt = "[E] Activar el obelisco"
+
+[node name="baldosa_de_piedra_de_lava_purpura2" parent="EmiliaCube" unique_id=810677777 instance=ExtResource("3_rri60")]
+transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.3835835, -0.117708206, -1.8872695, -0.19831467)
+
+[node name="obelisko_oscuro1" parent="EmiliaCube" unique_id=812692296 instance=ExtResource("6_eoxpm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06805706, -0.8055315, -1.1089182)
 
 [node name="Shape" type="CollisionShape3D" parent="EmiliaCube" unique_id=1492014432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5568161)
 shape = SubResource("shape_h2")
 
 [node name="EmiliaVert" type="AnimatableBody3D" parent="." unique_id=1511910587]
@@ -92,75 +78,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, -12)
 collision_mask = 0
 script = ExtResource("5_vert")
 
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaVert" unique_id=1323980274]
-mesh = SubResource("mesh_plat")
-surface_material_override/0 = ExtResource("3_trigger")
+[node name="bloque_de_piedra_purpura5" parent="EmiliaVert" unique_id=2018142121 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, -0.034685135, -0.18931293, -0.09869003)
 
 [node name="Shape" type="CollisionShape3D" parent="EmiliaVert" unique_id=1007209641]
 shape = SubResource("shape_plat")
-
-[node name="EmiliaTop" type="CSGBox3D" parent="." unique_id=1695176988]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 11.5, -19)
-use_collision = true
-size = Vector3(10, 1, 10)
-material = ExtResource("2_terrain")
-
-[node name="EmiliaTopCubes" type="Node3D" parent="." unique_id=580446616]
-
-[node name="Cube1" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=1311628269]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 13, -19)
-script = ExtResource("6_cube")
-reset_on_overhit = true
-
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube1" unique_id=414075790]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.9058075)
-mesh = SubResource("mesh_h2")
-
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube1" unique_id=1629844243]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.9058075)
-shape = SubResource("shape_h2")
-
-[node name="Cube2" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=645267548]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 13.5, -19)
-script = ExtResource("6_cube")
-hits_needed = 2
-reset_on_overhit = true
-
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube2" unique_id=159878436]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8791847, 0, 0.43024826)
-mesh = SubResource("mesh_h3")
-
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube2" unique_id=131606666]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8791847, 0, 0.43024826)
-shape = SubResource("shape_h3")
-
-[node name="Cube3" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=1991789267]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 14, -19)
-script = ExtResource("6_cube")
-hits_needed = 3
-reset_on_overhit = true
-
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube3" unique_id=485719418]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6024122, 0, -1.9588051)
-mesh = SubResource("mesh_h4")
-
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube3" unique_id=873486332]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6024122, 0, -1.9588051)
-shape = SubResource("shape_h4")
-
-[node name="Cube4" type="StaticBody3D" parent="EmiliaTopCubes" unique_id=1361203634]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 14.5, -19)
-script = ExtResource("6_cube")
-hits_needed = 4
-reset_on_overhit = true
-
-[node name="Mesh" type="MeshInstance3D" parent="EmiliaTopCubes/Cube4" unique_id=1286961301]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.628829, 0, -2.7730865)
-mesh = SubResource("mesh_h5")
-
-[node name="Shape" type="CollisionShape3D" parent="EmiliaTopCubes/Cube4" unique_id=599469177]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.628829, 0, -2.7730865)
-shape = SubResource("shape_h5")
 
 [node name="BenjaminDock" type="Marker3D" parent="." unique_id=1112766455]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 0)
@@ -176,11 +98,11 @@ for_archer = true
 dock = NodePath("../BenjaminDock")
 dest = NodePath("../BenjaminHorizDest")
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminHoriz" unique_id=816990841]
-mesh = SubResource("mesh_plat")
-surface_material_override/0 = ExtResource("3_trigger")
+[node name="bloque_de_piedra_purpura5" parent="BenjaminHoriz" unique_id=1860682759 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, 1.9477797, 0, 0.008725405)
 
 [node name="Shape" type="CollisionShape3D" parent="BenjaminHoriz" unique_id=1853870028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9129591, 0, 0)
 shape = SubResource("shape_plat")
 
 [node name="Rider" type="Area3D" parent="BenjaminHoriz" unique_id=969063033]
@@ -188,109 +110,81 @@ collision_layer = 0
 collision_mask = 2
 
 [node name="RiderShape" type="CollisionShape3D" parent="BenjaminHoriz/Rider" unique_id=442520620]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9129591, 1, 0)
 shape = SubResource("shape_rider")
-
-[node name="BenjaminFloor1" type="CSGBox3D" parent="." unique_id=420532547]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.5, -6)
-use_collision = true
-size = Vector3(8, 1, 8)
-material = ExtResource("2_terrain")
 
 [node name="BenjaminCube" type="StaticBody3D" parent="." unique_id=1608193779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 7, -6)
 script = ExtResource("6_cube")
-hits_needed = 2
+activacion = 1
+prompt = "[E] Activar el obelisco"
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminCube" unique_id=70604760]
-mesh = SubResource("mesh_h2")
+[node name="baldosa_de_piedra_de_lava_purpura3" parent="BenjaminCube" unique_id=24076407 instance=ExtResource("3_rri60")]
+transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.4358597, 0.12043953, -1.8872695, -0.19831467)
 
 [node name="Shape" type="CollisionShape3D" parent="BenjaminCube" unique_id=475081696]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.0941896)
 shape = SubResource("shape_h2")
+
+[node name="obelisko_oscuro2" parent="BenjaminCube" unique_id=251378117 instance=ExtResource("6_eoxpm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1514368, -0.8125477, -0.88896275)
 
 [node name="BenjaminVert" type="AnimatableBody3D" parent="." unique_id=458402743]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, -12)
 collision_mask = 0
 script = ExtResource("5_vert")
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminVert" unique_id=1395502076]
-mesh = SubResource("mesh_plat")
-surface_material_override/0 = ExtResource("3_trigger")
+[node name="bloque_de_piedra_purpura6" parent="BenjaminVert" unique_id=1884722642 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, 2.3067226, -0.18931293, -0.09869003)
 
 [node name="Shape" type="CollisionShape3D" parent="BenjaminVert" unique_id=409793842]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.219305, 0, 0)
 shape = SubResource("shape_plat")
 
-[node name="BenjaminTop" type="CSGBox3D" parent="." unique_id=592526036]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 11.5, -19)
-use_collision = true
-size = Vector3(10, 1, 10)
-material = ExtResource("2_terrain")
+[node name="bloque_de_espuma_morada2" parent="." unique_id=1301342508 instance=ExtResource("8_getua")]
+transform = Transform3D(0.065626755, 0, -6.7242017, 0, 1.0869792, 0, 4.871985, 0, 0.09057652, -0.7455828, 10.972622, -18.901295)
 
-[node name="BenjaminTopCubes" type="Node3D" parent="." unique_id=1783013679]
+[node name="portal_isluga2" parent="." unique_id=1618892134 instance=ExtResource("9_yxnhm")]
+transform = Transform3D(1.8436146, 0, 0, 0, 1.8436146, 0, 0, 0, 1.8436146, -0.32872403, 12.052724, -22.17932)
 
-[node name="Cube1" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=1625895500]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 13.2, -27)
-script = ExtResource("6_cube")
-reset_on_overhit = true
+[node name="brasero_oscuro2" parent="." unique_id=2049782038 instance=ExtResource("10_k5c33")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, -15.489241, 12.048319, -22.353992)
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube1" unique_id=1891801337]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24815655, 0, 0)
-mesh = SubResource("mesh_h2")
+[node name="brasero_oscuro6" parent="." unique_id=170783464 instance=ExtResource("10_k5c33")]
+transform = Transform3D(1.8611367, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, -4.7442207, 12.048319, -19.890207)
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube1" unique_id=2105935587]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24815655, 0, 0)
-shape = SubResource("shape_h2")
+[node name="brasero_oscuro7" parent="." unique_id=2116707789 instance=ExtResource("10_k5c33")]
+transform = Transform3D(1.8611367, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, 3.8079963, 12.048319, -19.890207)
 
-[node name="Cube2" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=1820703417]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 13.2, -27)
-script = ExtResource("6_cube")
-hits_needed = 2
-reset_on_overhit = true
+[node name="brasero_oscuro3" parent="." unique_id=271515689 instance=ExtResource("10_k5c33")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, -15.345303, 12.048319, -15.445416)
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube2" unique_id=1984043061]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.384617, 0, 11.148655)
-mesh = SubResource("mesh_h3")
+[node name="brasero_oscuro4" parent="." unique_id=1211385038 instance=ExtResource("10_k5c33")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 13.930489, 12.048319, -15.904396)
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube2" unique_id=422228038]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.384617, 0, 11.148655)
-shape = SubResource("shape_h3")
+[node name="brasero_oscuro5" parent="." unique_id=10840532 instance=ExtResource("10_k5c33")]
+transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 13.930489, 12.048319, -22.331057)
 
-[node name="Cube3" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=294857035]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 13.2, -27)
-script = ExtResource("6_cube")
-hits_needed = 3
-reset_on_overhit = true
+[node name="grupo_de_cristales_naranjas4" parent="." unique_id=1654026912 instance=ExtResource("11_qkxls")]
+transform = Transform3D(0.045505248, 0, 2.072735, 0, 2.0732346, 0, -2.072735, 0, 0.045505248, -15.405709, 12.052428, -18.552053)
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube3" unique_id=2052159837]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9871597, 0, 5.5723553)
-mesh = SubResource("mesh_h4")
+[node name="grupo_de_cristales_naranjas5" parent="." unique_id=1616257335 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, -11.974033, 12.052428, -22.583641)
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube3" unique_id=1915808304]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9871597, 0, 5.5723553)
-shape = SubResource("shape_h4")
+[node name="grupo_de_cristales_naranjas6" parent="." unique_id=2110693173 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, -9.064697, 12.052428, -22.583641)
 
-[node name="Cube4" type="StaticBody3D" parent="BenjaminTopCubes" unique_id=1432622489]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 13.2, -27)
-script = ExtResource("6_cube")
-hits_needed = 4
-reset_on_overhit = true
+[node name="grupo_de_cristales_naranjas7" parent="." unique_id=2083503422 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, -6.172354, 12.052428, -22.583641)
 
-[node name="Mesh" type="MeshInstance3D" parent="BenjaminTopCubes/Cube4" unique_id=573120600]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30205154, 0, 0)
-mesh = SubResource("mesh_h5")
+[node name="grupo_de_cristales_naranjas8" parent="." unique_id=620903979 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 5.2548127, 12.052428, -22.583641)
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminTopCubes/Cube4" unique_id=1627606823]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.30205154, 0, 0)
-shape = SubResource("shape_h5")
+[node name="grupo_de_cristales_naranjas9" parent="." unique_id=1867459516 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 8.165453, 12.052428, -22.583641)
 
-[node name="CenterTop" type="CSGBox3D" parent="." unique_id=1449454768]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.5, -19)
-use_collision = true
-size = Vector3(10, 1, 10)
-material = ExtResource("2_terrain")
+[node name="grupo_de_cristales_naranjas10" parent="." unique_id=1339880481 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 11.078361, 12.052428, -22.583641)
 
-[node name="bloque_de_piedra_purpura2" parent="." unique_id=1245486608 instance=ExtResource("7_rri60")]
-transform = Transform3D(3.7754116, 0, 0, 0, 0.99258983, 0, 0, 0, 3.5168831, -10.020838, 5.1059437, -5.983728)
-
-[node name="obelisko2" parent="." unique_id=1358502024 instance=ExtResource("8_eoxpm")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.043957, 6.0749035, -5.801296)
+[node name="grupo_de_cristales_naranjas11" parent="." unique_id=1869612923 instance=ExtResource("11_qkxls")]
+transform = Transform3D(-0.02122368, 0, -2.0731263, 0, 2.073235, 0, 2.0731263, 0, -0.02122368, 14.288581, 12.052428, -18.822313)

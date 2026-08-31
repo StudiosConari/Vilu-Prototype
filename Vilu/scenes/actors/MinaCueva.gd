@@ -13,6 +13,10 @@ extends Node3D
 ## modelo. Se usan tanto en el combate como en la huida.
 const MINERO          := preload("res://scenes/enemies/MineroCorrupto.tscn")
 const CHUPACABRAS     := preload("res://models/personaje/chupacabras.glb")
+## El Chupacabras COMO ENEMIGO, para el duelo final. Distinto del glb de arriba,
+## que en la huida es sólo un cuerpo con movimiento propio: en el duelo hace
+## falta vida, telegrafiado y muerte, o sea Enemy.gd.
+const CHUPACABRAS_JEFE := preload("res://scenes/enemies/Chupacabras.tscn")
 const ENCAJAR         := preload("res://scenes/core/EncajarModelo.gd")
 const TOON_SKIN       := preload("res://scenes/core/ToonSkin.gd")
 const BALLOON         := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
@@ -35,6 +39,11 @@ var _combat_started := false
 var _claw_fired     := false
 var _chase_active   := false
 var _chupacabras: CharacterBody3D = null
+var _duelo_activo := false
+var _chupa_jefe: CharacterBody3D = null
+var _chupa_pausa := 0.0
+## Cuántas veces mordió en esta huida. Para el HUD y para los tests.
+var _mordidas := 0
 var _chupa_vel      := Vector3.ZERO
 var _stall_pos      := Vector2.ZERO
 var _stall_frames   := 0
@@ -286,6 +295,7 @@ func _start_combat() -> void:
 	]
 	spawns = _puntos_de("SpawnsCombate", spawns)
 	_alive = spawns.size()
+	var nacidos: Array[CharacterBody3D] = []
 	for pos in spawns:
 		var e: CharacterBody3D = MINERO.instantiate()
 		e.base_color = miner_color
@@ -293,6 +303,51 @@ func _start_combat() -> void:
 		add_child(e)
 		TOON_SKIN.new().aplicar(e)
 		e.global_position = _sitio_libre(pos)
+		nacidos.append(e)
+	_presentar(nacidos)
+
+
+## Plano de presentación: la cámara deja a los personajes, se va con los mineros
+## que están brotando y se acerca a la cara del más cercano. Al terminar vuelve
+## y recién ahí se recupera el control.
+##
+## Mientras dura, los dos personajes quedan con el input bloqueado. No es sólo
+## para que no ataquen: con la cámara en otro sitio, moverse a ciegas es peor que
+## no poder moverse.
+func _presentar(mineros: Array[CharacterBody3D]) -> void:
+	var juego := get_tree().get_first_node_in_group("game")
+	if juego == null or not juego.has_method("focus_camera_on") or mineros.is_empty():
+		return
+
+	var quietos: Array = []
+	for p in get_tree().get_nodes_in_group("player"):
+		if is_instance_valid(p) and "input_locked" in p:
+			p.input_locked = true
+			quietos.append(p)
+
+	# El más cercano al que mira el jugador: es el que se lleva el primer plano.
+	var ojo := _presa_mas_cercana(mineros[0].global_position)
+	var desde: Vector3 = ojo.global_position if ojo else mineros[0].global_position
+	var elegido: CharacterBody3D = mineros[0]
+	var mejor := INF
+	for m in mineros:
+		var d: float = desde.distance_to(m.global_position)
+		if d < mejor:
+			mejor = d
+			elegido = m
+
+	# Lo que dura la presentación sale de la propia animación de brotar, no de un
+	# número escrito a mano: si mañana cambia el modelo, esto se ajusta solo.
+	var duracion := 1.0
+	for m in mineros:
+		duracion = maxf(duracion, float(m.get("_apareciendo")))
+	duracion += 0.5     # un respiro antes de devolver el control
+
+	juego.focus_camera_on(elegido, duracion, 2.6, 1.7)
+	await get_tree().create_timer(duracion).timeout
+	for p in quietos:
+		if is_instance_valid(p) and "input_locked" in p:
+			p.input_locked = false
 
 
 func _on_miner_died(_pos: Vector3, _xp: int) -> void:
@@ -302,6 +357,7 @@ func _on_miner_died(_pos: Vector3, _xp: int) -> void:
 		_banner("Sector despejado… hay algo más abajo.", 3.0)
 		if GameManager.get_beat() < 3:
 			GameManager.set_beat(3)
+		GameManager.conceder("mina")
 
 
 # ─── Pasillo de Garras (S3) ───────────────────────────────────────────────────
@@ -323,8 +379,58 @@ func _trigger_claw_dialogue() -> void:
 # ─── Nido / Persecución (S4) ──────────────────────────────────────────────────
 
 func _on_nest_enter(body: Node3D) -> void:
-	if body.is_in_group("player") and _combat_cleared and not _chase_active:
+	if not body.is_in_group("player"):
+		return
+	if _chase_active or _duelo_activo:
+		return
+	if _toca_el_duelo():
+		# El duelo NO exige haber despejado a los mineros: se vuelve a la mina a
+		# propósito, a buscarlo, y el camino hasta el nido está abierto.
+		_iniciar_duelo()
+	elif _combat_cleared:
 		_start_chase()
+
+
+## ¿Toca el enfrentamiento en vez de la huida?
+##
+## Se entra en este modo cuando están TODOS los logros menos el suyo: es lo
+## último que le queda al prototipo, así que la mina deja de ser una huida.
+func _toca_el_duelo() -> bool:
+	if GameManager.tiene_logro("chupacabras"):
+		return false
+	for l in GameManager.LOGROS:
+		if l["id"] != "chupacabras" and not GameManager.tiene_logro(l["id"]):
+			return false
+	return true
+
+
+## El duelo: el Chupacabras deja de correr y planta cara.
+##
+## Acá no se fuerza la carrera de nadie ni se sueltan mineros: no hay de qué
+## huir, y el derrumbe sobraría cuando lo que se quiere es un espacio en el que
+## pelear.
+func _iniciar_duelo() -> void:
+	if _duelo_activo:
+		return
+	_duelo_activo = true
+	_banner("El Chupacabras ya no huye. Esta vez te espera.", 3.5)
+	Sfx.play("boss", 3.0, 0.55)
+
+	var e: CharacterBody3D = CHUPACABRAS_JEFE.instantiate()
+	e.base_color = chupa_color
+	add_child(e)
+	TOON_SKIN.new().aplicar(e)
+	var marca := get_node_or_null("ChupacabrasSpawnPoint") as Node3D
+	e.global_position = _sitio_libre(
+		marca.global_position if marca else Vector3(0.0, -1.05, -49.0))
+	e.died.connect(_al_vencer_al_chupacabras)
+	_chupa_jefe = e
+
+
+func _al_vencer_al_chupacabras(_pos: Vector3, _xp: int) -> void:
+	_chupa_jefe = null
+	_banner("El Chupacabras cae. Vilu vuelve a respirar.", 6.0)
+	GameManager.conceder("chupacabras")
 
 
 func _start_chase() -> void:
@@ -463,6 +569,21 @@ func _spawn_debris(z: float) -> void:
 
 
 ## Velocidad de persecución, en m/s.
+## Qué fracción de la vida MÁXIMA se lleva cada mordida.
+##
+## Antes atraparte era muerte seca y recarga de escena: la huida no era una
+## huida, era un pasillo donde un solo error volvía a empezar. Con 0.25 el bicho
+## puede morderte dos veces y salís de la mina a media vida, que es peligro de
+## verdad en vez de castigo.
+const CHUPA_DANO := 0.25
+
+## Segundos que tarda en volver a poder morder.
+const CHUPA_ESPERA_MORDIDA := 3.0
+
+## Segundos que se queda quieto tras morder. Sin esta pausa te alcanza otra vez
+## en cuanto vence la espera, porque nunca dejó de estar encima tuyo.
+const CHUPA_PAUSA_MORDIDA := 0.9
+
 const CHUPA_VELOCIDAD := 8.0
 ## A menos de esto ya no hace falta acercarse más: lo agarra igual.
 const CHUPA_DISTANCIA_MINIMA := 1.0
@@ -653,6 +774,10 @@ func _move_chupacabras(delta: float) -> void:
 		if should_jump:
 			_chupa_vel.y = 9.5
 
+	if _chupa_pausa > 0.0:
+		_chupa_pausa = maxf(0.0, _chupa_pausa - delta)
+		_chupa_vel.x = 0.0
+		_chupa_vel.z = 0.0
 	c.velocity = _chupa_vel
 	c.move_and_slide()
 
@@ -666,15 +791,26 @@ func _check_chupa_hit(delta: float) -> void:
 		if not is_instance_valid(p):
 			continue
 		if cpos.distance_to(p.global_position) < 2.0:
-			_chupa_hit_cd = 999.0   # evitar múltiples triggers
-			_banner("¡El Chupacabras te atrapó!")
-			# Matar a ambos jugadores → game over
-			for pp in get_tree().get_nodes_in_group("player"):
-				if is_instance_valid(pp) and pp.has_method("take_damage"):
-					pp.take_damage(9999.0)
-			get_tree().create_timer(2.0).timeout.connect(
-				func() -> void: get_tree().reload_current_scene())
+			_morder()
 			return
+
+
+## Una mordida: se lleva un cuarto de la vida de los DOS y frena al bicho un
+## instante. No mata por sí sola —hacen falta cuatro— así que la huida se puede
+## perder, pero perderla cuesta cuatro errores y no uno.
+func _morder() -> void:
+	_chupa_hit_cd = CHUPA_ESPERA_MORDIDA
+	_mordidas += 1
+	_banner("¡El Chupacabras te alcanzó!", 2.0)
+	Sfx.play_at("hit", _chupacabras.global_position, -2.0, 0.7)
+	for pp in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(pp) or not pp.has_method("take_damage"):
+			continue
+		var maxima: float = float(pp.get("max_health")) if "max_health" in pp else 100.0
+		pp.take_damage(maxima * CHUPA_DANO)
+	# Se detiene un momento: si siguiera encima, la siguiente mordida llegaría
+	# apenas venza la espera y no habría forma de despegarse.
+	_chupa_pausa = CHUPA_PAUSA_MORDIDA
 
 
 func _stop_chase() -> void:

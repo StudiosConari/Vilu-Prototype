@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://1pqh3u32m8qm"
-path="res://.godot/imported/arena_rocosa.glb-a91e862a9823e7bf5600827291ce8563.scn"
+uid="uid://ddrf8skf77ixc"
+path="res://.godot/imported/guardian_del_isluga.glb-1a63f452015a2c0693e80be87e1776c7.scn"
 
 [deps]
 
-source_file="res://models/terreno/arena_rocosa.glb"
-dest_files=["res://.godot/imported/arena_rocosa.glb-a91e862a9823e7bf5600827291ce8563.scn"]
+source_file="res://models/personaje/guardian_del_isluga.glb"
+dest_files=["res://.godot/imported/guardian_del_isluga.glb-1a63f452015a2c0693e80be87e1776c7.scn"]
 
 [params]
 

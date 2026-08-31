@@ -201,6 +201,7 @@ func _give_wings() -> void:
 	GameManager.unlock("wings")
 	if GameManager.get_beat() < 5:
 		GameManager.set_beat(5)
+	GameManager.conceder("alicanto")
 	_banner("Emilia recibe las ALAS: doble salto y planeo (mantené Espacio al caer).", 7.0)
 	_hint("Emilia: [Espacio] doble salto · mantené [Espacio] al caer para planear · volvé al poblado")
 
