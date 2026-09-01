@@ -51,6 +51,13 @@ static var _cascos: Array = []      # [[WeakRef(StandardMaterial3D), escala]]
 func aplicar(raiz: Node, cuales: Resource = null) -> int:
 	if cuales != null:
 		ajustes = cuales
+	# Apagado desde toon.tres: no se convierte nada y cada modelo se queda con
+	# el material de su .glb. Se comprueba ACÁ y no en cada sitio que llama,
+	# porque son siete repartidos entre Game, WorldRoot y MinaCueva, y apagar
+	# unos y otros no era justamente lo que dejaba la Mina escalonada mientras
+	# el mundo abierto ya no lo estaba.
+	if ajustes != null and "activo" in ajustes and not ajustes.activo:
+		return 0
 	_convertidos = 0
 	_recorrer(raiz)
 	return _convertidos

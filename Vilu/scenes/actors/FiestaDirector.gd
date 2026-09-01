@@ -44,7 +44,11 @@ func _ready() -> void:
 		return
 
 	add_to_group("fiesta_director")
-	if not geometria_fijada:
+	if geometria_fijada:
+		# La geometría ya está en la escena, pero la interacción nunca se
+		# guardó: hay que volver a colgarla. Ver _reponer_interaccion.
+		_reponer_interaccion()
+	else:
 		_build_festival()
 
 
@@ -144,8 +148,13 @@ func _spawn_npc(pos: Vector3, bubble: String, clue: String, color: Color) -> voi
 	if Engine.is_editor_hint():
 		return
 
-	# Zona de interacción con pista
+	_colgar_interaccion(npc, clue)
+
+
+## Le cuelga a un NPC su zona de "[E] Hablar".
+func _colgar_interaccion(npc: Node3D, clue: String) -> void:
 	var area := Area3D.new()
+	area.name = "Interaccion"
 	area.set_script(INTERACT_SCRIPT)
 	area.collision_layer = 0
 	area.collision_mask = 2
@@ -159,6 +168,42 @@ func _spawn_npc(pos: Vector3, bubble: String, clue: String, color: Color) -> voi
 	sshape.shape = sphere
 	sshape.position.y = 1.0
 	area.add_child(sshape)
+
+
+## Devuelve las zonas de "[E] Hablar" a los NPC ya guardados en World.tscn.
+##
+## Al fijar la geometría quedaron dentro de la escena los cuerpos, su colisión y
+## su cartel, pero las zonas de interacción NO: se crean sólo en ejecución —el
+## `return` de arriba las salta en el editor—, así que cuando se fijó no había
+## ninguna que guardar. Los cuatro NPC con pista quedaron mudos y `clues_given`
+## no subía nunca, que es justo lo que mira Carmen para decidir qué te cuenta.
+##
+## Se emparejan POR EL TEXTO DE SU CARTEL, no por posición ni por orden. Los
+## nodos guardados llevan nombres autogenerados, y dos de ellos ya fueron
+## movidos a mano varios metros respecto de NPC_DATA: emparejar por cercanía le
+## habría dado la pista equivocada a alguno.
+func _reponer_interaccion() -> void:
+	for d in NPC_DATA:
+		var clue: String = d[3]
+		if clue == "":
+			continue
+		var cuerpo := _cuerpo_con_cartel(d[2])
+		if cuerpo == null:
+			push_warning("FiestaDirector: no hay NPC con el cartel '%s'" % d[2])
+			continue
+		if cuerpo.has_node("Interaccion"):
+			continue
+		_colgar_interaccion(cuerpo, clue)
+
+
+func _cuerpo_con_cartel(texto: String) -> Node3D:
+	for c in get_children():
+		if not (c is StaticBody3D):
+			continue
+		for h in c.get_children():
+			if h is Label3D and (h as Label3D).text == texto:
+				return c
+	return null
 
 
 # ── Helpers de geometría ─────────────────────────────────────────────────────
