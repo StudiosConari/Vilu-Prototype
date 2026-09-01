@@ -45,8 +45,23 @@ var _iniciado := false   # la secuencia ya arrancó (no se repite al volver)
 var _en_zona := false    # el jugador está dentro de la quebrada
 
 
+
+## Deja de generar el decorado por código: ya está guardado como nodos.
+##
+## Se tilda DESPUÉS de correr tools/fijar_geometria.gd, que adopta los nodos
+## generados dándoles `owner`. Con la bandera puesta el script no vuelve a
+## construir encima, y el decorado pasa a editarse a mano en el editor.
+##
+## El orden importa: tildarla antes de correr la herramienta deja la zona sin
+## geometría que adoptar.
+@export var geometria_fijada: bool = false
+
+
 func _ready() -> void:
-	_build_arena()
+	# Sólo el DECORADO se salta cuando ya está fijado. Los personajes tienen que
+	# nacer igual: son actores, no escenografía, y quedaron fuera del horneado.
+	if not geometria_fijada:
+		_build_arena()
 	_spawn_characters()
 	# En el editor queda ahí quieto: la secuencia arranca sólo con activate(),
 	# que llama WorldRoot cuando el jugador entra a la quebrada.

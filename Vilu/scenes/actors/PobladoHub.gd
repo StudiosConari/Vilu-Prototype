@@ -58,16 +58,30 @@ var _ocultista: Node3D = null
 var _exit: Node = null
 
 
+
+## Deja de generar el decorado por código: ya está guardado como nodos.
+##
+## Se tilda DESPUÉS de correr tools/fijar_geometria.gd, que adopta los nodos
+## generados dándoles `owner`. Con la bandera puesta el script no vuelve a
+## construir encima, y el decorado pasa a editarse a mano en el editor.
+##
+## El orden importa: tildarla antes de correr la herramienta deja la zona sin
+## geometría que adoptar.
+@export var geometria_fijada: bool = false
+
+
 func _ready() -> void:
 	# EN EL EDITOR: sólo la geometría, para poder verla al trabajar el terreno.
 	# Nada más: el resto toca autoloads (GameManager, DialogueManager) que en el
 	# editor no están instanciados, y dispararía diálogos y señales.
 	if Engine.is_editor_hint():
-		_build_town()
+		if not geometria_fijada:
+			_build_town()
 		return
 
 	_stage = _current_stage()
-	_build_town()
+	if not geometria_fijada:
+		_build_town()
 	_spawn_witch()
 	_spawn_bar_folk()
 	_setup_exit()

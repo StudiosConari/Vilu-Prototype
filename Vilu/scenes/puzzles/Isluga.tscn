@@ -1,190 +1,772 @@
 [gd_scene format=3 uid="uid://bikdfsn25qvqy"]
 
 [ext_resource type="Script" uid="uid://vxfphkv1o4h6" path="res://scenes/puzzles/PuzzleIsluga.gd" id="1_puzzle"]
+[ext_resource type="PackedScene" uid="uid://ct5t6ucgc07u" path="res://models/volcanes/crater_2.glb" id="2_e738t"]
+[ext_resource type="PackedScene" uid="uid://c3ob8qs8s0hcn" path="res://models/volcanes/isluga_cima.glb" id="2_xeac7"]
 [ext_resource type="PackedScene" uid="uid://kdn7lps6dx77" path="res://models/volcanes/baldosa_de_piedra_de_lava_purpura.glb" id="3_rri60"]
 [ext_resource type="Script" uid="uid://7qw5x1osfevx" path="res://scenes/actors/RoleMovingPlatform.gd" id="4_rolemov"]
+[ext_resource type="PackedScene" uid="uid://cul62ib80l4xy" path="res://models/volcanes/roca_volcanica_de_lava.glb" id="5_br2em"]
 [ext_resource type="Script" uid="uid://laxq1dsyqbnt" path="res://scenes/actors/VertPlatform.gd" id="5_vert"]
 [ext_resource type="Script" uid="uid://dp1ohawnhearo" path="res://scenes/actors/HitCube.gd" id="6_cube"]
 [ext_resource type="PackedScene" uid="uid://x4wpud8u5s2e" path="res://models/focal/obelisko_oscuro.glb" id="6_eoxpm"]
+[ext_resource type="PackedScene" uid="uid://c43ciknshwuc6" path="res://models/volcanes/grupo_de_rocas_de_lava.glb" id="6_pdo2b"]
+[ext_resource type="PackedScene" uid="uid://b0humt0r1l7cy" path="res://models/volcanes/roca_volcanica.glb" id="7_py5mq"]
 [ext_resource type="PackedScene" uid="uid://baeu1jfo1r0tw" path="res://models/volcanes/bloque_de_piedra_purpura.glb" id="7_rri60"]
 [ext_resource type="PackedScene" uid="uid://dq5dn05gt75hn" path="res://models/volcanes/bloque_de_espuma_morada.glb" id="8_getua"]
+[ext_resource type="PackedScene" uid="uid://bxy804wef4bss" path="res://models/volcanes/bloques_de_espuma_morada.glb" id="8_qn5yr"]
+[ext_resource type="Script" uid="uid://bhbsm1evq7wtp" path="res://scenes/actors/BloqueQueSeHunde.gd" id="9_0ei5h"]
 [ext_resource type="PackedScene" uid="uid://db4pbyihwnkuf" path="res://models/focal/portal_isluga.glb" id="9_yxnhm"]
+[ext_resource type="PackedScene" uid="uid://bjdkagvdy58t" path="res://models/volcanes/bloque_de_arcilla_purpura.glb" id="10_5jbcx"]
 [ext_resource type="PackedScene" uid="uid://ccd2nesc3wups" path="res://models/prop_mediano/brasero_oscuro.glb" id="10_k5c33"]
+[ext_resource type="Script" uid="uid://0h7dta48ifid" path="res://scenes/actors/PlataformaMovil.gd" id="11_hemig"]
 [ext_resource type="PackedScene" uid="uid://dxg4vf6ccq6gu" path="res://models/volcanes/grupo_de_cristales_naranjas.glb" id="11_qkxls"]
+[ext_resource type="PackedScene" uid="uid://shye3cc2cxhe" path="res://models/prop_mediano/cubo_de_piedra_oscura.glb" id="13_l23ka"]
+[ext_resource type="Script" uid="uid://bq0mblbemd1e4" path="res://scenes/actors/InterruptorGolpeable.gd" id="14_mw708"]
+[ext_resource type="Script" uid="uid://chf1bghotg52e" path="res://scenes/actors/BloqueCondicionado.gd" id="15_j0fqw"]
+[ext_resource type="Script" uid="uid://7yd12l1fn45f" path="res://scenes/actors/CaminoDeSalida.gd" id="17_6ngw3"]
+[ext_resource type="PackedScene" path="res://scenes/core/LavaToon.tscn" id="18_722xg"]
+[ext_resource type="PackedScene" uid="uid://cogv2f3cy0g4i" path="res://models/mina/plataforma_de_madera.glb" id="26_br2em"]
+[ext_resource type="PackedScene" uid="uid://ddrf8skf77ixc" path="res://models/personaje/guardian_del_isluga.glb" id="93_guardian"]
+[ext_resource type="Script" uid="uid://canqli8olg80w" path="res://scenes/actors/VistaPrevia.gd" id="93_vista"]
+[ext_resource type="PackedScene" path="res://scenes/core/MarToon.tscn" id="95_mar"]
+[ext_resource type="Script" uid="uid://cg2028juyi3af" path="res://scenes/actors/CieloDeZona.gd" id="96_cielo"]
+[ext_resource type="Environment" uid="uid://bu1267wl3o0dp" path="res://scenes/core/cielo_isluga.tres" id="96_entorno"]
+[ext_resource type="Script" uid="uid://d202l2l3g8ore" path="res://scenes/actors/LavaQuema.gd" id="97_lava"]
+[ext_resource type="PackedScene" path="res://scenes/core/NieblaToon.tscn" id="98_niebla"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="99_salida"]
 
-[sub_resource type="BoxShape3D" id="shape_plat"]
+[sub_resource type="BoxShape3D" id="isl_shape_plat"]
 size = Vector3(4, 0.4, 4)
 
-[sub_resource type="BoxShape3D" id="shape_rider"]
+[sub_resource type="BoxShape3D" id="isl_shape_rider"]
 size = Vector3(3.6, 1.6, 3.6)
 
-[sub_resource type="BoxShape3D" id="shape_h2"]
+[sub_resource type="BoxShape3D" id="isl_shape_h2"]
 size = Vector3(1.4, 2, 1.4)
 
-[node name="Isluga" type="Node3D" unique_id=387808961]
+[node name="Isluga" type="Node3D" unique_id=1861562595]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -137.13548, 208.87888, 74.62282)
 script = ExtResource("1_puzzle")
 
-[node name="PlayerSpawn" type="Marker3D" parent="." unique_id=602394335]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.8248558, 76.05463)
+[node name="isluga_cima2" parent="." unique_id=501114262 instance=ExtResource("2_xeac7")]
+transform = Transform3D(6.3848557, 0, 0, 0, 6.3848557, 0, 0, 0, 6.3848557, 137.91815, -454.96353, -79.46913)
 
-[node name="TravelSpawn" type="Marker3D" parent="." unique_id=700000001]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 12.5, -16)
+[node name="Crater" type="Node3D" parent="." unique_id=1559127508]
+transform = Transform3D(1, 0, -5.5879354e-09, 0, 1, 0, 5.5879354e-09, 0, 1, -2.1750488, 127.01963, 52.246735)
 
-[node name="EmiliaDock" type="Marker3D" parent="." unique_id=108884045]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 0)
+[node name="crater_22" parent="Crater" unique_id=1624610948 instance=ExtResource("2_e738t")]
+transform = Transform3D(14.088906, 0, 0.89371276, 0, 12.2954445, 0, -0.91603166, 0, 13.745633, 138.49112, -30.62535, -125.88233)
 
-[node name="EmiliaHorizDest" type="Marker3D" parent="." unique_id=1095423440]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, 0)
+[node name="crater_24" parent="Crater" unique_id=1473254688 instance=ExtResource("2_e738t")]
+transform = Transform3D(-14.178952, 0, -0.96198994, 0, 12.2954445, 0, 1.1040958, 0, -12.3540125, 141.2107, -30.62535, -125.88233)
 
-[node name="EmiliaHoriz" type="AnimatableBody3D" parent="." unique_id=396376706]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.2, 0)
+[node name="baldosa_de_piedra_de_lava_purpura2" parent="Crater" unique_id=810677777 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.6481, -2.4354706, -80.637985)
+
+[node name="baldosa_de_piedra_de_lava_purpura3" parent="Crater" unique_id=1874894023 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.6481, -2.4354706, -86.70652)
+
+[node name="baldosa_de_piedra_de_lava_purpura10" parent="Crater" unique_id=974498599 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 133.8561, -2.4354706, -88.76203)
+
+[node name="baldosa_de_piedra_de_lava_purpura11" parent="Crater" unique_id=331689015 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 132.47745, -2.4354706, -94.73222)
+
+[node name="baldosa_de_piedra_de_lava_purpura12" parent="Crater" unique_id=87388800 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 125.39956, -2.4354706, -95.87176)
+
+[node name="baldosa_de_piedra_de_lava_purpura13" parent="Crater" unique_id=1586885815 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 120.370026, -2.4354706, -100.07057)
+
+[node name="baldosa_de_piedra_de_lava_purpura4" parent="Crater" unique_id=969791077 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 147.1341, -2.4354706, -88.29573)
+
+[node name="baldosa_de_piedra_de_lava_purpura5" parent="Crater" unique_id=2039971934 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 151.70343, -2.4354706, -83.2487)
+
+[node name="baldosa_de_piedra_de_lava_purpura6" parent="Crater" unique_id=1575062274 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 157.14523, -2.4354706, -87.68512)
+
+[node name="baldosa_de_piedra_de_lava_purpura7" parent="Crater" unique_id=1794780697 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 157.14523, -2.4354706, -92.98813)
+
+[node name="baldosa_de_piedra_de_lava_purpura8" parent="Crater" unique_id=507336463 instance=ExtResource("3_rri60")]
+transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 152.09708, -2.4354706, -96.836945)
+
+[node name="roca_volcanica_de_lava2" parent="Crater" unique_id=513037970 instance=ExtResource("5_br2em")]
+transform = Transform3D(-5.3549147, 0, 9.625812, 0, 10.465113, 0, -8.195686, 0, -6.289333, 106.00195, -2.7650757, -86.29824)
+
+[node name="roca_volcanica_de_lava4" parent="Crater" unique_id=1883691757 instance=ExtResource("5_br2em")]
+transform = Transform3D(8.359238, 0, 13.4129095, 0, 14.513829, 0, -12.982028, 0, 8.636685, 106.00195, -2.7650757, -154.21806)
+
+[node name="roca_volcanica_de_lava3" parent="Crater" unique_id=1982002982 instance=ExtResource("5_br2em")]
+transform = Transform3D(-0.73715806, 0, 7.2878785, 0, 6.5661583, 0, -6.435959, 0, -0.8347348, 103.74497, -2.7650757, -117.05735)
+
+[node name="roca_volcanica_de_lava5" parent="Crater" unique_id=633679590 instance=ExtResource("5_br2em")]
+transform = Transform3D(-6.197253, 0, 3.1764255, 0, 6.5661573, 0, -3.7237272, 0, -5.2864003, 120.474266, -2.7650757, -82.8038)
+
+[node name="grupo_de_rocas_de_lava2" parent="Crater" unique_id=1143186049 instance=ExtResource("6_pdo2b")]
+transform = Transform3D(3.6721292, 0, 0, 0, 3.2847347, 0, -1.7763568e-15, 0, 3.2847347, 99.28589, -2.4373016, -102.39409)
+
+[node name="grupo_de_rocas_de_lava3" parent="Crater" unique_id=687709250 instance=ExtResource("6_pdo2b")]
+transform = Transform3D(1.5858337, 0, 3.9227967, 0, 3.920084, 0, -3.0776312, 0, 2.0213282, 100.383835, -2.4373016, -132.49734)
+
+[node name="roca_volcanica2" parent="Crater" unique_id=1930924378 instance=ExtResource("7_py5mq")]
+transform = Transform3D(4.9944167, 0, 0, 0, 4.4675264, 0, 0, 0, 4.4675264, 111.631645, -3.0444794, -99.90969)
+
+[node name="roca_volcanica3" parent="Crater" unique_id=1363316819 instance=ExtResource("7_py5mq")]
+transform = Transform3D(-4.8037143, 0, -1.2017903, 0, 4.4675264, 0, 1.2986447, 0, -4.4454484, 111.631645, -3.0444794, -137.9826)
+
+[node name="roca_volcanica_de_lava6" parent="Crater" unique_id=207246224 instance=ExtResource("5_br2em")]
+transform = Transform3D(5.0753927, 0, -9.866592, 0, 10.465112, 0, 8.415714, 0, 5.9503956, 176.95784, -2.7650757, -156.2869)
+
+[node name="roca_volcanica_de_lava7" parent="Crater" unique_id=847838262 instance=ExtResource("5_br2em")]
+transform = Transform3D(-8.8511915, 0, -13.06459, 0, 14.513829, 0, 12.714276, 0, -9.095067, 174.22006, -2.7650757, -88.411224)
+
+[node name="roca_volcanica_de_lava8" parent="Crater" unique_id=1284210962 instance=ExtResource("5_br2em")]
+transform = Transform3D(0.5067865, 0, -7.315906, 0, 6.5661573, 0, 6.4860663, 0, 0.57162577, 177.9735, -2.7650757, -125.47498)
+
+[node name="roca_volcanica_de_lava10" parent="Crater" unique_id=293513804 instance=ExtResource("5_br2em")]
+transform = Transform3D(-0.1351343, 0, -3.9307811, 0, 3.5189428, 0, 3.5322254, 0, -0.15038206, 152.15118, -2.7650757, -88.661415)
+
+[node name="roca_volcanica_de_lava12" parent="Crater" unique_id=2051748413 instance=ExtResource("5_br2em")]
+transform = Transform3D(-0.80297494, 0, 3.8128264, 0, 3.5189428, 0, -3.3259904, 0, -0.9205089, 127.59116, -2.7650757, -90.635704)
+
+[node name="roca_volcanica_de_lava13" parent="Crater" unique_id=520978716 instance=ExtResource("5_br2em")]
+transform = Transform3D(0.107127436, 0, 3.9319587, 0, 3.5189433, 0, -3.5299075, 0, 0.11932909, 123.13315, -2.7650757, -114.42603)
+
+[node name="roca_volcanica_de_lava11" parent="Crater" unique_id=628864503 instance=ExtResource("5_br2em")]
+transform = Transform3D(-0.09557088, 0, -2.7799618, 0, 2.488698, 0, 2.4980917, 0, -0.10635454, 157.49304, -2.7650757, -97.254715)
+
+[node name="roca_volcanica_de_lava9" parent="Crater" unique_id=1982845870 instance=ExtResource("5_br2em")]
+transform = Transform3D(6.046546, 0, -3.352052, 0, 6.5661573, 0, 3.9366748, 0, 5.1485925, 162.6358, -2.7650757, -160.24582)
+
+[node name="grupo_de_rocas_de_lava4" parent="Crater" unique_id=754046731 instance=ExtResource("6_pdo2b")]
+transform = Transform3D(-3.6694894, 0, 0.11793213, 0, 3.2847347, 0, -0.13239473, 0, -3.26864, 183.02074, -2.4373016, -139.9849)
+
+[node name="grupo_de_rocas_de_lava5" parent="Crater" unique_id=1742441422 instance=ExtResource("6_pdo2b")]
+transform = Transform3D(-1.7017959, 0, -3.840344, 0, 3.9200838, 0, 3.029175, 0, -2.157512, 180.71008, -2.4373016, -109.93662)
+
+[node name="roca_volcanica4" parent="Crater" unique_id=493336829 instance=ExtResource("7_py5mq")]
+transform = Transform3D(-4.990827, 0, 0.160398, 0, 4.4675264, 0, -0.18006843, 0, -4.4456363, 170.78317, -3.0444794, -142.86588)
+
+[node name="roca_volcanica5" parent="Crater" unique_id=1528586373 instance=ExtResource("7_py5mq")]
+transform = Transform3D(4.8519225, 0, 1.0365571, 0, 4.467526, 0, -1.1256412, 0, 4.4679375, 169.24849, -3.0444794, -104.8177)
+
+[node name="roca_volcanica6" parent="Crater" unique_id=764846438 instance=ExtResource("7_py5mq")]
+transform = Transform3D(-4.3710375, 0, 2.3510566, 0, 4.7003136, 0, -2.759234, 0, -3.724424, 140.90096, -3.0444794, -94.611336)
+
+[node name="bloques_de_espuma_morada6" parent="Crater" unique_id=623805301 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.9217, -2.2762299, -100.67808)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada27" parent="Crater" unique_id=1165181907 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 147.20137, -2.2762299, -100.67808)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada28" parent="Crater" unique_id=1464925234 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 152.09926, -2.2762299, -100.67808)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada29" parent="Crater" unique_id=311039369 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 157.79863, -2.2762299, -100.67808)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada30" parent="Crater" unique_id=1847565422 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -100.67808)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada31" parent="Crater" unique_id=535283088 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -104.89323)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada32" parent="Crater" unique_id=153381895 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -109.17537)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada33" parent="Crater" unique_id=349154407 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -113.10777)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada34" parent="Crater" unique_id=1867029075 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -116.942856)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada35" parent="Crater" unique_id=1517225454 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 157.3122, -2.2762299, -116.942856)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada36" parent="Crater" unique_id=85850109 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 152.0843, -2.2762299, -116.942856)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada37" parent="Crater" unique_id=886070830 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 147.04724, -2.2762299, -116.942856)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada38" parent="Crater" unique_id=362045605 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -116.942856)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada39" parent="Crater" unique_id=213162072 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -112.90771)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada40" parent="Crater" unique_id=1073038750 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -108.87424)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada41" parent="Crater" unique_id=1085992868 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -104.86236)
+script = ExtResource("9_0ei5h")
+
+[node name="bloque_de_arcilla_purpura4" parent="Crater" unique_id=1573356554 instance=ExtResource("10_5jbcx")]
+transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 120.5461, -2.3418121, -104.42684)
+
+[node name="bloque_de_arcilla_purpura5" parent="Crater" unique_id=1930148764 instance=ExtResource("10_5jbcx")]
+transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 128.65295, -2.3466187, -104.42684)
+script = ExtResource("11_hemig")
+destino = NodePath("../bloque_de_espuma_morada2")
+
+[node name="bloque_de_arcilla_purpura6" parent="Crater" unique_id=1224341083 instance=ExtResource("10_5jbcx")]
+transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 127.08151, 0.09918213, -110.25363)
+script = ExtResource("11_hemig")
+modo = 1
+recorrido_suelto = Vector3(-7.10365, 0, 0)
+
+[node name="bloque_de_arcilla_purpura7" parent="Crater" unique_id=1933880915 instance=ExtResource("10_5jbcx")]
+transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 120.052475, 0.09918213, -128.69382)
+script = ExtResource("11_hemig")
+modo = 1
+recorrido_suelto = Vector3(0, 0, 8.54519)
+
+[node name="bloque_de_arcilla_purpura8" parent="Crater" unique_id=1910107788 instance=ExtResource("10_5jbcx")]
+transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 124.713974, 0.09918213, -120.00025)
+script = ExtResource("11_hemig")
+modo = 1
+recorrido_suelto = Vector3(0, 0, -8.65701)
+
+[node name="bloque_de_arcilla_purpura9" parent="Crater" unique_id=1394080686 instance=ExtResource("10_5jbcx")]
+transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 129.20746, 0.09918213, -128.76813)
+script = ExtResource("11_hemig")
+modo = 1
+recorrido_suelto = Vector3(0, 0, 8.71487)
+
+[node name="bloque_de_arcilla_purpura10" parent="Crater" unique_id=1919543841 instance=ExtResource("10_5jbcx")]
+transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 133.55632, 0.09918213, -119.971275)
+script = ExtResource("11_hemig")
+modo = 1
+recorrido_suelto = Vector3(0, 0, -8.84741)
+recorrido_alterno = Vector3(0, 0, -7.05188)
+
+[node name="bloques_de_espuma_morada2" parent="Crater" unique_id=11846360 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 124.960754, -2.2099152, -104.78121)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada17" parent="Crater" unique_id=569265987 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 133.56844, 0.12176514, -110.712494)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada18" parent="Crater" unique_id=1410995587 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 133.56844, 0.12176514, -113.42934)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada19" parent="Crater" unique_id=431088203 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 130.41582, 0.12176514, -113.42934)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada20" parent="Crater" unique_id=1504769087 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 127.19611, 0.12176514, -113.42934)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada21" parent="Crater" unique_id=996898750 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 119.022385, 0.12176514, -113.42934)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada22" parent="Crater" unique_id=39771887 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 116.067444, 0.12176514, -113.42934)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada23" parent="Crater" unique_id=1325680193 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 112.4025, 0.12176514, -120.1794)
+script = ExtResource("9_0ei5h")
+
+[node name="bloques_de_espuma_morada24" parent="Crater" unique_id=1272656694 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.41447878, 0, 0, 0, 0.370753, 0, 0, 0, 0.370753, 115.89072, 0.12176514, -120.1794)
+script = ExtResource("9_0ei5h")
+
+[node name="bloque_de_espuma_morada2" parent="Crater" unique_id=1301342508 instance=ExtResource("8_getua")]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 133.1114, 0.8727722, -106.22931)
+
+[node name="bloque_de_espuma_morada3" parent="Crater" unique_id=692352435 instance=ExtResource("8_getua")]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 112.39986, 0.28852844, -114.9973)
+
+[node name="bloque_de_espuma_morada4" parent="Crater" unique_id=1359870277 instance=ExtResource("8_getua")]
+transform = Transform3D(-0.009071981, 0, 1.1178868, 0, 1, 0, -0.9988877, 0, -0.010152741, 112.97686, 0.28852844, -128.40472)
+
+[node name="crater_23" parent="Crater" unique_id=1395506417 instance=ExtResource("2_e738t")]
+transform = Transform3D(-1.2198933, 0, -0.05538687, 0, 2.1043613, 0, 0.06154504, 0, -1.0978314, 152.30553, -5.4670563, -108.85663)
+
+[node name="cubo_de_piedra_oscura2" parent="Crater" unique_id=1585180597 instance=ExtResource("13_l23ka")]
+transform = Transform3D(1.1179378, 0, 0, 0, 0.021286845, 0.9997735, 0, -0.9997735, 0.021286845, 152.17508, -1.3987732, -108.41851)
+script = ExtResource("14_mw708")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura3" parent="Crater" unique_id=1810637644 instance=ExtResource("13_l23ka")]
+transform = Transform3D(1.1179378, 0, 0, 0, 0.028091367, 0.9996055, 0, -0.9996055, 0.028091367, 163.17368, -1.3170319, -97.322975)
+script = ExtResource("14_mw708")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura4" parent="Crater" unique_id=1702797672 instance=ExtResource("13_l23ka")]
+transform = Transform3D(-0.009272822, -1.1173972, 0.0279971, -5.825013e-11, 0.031402957, 0.996294, -1.0010496, 0.010350563, -0.00025933995, 168.72289, -1.3170319, -116.7189)
+script = ExtResource("14_mw708")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura5" parent="Crater" unique_id=881954678 instance=ExtResource("13_l23ka")]
+transform = Transform3D(-1.117931, 0.003337031, -9.381667e-05, -1.7449578e-12, 0.028080316, 0.9996169, 0.0037335344, 0.9992066, -0.028091524, 141.91832, -1.3170319, -120.25809)
+script = ExtResource("14_mw708")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura6" parent="Crater" unique_id=821645777 instance=ExtResource("13_l23ka")]
+transform = Transform3D(-0.012240436, 1.1173576, -0.027996207, 4.6529993e-12, 0.03140286, 0.9962945, 0.9984795, 0.013697778, -0.00034320782, 137.83357, -1.3170319, -100.73966)
+script = ExtResource("14_mw708")
+objetivo = NodePath("../bloque_de_espuma_morada5")
+metodo = "revisar"
+
+[node name="cubo_de_piedra_oscura7" parent="Crater" unique_id=1764829015 instance=ExtResource("13_l23ka")]
+transform = Transform3D(0.034037285, 0.70981747, 0, -0.6390131, 0.03780871, 0, 0, 0, 0.6359297, 111.32537, 1.9030151, -128.36449)
+script = ExtResource("14_mw708")
+objetivo = NodePath("../bloque_de_arcilla_purpura10")
+mensaje = "La plataforma cambia de rumbo"
+
+[node name="bloque_de_espuma_morada5" parent="Crater" unique_id=1557458614 instance=ExtResource("8_getua")]
+transform = Transform3D(1.9511956, 0, 0, 0, 0.5495895, 0, -8.881784e-16, 0, 0.73454154, 152.12955, -2.237503, -121.138176)
+script = ExtResource("15_j0fqw")
+objetivos = Array[NodePath]([NodePath("../cubo_de_piedra_oscura2"), NodePath("../cubo_de_piedra_oscura3"), NodePath("../cubo_de_piedra_oscura4"), NodePath("../cubo_de_piedra_oscura5"), NodePath("../cubo_de_piedra_oscura6")])
+oculta_tambien = Array[NodePath]([NodePath("../Bloques en cadena")])
+mensaje = "El camino se abre"
+
+[node name="Bloques en cadena" type="Node3D" parent="Crater" unique_id=348335837]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, -16.17215, 0, 0)
+
+[node name="bloques_de_espuma_morada42" parent="Crater/Bloques en cadena" unique_id=1701544679 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.50609, -2.2762222, -125.798294)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada43")
+
+[node name="bloques_de_espuma_morada64" parent="Crater/Bloques en cadena" unique_id=1024490279 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.50609, -2.2762222, -123.8785)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada42")
+
+[node name="bloques_de_espuma_morada43" parent="Crater/Bloques en cadena" unique_id=1063177212 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 152.71579, -2.2762222, -125.798294)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada44")
+
+[node name="bloques_de_espuma_morada44" parent="Crater/Bloques en cadena" unique_id=1634267915 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 154.92445, -2.2762222, -125.798294)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada45")
+
+[node name="bloques_de_espuma_morada45" parent="Crater/Bloques en cadena" unique_id=1566113229 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -125.798294)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada65")
+
+[node name="bloques_de_espuma_morada65" parent="Crater/Bloques en cadena" unique_id=1020504349 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -123.835884)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada66")
+
+[node name="bloques_de_espuma_morada66" parent="Crater/Bloques en cadena" unique_id=296554308 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -121.88764)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada67")
+
+[node name="bloques_de_espuma_morada67" parent="Crater/Bloques en cadena" unique_id=1103611181 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.14738, -2.2762222, -119.98414)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada68")
+
+[node name="bloques_de_espuma_morada68" parent="Crater/Bloques en cadena" unique_id=930670457 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 159.36989, -2.2762222, -119.98414)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada69")
+
+[node name="bloques_de_espuma_morada69" parent="Crater/Bloques en cadena" unique_id=2101114857 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 161.56071, -2.2762222, -119.98414)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada70")
+
+[node name="bloques_de_espuma_morada70" parent="Crater/Bloques en cadena" unique_id=380858350 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.71432, -2.2762222, -119.98414)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada71")
+
+[node name="bloques_de_espuma_morada71" parent="Crater/Bloques en cadena" unique_id=22228427 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.71432, -2.2762222, -121.87667)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada72")
+
+[node name="bloques_de_espuma_morada72" parent="Crater/Bloques en cadena" unique_id=1164495714 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.71432, -2.2762222, -123.841156)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada48")
+
+[node name="bloques_de_espuma_morada48" parent="Crater/Bloques en cadena" unique_id=1205401270 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -125.798294)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada49")
+
+[node name="bloques_de_espuma_morada49" parent="Crater/Bloques en cadena" unique_id=1082967019 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -127.686)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada50")
+
+[node name="bloques_de_espuma_morada50" parent="Crater/Bloques en cadena" unique_id=681566022 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -129.63324)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada51")
+
+[node name="bloques_de_espuma_morada51" parent="Crater/Bloques en cadena" unique_id=1018223678 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -131.54033)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada52")
+
+[node name="bloques_de_espuma_morada52" parent="Crater/Bloques en cadena" unique_id=1217513115 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 163.7551, -2.2762222, -133.4858)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada53")
+
+[node name="bloques_de_espuma_morada53" parent="Crater/Bloques en cadena" unique_id=1642150447 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 161.53473, -2.2762222, -133.4858)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada54")
+
+[node name="bloques_de_espuma_morada54" parent="Crater/Bloques en cadena" unique_id=2005454538 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 159.28152, -2.2762222, -133.4858)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada55")
+
+[node name="bloques_de_espuma_morada55" parent="Crater/Bloques en cadena" unique_id=1917597744 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.18033, -2.2762222, -133.4858)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada56")
+
+[node name="bloques_de_espuma_morada56" parent="Crater/Bloques en cadena" unique_id=170562131 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 157.18033, -2.2762222, -131.58534)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada57")
+
+[node name="bloques_de_espuma_morada57" parent="Crater/Bloques en cadena" unique_id=1032336939 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 155.04248, -2.2762222, -131.58534)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada58")
+
+[node name="bloques_de_espuma_morada58" parent="Crater/Bloques en cadena" unique_id=335962178 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 152.8156, -2.2762222, -131.58534)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada59")
+
+[node name="bloques_de_espuma_morada59" parent="Crater/Bloques en cadena" unique_id=664062260 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 150.69478, -2.2762222, -131.58534)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada60")
+
+[node name="bloques_de_espuma_morada60" parent="Crater/Bloques en cadena" unique_id=1283853733 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 148.49669, -2.2762222, -131.58534)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada61")
+
+[node name="bloques_de_espuma_morada61" parent="Crater/Bloques en cadena" unique_id=1009595434 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -131.58534)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada62")
+
+[node name="bloques_de_espuma_morada62" parent="Crater/Bloques en cadena" unique_id=103535604 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -133.59525)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada63")
+
+[node name="bloques_de_espuma_morada63" parent="Crater/Bloques en cadena" unique_id=1326513012 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -135.52121)
+script = ExtResource("9_0ei5h")
+siguiente = NodePath("../bloques_de_espuma_morada73")
+
+[node name="bloques_de_espuma_morada73" parent="Crater/Bloques en cadena" unique_id=522707446 instance=ExtResource("8_qn5yr")]
+transform = Transform3D(0.4645663, 0, 0, 0, 0.27679273, 0, 0, 0, 0.40630835, 146.28699, -2.2762222, -137.50586)
+script = ExtResource("9_0ei5h")
+
+[node name="bloque_de_piedra_purpura2" parent="Crater" unique_id=1245486608 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.1179378, 0, 0, 0, 0.58986616, 0, 0, 0, 0.8661172, 149.96626, -2.4668121, -137.53914)
+script = ExtResource("11_hemig")
+modo = 2
+recorrido_suelto = Vector3(0, 2.5264728, 0)
+
+[node name="Salida" type="Node3D" parent="Crater" unique_id=1247426669 groups=["camino_salida"]]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, -16.17215, 0, 0)
+script = ExtResource("17_6ngw3")
+acompanan = Array[NodePath]([NodePath("../../plataforma_de_madera2"), NodePath("../../SalidaAlMundo")])
+
+[node name="bloque_de_piedra_purpura3" parent="Crater/Salida" unique_id=1604602010 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -151.79492)
+
+[node name="bloque_de_piedra_purpura4" parent="Crater/Salida" unique_id=783284653 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -147.92647)
+
+[node name="bloque_de_piedra_purpura5" parent="Crater/Salida" unique_id=2122648930 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -144.06042)
+
+[node name="bloque_de_piedra_purpura6" parent="Crater/Salida" unique_id=452025091 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -140.19522)
+
+[node name="bloque_de_piedra_purpura7" parent="Crater/Salida" unique_id=558835306 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -136.38292)
+
+[node name="bloque_de_piedra_purpura8" parent="Crater/Salida" unique_id=2049203804 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -132.59709)
+
+[node name="bloque_de_piedra_purpura9" parent="Crater/Salida" unique_id=1392554340 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -128.78546)
+
+[node name="bloque_de_piedra_purpura10" parent="Crater/Salida" unique_id=24488990 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -124.97752)
+
+[node name="bloque_de_piedra_purpura11" parent="Crater/Salida" unique_id=1129901101 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -121.22176)
+
+[node name="bloque_de_piedra_purpura12" parent="Crater/Salida" unique_id=575236120 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -117.44133)
+
+[node name="bloque_de_piedra_purpura13" parent="Crater/Salida" unique_id=963430134 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -113.69046)
+
+[node name="bloque_de_piedra_purpura14" parent="Crater/Salida" unique_id=1281482231 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -109.84121)
+
+[node name="bloque_de_piedra_purpura15" parent="Crater/Salida" unique_id=384830826 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -106.12907)
+
+[node name="bloque_de_piedra_purpura16" parent="Crater/Salida" unique_id=257440949 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -102.34805)
+
+[node name="bloque_de_piedra_purpura17" parent="Crater/Salida" unique_id=783139356 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -98.67067)
+
+[node name="bloque_de_piedra_purpura18" parent="Crater/Salida" unique_id=1486735953 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -94.89235)
+
+[node name="bloque_de_piedra_purpura19" parent="Crater/Salida" unique_id=1744396522 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -91.183304)
+
+[node name="bloque_de_piedra_purpura20" parent="Crater/Salida" unique_id=2066407125 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -87.34233)
+
+[node name="bloque_de_piedra_purpura21" parent="Crater/Salida" unique_id=473878260 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -83.7371)
+
+[node name="bloque_de_piedra_purpura22" parent="Crater/Salida" unique_id=1779465378 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -79.86483)
+
+[node name="bloque_de_piedra_purpura23" parent="Crater/Salida" unique_id=1041202813 instance=ExtResource("7_rri60")]
+transform = Transform3D(1.7587911, 0, 0, 0, 1, 0, 0, 0, 1.5870535, 139.534, 10.913386, -76.020744)
+
+[node name="LavaToon2" parent="Crater" unique_id=968082854 instance=ExtResource("18_722xg")]
+transform = Transform3D(4.9900894, 0, -0.19190364, 0, 1.2358121, 0, 0.24157909, 0, 3.9639857, 141.32336, -2.210266, -121.92168)
+skeleton = NodePath("../../..")
+script = ExtResource("97_lava")
+
+[node name="PlayerSpawn" type="Marker3D" parent="Crater" unique_id=872008874]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 140.6481, -0.612854, -80.63799)
+
+[node name="TravelSpawn" type="Marker3D" parent="Crater" unique_id=331770546]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 143.13399, 12.5, -156)
+
+[node name="EmiliaDock" type="Marker3D" parent="Crater" unique_id=818915091]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 129.15977, 0.19999695, -140)
+
+[node name="EmiliaHorizDest" type="Marker3D" parent="Crater" unique_id=1204181947]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 129.15977, 6.199997, -140)
+
+[node name="EmiliaHoriz" type="AnimatableBody3D" parent="Crater" unique_id=1303944558]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 129.15977, 0.19999695, -140)
 collision_mask = 0
 script = ExtResource("4_rolemov")
 dock = NodePath("../EmiliaDock")
 dest = NodePath("../EmiliaHorizDest")
 
-[node name="bloque_de_piedra_purpura4" parent="EmiliaHoriz" unique_id=1245486608 instance=ExtResource("7_rri60")]
+[node name="bloque_de_piedra_purpura4" parent="Crater/EmiliaHoriz" unique_id=1870603272 instance=ExtResource("7_rri60")]
 transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, -0.034685135, 0, 0.008725405)
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaHoriz" unique_id=1603368327]
-shape = SubResource("shape_plat")
+[node name="Shape" type="CollisionShape3D" parent="Crater/EmiliaHoriz" unique_id=1642403963]
+shape = SubResource("isl_shape_plat")
 
-[node name="Rider" type="Area3D" parent="EmiliaHoriz" unique_id=701110269]
+[node name="Rider" type="Area3D" parent="Crater/EmiliaHoriz" unique_id=347355353]
 collision_layer = 0
 collision_mask = 2
 
-[node name="RiderShape" type="CollisionShape3D" parent="EmiliaHoriz/Rider" unique_id=84573363]
+[node name="RiderShape" type="CollisionShape3D" parent="Crater/EmiliaHoriz/Rider" unique_id=1644426078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-shape = SubResource("shape_rider")
+shape = SubResource("isl_shape_rider")
 
-[node name="EmiliaCube" type="StaticBody3D" parent="." unique_id=720540949]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 7, -6)
+[node name="EmiliaCube" type="StaticBody3D" parent="Crater" unique_id=984946668]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 129.15977, 7, -146)
 script = ExtResource("6_cube")
 activacion = 1
 prompt = "[E] Activar el obelisco"
 
-[node name="baldosa_de_piedra_de_lava_purpura2" parent="EmiliaCube" unique_id=810677777 instance=ExtResource("3_rri60")]
+[node name="baldosa_de_piedra_de_lava_purpura2" parent="Crater/EmiliaCube" unique_id=1949423962 instance=ExtResource("3_rri60")]
 transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.3835835, -0.117708206, -1.8872695, -0.19831467)
 
-[node name="obelisko_oscuro1" parent="EmiliaCube" unique_id=812692296 instance=ExtResource("6_eoxpm")]
+[node name="obelisko_oscuro1" parent="Crater/EmiliaCube" unique_id=812692296 instance=ExtResource("6_eoxpm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06805706, -0.8055315, -1.1089182)
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaCube" unique_id=1492014432]
+[node name="Shape" type="CollisionShape3D" parent="Crater/EmiliaCube" unique_id=2043313642]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.5568161)
-shape = SubResource("shape_h2")
+shape = SubResource("isl_shape_h2")
 
-[node name="EmiliaVert" type="AnimatableBody3D" parent="." unique_id=1511910587]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6.2, -12)
+[node name="EmiliaVert" type="AnimatableBody3D" parent="Crater" unique_id=1340513201]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 129.15977, 6.199997, -152)
 collision_mask = 0
 script = ExtResource("5_vert")
 
-[node name="bloque_de_piedra_purpura5" parent="EmiliaVert" unique_id=2018142121 instance=ExtResource("7_rri60")]
+[node name="bloque_de_piedra_purpura5" parent="Crater/EmiliaVert" unique_id=71642679 instance=ExtResource("7_rri60")]
 transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, -0.034685135, -0.18931293, -0.09869003)
 
-[node name="Shape" type="CollisionShape3D" parent="EmiliaVert" unique_id=1007209641]
-shape = SubResource("shape_plat")
+[node name="Shape" type="CollisionShape3D" parent="Crater/EmiliaVert" unique_id=881820177]
+shape = SubResource("isl_shape_plat")
 
-[node name="BenjaminDock" type="Marker3D" parent="." unique_id=1112766455]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 0)
+[node name="BenjaminDock" type="Marker3D" parent="Crater" unique_id=173037361]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 151.51852, 0.19999695, -140)
 
-[node name="BenjaminHorizDest" type="Marker3D" parent="." unique_id=1218847177]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, 0)
+[node name="BenjaminHorizDest" type="Marker3D" parent="Crater" unique_id=487627022]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 151.51852, 6.199997, -140)
 
-[node name="BenjaminHoriz" type="AnimatableBody3D" parent="." unique_id=651879927]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, 0)
+[node name="BenjaminHoriz" type="AnimatableBody3D" parent="Crater" unique_id=2030937151]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 151.51852, 0.19999695, -140)
 collision_mask = 0
 script = ExtResource("4_rolemov")
 for_archer = true
 dock = NodePath("../BenjaminDock")
 dest = NodePath("../BenjaminHorizDest")
 
-[node name="bloque_de_piedra_purpura5" parent="BenjaminHoriz" unique_id=1860682759 instance=ExtResource("7_rri60")]
+[node name="bloque_de_piedra_purpura5" parent="Crater/BenjaminHoriz" unique_id=2066677519 instance=ExtResource("7_rri60")]
 transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, 1.9477797, 0, 0.008725405)
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminHoriz" unique_id=1853870028]
+[node name="Shape" type="CollisionShape3D" parent="Crater/BenjaminHoriz" unique_id=1360467410]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9129591, 0, 0)
-shape = SubResource("shape_plat")
+shape = SubResource("isl_shape_plat")
 
-[node name="Rider" type="Area3D" parent="BenjaminHoriz" unique_id=969063033]
+[node name="Rider" type="Area3D" parent="Crater/BenjaminHoriz" unique_id=171116933]
 collision_layer = 0
 collision_mask = 2
 
-[node name="RiderShape" type="CollisionShape3D" parent="BenjaminHoriz/Rider" unique_id=442520620]
+[node name="RiderShape" type="CollisionShape3D" parent="Crater/BenjaminHoriz/Rider" unique_id=1542456291]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.9129591, 1, 0)
-shape = SubResource("shape_rider")
+shape = SubResource("isl_shape_rider")
 
-[node name="BenjaminCube" type="StaticBody3D" parent="." unique_id=1608193779]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 7, -6)
+[node name="BenjaminCube" type="StaticBody3D" parent="Crater" unique_id=585675572]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 153.7544, 7, -146)
 script = ExtResource("6_cube")
 activacion = 1
 prompt = "[E] Activar el obelisco"
 
-[node name="baldosa_de_piedra_de_lava_purpura3" parent="BenjaminCube" unique_id=24076407 instance=ExtResource("3_rri60")]
+[node name="baldosa_de_piedra_de_lava_purpura3" parent="Crater/BenjaminCube" unique_id=1077435592 instance=ExtResource("3_rri60")]
 transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.4358597, 0.12043953, -1.8872695, -0.19831467)
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminCube" unique_id=475081696]
+[node name="Shape" type="CollisionShape3D" parent="Crater/BenjaminCube" unique_id=227738347]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.0941896)
-shape = SubResource("shape_h2")
+shape = SubResource("isl_shape_h2")
 
-[node name="obelisko_oscuro2" parent="BenjaminCube" unique_id=251378117 instance=ExtResource("6_eoxpm")]
+[node name="obelisko_oscuro2" parent="Crater/BenjaminCube" unique_id=303098368 instance=ExtResource("6_eoxpm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1514368, -0.8125477, -0.88896275)
 
-[node name="BenjaminVert" type="AnimatableBody3D" parent="." unique_id=458402743]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 6.2, -12)
+[node name="BenjaminVert" type="AnimatableBody3D" parent="Crater" unique_id=2062094561]
+transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 151.51852, 6.199997, -152)
 collision_mask = 0
 script = ExtResource("5_vert")
 
-[node name="bloque_de_piedra_purpura6" parent="BenjaminVert" unique_id=1884722642 instance=ExtResource("7_rri60")]
+[node name="bloque_de_piedra_purpura6" parent="Crater/BenjaminVert" unique_id=238013309 instance=ExtResource("7_rri60")]
 transform = Transform3D(1.7524914, 0, 0, 0, 0.44776398, 0, 0, 0, 1.6763113, 2.3067226, -0.18931293, -0.09869003)
 
-[node name="Shape" type="CollisionShape3D" parent="BenjaminVert" unique_id=409793842]
+[node name="Shape" type="CollisionShape3D" parent="Crater/BenjaminVert" unique_id=998720557]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.219305, 0, 0)
-shape = SubResource("shape_plat")
+shape = SubResource("isl_shape_plat")
 
-[node name="bloque_de_espuma_morada2" parent="." unique_id=1301342508 instance=ExtResource("8_getua")]
-transform = Transform3D(0.065626755, 0, -6.7242017, 0, 1.0869792, 0, 4.871985, 0, 0.09057652, -0.7455828, 10.972622, -18.901295)
+[node name="bloque_de_espuma_morada_puzzle" parent="Crater" unique_id=156986209 instance=ExtResource("8_getua")]
+transform = Transform3D(0.06552251, 0, -7.517167, 0, 1.0869792, 0, 4.864246, 0, 0.10125795, 139.50563, 10.972626, -158.90129)
 
-[node name="portal_isluga2" parent="." unique_id=1618892134 instance=ExtResource("9_yxnhm")]
-transform = Transform3D(1.8436146, 0, 0, 0, 1.8436146, 0, 0, 0, 1.8436146, -0.32872403, 12.052724, -22.17932)
+[node name="portal_isluga2" parent="Crater" unique_id=1618892134 instance=ExtResource("9_yxnhm")]
+transform = Transform3D(2.0610464, 0, 0, 0, 1.8436146, 0, 8.881784e-16, 0, 1.8436146, 139.97166, 12.052719, -162.17932)
 
-[node name="brasero_oscuro2" parent="." unique_id=2049782038 instance=ExtResource("10_k5c33")]
-transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, -15.489241, 12.048319, -22.353992)
+[node name="brasero_oscuro2" parent="Crater" unique_id=2049782038 instance=ExtResource("10_k5c33")]
+transform = Transform3D(3.015343, 0, 0, 0, 2.6972368, 0, -1.7763568e-15, 0, 2.6972368, 123.02313, 12.048325, -162.35399)
 
-[node name="brasero_oscuro6" parent="." unique_id=170783464 instance=ExtResource("10_k5c33")]
-transform = Transform3D(1.8611367, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, -4.7442207, 12.048319, -19.890207)
+[node name="brasero_oscuro6" parent="Crater" unique_id=1047964609 instance=ExtResource("10_k5c33")]
+transform = Transform3D(2.080635, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, 135.0354, 12.048325, -159.89021)
 
-[node name="brasero_oscuro7" parent="." unique_id=2116707789 instance=ExtResource("10_k5c33")]
-transform = Transform3D(1.8611367, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, 3.8079963, 12.048319, -19.890207)
+[node name="brasero_oscuro7" parent="Crater" unique_id=1748607079 instance=ExtResource("10_k5c33")]
+transform = Transform3D(2.080635, 0, 0, 0, 1.8611367, 0, 0, 0, 1.8611367, 144.59625, 12.048325, -159.89021)
 
-[node name="brasero_oscuro3" parent="." unique_id=271515689 instance=ExtResource("10_k5c33")]
-transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, -15.345303, 12.048319, -15.445416)
+[node name="brasero_oscuro3" parent="Crater" unique_id=614447189 instance=ExtResource("10_k5c33")]
+transform = Transform3D(3.015343, 0, 0, 0, 2.6972368, 0, -1.7763568e-15, 0, 2.6972368, 123.18405, 12.048325, -155.44542)
 
-[node name="brasero_oscuro4" parent="." unique_id=1211385038 instance=ExtResource("10_k5c33")]
-transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 13.930489, 12.048319, -15.904396)
+[node name="brasero_oscuro4" parent="Crater" unique_id=567681718 instance=ExtResource("10_k5c33")]
+transform = Transform3D(3.015343, 0, 0, 0, 2.6972368, 0, -1.7763568e-15, 0, 2.6972368, 155.91257, 12.048325, -155.90439)
 
-[node name="brasero_oscuro5" parent="." unique_id=10840532 instance=ExtResource("10_k5c33")]
-transform = Transform3D(2.6972368, 0, 0, 0, 2.6972368, 0, 0, 0, 2.6972368, 13.930489, 12.048319, -22.331057)
+[node name="brasero_oscuro5" parent="Crater" unique_id=156371217 instance=ExtResource("10_k5c33")]
+transform = Transform3D(3.015343, 0, 0, 0, 2.6972368, 0, -1.7763568e-15, 0, 2.6972368, 155.91257, 12.048325, -162.33105)
 
-[node name="grupo_de_cristales_naranjas4" parent="." unique_id=1654026912 instance=ExtResource("11_qkxls")]
-transform = Transform3D(0.045505248, 0, 2.072735, 0, 2.0732346, 0, -2.072735, 0, 0.045505248, -15.405709, 12.052428, -18.552053)
+[node name="grupo_de_cristales_naranjas4" parent="Crater" unique_id=1654026912 instance=ExtResource("11_qkxls")]
+transform = Transform3D(0.045623045, 0, 2.31713, 0, 2.0732346, 0, -2.0781007, 0, 0.050870746, 123.11652, 12.052429, -158.55205)
 
-[node name="grupo_de_cristales_naranjas5" parent="." unique_id=1616257335 instance=ExtResource("11_qkxls")]
-transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, -11.974033, 12.052428, -22.583641)
+[node name="grupo_de_cristales_naranjas5" parent="Crater" unique_id=929014599 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.3175251, 0, 0.027339661, 0, 2.0732346, 0, -0.030516375, 0, 2.076274, 126.95293, 12.052429, -162.58363)
 
-[node name="grupo_de_cristales_naranjas6" parent="." unique_id=2110693173 instance=ExtResource("11_qkxls")]
-transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, -9.064697, 12.052428, -22.583641)
+[node name="grupo_de_cristales_naranjas6" parent="Crater" unique_id=1075069916 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.3175251, 0, 0.027339661, 0, 2.0732346, 0, -0.030516375, 0, 2.076274, 130.20538, 12.052429, -162.58363)
 
-[node name="grupo_de_cristales_naranjas7" parent="." unique_id=2083503422 instance=ExtResource("11_qkxls")]
-transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, -6.172354, 12.052428, -22.583641)
+[node name="grupo_de_cristales_naranjas7" parent="Crater" unique_id=1468744431 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.3175251, 0, 0.027339661, 0, 2.0732346, 0, -0.030516375, 0, 2.076274, 133.43884, 12.052429, -162.58363)
 
-[node name="grupo_de_cristales_naranjas8" parent="." unique_id=620903979 instance=ExtResource("11_qkxls")]
-transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 5.2548127, 12.052428, -22.583641)
+[node name="grupo_de_cristales_naranjas8" parent="Crater" unique_id=1327788873 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.3175251, 0, 0.027339661, 0, 2.0732346, 0, -0.030516375, 0, 2.076274, 146.2137, 12.052429, -162.58363)
 
-[node name="grupo_de_cristales_naranjas9" parent="." unique_id=1867459516 instance=ExtResource("11_qkxls")]
-transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 8.165453, 12.052428, -22.583641)
+[node name="grupo_de_cristales_naranjas9" parent="Crater" unique_id=1794621295 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.3175251, 0, 0.027339661, 0, 2.0732346, 0, -0.030516375, 0, 2.076274, 149.46762, 12.052429, -162.58363)
 
-[node name="grupo_de_cristales_naranjas10" parent="." unique_id=1339880481 instance=ExtResource("11_qkxls")]
-transform = Transform3D(2.0730548, 0, 0.027297273, 0, 2.0732346, 0, -0.027297273, 0, 2.0730548, 11.078361, 12.052428, -22.583641)
+[node name="grupo_de_cristales_naranjas10" parent="Crater" unique_id=1241319622 instance=ExtResource("11_qkxls")]
+transform = Transform3D(2.3175251, 0, 0.027339661, 0, 2.0732346, 0, -0.030516375, 0, 2.076274, 152.72406, 12.052429, -162.58363)
 
-[node name="grupo_de_cristales_naranjas11" parent="." unique_id=1869612923 instance=ExtResource("11_qkxls")]
-transform = Transform3D(-0.02122368, 0, -2.0731263, 0, 2.073235, 0, 2.0731263, 0, -0.02122368, 14.288581, 12.052428, -18.822313)
+[node name="grupo_de_cristales_naranjas11" parent="Crater" unique_id=1475401814 instance=ExtResource("11_qkxls")]
+transform = Transform3D(-0.021249304, 0, -2.3176134, 0, 2.073235, 0, 2.0756292, 0, -0.023726622, 156.31288, 12.052429, -158.82231)
+
+[node name="plataforma_de_madera2" parent="." unique_id=994967977 instance=ExtResource("26_br2em")]
+transform = Transform3D(2.4949753, 0, -0.032105308, 0, 2.4951818, 0, 0.032105308, 0, 2.4949753, 137.56915, 136.39734, -19.988804)
+
+[node name="NieblaToon" parent="." unique_id=980000001 instance=ExtResource("98_niebla")]
+transform = Transform3D(17.545374, 0, 0, 0, 2.4734483, 0, 0, 0, 18.176657, 138.135, -229.72418, -73.623)
+
+[node name="SalidaAlMundo" parent="." unique_id=990000002 instance=ExtResource("99_salida")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 137.569, 137.4, -19.085)
+target_region = "Poblado"
+prompt = "[E] Bajar del volcán"
+tamano = Vector3(7, 5, 7)
+
+[node name="CieloDelIsluga" type="Node" parent="." unique_id=960000001]
+script = ExtResource("96_cielo")
+entorno = ExtResource("96_entorno")
+
+[node name="MarToon" parent="." unique_id=950000001 instance=ExtResource("95_mar")]
+transform = Transform3D(40, 0, 0, 0, 1, 0, 0, 0, 40, 137.135, -468.879, -74.623)
+
+[node name="GuardianSpawn" type="Marker3D" parent="." unique_id=940000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 138.135, 138.93561, -105.34)
+script = ExtResource("93_vista")
+modelo = ExtResource("93_guardian")
+altura = 4.09

@@ -54,10 +54,23 @@ var _fork_seen := false
 var _t := 0.0
 
 
+
+## Deja de generar el decorado por código: ya está guardado como nodos.
+##
+## Se tilda DESPUÉS de correr tools/fijar_geometria.gd, que adopta los nodos
+## generados dándoles `owner`. Con la bandera puesta el script no vuelve a
+## construir encima, y el decorado pasa a editarse a mano en el editor.
+##
+## El orden importa: tildarla antes de correr la herramienta deja la zona sin
+## geometría que adoptar.
+@export var geometria_fijada: bool = false
+
+
 func _ready() -> void:
-	_build_canyon()
-	_build_gold_path()
-	_build_hurt_path()
+	if not geometria_fijada:
+		_build_canyon()
+		_build_gold_path()
+		_build_hurt_path()
 	# En el editor sólo se construye la quebrada; el hint es para el jugador.
 	if Engine.is_editor_hint():
 		return

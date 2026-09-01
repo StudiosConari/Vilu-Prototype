@@ -46,41 +46,34 @@ const ZONAS := [
 ## dejaría desalineado y habría que rehacerlo.
 	{
 		"id": "Poblado",
-		"escena": "res://scenes/regions/Poblado.tscn",
+		"inline": true,
+		"escena": "",
 		"pos": Vector3(0, 0, 55),
 		"radio": 36.0,
 	},
 	{
 		"id": "Region1_Tarapaca",
-		"escena": "res://scenes/regions/Region1_Tarapaca.tscn",
+		"inline": true,
+		"escena": "",
 		"pos": Vector3(0, 0, 160),
 		"radio": 34.0,
 	},
 	{
 		"id": "Region2_Alicanto",
-		"escena": "res://scenes/regions/Region2_Alicanto.tscn",
+		"inline": true,
+		"escena": "",
 		"pos": Vector3(0, 0, -70),
 		"radio": 44.0,
 	},
-	{
-		# Movido al cuadrante este (región 0,-1), donde había terreno libre.
-		# Desde acá hay ~116 m hasta el borde del bloque en ambos ejes, así que
-		# entra un cráter tan grande como el de la Cumbre. Y queda a 285 m de
-		# ella, sin riesgo de que las faldas se toquen.
-		"id": "Isluga",
-		# Construida a mano DENTRO de World.tscn, no en una escena aparte. Sin
-		# esto se instanciaba encima un duplicado de puzzles/Isluga.tscn, y como
-		# el nombre "Isluga" ya estaba tomado, Godot se lo cambiaba a algo como
-		# "@Node3D@179": dos Islugas superpuestos y el registro apuntando al que
-		# no se veía en el árbol.
-		"inline": true,
-		"escena": "",
-		"pos": Vector3(140, 0, -140),
-		"radio": 32.0,
-	},
+	# El Isluga NO está acá a propósito. Dejó de ser una zona del mundo abierto:
+	# ahora es un interior con puerta, y se entra por el monumento de la subida.
+	# Si volviera al registro, `has_zone("Isluga")` daría true y el selector del
+	# título dejaría de cargarlo, porque Game sólo entra al interior cuando la
+	# zona NO existe en el mundo.
 	{
 		"id": "Region2_Yastay",
-		"escena": "res://scenes/regions/Region2_Yastay.tscn",
+		"inline": true,
+		"escena": "",
 		"pos": Vector3(-145, 0, 55),
 		"radio": 34.0,
 	},
@@ -99,6 +92,11 @@ const ZONAS := [
 ## del mundo — sólo una entrada física con su ZoneExit.
 ## Sigue al Poblado en el corrimiento de +55 en Z.
 const BOCA_MINA := Vector3(88, 0, 55)
+
+## Desde la boca hasta donde se reaparece al salir. Lo bastante lejos como para
+## quedar fuera del disparador de entrada: si no, salir de la Mina te dejaría
+## dentro del área que te vuelve a ofrecer entrar.
+const SALIR_DE_LA_MINA := Vector3(0.0, -1.3, -8.0)
 
 ## Caminos que unen las zonas: [desde, hasta, ancho, hueco].
 ##
@@ -232,9 +230,10 @@ func _previsualizar_zonas() -> void:
 
 	for z in ZONAS:
 		var r: float = float(z["radio"])
-		var centro: Vector3 = z["pos"]
+		var centro: Vector3 = _pos_de_zona(z)
 
-		# Geometría real de la zona (sin lógica: los scripts están dormidos)
+		# Geometría real de la zona (sin lógica: los scripts están dormidos).
+		# Las que viven dentro de World.tscn no se previsualizan: ya están ahí.
 		if mostrar_zonas_en_editor and not z.get("inline", false):
 			# Sin caché: si la escena de la zona se acaba de guardar, `load` a
 			# secas puede devolver la copia que el editor tenía en memoria y el
@@ -275,14 +274,15 @@ func _previsualizar_zonas() -> void:
 
 	# Boca de la Mina: el bulto real, igual que las zonas, para poder esculpir
 	# el terreno alrededor sabiendo dónde queda el socavón.
-	if mostrar_zonas_en_editor:
+	# Igual que arriba: con el modelo puesto no hace falta el bulto de CSG.
+	if mostrar_zonas_en_editor and _nodo_boca() == null:
 		_geometria_boca_mina(raiz)
 
 	var m_lbl := Label3D.new()
 	m_lbl.text = "boca de la Mina"
 	m_lbl.font_size = 40
 	m_lbl.pixel_size = 0.05
-	m_lbl.position = BOCA_MINA + Vector3(0, 10, 0)
+	m_lbl.position = _pos_boca() + Vector3(0, 12, 0)
 	m_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	m_lbl.modulate = Color(1.0, 0.75, 0.35)
 	m_lbl.outline_size = 12
@@ -311,15 +311,44 @@ func _construir_terreno() -> void:
 
 ## Entrada a la Mina, al este del poblado. La Mina es un INTERIOR: no vive en
 ## el mundo, se carga aparte al cruzar este umbral.
+## El nodo que hace de boca, si la escena trae uno.
+##
+## Se busca por GRUPO y no por nombre ni por ruta: el modelo se puede renombrar
+## o mover de sitio en el editor y esto sigue encontrándolo.
+func _nodo_boca() -> Node3D:
+	var n := get_tree().get_first_node_in_group("boca_mina")
+	return n as Node3D if n is Node3D else null
+
+
+## Dónde está la boca, en coordenadas de este nodo.
+##
+## Si la escena trae un modelo de entrada, manda ése; si no, la constante de
+## siempre. Así el greybox sigue sirviendo en un mundo sin el modelo puesto.
+func _pos_boca() -> Vector3:
+	var n := _nodo_boca()
+	return to_local(n.global_position) if n != null else BOCA_MINA
+
+
 func _construir_boca_mina() -> void:
-	_geometria_boca_mina(self)
+	var modelo := _nodo_boca()
+	# El bulto de CSG sólo se arma si NO hay modelo. Estaba para marcar el sitio
+	# mientras la boca era un greybox; con la entrada de madera puesta sería un
+	# cerro gris de más, y encima en otro lugar.
+	if modelo == null:
+		_geometria_boca_mina(self)
 
 	var salida := EXIT_SCENE.instantiate()
 	add_child(salida)
-	salida.position = BOCA_MINA + Vector3(-4.5, 2.0, 0.0)
 	salida.target_region = "Mina"
 	salida.require_beat = -1
 	salida.prompt = "[E] Entrar a la Mina"
+	if modelo != null:
+		# Centrada en el modelo y generosa: no se sabe hacia dónde mira, y como
+		# pide [E] no hay riesgo de entrar sin querer.
+		salida.position = _pos_boca() + Vector3(0.0, 2.5, 0.0)
+		salida.tamano = Vector3(9.0, 6.0, 9.0)
+	else:
+		salida.position = BOCA_MINA + Vector3(-4.5, 2.0, 0.0)
 
 
 ## Sólo el bulto visible de la boca: cerro, socavón, entable y cartel.
@@ -376,7 +405,7 @@ func _geometria_boca_mina(padre: Node3D) -> void:
 
 ## Punto donde reaparece el jugador al salir de la Mina (frente a la boca).
 func mine_mouth() -> Vector3:
-	return global_position + BOCA_MINA + Vector3(-8.0, 0.5, 0.0)
+	return to_global(_pos_boca() + SALIR_DE_LA_MINA)
 
 
 func _process(_delta: float) -> void:
@@ -387,8 +416,23 @@ func _process(_delta: float) -> void:
 
 # ─── Construcción ────────────────────────────────────────────────────────────
 
+## Dónde está una zona, en coordenadas de este nodo.
+##
+## Si la zona vive DENTRO de World.tscn manda el nodo real, no el número del
+## registro: así se la puede arrastrar en el editor y el radio de activación,
+## los caminos y las siluetas la siguen. El número queda de respaldo para las
+## que se sigan instanciando, como la Cumbre.
+func _pos_de_zona(z: Dictionary) -> Vector3:
+	var n := get_node_or_null(NodePath(z["id"])) as Node3D
+	return n.position if n != null else z["pos"]
+
+
 func _instanciar_zonas() -> void:
 	for z in ZONAS:
+		# Zona construida a mano dentro de World.tscn: ya está en el árbol y
+		# sólo hay que registrarla. Instanciar además su escena pondría una
+		# copia encima, y como el nombre ya está tomado Godot le cambiaría el
+		# suyo por algo tipo "@Node3D@179".
 		if z.get("inline", false):
 			var ya := get_node_or_null(NodePath(z["id"])) as Node3D
 			if ya == null:
@@ -478,7 +522,7 @@ func _radio_de(id: String) -> float:
 func _pos_de(id: String) -> Vector3:
 	for z in ZONAS:
 		if z["id"] == id:
-			return z["pos"]
+			return _pos_de_zona(z)
 	return Vector3.INF
 
 
@@ -500,7 +544,7 @@ func _revisar_zona_del_jugador() -> void:
 
 	for z in ZONAS:
 		var id: String = z["id"]
-		var centro: Vector3 = z["pos"]
+		var centro: Vector3 = _pos_de_zona(z)
 		var d := Vector2(pos.x - centro.x, pos.z - centro.z).length()
 		var dentro := d <= float(z["radio"])
 
@@ -546,9 +590,9 @@ func spawn_point(id: String, marcador := "PlayerSpawn") -> Vector3:
 	var n: Node3D = _zonas.get(id)
 	if n == null:
 		return Vector3.INF
-	var m := n.get_node_or_null(marcador) as Node3D
+	var m := n.find_child(marcador, true, false) as Node3D
 	if m == null:
-		m = n.get_node_or_null("PlayerSpawn") as Node3D
+		m = n.find_child("PlayerSpawn", true, false) as Node3D
 	if m == null:
 		return n.global_position
 	return m.global_position
