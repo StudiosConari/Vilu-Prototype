@@ -1,0 +1,44 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://bbrk8ewstk37g"
+path.s3tc="res://.godot/imported/guanaco_guanaco_ao.jpg-efc860f923b1a79a2fb1216e28da3f7e.s3tc.ctex"
+metadata={
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
+}
+generator_parameters={
+"md5": "d9bfb3ae2c01ae78608468155a7209df"
+}
+
+[deps]
+
+source_file="res://models/personaje/guanaco_guanaco_ao.jpg"
+dest_files=["res://.godot/imported/guanaco_guanaco_ao.jpg-efc860f923b1a79a2fb1216e28da3f7e.s3tc.ctex"]
+
+[params]
+
+compress/mode=2
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=8
+roughness/src_normal="res://models/personaje/guanaco_guanaco_normal.png"
+process/channel_remap/red=0
+process/channel_remap/green=1
+process/channel_remap/blue=2
+process/channel_remap/alpha=3
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0

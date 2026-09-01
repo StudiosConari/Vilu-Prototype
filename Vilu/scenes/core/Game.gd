@@ -20,7 +20,7 @@ const ESPERA_CIERRE := 3.5
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 
 ## Zonas que NO son parte del mundo continuo: se cargan aparte al entrar.
-const INTERIORES := ["Mina", "Final", "Iglesia"]
+const INTERIORES := ["Mina", "Final", "Iglesia", "Isluga"]
 
 ## Interiores a los que se entra por una PUERTA que está dentro de una zona.
 ##
@@ -28,7 +28,7 @@ const INTERIORES := ["Mina", "Final", "Iglesia"]
 ## por el que entró, no al punto de aparición de la zona. La Mina no está acá
 ## porque tiene su propio punto curado (`mine_mouth()`), unos metros delante del
 ## socavón, que queda mejor que el sitio exacto donde estabas parado.
-const INTERIORES_DE_PUERTA := ["Iglesia"]
+const INTERIORES_DE_PUERTA := ["Iglesia", "Isluga"]
 
 @onready var _region_holder: Node3D = $RegionHolder
 
@@ -64,7 +64,9 @@ var _cam_dist_actual := -1.0
 ## Altura del punto al que mira la cámara, sobre el objetivo.
 var _cam_alto := 1.5
 
-@export var fall_limit := -8.0   # por debajo de esto = cayó al vacío -> reinicia la zona
+## Altura por debajo de la cual se cuenta como caída al vacío, EN EL MUNDO
+## ABIERTO. Ahí el suelo está siempre a la misma altura y un valor absoluto vale.
+@export var fall_limit := -8.0
 var _resetting := false
 
 var player: CharacterBody3D          # personaje primario/activo de referencia
@@ -206,19 +208,53 @@ func _process(_delta: float) -> void:
 func _check_fall() -> void:
 	if _resetting:
 		return
+	var limite := _limite_de_caida()
 	for c in party:
-		if is_instance_valid(c) and c.global_position.y < fall_limit:
+		if is_instance_valid(c) and c.global_position.y < limite:
 			_respawn()
 			return
+
+
+## El umbral de caída de la zona en la que se está.
+##
+## Un interior puede vivir a cualquier altura: el cráter del Isluga está a y≈300
+## y su suelo tiene 80 m de desnivel, así que ni un valor absoluto ni un margen
+## desde el punto de aparición sirven. Cada región puede declarar el suyo con una
+## propiedad `limite_de_caida` en su nodo raíz; el que no la trae usa el del
+## mundo abierto.
+##
+## Sin esto, caer a la lava del Isluga no rescataba a nadie: se atravesaba y se
+## quedaba de pie sobre la cáscara del volcán, con el cráter de techo.
+func _limite_de_caida() -> float:
+	if _interior == "":
+		return fall_limit
+	for r in _region_holder.get_children():
+		if "limite_de_caida" in r:
+			return float(r.get("limite_de_caida"))
+	return fall_limit
 
 
 ## MUNDO ABIERTO: ya no existe "recargar la zona actual" — el mundo entero está
 ## siempre cargado y recargarlo reiniciaría guiones de zonas lejanas. En su
 ## lugar se devuelve al party al último spawn pisado.
-func _respawn() -> void:
+## Devuelve al party al punto seguro por algo que no es caerse: la lava, por
+## ahora. El daño se aplica DESPUÉS de reubicar porque el rescate cura al party
+## entero; sin esto tocar la lava no costaría nada.
+func volver_al_punto_seguro(motivo: String, dano := 0.0) -> void:
+	if _resetting:
+		return
+	_respawn(motivo)
+	if dano <= 0.0:
+		return
+	for c in party:
+		if is_instance_valid(c) and c.has_method("take_damage"):
+			c.take_damage(dano)
+
+
+func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 	_resetting = true
 	if hud and hud.has_method("show_banner"):
-		hud.show_banner("Caíste — volvés al último punto seguro")
+		hud.show_banner(motivo)
 
 	var destino := _respawn_pos
 	if _interior == "":
@@ -363,12 +399,21 @@ func _apply_active() -> void:
 func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 	if region == null:
 		return
+	# Se busca en TODO el árbol de la región, no sólo entre sus hijos directos.
+	#
+	# Antes era `get_node_or_null("PlayerSpawn")`, que exige que el marcador
+	# cuelgue de la raíz. En cuanto el Isluga agrupó su contenido bajo un nodo
+	# `Crater`, el marcador dejó de encontrarse: la función salía sin hacer nada
+	# y la party se quedaba donde estuviera, que al entrar era el aire. Buscando
+	# en profundidad el marcador se puede arrastrar a donde sea dentro de la
+	# escena y sigue valiendo.
 	var spawn: Node3D = null
 	if use_travel_spawn:
-		spawn = region.get_node_or_null("TravelSpawn") as Node3D
+		spawn = region.find_child("TravelSpawn", true, false) as Node3D
 	if spawn == null:
-		spawn = region.get_node_or_null("PlayerSpawn") as Node3D
+		spawn = region.find_child("PlayerSpawn", true, false) as Node3D
 	if spawn == null:
+		push_warning("Game: la región %s no trae PlayerSpawn" % region.name)
 		return
 	# El RUMBO del marcador también cuenta, no sólo su posición.
 	#
@@ -387,6 +432,13 @@ func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 	# Y la cámara detrás, mirando lo mismo. Con _cam_yaw = 0 se pone en +Z y
 	# mira hacia -Z, o sea que coincide con el marcador sin rotar.
 	_cam_yaw = yaw
+
+	# Acabar de llegar a una región la convierte en el último punto seguro.
+	#
+	# Faltaba: entrar a un interior colocaba al party pero dejaba `_respawn_pos`
+	# con el valor del mundo abierto, así que caerse dentro del cráter del
+	# Isluga te escupía al otro lado del mapa en vez de devolverte arriba.
+	_respawn_pos = spawn.global_position
 
 
 ## Punto de entrada único para "ir a X". Enruta según el tipo de destino:

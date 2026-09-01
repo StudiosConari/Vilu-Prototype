@@ -942,7 +942,6 @@ script = ExtResource("35_antor")
 
 [node name="Techo" type="Node3D" parent="." unique_id=1563147629]
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0, 0)
-visible = false
 
 [node name="techo_baldosa_de_tierra_agrietada2" parent="Techo" unique_id=1412141125 instance=ExtResource("6_kh1ie")]
 transform = Transform3D(16.193682, 0, 0, 0, 1.4785938e-06, 2.0098312, 0, -11.275428, 2.6355752e-07, -18.127033, 7.777, -1.7999725)

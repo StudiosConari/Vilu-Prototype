@@ -13,11 +13,18 @@ extends EditorScript
 ##   se seleccionan, se mueven con el gizmo y se guardan al hacer Ctrl+S.
 ##
 ## CÓMO USARLO — EL ORDEN IMPORTA, NO LO CAMBIES
-##   1. Abrí la escena de la ZONA que querés editar, sola. Por ejemplo
-##      scenes/regions/Region1_Tarapaca.tscn (no World.tscn).
+##   1. Abrí World.tscn y SELECCIONÁ en el panel de Escena el nodo de la zona
+##      que querés fijar: Poblado, Region1_Tarapaca, Region2_Alicanto o
+##      Region2_Yastay. Una por vez.
 ##   2. Abrí este archivo en el editor de Script y ejecutalo (Ctrl+Shift+X).
-##   3. En el nodo que tiene el script de la zona, tildá `Geometria Fijada`.
+##   3. En ese mismo nodo, tildá `Geometria Fijada` en el inspector.
 ##   4. RECIÉN AHORA Ctrl+S.
+##
+## POR QUÉ HAY QUE SELECCIONAR
+##   Sin selección adopta la escena entera, y en World.tscn eso se llevaría
+##   puestas las siluetas de zona y los carteles que WorldRoot dibuja SÓLO como
+##   referencia del editor. Esos tienen que seguir sin owner: son andamios, no
+##   decorado. Seleccionando la zona, se adopta nada más que lo suyo.
 ##
 ## POR QUÉ EL FLAG VA ANTES DE GUARDAR
 ##   Guardar con el decorado adentro pero el flag todavía en false deja la
@@ -42,20 +49,50 @@ extends EditorScript
 
 
 func _run() -> void:
-	var raiz := get_scene()
-	if raiz == null:
-		push_error("Abrí primero la escena de la zona que querés editar.")
+	var escena := get_scene()
+	if escena == null:
+		push_error("Abrí primero la escena que querés editar.")
 		return
 
+	# Se trabaja sobre lo SELECCIONADO, y sólo se cae a la escena entera si no
+	# hay nada seleccionado. Ver la nota de arriba sobre por qué importa.
+	var raiz: Node = escena
+	var sel := get_editor_interface().get_selection().get_selected_nodes()
+	if sel.size() == 1:
+		raiz = sel[0]
+		print("[fijar] trabajando sobre '%s'" % raiz.name)
+	elif sel.size() > 1:
+		push_error("Seleccioná UNA sola zona, no %d." % sel.size())
+		return
+	else:
+		print("[fijar] sin selección: se adopta la escena entera '%s'." % escena.name)
+		print("[fijar] En World.tscn eso también fija las siluetas del editor.")
+
 	var antes := _contar_con_owner(raiz)
-	var n := _adoptar(raiz, raiz)
+	# El owner tiene que ser la RAÍZ DE LA ESCENA, no el nodo seleccionado:
+	# Godot sólo guarda en el .tscn lo que pertenece a la escena abierta.
+	var n := _adoptar(raiz, escena)
 	var despues := _contar_con_owner(raiz)
 
 	print("[fijar] nodos adoptados: %d   (antes en la escena: %d, ahora: %d)"
 		% [n, antes, despues])
 	if n == 0:
-		print("[fijar] no había geometría generada suelta. ¿Es la escena correcta?")
+		# El motivo casi siempre es el mismo, así que se dice en vez de dejar
+		# al usuario adivinando: con la bandera puesta el script no construye,
+		# y entonces no hay nada suelto que adoptar.
+		if "geometria_fijada" in raiz and raiz.get("geometria_fijada"):
+			push_error("'%s' ya tiene Geometria Fijada tildado, así que su decorado no se generó y no hay nada que adoptar." % raiz.name)
+			print("[fijar] PARA ARREGLARLO:")
+			print("[fijar]   1. Destildá `Geometria Fijada` en '%s'." % raiz.name)
+			print("[fijar]   2. Escena > Recargar escena guardada (para que el script vuelva a construir).")
+			print("[fijar]   3. Seleccioná '%s' y volvé a correr esto." % raiz.name)
+			print("[fijar]   4. Ahí sí: tildá la bandera y recién después Ctrl+S.")
+			return
+		print("[fijar] no había geometría generada suelta bajo '%s'." % raiz.name)
+		print("[fijar] ¿Seleccionaste el nodo correcto? ¿Ya estaba fijado antes?")
 		return
+	print("[fijar] revisá el panel de Escena: los nodos ya tienen que aparecer")
+	print("[fijar] colgando de '%s' y ser seleccionables." % raiz.name)
 	print("[fijar] AHORA, EN ESTE ORDEN:")
 	print("[fijar]   1. Tildá `Geometria Fijada` en el nodo de la zona.")
 	print("[fijar]   2. Recién después Ctrl+S.")

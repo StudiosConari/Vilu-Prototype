@@ -19,6 +19,18 @@ extends Node3D
 
 const ENCAJAR := preload("res://scenes/core/EncajarModelo.gd")
 
+## Otros nodos que viven el MISMO ciclo que el camino: no están hasta que el
+## guardián lo abre, y se van cuando el camino se derrumba.
+##
+## Para la plataforma que baja al mundo. No es sólo estética: si estuviera
+## desde el principio se podría bajar sin haber resuelto nada, y el camino que
+## la precede no tendría sentido. Se le apaga también la colisión y las zonas,
+## o sería un ascensor invisible que igual se puede usar.
+##
+## Se van al FINAL del derrumbe, después del último bloque, que es el momento
+## que deja más margen para alcanzarlas.
+@export var acompanan: Array[NodePath] = []
+
 ## Cuánto por debajo de su sitio aparece cada bloque, en metros.
 @export_range(0.2, 8.0, 0.1) var brota_desde := 1.8
 
@@ -50,6 +62,9 @@ var _altura: Array[float] = []
 var _hasta := -1
 var _arrancado := false
 var _desvaneciendo := false
+var _extras: Array[Node3D] = []
+var _cuerpos_extra: Array[CollisionObject3D] = []
+var _capas_extra: Array[int] = []
 
 
 func _ready() -> void:
@@ -65,6 +80,56 @@ func _ready() -> void:
 		_esconder(_bloques.size() - 1)
 	if _bloques.is_empty():
 		push_warning("CaminoDeSalida en %s: no cuelga ningún bloque" % name)
+	# Diferido: los nodos de `acompanan` pueden ir DESPUÉS que éste en la
+	# escena, y varios guardan su capa de colisión en su propio _ready. Si se
+	# les pusiera a cero antes, guardarían el cero como valor bueno.
+	_preparar_acompanantes.call_deferred()
+
+
+func _preparar_acompanantes() -> void:
+	for r in acompanan:
+		var n := get_node_or_null(r) as Node3D
+		if n == null:
+			push_warning("CaminoDeSalida en %s: no encuentro '%s'" % [name, r])
+			continue
+		_extras.append(n)
+		_apagar(n)
+
+
+func _apagar(n: Node) -> void:
+	if n is Node3D:
+		(n as Node3D).visible = false
+	_tocar_cuerpos(n, true)
+
+
+func _tocar_cuerpos(n: Node, apagar: bool) -> void:
+	for c in n.get_children():
+		if c is CollisionObject3D:
+			var co := c as CollisionObject3D
+			if apagar:
+				_cuerpos_extra.append(co)
+				_capas_extra.append(co.collision_layer)
+				co.collision_layer = 0
+			# El encendido se hace aparte, por índice, para no perder la capa.
+		_tocar_cuerpos(c, apagar)
+
+
+func _encender_acompanantes() -> void:
+	for n in _extras:
+		if is_instance_valid(n):
+			n.visible = true
+	for i in _cuerpos_extra.size():
+		if is_instance_valid(_cuerpos_extra[i]):
+			_cuerpos_extra[i].collision_layer = _capas_extra[i]
+
+
+func _apagar_acompanantes() -> void:
+	for i in _cuerpos_extra.size():
+		if is_instance_valid(_cuerpos_extra[i]):
+			_cuerpos_extra[i].collision_layer = 0
+	for n in _extras:
+		if is_instance_valid(n):
+			n.visible = false
 
 
 func _buscar(n: Node, clase: String) -> Node:
@@ -90,9 +155,12 @@ func activar() -> void:
 	_arrancado = true
 	if retardo_inicial <= 0.0:
 		_aparecer(0)
+		_encender_acompanantes()
 		return
 	get_tree().create_timer(retardo_inicial).timeout.connect(
-		func() -> void: _aparecer(0))
+		func() -> void:
+			_aparecer(0)
+			_encender_acompanantes())
 
 
 func _aparecer(i: int) -> void:
@@ -184,6 +252,12 @@ func _desvanecer() -> void:
 	if _desvaneciendo:
 		return
 	_desvaneciendo = true
+	# Los acompañantes se van al final de todo: es el mayor margen posible para
+	# alcanzarlos antes de que el camino termine de caerse.
+	var ultimo: float = retardo_derrumbe + float(maxi(_bloques.size() - 1, 0)) * retardo_desaparicion
+	var t0 := create_tween()
+	t0.tween_interval(ultimo + duracion_subida)
+	t0.tween_callback(_apagar_acompanantes)
 	for i in _bloques.size():
 		if not _bloques[i].visible:
 			continue

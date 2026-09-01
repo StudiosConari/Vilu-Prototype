@@ -5,6 +5,10 @@ extends "res://addons/gut/test.gd"
 
 const ISLUGA := preload("res://scenes/puzzles/Isluga.tscn")
 
+## Los nodos se buscan por NOMBRE en todo el árbol, igual que hace el juego.
+## Con rutas fijas, agrupar el cráter bajo un nodo `Crater` rompía los tests sin
+## que nada estuviera mal en la lógica.
+
 func before_each() -> void:
 	GameManager.reset_progress()
 
@@ -16,10 +20,10 @@ func test_cube_activates_the_other_vert() -> void:
 	var c := ISLUGA.instantiate()
 	add_child_autofree(c)
 	assert_false(c.vert_active("BenjaminVert"), "arranca inactivo")
-	c.get_node("EmiliaCube").activated.emit()   # Emilia activa el ascensor de Benjamín
+	c.find_child("EmiliaCube", true, false).activated.emit()   # Emilia activa el ascensor de Benjamín
 	assert_true(c.vert_active("BenjaminVert"))
 	assert_false(c.vert_active("EmiliaVert"))
-	c.get_node("BenjaminCube").activated.emit()  # Benjamín activa el de Emilia
+	c.find_child("BenjaminCube", true, false).activated.emit()  # Benjamín activa el de Emilia
 	assert_true(c.vert_active("EmiliaVert"))
 
 
@@ -28,7 +32,7 @@ func test_el_obelisco_no_se_acciona_a_golpes() -> void:
 	# veces y esperaba que se activaran, que es justo lo que ya no debe pasar.
 	var c := ISLUGA.instantiate()
 	add_child_autofree(c)
-	var cube := c.get_node("EmiliaCube")
+	var cube := c.find_child("EmiliaCube", true, false)
 	watch_signals(cube)
 	cube.take_damage()
 	cube.take_damage()
@@ -40,7 +44,7 @@ func test_el_obelisco_no_se_acciona_a_golpes() -> void:
 func test_el_obelisco_se_acciona_al_interactuar() -> void:
 	var c := ISLUGA.instantiate()
 	add_child_autofree(c)
-	var cube := c.get_node("EmiliaCube")
+	var cube := c.find_child("EmiliaCube", true, false)
 	watch_signals(cube)
 	cube._al_interactuar(null)
 	assert_true(cube.is_done(), "con [E] queda accionado de una")
