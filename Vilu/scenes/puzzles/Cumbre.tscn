@@ -1,14 +1,32 @@
 [gd_scene format=3 uid="uid://buhdkqidv7jdc"]
 
 [ext_resource type="Script" uid="uid://bqbik3tph44dc" path="res://scenes/puzzles/CumbreCima.gd" id="1_cima"]
+[ext_resource type="PackedScene" uid="uid://c87bx8jg5frht" path="res://models/prop_mediano/boton de guanaco.glb" id="2_nykxi"]
+[ext_resource type="PackedScene" uid="uid://dlqyvrmtkuyhh" path="res://models/volcanes/camino_de_ladrillos_de_piedra.glb" id="3_2f63k"]
 [ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="3_prop"]
 [ext_resource type="Material" path="res://art_placeholders/mat_trigger.tres" id="4_trigger"]
 [ext_resource type="Script" uid="uid://b1pxroad0bnps" path="res://scenes/actors/Updraft.gd" id="5_up"]
 [ext_resource type="Script" uid="uid://si83gt3dc80s" path="res://scenes/actors/RopeAnchor.gd" id="6_rope"]
 [ext_resource type="Script" uid="uid://lv0tm5s17lnb" path="res://scenes/actors/MovingPlatform.gd" id="7_mov"]
-[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="8_exit"]
+[ext_resource type="PackedScene" uid="uid://cpesab4s5th47" path="res://models/prop_pequeno/baldosa_de_piedra.glb" id="8_ckctx"]
+[ext_resource type="PackedScene" uid="uid://c3ob8qs8s0hcn" path="res://models/volcanes/isluga_cima.glb" id="9_rsvwq"]
 [ext_resource type="Script" uid="uid://d38sav4jo7s75" path="res://scenes/actors/ArrowSwitch.gd" id="9_switch"]
+[ext_resource type="PackedScene" uid="uid://dyrfgupy37vrb" path="res://models/volcanes/crater.glb" id="10_a8far"]
 [ext_resource type="Script" uid="uid://dlppkkid1ly4f" path="res://scenes/actors/MovingWall.gd" id="10_wall"]
+[ext_resource type="PackedScene" path="res://scenes/core/LavaToon.tscn" id="11_7hfeh"]
+[ext_resource type="Script" uid="uid://d202l2l3g8ore" path="res://scenes/actors/LavaQuema.gd" id="12_7xror"]
+[ext_resource type="PackedScene" path="res://scenes/core/NieblaToon.tscn" id="13_x2ft7"]
+[ext_resource type="PackedScene" path="res://scenes/core/MarToon.tscn" id="14_iktpd"]
+[ext_resource type="PackedScene" uid="uid://coo4tfla83e51" path="res://models/volcanes/formacion_rocosa_volcanica.glb" id="16_r8ewl"]
+[ext_resource type="PackedScene" uid="uid://cd74xhry86aph" path="res://models/volcanes/crater_volcanico.glb" id="17_s0xhi"]
+[ext_resource type="PackedScene" uid="uid://euulaxfkhp4l" path="res://models/volcanes/brasero.glb" id="18_nykxi"]
+[ext_resource type="PackedScene" uid="uid://bycroxv1s0d1v" path="res://models/prop_mediano/formacion_rocosa_3.glb" id="19_ckctx"]
+[ext_resource type="PackedScene" uid="uid://dok4fjkmwg0fy" path="res://models/volcanes/plataforma_cubica.glb" id="20_xkml4"]
+[ext_resource type="PackedScene" uid="uid://bqpw8pvax3sv6" path="res://models/edificio/plataforma_cubica_2.glb" id="21_7lo23"]
+[ext_resource type="PackedScene" uid="uid://drpmbwlrdpjvj" path="res://models/volcanes/bloque_de_piedra_volcanico.glb" id="22_r8ewl"]
+[ext_resource type="PackedScene" uid="uid://dxg4vf6ccq6gu" path="res://models/volcanes/grupo_de_cristales_naranjas.glb" id="25_xkml4"]
+[ext_resource type="PackedScene" uid="uid://cnyeein8qcvm" path="res://models/personaje/guardian_del_ojos_del_salado.glb" id="26_7lo23"]
+[ext_resource type="PackedScene" uid="uid://c5c7g7tgkmony" path="res://models/prop_mediano/portal ojos del salado.glb" id="27_7lo23"]
 
 [sub_resource type="BoxShape3D" id="shape_plate"]
 size = Vector3(2.5, 1.6, 2.5)
@@ -16,17 +34,8 @@ size = Vector3(2.5, 1.6, 2.5)
 [sub_resource type="BoxMesh" id="mesh_plate"]
 size = Vector3(2.5, 0.15, 2.5)
 
-[sub_resource type="BoxMesh" id="mesh_bridge"]
-size = Vector3(6, 0.6, 13)
-
 [sub_resource type="BoxShape3D" id="shape_bridge"]
 size = Vector3(6, 0.6, 13)
-
-[sub_resource type="BoxShape3D" id="shape_up1"]
-size = Vector3(5, 7, 4)
-
-[sub_resource type="BoxMesh" id="mesh_up1"]
-size = Vector3(5, 7, 4)
 
 [sub_resource type="BoxShape3D" id="shape_p1trig"]
 size = Vector3(7, 2, 6)
@@ -37,23 +46,14 @@ size = Vector3(2, 2, 2)
 [sub_resource type="BoxMesh" id="mesh_rope"]
 size = Vector3(0.16, 7, 0.16)
 
-[sub_resource type="BoxMesh" id="mesh_movplat"]
-size = Vector3(4, 0.4, 4)
-
 [sub_resource type="BoxShape3D" id="shape_movplat"]
 size = Vector3(4, 0.4, 4)
 
 [sub_resource type="BoxShape3D" id="shape_rider"]
 size = Vector3(3.6, 1.6, 3.6)
 
-[sub_resource type="BoxMesh" id="mesh_wall"]
-size = Vector3(3, 4, 0.6)
-
 [sub_resource type="BoxShape3D" id="shape_wall"]
 size = Vector3(3, 4, 0.6)
-
-[sub_resource type="BoxMesh" id="mesh_switch"]
-size = Vector3(1.6, 1.6, 1.6)
 
 [sub_resource type="BoxShape3D" id="shape_switch"]
 size = Vector3(1.6, 1.6, 1.6)
@@ -65,28 +65,35 @@ size = Vector3(5, 8, 4)
 size = Vector3(5, 8.030762, 4)
 
 [sub_resource type="BoxShape3D" id="shape_finaltrig"]
-size = Vector3(12, 3, 12)
+size = Vector3(36.12329, 3, 10.148315)
+
+[sub_resource type="BoxShape3D" id="shape_up1"]
+size = Vector3(5, 7, 4)
+
+[sub_resource type="BoxMesh" id="mesh_up1"]
+size = Vector3(5, 7, 4)
 
 [node name="Cumbre" type="Node3D" unique_id=2072542553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 75.328766, 0)
 script = ExtResource("1_cima")
 
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=941184287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 22)
 
-[node name="TravelSpawn" type="Marker3D" parent="." unique_id=700000002]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 13.2, -14)
-
 [node name="MountPlate" type="Area3D" parent="." unique_id=1600259397]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 16)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20.888905)
 collision_layer = 0
 collision_mask = 2
+
+[node name="boton de guanaco" parent="MountPlate" unique_id=1852079500 instance=ExtResource("2_nykxi")]
+transform = Transform3D(4.9317517, 0, 0.5563054, 0, 3.4974866, 0, -0.5563054, 0, 4.9317517, 0.043546677, -0.51330566, -0.080480576)
 
 [node name="PlateShape" type="CollisionShape3D" parent="MountPlate" unique_id=1767086714]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("shape_plate")
 
 [node name="PlateMesh" type="MeshInstance3D" parent="MountPlate" unique_id=905884334]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.08, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4156189, 0)
 mesh = SubResource("mesh_plate")
 surface_material_override/0 = ExtResource("4_trigger")
 
@@ -94,28 +101,14 @@ surface_material_override/0 = ExtResource("4_trigger")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 2.5)
 collision_mask = 0
 
-[node name="Mesh" type="MeshInstance3D" parent="Bridge" unique_id=1542630953]
-mesh = SubResource("mesh_bridge")
-surface_material_override/0 = ExtResource("3_prop")
+[node name="camino_de_ladrillos_de_piedra2" parent="Bridge" unique_id=1301081429 instance=ExtResource("3_2f63k")]
+transform = Transform3D(3.1611643, 0, 0, 0, 3.1607707, -0.04848491, 0, 0.049901016, 3.071073, 0.02431731, -1.1488876, 4.9540443)
 
 [node name="Shape" type="CollisionShape3D" parent="Bridge" unique_id=2095640900]
 shape = SubResource("shape_bridge")
 
-[node name="Updraft1" type="Area3D" parent="." unique_id=347556408]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -9)
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("5_up")
-
-[node name="Shape" type="CollisionShape3D" parent="Updraft1" unique_id=1117710040]
-shape = SubResource("shape_up1")
-
-[node name="Mesh" type="MeshInstance3D" parent="Updraft1" unique_id=443559505]
-mesh = SubResource("mesh_up1")
-surface_material_override/0 = ExtResource("4_trigger")
-
 [node name="Platform1Trigger" type="Area3D" parent="." unique_id=791808888]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -7.25153)
 collision_layer = 0
 collision_mask = 2
 
@@ -123,7 +116,7 @@ collision_mask = 2
 shape = SubResource("shape_p1trig")
 
 [node name="Rope1" type="Area3D" parent="." unique_id=941229560]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -11)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -4.25153)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("6_rope")
@@ -138,24 +131,23 @@ mesh = SubResource("mesh_rope")
 surface_material_override/0 = ExtResource("3_prop")
 
 [node name="RopeTop1" type="Marker3D" parent="." unique_id=1824453110]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.3, -12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.300003, -5.25153)
 
 [node name="Dock1" type="Marker3D" parent="." unique_id=157693111]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 6.2, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 6.199997, -7.25153)
 
 [node name="Dest1" type="Marker3D" parent="." unique_id=1136635273]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 6.2, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.405573, 6.199997, -7.25153)
 
 [node name="MovingPlatform" type="AnimatableBody3D" parent="." unique_id=1335418472]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 6.2, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 6.199997, -7.25153)
 collision_mask = 0
 script = ExtResource("7_mov")
 dock = NodePath("../Dock1")
 dest = NodePath("../Dest1")
 
-[node name="Mesh" type="MeshInstance3D" parent="MovingPlatform" unique_id=769647961]
-mesh = SubResource("mesh_movplat")
-surface_material_override/0 = ExtResource("4_trigger")
+[node name="boton de guanaco" parent="MovingPlatform" unique_id=995602159 instance=ExtResource("2_nykxi")]
+transform = Transform3D(4.15222, 0, 0.30289015, 0, 4.1632524, 0, -0.30289015, 0, 4.15222, 0, 0, 0)
 
 [node name="Shape" type="CollisionShape3D" parent="MovingPlatform" unique_id=752084329]
 shape = SubResource("shape_movplat")
@@ -168,31 +160,67 @@ collision_mask = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("shape_rider")
 
+[node name="MovingPlatform2" type="AnimatableBody3D" parent="." unique_id=1600635399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.129358, 6.199997, -7.25153)
+collision_mask = 0
+script = ExtResource("7_mov")
+dock = NodePath("../Dock1")
+dest = NodePath("../Dest1")
+
+[node name="baldosa_de_piedra2" parent="MovingPlatform2" unique_id=681412486 instance=ExtResource("8_ckctx")]
+transform = Transform3D(2.3606117, -0.010082753, 0, 0.010082422, 2.3605342, -0.019129362, 8.170547e-05, 0.019129189, 2.3605556, -0.1122179, 0.1835556, -0.020748138)
+
+[node name="Shape" type="CollisionShape3D" parent="MovingPlatform2" unique_id=1654572348]
+shape = SubResource("shape_movplat")
+
+[node name="Rider" type="Area3D" parent="MovingPlatform2" unique_id=122192532]
+collision_layer = 0
+collision_mask = 2
+
+[node name="RiderShape" type="CollisionShape3D" parent="MovingPlatform2/Rider" unique_id=1652918384]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("shape_rider")
+
 [node name="MovingWall" type="AnimatableBody3D" parent="." unique_id=1189479178]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 7, -20)
+transform = Transform3D(-0.99994934, 0, -0.010065397, 0, 1, 0, 0.010065397, 0, -0.99994934, 17.282495, 7, -2.0544918)
 collision_mask = 0
 script = ExtResource("10_wall")
 
-[node name="Mesh" type="MeshInstance3D" parent="MovingWall" unique_id=372467964]
-mesh = SubResource("mesh_wall")
-surface_material_override/0 = ExtResource("3_prop")
+[node name="baldosa_de_piedra2" parent="MovingWall" unique_id=1586483996 instance=ExtResource("8_ckctx")]
+transform = Transform3D(-2.7260823, -0.02744032, 9.540523e-05, 1.745556e-09, 0.009478479, 2.7262037, -0.02744049, 2.7260656, -0.009477831, 2.9270535, 0.3987503, -0.17390347)
+
+[node name="baldosa_de_piedra3" parent="MovingWall" unique_id=1776451084 instance=ExtResource("8_ckctx")]
+transform = Transform3D(-2.7260823, -0.02744032, 9.5405216e-05, 1.745556e-09, 0.009478479, 2.7262037, -0.02744049, 2.7260656, -0.009477826, -4.861471, 0.3987503, 13.947276)
+
+[node name="baldosa_de_piedra5" parent="MovingWall" unique_id=840120120 instance=ExtResource("8_ckctx")]
+transform = Transform3D(-0.07160431, 1.6051806, -0.0055807936, 1.184048e-09, 0.005586447, 1.6067762, 1.6051905, 0.07160388, -0.00024894867, -8.298542, 1.0547028, 15.68771)
+
+[node name="baldosa_de_piedra7" parent="MovingWall" unique_id=827352206 instance=ExtResource("8_ckctx")]
+transform = Transform3D(-1.6052687, -0.06982446, 0.00024276227, 1.2539606e-09, 0.005586447, 1.6067762, -0.06982489, 1.6052595, -0.0055810665, 0.06694412, 2.7064133, 20.198185)
+
+[node name="baldosa_de_piedra8" parent="MovingWall" unique_id=918617748 instance=ExtResource("8_ckctx")]
+transform = Transform3D(-1.6052687, -0.06982444, 0.00024276227, 1.2539606e-09, 0.005586447, 1.6067762, -0.06982489, 1.6052604, -0.0055810665, 2.6064663, -5.4350433, 20.22374)
+
+[node name="baldosa_de_piedra10" parent="MovingWall" unique_id=2073816621 instance=ExtResource("8_ckctx")]
+transform = Transform3D(-1.6052687, -0.06982444, 0.00024276227, 1.2539606e-09, 0.005586447, 1.6067762, -0.06982489, 1.6052608, -0.0055810665, 10.7359, -7.6793213, 25.096008)
+
+[node name="baldosa_de_piedra6" parent="MovingWall" unique_id=805978436 instance=ExtResource("8_ckctx")]
+transform = Transform3D(-0.07160431, 1.6051809, -0.0055807936, 1.184048e-09, 0.005586447, 1.6067762, 1.6051908, 0.07160388, -0.00024894872, -8.25094, -0.87444305, 10.958757)
 
 [node name="Shape" type="CollisionShape3D" parent="MovingWall" unique_id=323631687]
 shape = SubResource("shape_wall")
 
 [node name="ArrowSwitch" type="Area3D" parent="." unique_id=391666460]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 7, -26)
+transform = Transform3D(-0.99994934, 0, -0.010065397, 0, 1, 0, 0.010065397, 0, -0.99994934, 17.342886, 7, 3.9452045)
 collision_layer = 0
 script = ExtResource("9_switch")
 
-[node name="Mesh" type="MeshInstance3D" parent="ArrowSwitch" unique_id=2044071199]
-mesh = SubResource("mesh_switch")
-
 [node name="Shape" type="CollisionShape3D" parent="ArrowSwitch" unique_id=1778879065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1054306, 0.7716446, 3.4365225)
 shape = SubResource("shape_switch")
 
 [node name="Updraft2" type="Area3D" parent="." unique_id=2125916931]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 9.5, -14)
+transform = Transform3D(0.9998921, 0, -0.014688749, 0, 0.6291173, 0, 0.014688749, 0, 0.9998921, 0.52383137, 12.403183, -34.544193)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
@@ -207,15 +235,19 @@ mesh = SubResource("mesh_up2")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="FinalTrigger" type="Area3D" parent="." unique_id=1299778874]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 13.7, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.78270626, 13.699997, -41.222313)
 collision_layer = 0
 collision_mask = 2
 
+[node name="camino_de_ladrillos_de_piedra3" parent="FinalTrigger" unique_id=1023722755 instance=ExtResource("3_2f63k")]
+transform = Transform3D(0.17201668, 0, 9.265483, 0, 9.537651, 0, -9.5361, 0, 0.16713513, -0.294878, -2.9823914, -0.944767)
+
 [node name="Shape" type="CollisionShape3D" parent="FinalTrigger" unique_id=675186086]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4234619, 0, -0.9258423)
 shape = SubResource("shape_finaltrig")
 
 [node name="Rope2" type="Area3D" parent="." unique_id=69335770]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.5, 6.5, -14)
+transform = Transform3D(1, 0, 0, 0, 0.7077039, 0, 0, 0, 1, -0.0053515434, 10.363884, -36.130974)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("6_rope")
@@ -230,5 +262,408 @@ mesh = SubResource("mesh_rope")
 surface_material_override/0 = ExtResource("3_prop")
 
 [node name="RopeTop2" type="Marker3D" parent="." unique_id=285890180]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 13.3, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25334072, 15.568924, -36.852966)
 
+[node name="isluga_cima2" parent="." unique_id=1838279451 instance=ExtResource("9_rsvwq")]
+transform = Transform3D(5.452778, 0, 0, 0, 5.452778, 0, 0, 0, 5.452778, -1.8377991, -491.22635, -13.1519165)
+
+[node name="crater2" parent="." unique_id=394111066 instance=ExtResource("10_a8far")]
+transform = Transform3D(11.855957, 0, 0.393679, 0, 11.862491, 0, -0.393679, 0, 11.855957, -2.504995, -26.184547, -7.603223)
+
+[node name="crater3" parent="." unique_id=219124224 instance=ExtResource("10_a8far")]
+transform = Transform3D(-11.858608, 0, -0.30348146, 0, 11.862492, 0, 0.30348146, 0, -11.858608, -2.5444052, -26.184547, -8.790093)
+
+[node name="LavaToon2" parent="." unique_id=1078005126 instance=ExtResource("11_7hfeh")]
+transform = Transform3D(4.281243, 0, -0.16464354, 0, 1.0602639, 0, 0.20726256, 0, 3.400898, -4.2919006, -2.210266, -5.649025)
+skeleton = NodePath("../../..")
+script = ExtResource("12_7xror")
+
+[node name="NieblaToon" parent="." unique_id=1576258048 instance=ExtResource("13_x2ft7")]
+transform = Transform3D(17.545374, 0, 0, 0, 2.4734483, 0, 0, 0, 18.176657, 138.135, -229.72418, -73.623)
+
+[node name="MarToon" parent="." unique_id=1331676736 instance=ExtResource("14_iktpd")]
+transform = Transform3D(40, 0, 0, 0, 1, 0, 0, 0, 40, 137.135, -468.879, -74.623)
+
+[node name="Props" type="Node3D" parent="." unique_id=1631620258]
+
+[node name="formacion_rocosa_volcanica2" parent="Props" unique_id=951698010 instance=ExtResource("16_r8ewl")]
+transform = Transform3D(2.8603692, 0, -0.34576136, 0, 2.881191, 0, 0.34576136, 0, 2.8603692, -19.971897, -3.223259, 29.43317)
+
+[node name="formacion_rocosa_volcanica3" parent="Props" unique_id=1069825335 instance=ExtResource("16_r8ewl")]
+transform = Transform3D(2.8603692, 0, -0.34576136, 0, 2.881191, 0, 0.34576136, 0, 2.8603692, -17.41734, -3.223259, -43.124058)
+
+[node name="crater_volcanico2" parent="Props" unique_id=27009399 instance=ExtResource("17_s0xhi")]
+transform = Transform3D(0.89577556, 0, 0, 0, 0.89577556, 0, 0, 0, 0.89577556, -36.214912, -2.874176, 5.1884556)
+
+[node name="crater_volcanico3" parent="Props" unique_id=379117931 instance=ExtResource("17_s0xhi")]
+transform = Transform3D(0.89577556, 0, 0, 0, 0.89577556, 0, 0, 0, 0.89577556, -36.09404, -2.874176, -23.879559)
+
+[node name="crater_volcanico6" parent="Props" unique_id=565907258 instance=ExtResource("17_s0xhi")]
+transform = Transform3D(0.89577556, 0, 0, 0, 0.89577556, 0, 0, 0, 0.89577556, 0.77155304, -2.874176, -46.666317)
+
+[node name="brasero2" parent="Props" unique_id=1050114537 instance=ExtResource("18_nykxi")]
+transform = Transform3D(1.6631541, 0, 0, 0, 1.6631541, 0, 0, 0, 1.6631541, -6.8390307, 0.0414505, 14.692682)
+
+[node name="brasero3" parent="Props" unique_id=287504947 instance=ExtResource("18_nykxi")]
+transform = Transform3D(1.6631541, 0, 0, 0, 1.6631541, 0, 0, 0, 1.6631541, 7.2718406, 0.0414505, 14.692682)
+
+[node name="brasero4" parent="Props" unique_id=441394512 instance=ExtResource("18_nykxi")]
+transform = Transform3D(1.6631541, 0, 0, 0, 1.6631541, 0, 0, 0, 1.6631541, 7.2718406, 0.0414505, 27.342024)
+
+[node name="brasero5" parent="Props" unique_id=1465329652 instance=ExtResource("18_nykxi")]
+transform = Transform3D(1.6631541, 0, 0, 0, 1.6631541, 0, 0, 0, 1.6631541, -6.6993876, 0.0414505, 27.464956)
+
+[node name="formacion_rocosa_32" parent="Props" unique_id=2125757794 instance=ExtResource("19_ckctx")]
+transform = Transform3D(5.935456, 0, 0, 0, 5.935456, 0, 0, 0, 5.935456, -32.799854, -2.857666, 20.200214)
+
+[node name="formacion_rocosa_36" parent="Props" unique_id=566233193 instance=ExtResource("19_ckctx")]
+transform = Transform3D(5.935456, 0, 0, 0, 5.935456, 0, 0, 0, 5.935456, -30.979507, -2.857666, -38.28084)
+
+[node name="formacion_rocosa_33" parent="Props" unique_id=872093689 instance=ExtResource("19_ckctx")]
+transform = Transform3D(2.8537672, 0, 0, 0, 2.8537672, 0, 0, 0, 2.8537672, -37.99119, -2.857666, -5.3034277)
+
+[node name="formacion_rocosa_34" parent="Props" unique_id=411978959 instance=ExtResource("19_ckctx")]
+transform = Transform3D(3.2512467, 0, 0, 0, 3.2512467, 0, 0, 0, 2.8888967, -15.893173, -2.857666, -3.328353)
+
+[node name="formacion_rocosa_42" parent="Props" unique_id=968655301 instance=ExtResource("19_ckctx")]
+transform = Transform3D(3.2512467, 0, 0, 0, 3.2512467, 0, 0, 0, 2.8888967, -15.893173, -2.857666, -12.336554)
+
+[node name="formacion_rocosa_43" parent="Props" unique_id=213486589 instance=ExtResource("19_ckctx")]
+transform = Transform3D(3.2512467, 0, 0, 0, 3.2512467, 0, 0, 0, 2.8888967, -15.893173, -2.857666, -21.641253)
+
+[node name="formacion_rocosa_35" parent="Props" unique_id=43483758 instance=ExtResource("19_ckctx")]
+transform = Transform3D(2.8537672, 0, 0, 0, 2.8537672, 0, 0, 0, 2.8537672, -37.612335, -2.857666, -12.633419)
+
+[node name="formacion_rocosa_44" parent="Props" unique_id=1196986288 instance=ExtResource("19_ckctx")]
+transform = Transform3D(2.8537672, 0, 0, 0, 2.8537672, 0, 0, 0, 2.8537672, -31.453304, -2.857666, -8.645672)
+
+[node name="formacion_rocosa_volcanica4" parent="Props" unique_id=1179335210 instance=ExtResource("16_r8ewl")]
+transform = Transform3D(-2.8637333, 0, 0.31669763, 0, 2.8811913, 0, -0.31669763, 0, -2.8637333, 18.599556, -3.223259, -45.16805)
+
+[node name="formacion_rocosa_volcanica5" parent="Props" unique_id=1568859218 instance=ExtResource("16_r8ewl")]
+transform = Transform3D(-2.8637333, 0, 0.31669763, 0, 2.8811913, 0, -0.31669763, 0, -2.8637333, 16.781925, -3.223259, 27.41138)
+
+[node name="crater_volcanico4" parent="Props" unique_id=134715726 instance=ExtResource("17_s0xhi")]
+transform = Transform3D(-0.8957293, 0, -0.009096272, 0, 0.8957755, 0, 0.009096272, 0, -0.8957293, 37.467323, -2.874176, -21.11369)
+
+[node name="crater_volcanico5" parent="Props" unique_id=87331106 instance=ExtResource("17_s0xhi")]
+transform = Transform3D(-0.8957293, 0, -0.009096272, 0, 0.8957755, 0, 0.009096272, 0, -0.8957293, 35.26224, -2.874176, 7.9782176)
+
+[node name="formacion_rocosa_37" parent="Props" unique_id=2053829424 instance=ExtResource("19_ckctx")]
+transform = Transform3D(-5.9351497, 0, -0.06027235, 0, 5.9354563, 0, 0.06027235, 0, -5.9351497, 31.52061, -2.857666, -36.065838)
+
+[node name="formacion_rocosa_38" parent="Props" unique_id=1317772095 instance=ExtResource("19_ckctx")]
+transform = Transform3D(-5.9351497, 0, -0.06027235, 0, 5.9354563, 0, 0.06027235, 0, -5.9351497, 30.294212, -2.857666, 22.430698)
+
+[node name="formacion_rocosa_39" parent="Props" unique_id=440385926 instance=ExtResource("19_ckctx")]
+transform = Transform3D(-2.8536203, 0, -0.028978951, 0, 2.8537672, 0, 0.028978951, 0, -2.8536203, 34.92412, -2.857666, -7.706782)
+
+[node name="formacion_rocosa_40" parent="Props" unique_id=1012290366 instance=ExtResource("19_ckctx")]
+transform = Transform3D(-2.8536203, 0, -0.028978951, 0, 2.8537672, 0, 0.028978951, 0, -2.8536203, 28.706411, -2.857666, -11.924814)
+
+[node name="formacion_rocosa_41" parent="Props" unique_id=534654907 instance=ExtResource("19_ckctx")]
+transform = Transform3D(-2.8536203, 0, -0.028978951, 0, 2.8537672, 0, 0.028978951, 0, -2.8536203, 28.927107, -2.857666, -3.204167)
+
+[node name="Plataforma" type="Node3D" parent="." unique_id=405869560]
+
+[node name="plataforma_cubica2" parent="Plataforma" unique_id=1159989072 instance=ExtResource("20_xkml4")]
+transform = Transform3D(7.443386, 0, 0, 0, 7.744949, 0, 0, 0, 7.443386, 0.08319217, -2.8397522, 25.208662)
+
+[node name="plataforma_cubica_22" parent="Plataforma" unique_id=767214493 instance=ExtResource("21_7lo23")]
+transform = Transform3D(3.509119, 0, 0, 0, 3.509119, 0, 0, 0, 3.509119, -0.0074145794, -0.99141693, -4.130368)
+
+[node name="plataforma_cubica_23" parent="Plataforma" unique_id=434003132 instance=ExtResource("21_7lo23")]
+transform = Transform3D(2.2228262, 0, 0, 0, 1.6764925, 0, 0, 0, 1.9009634, -0.0074145794, 6.1865463, -7.2308283)
+
+[node name="plataforma_cubica_24" parent="Plataforma" unique_id=219310878 instance=ExtResource("21_7lo23")]
+transform = Transform3D(2.2228262, 0, 0, 0, 1.6764925, 0, 0, 0, 1.9009634, 17.091797, 6.1865463, -7.2308283)
+
+[node name="camino_de_ladrillos_de_piedra3" parent="Plataforma" unique_id=1055187894 instance=ExtResource("3_2f63k")]
+transform = Transform3D(3.1611645, 0, 0, 0, 3.1611645, 0, 0, 0, 3.071456, -23.45038, -0.71952057, -15.561633)
+
+[node name="camino_de_ladrillos_de_piedra4" parent="Plataforma" unique_id=880351364 instance=ExtResource("3_2f63k")]
+transform = Transform3D(3.1611645, 0, 0, 0, 3.1611645, 0, 0, 0, 3.071456, -23.45038, 7.567581, -15.561633)
+
+[node name="plataforma_cubica_26" parent="Plataforma" unique_id=372932262 instance=ExtResource("21_7lo23")]
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -17.83794, 5.041191, -28.800371)
+
+[node name="plataforma_cubica_27" parent="Plataforma" unique_id=1084082435 instance=ExtResource("21_7lo23")]
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -13.310589, 7.084175, -28.800371)
+
+[node name="plataforma_cubica_28" parent="Plataforma" unique_id=502175865 instance=ExtResource("21_7lo23")]
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -6.341948, 7.084175, -28.800371)
+
+[node name="plataforma_cubica_29" parent="Plataforma" unique_id=83090782 instance=ExtResource("21_7lo23")]
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -6.341948, -0.05242157, -23.97547)
+
+[node name="plataforma_cubica_30" parent="Plataforma" unique_id=1689499173 instance=ExtResource("21_7lo23")]
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -6.341948, 9.598686, -19.116426)
+
+[node name="bloque_de_piedra_volcanico2" parent="Plataforma" unique_id=1468536390 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4077578, 2.458168, -16.438816)
+
+[node name="bloque_de_piedra_volcanico4" parent="Plataforma" unique_id=800011120 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.504597, 2.458168, -16.438816)
+
+[node name="bloque_de_piedra_volcanico3" parent="Plataforma" unique_id=1517069104 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5179725, 2.458168, -16.438816)
+
+[node name="bloque_de_piedra_volcanico5" parent="Plataforma" unique_id=874598464 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4077578, 4.362152, -21.726383)
+
+[node name="bloque_de_piedra_volcanico6" parent="Plataforma" unique_id=717029767 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.504597, 4.362152, -21.726383)
+
+[node name="bloque_de_piedra_volcanico7" parent="Plataforma" unique_id=2095477088 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5179725, 4.362152, -21.726383)
+
+[node name="bloque_de_piedra_volcanico8" parent="Plataforma" unique_id=305685082 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4077578, 6.194519, -16.46103)
+
+[node name="bloque_de_piedra_volcanico9" parent="Plataforma" unique_id=481357292 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.504597, 6.194519, -16.46103)
+
+[node name="bloque_de_piedra_volcanico10" parent="Plataforma" unique_id=2073796782 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5179725, 6.194519, -16.46103)
+
+[node name="bloque_de_piedra_volcanico11" parent="Plataforma" unique_id=1385305122 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4077578, 8.103043, -21.66927)
+
+[node name="bloque_de_piedra_volcanico12" parent="Plataforma" unique_id=1255000832 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.504597, 8.103043, -21.66927)
+
+[node name="bloque_de_piedra_volcanico13" parent="Plataforma" unique_id=508987110 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5179725, 8.103043, -21.66927)
+
+[node name="camino_de_ladrillos_de_piedra5" parent="Plataforma" unique_id=359548896 instance=ExtResource("3_2f63k")]
+transform = Transform3D(2.3936193, 0, 0, 0, 2.3936193, 0, 0, 0, 2.5664861, 0.5749148, 9.914993, -31.62067)
+
+[node name="camino_de_ladrillos_de_piedra6" parent="Plataforma" unique_id=1397636765 instance=ExtResource("3_2f63k")]
+transform = Transform3D(3.0797079, 0, 0, 0, -0.03324482, -1.2718458, 0, 2.377704, -0.017782822, -2.0927296, 9.498253, -22.06256)
+
+[node name="camino_de_ladrillos_de_piedra7" parent="Plataforma" unique_id=1306682897 instance=ExtResource("3_2f63k")]
+transform = Transform3D(1.6870073, 0, 0, 0, -0.03324482, -1.2718458, 0, 2.377704, -0.017782822, -2.8526635, 4.984314, -22.06256)
+
+[node name="camino_de_ladrillos_de_piedra8" parent="Plataforma" unique_id=1135982265 instance=ExtResource("3_2f63k")]
+transform = Transform3D(-0.015539017, -2.374382, 0.017708378, 4.3522096, -0.008850216, -0.014198949, 0.04901257, 0.03310101, 1.2664499, -2.763013, 9.5242, -24.477728)
+
+[node name="camino_de_ladrillos_de_piedra9" parent="Plataforma" unique_id=186984236 instance=ExtResource("3_2f63k")]
+transform = Transform3D(-0.015539017, -2.374382, 0.017708378, 4.3522096, -0.008850216, -0.014198949, 0.04901257, 0.03310101, 1.2664499, -2.763013, 4.7634735, -24.540077)
+
+[node name="corrientes de viento" type="Node3D" parent="." unique_id=175493314]
+
+[node name="Updraft1" type="Area3D" parent="corrientes de viento" unique_id=347556408]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -2.2515302)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft1" unique_id=1117710040]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft1" unique_id=443559505]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft3" type="Area3D" parent="corrientes de viento" unique_id=674756093]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.212517, 3.5, -4.5165873)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft3" unique_id=1543749123]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft3" unique_id=601878468]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15372276, 0, 0)
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft4" type="Area3D" parent="corrientes de viento" unique_id=1402414908]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.766629, 3.5, 0.9475455)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft4" unique_id=635202933]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft4" unique_id=1769692706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.617404, 0, 0.64564943)
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft5" type="Area3D" parent="corrientes de viento" unique_id=1843022612]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.847832, 3.5, -4.521416)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft5" unique_id=1257952389]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft5" unique_id=594260833]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft6" type="Area3D" parent="corrientes de viento" unique_id=1472735544]
+transform = Transform3D(1.0408889, 0, 0, 0, 1.3555839, 0, 0, 0, 3.0277512, -23.68987, 4.24382, -15.5199585)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft6" unique_id=475293958]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft6" unique_id=1962671101]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft7" type="Area3D" parent="corrientes de viento" unique_id=116461592]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.847832, 3.5, -28.787169)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft7" unique_id=1773507508]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft7" unique_id=732014873]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft8" type="Area3D" parent="corrientes de viento" unique_id=592343307]
+transform = Transform3D(1, 0, 0, 0, 1.3261883, 0, 0, 0, 1, -6.5414696, 4.8944855, -19.043442)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft8" unique_id=606117827]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft8" unique_id=2026389585]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft9" type="Area3D" parent="corrientes de viento" unique_id=667541834]
+transform = Transform3D(0.3363176, 0, 0, 0, 0.8528358, 0, 0, 0, 0.44676912, -0.7645006, 6.6639633, -19.08202)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft9" unique_id=905611452]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft9" unique_id=1919837966]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft10" type="Area3D" parent="corrientes de viento" unique_id=2051967145]
+transform = Transform3D(0.3363176, 0, 0, 0, 0.19227214, 0, 0, 0, 0.44676912, -0.7645006, 9.326874, -22.052025)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft10" unique_id=393215960]
+shape = SubResource("shape_up1")
+
+[node name="Updraft11" type="Area3D" parent="corrientes de viento" unique_id=546829695]
+transform = Transform3D(0.3363176, 0, 0, 0, 0.38250136, 0, 0, 0, 0.44676912, -0.7645006, 5.019562, -23.177782)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft11" unique_id=1602978594]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft11" unique_id=862976629]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft13" type="Area3D" parent="corrientes de viento" unique_id=2077926217]
+transform = Transform3D(0.3363176, 0, 0, 0, 0.38250136, 0, 0, 0, 0.44676912, -0.7645006, 7.803566, -25.834753)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft13" unique_id=938955117]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft13" unique_id=858342763]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft14" type="Area3D" parent="corrientes de viento" unique_id=303221662]
+transform = Transform3D(0.3363176, 0, 0, 0, 0.38250136, 0, 0, 0, 0.44676912, -0.7645006, 10.511513, -23.41205)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft14" unique_id=67518905]
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft14" unique_id=706482079]
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Interruptores" type="Node3D" parent="." unique_id=296354901]
+
+[node name="bloque_de_piedra_volcanico2" parent="Interruptores" unique_id=2035610555 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1.656143, 0, 0, 0, 1.656143, 0, 0, 0, 1.656143, 17.093798, 6.957344, 0.49870968)
+
+[node name="bloque_de_piedra_volcanico3" parent="Interruptores" unique_id=758620737 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1.656143, 0, 0, 0, 1.656143, 0, 0, 0, 1.656143, 27.58339, 6.957344, -13.1967945)
+
+[node name="bloque_de_piedra_volcanico4" parent="Interruptores" unique_id=1180874978 instance=ExtResource("22_r8ewl")]
+transform = Transform3D(1.656143, 0, 0, 0, 1.656143, 0, 0, 0, 1.656143, 16.987913, 6.957344, -20.366764)
+
+[node name="boton de guanaco" parent="Interruptores" unique_id=1564709709 instance=ExtResource("2_nykxi")]
+transform = Transform3D(-0.032336332, -2.3126779, -0.017057724, 0.21900244, 0.013920796, -2.3025334, 2.3023481, -0.033805568, 0.21878041, 27.77203, 7.7927628, -20.191511)
+
+[node name="boton de guanaco2" parent="Interruptores" unique_id=796427297 instance=ExtResource("2_nykxi")]
+transform = Transform3D(-2.3025753, 0.00092594326, -0.2190008, 0.21900247, 0.013920798, -2.3025336, 0.00039625168, -2.3129253, -0.013945885, 12.302081, 1.4766312, -20.191511)
+
+[node name="boton de guanaco3" parent="Interruptores" unique_id=1593464253 instance=ExtResource("2_nykxi")]
+transform = Transform3D(2.2992527, -0.1255327, 0.21793145, 0.21900247, 0.013920799, -2.3025336, 0.12365481, 2.3095162, 0.025724232, 6.321993, 1.4766312, -28.70037)
+
+[node name="grupo_de_cristales_naranjas2" parent="." unique_id=1654026912 instance=ExtResource("25_xkml4")]
+transform = Transform3D(2.8458333, 0, 0, 0, 2.8458333, 0, 0, 0, 2.8458333, -12.619107, 15.086693, -46.591263)
+
+[node name="grupo_de_cristales_naranjas3" parent="." unique_id=1598143725 instance=ExtResource("25_xkml4")]
+transform = Transform3D(2.8458333, 0, 0, 0, 2.8458333, 0, 0, 0, 2.8458333, -8.83984, 15.086693, -46.591263)
+
+[node name="grupo_de_cristales_naranjas4" parent="." unique_id=1438651781 instance=ExtResource("25_xkml4")]
+transform = Transform3D(2.8458333, 0, 0, 0, 2.8458333, 0, 0, 0, 2.8458333, -5.4740586, 15.086693, -46.591263)
+
+[node name="grupo_de_cristales_naranjas5" parent="." unique_id=514068284 instance=ExtResource("25_xkml4")]
+transform = Transform3D(2.8458333, 0, 0, 0, 2.8458333, 0, 0, 0, 2.8458333, 14.156809, 15.086693, -46.591263)
+
+[node name="grupo_de_cristales_naranjas8" parent="." unique_id=317724958 instance=ExtResource("25_xkml4")]
+transform = Transform3D(-0.15782423, 0, -2.8414533, 0, 2.8458335, 0, 2.8414533, 0, -0.15782423, 17.630377, 15.086693, -42.158936)
+
+[node name="grupo_de_cristales_naranjas9" parent="." unique_id=1764363045 instance=ExtResource("25_xkml4")]
+transform = Transform3D(0.039024144, 0, 2.8455653, 0, 2.8458335, 0, -2.8455653, 0, 0.039024144, -16.226936, 15.086693, -42.55519)
+
+[node name="grupo_de_cristales_naranjas6" parent="." unique_id=1113885257 instance=ExtResource("25_xkml4")]
+transform = Transform3D(2.8458333, 0, 0, 0, 2.8458333, 0, 0, 0, 2.8458333, 10.614785, 15.086693, -46.591263)
+
+[node name="grupo_de_cristales_naranjas7" parent="." unique_id=1284749090 instance=ExtResource("25_xkml4")]
+transform = Transform3D(2.8458333, 0, 0, 0, 2.8458333, 0, 0, 0, 2.8458333, 7.187909, 15.086693, -46.591263)
+
+[node name="brasero2" parent="." unique_id=541394681 instance=ExtResource("18_nykxi")]
+transform = Transform3D(3.3636434, 0, 0, 0, 3.3636434, 0, 0, 0, 3.3636434, -16.53337, 15.185318, -46.64512)
+
+[node name="brasero3" parent="." unique_id=1364285803 instance=ExtResource("18_nykxi")]
+transform = Transform3D(3.3636434, 0, 0, 0, 3.3636434, 0, 0, 0, 3.3636434, -16.866226, 15.185318, -38.538406)
+
+[node name="brasero4" parent="." unique_id=1409632972 instance=ExtResource("18_nykxi")]
+transform = Transform3D(3.3636434, 0, 0, 0, 3.3636434, 0, 0, 0, 3.3636434, 17.591974, 15.185318, -46.25979)
+
+[node name="brasero5" parent="." unique_id=1254664505 instance=ExtResource("18_nykxi")]
+transform = Transform3D(3.3636434, 0, 0, 0, 3.3636434, 0, 0, 0, 3.3636434, 17.259117, 15.185318, -38.153076)
+
+[node name="guardian_del_ojos_del_salado2" parent="." unique_id=2092513388 instance=ExtResource("26_7lo23")]
+transform = Transform3D(3.103441, 0, 0, 0, 3.103441, 0, 0, 0, 3.103441, 0.5293503, 14.631523, -41.439457)
+
+[node name="portal ojos del salado" parent="." unique_id=1702443081 instance=ExtResource("27_7lo23")]
+transform = Transform3D(9.284871, 0, 0, 0, 9.284871, 0, 0, 0, 9.284871, 0.73797464, 14.85611, -46.12073)

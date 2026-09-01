@@ -25,6 +25,7 @@ const EXIT_SCENE := preload("res://scenes/actors/ZoneExit.tscn")
 const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
 const PARADA_DE_BUS := preload("res://scenes/actors/ParadaDeBus.gd")
+const TRAMPA_DEL_ORO := preload("res://scenes/actors/TrampaDelOro.gd")
 
 ## Layout del mapa, con el POBLADO (bar + bruja) como centro y punto de partida:
 ##
@@ -160,6 +161,7 @@ func _ready() -> void:
 		_construir_caminos()
 	_construir_boca_mina()
 	_construir_paradas_de_bus()
+	_construir_trampa_del_oro()
 	if sombreado_toon:
 		# Al final de todo: hay que vestir lo que ya está construido.
 		var n: int = TOON_SKIN.new().aplicar(self)
@@ -390,6 +392,36 @@ func _construir_boca_mina() -> void:
 		salida.tamano = Vector3(9.0, 6.0, 9.0)
 	else:
 		salida.position = BOCA_MINA + Vector3(-4.5, 2.0, 0.0)
+
+
+## Monta la trampa del oro de la quebrada del Alicanto, si sus dos piezas están
+## puestas en la escena.
+##
+## Se buscan por nombre en TODO el árbol, no por ruta: los dos modelos quedaron
+## colgando dentro del área de la persona herida, y una ruta fija se rompería en
+## cuanto se los reacomode. Si falta alguno, no se monta nada y se avisa.
+func _construir_trampa_del_oro() -> void:
+	var puente := _buscar_por_prefijo(self, "puente_derrumbable")
+	var camino := _buscar_por_prefijo(self, "camino_derrumbable")
+	if puente == null or camino == null:
+		return
+	var trampa := Node3D.new()
+	trampa.name = "TrampaDelOro"
+	trampa.set_script(TRAMPA_DEL_ORO)
+	trampa.puente = puente
+	trampa.camino = camino
+	add_child(trampa)
+	print("[mundo] trampa del oro: %s arma, %s se derrumba" % [puente.name, camino.name])
+
+
+func _buscar_por_prefijo(n: Node, prefijo: String) -> Node3D:
+	if n is Node3D and n.name.begins_with(prefijo):
+		return n
+	for c in n.get_children():
+		var r := _buscar_por_prefijo(c, prefijo)
+		if r != null:
+			return r
+	return null
 
 
 ## Margen alrededor del bus desde el que ya se puede subir, en metros.

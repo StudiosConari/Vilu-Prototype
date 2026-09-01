@@ -50,6 +50,11 @@ var _phase := Phase.APPROACH
 var _gold_tiles: Array = []      # losas del camino izquierdo (se desvanecen)
 var _hurt: Node3D = null
 var _alicanto: Node3D = null
+## La herida es un modelo puesto a mano, no la cápsula: no se la mueve ni se la
+## tumba, y al rescatarla no se le anima el "incorporarse" del greybox.
+var _hurt_es_modelo := false
+## Altura a la que flota el ave. Sale de donde la hayas colocado.
+var _alicanto_y := 6.0
 var _fork_seen := false
 var _t := 0.0
 
@@ -74,13 +79,235 @@ func _ready() -> void:
 	# En el editor sólo se construye la quebrada; el hint es para el jugador.
 	if Engine.is_editor_hint():
 		return
+	if geometria_fijada:
+		_reponer_logica()
 	_hint("Quebrada del Alicanto. El camino se bifurca más adelante.")
+
+
+## Metros de tolerancia al buscar por posición un nodo ya horneado.
+const CERCA := 1.5
+
+
+## Vuelve a enganchar la lógica sobre lo que quedó guardado en la escena.
+##
+## Al fijar la geometría se hornearon los disparadores, las losas del oro y la
+## persona herida, pero sus señales se conectaban DENTRO de _build_canyon(),
+## _build_gold_path() y _build_hurt_path(), que con el flag puesto ya no corren.
+## La zona quedó siendo geometría sin lógica: la bifurcación no detectaba al
+## jugador, pisar el oro no derrumbaba nada y a la herida no se la podía
+## socorrer. Es el mismo agujero que tenían los NPC de la fiesta de La Tirana.
+func _reponer_logica() -> void:
+	var fork := _area_en(Vector3(0.0, 1.5, -3.5))
+	if fork == null:
+		push_warning("Alicanto: no encuentro el disparador de la bifurcación")
+	elif not fork.body_entered.is_connected(_on_fork_entered):
+		fork.body_entered.connect(_on_fork_entered)
+
+	var trap := _area_en(Vector3(-11.0, 1.5, -13.0))
+	if trap == null:
+		push_warning("Alicanto: no encuentro el disparador del camino del oro")
+	elif not trap.body_entered.is_connected(_on_gold_path_entered):
+		trap.body_entered.connect(_on_gold_path_entered)
+
+	# Las ocho losas que se caen una tras otra, buscadas en las coordenadas con
+	# que se generaron. Sin esto el derrumbe muestra el cartel y no pasa nada.
+	_gold_tiles.clear()
+	for i in 8:
+		var t := _nodo_en(Vector3(-11.0, -0.5, -12.0 - float(i) * 3.4))
+		if t != null:
+			_gold_tiles.append(t)
+	if _gold_tiles.size() < 8:
+		push_warning("Alicanto: sólo %d de las 8 losas del oro; el derrumbe se verá corto"
+			% _gold_tiles.size())
+
+	# El ave, si la colocaste, arranca escondida: aparece al superar la prueba.
+	var ave := _hijo_que_empieza_con("alicanto")
+	if ave != null:
+		ave.visible = false
+
+	_reponer_herida()
+
+
+## La persona herida: se adopta la que quedó horneada, se la lleva a la cama de
+## aventurero si está puesta y se le devuelve su zona de "[E] Ayudar".
+##
+## Esa zona NUNCA llegó a guardarse: se creaba después del `return` del editor,
+## así que en el momento del horneado no existía.
+func _reponer_herida() -> void:
+	_hurt = _nodo_con_cartel("¡Alguien herido!")
+	if _hurt == null:
+		push_warning("Alicanto: no encuentro a la persona herida")
+		return
+
+	# Dentro de la cápsula quedaron reparentados varios modelos por deslices del
+	# editor. Se los saca conservando su posición de mundo, y si alguno de ellos
+	# es un PERSONAJE, ése pasa a ser la persona herida: ponerlo ahí es
+	# justamente la forma de decir "reemplazá la píldora por esto".
+	var reemplazo := _rescatar_colados(_hurt)
+	# Ya no hace falta que esté ANIDADO en la cápsula: desde que los modelos se
+	# reparentaron a la zona, el reemplazo es un hermano. Vale el personaje
+	# puesto más cerca, medido en planta —la diferencia de altura no cuenta,
+	# porque la cápsula quedó a ras de suelo y el modelo está sobre la roca.
+	if reemplazo == null:
+		reemplazo = _personaje_mas_cerca(_hurt.position, 6.0)
+
+	if reemplazo != null:
+		# El modelo puesto a mano manda: se queda donde lo dejaste, sin llevarlo
+		# a la cama ni tumbarlo. Colocarlo ES la decisión.
+		_cartel_de(reemplazo, "¡Alguien herido!")
+		_hurt.queue_free()
+		_hurt = reemplazo
+		_hurt_es_modelo = true
+	else:
+		var cama := _hijo_que_empieza_con("cama_aventurero")
+		if cama != null:
+			_hurt.position = cama.position + Vector3(0.0, 0.5, 0.0)
+		_hurt.rotation.z = PI / 2.0   # tirada, no de pie
+
+	if _hurt.has_node("ZonaAyuda"):
+		return
+	var zone := Area3D.new()
+	zone.name = "ZonaAyuda"
+	zone.collision_layer = 0
+	zone.collision_mask = 2
+	zone.set_script(INTERACT_SCR)
+	zone.prompt = "[E] Ayudar a la herida"
+	_hurt.add_child(zone)
+	var cs := CollisionShape3D.new()
+	var sph := SphereShape3D.new()
+	sph.radius = 2.4
+	cs.shape = sph
+	zone.add_child(cs)
+	zone.interacted.connect(_on_hurt_help)
+
+
+## Saca de `n` (y de sus áreas) los modelos que no le pertenecen y los cuelga de
+## la zona, conservando su transformación de mundo.
+##
+## Es un parche de ejecución para un desliz de la escena, no la cura: mientras
+## sigan mal colgados en el .tscn, en el editor se van a ver dentro de la herida
+## y moverla a ella los moverá a ellos. Lo bueno es reparentarlos ahí.
+## Devuelve el PERSONAJE que estuviera colgado ahí dentro, si lo hay.
+func _rescatar_colados(n: Node3D) -> Node3D:
+	var colados: Array = []
+	_juntar_colados(n, colados)
+	var personaje: Node3D = null
+	for c: Node3D in colados:
+		var t := c.global_transform
+		c.get_parent().remove_child(c)
+		add_child(c)
+		c.global_transform = t
+		if _es_personaje(c.name):
+			personaje = c
+			push_warning("Alicanto: '%s' pasa a ser la persona herida" % c.name)
+		else:
+			push_warning("Alicanto: '%s' colgaba de la persona herida; se devolvió a la zona"
+				% c.name)
+	return personaje
+
+
+## El personaje puesto a mano más cercano a la píldora, en planta.
+##
+## Colocar un modelo junto a ella es la forma de decir "reemplazá esto por
+## aquello", sin tocar código ni nombres especiales.
+func _personaje_mas_cerca(pos: Vector3, radio: float) -> Node3D:
+	var mejor: Node3D = null
+	var d := radio
+	for c in get_children():
+		if not (c is Node3D) or (c as Node3D).scene_file_path == "":
+			continue
+		if not _es_personaje(c.name):
+			continue
+		var p: Vector3 = (c as Node3D).position
+		var dd := Vector2(p.x - pos.x, p.z - pos.z).length()
+		if dd < d:
+			d = dd
+			mejor = c
+	if mejor != null:
+		push_warning("Alicanto: '%s' pasa a ser la persona herida (a %.1f m)"
+			% [mejor.name, d])
+	return mejor
+
+
+## Nombres de modelos que valen como actor. El decorado y las piezas de la
+## trampa quedan fuera: se sacan igual de ahí dentro, pero no reemplazan a nadie.
+func _es_personaje(nombre: String) -> bool:
+	for p in ["cazador", "cazadora", "ocultista", "brujo", "bruja",
+			"nativo", "chica_", "nino_", "guardian"]:
+		if nombre.begins_with(p):
+			return true
+	return false
+
+
+## Junta TODO lo que hayas arrastrado dentro, sea lo que sea.
+##
+## Antes esto era una lista de nombres —la trampa y los personajes— y fue un
+## error grave: los siete cristales de oro no estaban en la lista, se quedaban
+## dentro de la cápsula y el queue_free() posterior SE LOS LLEVABA. Por eso
+## desaparecían del camino del oro.
+##
+## La regla buena no es por nombre sino estructural: un nodo con
+## `scene_file_path` es una escena instanciada, o sea un modelo que pusiste vos.
+## Todo lo demás son piezas del greybox que sí pertenecen a la cápsula.
+func _juntar_colados(n: Node, fuera: Array) -> void:
+	for c in n.get_children():
+		if c is Node3D and (c as Node3D).scene_file_path != "":
+			fuera.append(c)
+		else:
+			_juntar_colados(c, fuera)
+
+
+## Le pone (o reusa) el cartel flotante a un modelo adoptado. El guion le cambia
+## el texto a "Sobreviviente" al rescatarlo, así que tiene que existir.
+func _cartel_de(nodo: Node3D, texto: String) -> Label3D:
+	var existente := nodo.get_node_or_null("Label3D") as Label3D
+	if existente != null:
+		return existente
+	var lbl := Label3D.new()
+	lbl.name = "Label3D"
+	lbl.text = texto
+	lbl.font_size = 22
+	lbl.position.y = 2.0
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	nodo.add_child(lbl)
+	return lbl
+
+
+func _area_en(pos: Vector3) -> Area3D:
+	for c in get_children():
+		if c is Area3D and (c as Area3D).position.distance_to(pos) <= CERCA:
+			return c
+	return null
+
+
+func _nodo_en(pos: Vector3) -> Node3D:
+	for c in get_children():
+		if c is Node3D and not (c is Area3D) and (c as Node3D).position.distance_to(pos) <= CERCA:
+			return c
+	return null
+
+
+func _nodo_con_cartel(texto: String) -> Node3D:
+	for c in get_children():
+		if not (c is Node3D):
+			continue
+		for h in c.get_children():
+			if h is Label3D and (h as Label3D).text == texto:
+				return c
+	return null
+
+
+func _hijo_que_empieza_con(prefijo: String) -> Node3D:
+	for c in get_children():
+		if c is Node3D and c.name.begins_with(prefijo):
+			return c
+	return null
 
 
 func _process(delta: float) -> void:
 	_t += delta
 	if is_instance_valid(_alicanto):
-		_alicanto.position.y = 6.0 + sin(_t * 1.2) * 0.35
+		_alicanto.position.y = _alicanto_y + sin(_t * 1.2) * 0.35
 		_alicanto.rotation.y += delta * 0.4
 
 
@@ -130,9 +357,12 @@ func _on_hurt_help(_player: Node) -> void:
 
 	# Se incorpora
 	if is_instance_valid(_hurt):
-		var tw := get_tree().create_tween()
-		tw.tween_property(_hurt, "rotation:z", 0.0, 0.8)
-		tw.parallel().tween_property(_hurt, "position:y", 0.0, 0.8)
+		# El "se incorpora" es del greybox: la cápsula estaba tumbada en y=0. A un
+		# modelo puesto a mano llevarlo a y=0 lo hundiría en el suelo.
+		if not _hurt_es_modelo:
+			var tw := get_tree().create_tween()
+			tw.tween_property(_hurt, "rotation:z", 0.0, 0.8)
+			tw.parallel().tween_property(_hurt, "position:y", 0.0, 0.8)
 		var lbl := _hurt.get_node_or_null("Label3D") as Label3D
 		if lbl:
 			lbl.text = "Sobreviviente"
@@ -150,8 +380,23 @@ func _summon_alicanto() -> void:
 # ─── Alicanto ────────────────────────────────────────────────────────────────
 
 func _build_alicanto() -> void:
+	# Si pusiste un modelo de alicanto en la zona, el ave baja AHÍ. Es la forma
+	# de elegir el sitio sin tocar código: la posición de abajo es sólo la que
+	# tenía el greybox, y con la herida movida ya no le corresponde a nada.
+	#
+	# El modelo se mantiene oculto hasta este momento (ver _reponer_logica): el
+	# Alicanto tiene que APARECER al superar la prueba, no estar ahí desde que
+	# entrás a la quebrada.
+	var modelo := _hijo_que_empieza_con("alicanto")
+	if modelo != null:
+		_alicanto = modelo
+		_alicanto_y = modelo.position.y
+		modelo.visible = true
+		return
+
 	_alicanto = Node3D.new()
 	_alicanto.position = Vector3(11.0, 6.0, -34.0)
+	_alicanto_y = 6.0
 	add_child(_alicanto)
 
 	var bird := _mat_emit(Color(0.98, 0.82, 0.30), Color(0.66, 0.50, 0.08), 2.6)
