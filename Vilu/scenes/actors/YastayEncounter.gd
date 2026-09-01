@@ -44,6 +44,89 @@ var _brujo: Node3D = null
 var _iniciado := false   # la secuencia ya arrancó (no se repite al volver)
 var _en_zona := false    # el jugador está dentro de la quebrada
 
+## Cuánto se corrió la arena respecto de las coordenadas con que se escribió
+## esta escena. Sale de dónde está el modelo del Yastay puesto a mano, y se le
+## suma al resto del reparto para que no queden todos en el sitio viejo.
+var _desplazamiento := Vector3.ZERO
+
+
+## Apoya en el suelo a los actores que genera este script.
+##
+## Sus posiciones están escritas con y=0, que era la altura del greybox. Sobre
+## el terreno esculpido de la arena eso los deja ENTERRADOS —casi un metro— y no
+## se corrige solo: son Node3D con una malla, sin cuerpo físico, así que no caen.
+##
+## Sólo se tocan las cápsulas. Los modelos adoptados los colocaste vos a mano y
+## ya están a su altura; bajarlos sería estropear tu trabajo.
+func _apoyar_en_el_suelo() -> void:
+	var esp := get_world_3d().direct_space_state
+	if esp == null:
+		return
+	for c in get_children():
+		if not (c is Node3D) or not _es_capsula(c):
+			continue
+		var p: Vector3 = (c as Node3D).global_position
+		var q := PhysicsRayQueryParameters3D.create(
+			p + Vector3.UP * 40.0, p + Vector3.DOWN * 40.0)
+		q.collision_mask = 1          # el terreno
+		var r := esp.intersect_ray(q)
+		if not r.is_empty():
+			(c as Node3D).global_position = r["position"]
+
+
+func _es_capsula(n: Node) -> bool:
+	for h in n.get_children():
+		if h is MeshInstance3D and (h as MeshInstance3D).mesh is CapsuleMesh:
+			return true
+	return false
+
+
+## TODOS los modelos colocados a mano cuyo nombre empieza así.
+func _modelos_con_prefijo(prefijo: String) -> Array:
+	var out: Array = []
+	for c in get_children():
+		if not (c is Node3D) or not c.name.begins_with(prefijo):
+			continue
+		var es_capsula := false
+		for h in c.get_children():
+			if h is MeshInstance3D and (h as MeshInstance3D).mesh is CapsuleMesh:
+				es_capsula = true
+		if not es_capsula:
+			out.append(c)
+	return out
+
+
+## Primer hijo de la zona cuyo nombre empieza así y que NO es una cápsula de
+## greybox: o sea, un modelo colocado a mano.
+func _modelo_con_prefijo(prefijo: String) -> Node3D:
+	for c in get_children():
+		if not (c is Node3D) or not c.name.begins_with(prefijo):
+			continue
+		var es_capsula := false
+		for h in c.get_children():
+			if h is MeshInstance3D and (h as MeshInstance3D).mesh is CapsuleMesh:
+				es_capsula = true
+		if not es_capsula:
+			return c
+	return null
+
+
+## Le cuelga un cartel a un modelo adoptado, igual al que _npc le pone a las
+## cápsulas. Hace falta porque el resto del guion busca ese Label3D por nombre
+## para ir cambiándole el texto ("¡Intruso!", "¡El brujo huye!"...).
+func _cartel_para(nodo: Node3D, texto: String, escala: float) -> Label3D:
+	var existente := nodo.get_node_or_null("Label3D") as Label3D
+	if existente != null:
+		return existente
+	var lbl := Label3D.new()
+	lbl.name = "Label3D"
+	lbl.text = texto
+	lbl.font_size = 22
+	lbl.position.y = 1.9 * escala
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	nodo.add_child(lbl)
+	return lbl
+
 
 
 ## Deja de generar el decorado por código: ya está guardado como nodos.
@@ -63,6 +146,9 @@ func _ready() -> void:
 	if not geometria_fijada:
 		_build_arena()
 	_spawn_characters()
+	# Diferido: en _ready() el espacio físico todavía no acepta consultas.
+	if not Engine.is_editor_hint():
+		_apoyar_en_el_suelo.call_deferred()
 	# En el editor queda ahí quieto: la secuencia arranca sólo con activate(),
 	# que llama WorldRoot cuando el jugador entra a la quebrada.
 
@@ -122,7 +208,11 @@ func _defeat_hunter(idx: int) -> void:
 
 	var tw := get_tree().create_tween()
 	tw.tween_property(h, "rotation:z", PI / 2.0, 0.35)
-	tw.parallel().tween_property(h, "position:y", 0.30, 0.35)
+	# La altura sólo se toca en las cápsulas. El 0.30 de siempre es absoluto y
+	# suponía el suelo en y=0; sobre el terreno esculpido hundiría a un modelo
+	# puesto a mano. Al girar 90° el cuerpo ya queda tendido sin bajarlo.
+	if _es_capsula(h):
+		tw.parallel().tween_property(h, "position:y", 0.30, 0.35)
 
 	var lbl := h.get_node_or_null("Label3D") as Label3D
 	if lbl:
@@ -328,15 +418,34 @@ func _spawn_characters() -> void:
 	var guanaco_mat := _mat(Color(0.86, 0.76, 0.56))
 
 	# — Yastay (enorme, dorado) —
-	_yastay = _npc(Vector3(0, 0, -14), yastay_mat, 2.6, "Yastay")
-	_yastay_label = _yastay.get_node_or_null("Label3D")
-	# Luz dorada del Yastay
-	var light := OmniLight3D.new()
-	light.light_color  = Color(1.0, 0.82, 0.35)
-	light.omni_range   = 10.0
-	light.light_energy = 1.2
-	light.position.y   = 2.0
-	_yastay.add_child(light)
+	#
+	# Si hay un modelo puesto a mano, ÉSE es el actor: nada de plantarle encima
+	# una cápsula de greybox. Y como la arena se movió al recolocarlo, el resto
+	# del reparto se corre con él: se guarda el desfase entre dónde está el
+	# modelo y dónde estaba la cápsula, y se le suma a cada posición de abajo.
+	# Sin eso los cazadores quedaban en el sitio viejo, a doce metros, sobre los
+	# puentes de entrada.
+	var modelo := _modelo_con_prefijo("yastay")
+	if modelo != null:
+		_yastay = modelo
+		_desplazamiento = modelo.position - Vector3(0, 0, -14)
+		_yastay_label = _cartel_para(_yastay, "Yastay", 2.6)
+		# SIN la luz dorada. Esa luz existía para que una cápsula gris se leyera
+		# como un ser sagrado; sobre el modelo de verdad no aporta nada y le
+		# pega un halo encima —el mismo resplandor escalonado que sacamos del
+		# guanaco— porque un foco puntual a dos metros de la cabeza recorre todo
+		# el rango de luz sobre su lomo.
+	else:
+		_yastay = _npc(Vector3(0, 0, -14), yastay_mat, 2.6, "Yastay")
+		_yastay_label = _yastay.get_node_or_null("Label3D")
+
+		# Luz dorada: sólo para el greybox, por lo dicho arriba.
+		var light := OmniLight3D.new()
+		light.light_color  = Color(1.0, 0.82, 0.35)
+		light.omni_range   = 10.0
+		light.light_energy = 1.2
+		light.position.y   = 2.0
+		_yastay.add_child(light)
 
 	# — Cazadores (4, marrón oscuro) —
 	var hunt_pos: Array[Vector3] = [
@@ -345,20 +454,39 @@ func _spawn_characters() -> void:
 		Vector3(-3, 0, -12),
 		Vector3( 3, 0, -12),
 	]
-	for hp: Vector3 in hunt_pos:
-		_hunters.append(_npc(hp, hunter_mat, 1.0, "Cazador"))
+	# Si colocaste modelos de cazador, ésos son los cazadores. Si no, cápsulas en
+	# las posiciones de siempre, corridas con la arena.
+	var modelos_cazador := _modelos_con_prefijo("cazador")
+	if modelos_cazador.is_empty():
+		for hp: Vector3 in hunt_pos:
+			_hunters.append(_npc(hp + _desplazamiento, hunter_mat, 1.0, "Cazador"))
+	else:
+		for m: Node3D in modelos_cazador:
+			_cartel_para(m, "Cazador", 1.0)
+			_hunters.append(m)
 
 	# — Brujo: los dirige desde atrás, encapuchado. Escapa al verlos caer —
-	_brujo = _npc(Vector3(-2, 0, -17), _mat(Color(0.10, 0.06, 0.16)), 1.05, "???")
-	var hood_mi   := MeshInstance3D.new()
-	var hood_mesh := CylinderMesh.new()
-	hood_mesh.top_radius    = 0.0
-	hood_mesh.bottom_radius = 0.40
-	hood_mesh.height        = 0.55
-	hood_mi.mesh       = hood_mesh
-	hood_mi.position.y = 1.75
-	hood_mi.set_surface_override_material(0, _mat(Color(0.07, 0.04, 0.11)))
-	_brujo.add_child(hood_mi)
+	# El brujo que los dirige: si hay un ocultista modelado, es él.
+	# Sirve cualquiera de los dos nombres: el asset se llama "brujo" y el guion
+	# lo llama ocultista.
+	var modelo_brujo := _modelo_con_prefijo("brujo")
+	if modelo_brujo == null:
+		modelo_brujo = _modelo_con_prefijo("ocultista")
+	if modelo_brujo != null:
+		_brujo = modelo_brujo
+		_cartel_para(_brujo, "???", 1.05)
+	else:
+		_brujo = _npc(Vector3(-2, 0, -17) + _desplazamiento, _mat(Color(0.10, 0.06, 0.16)), 1.05, "???")
+		# Capucha de greybox: sobre un modelo de verdad sobra.
+		var hood_mi   := MeshInstance3D.new()
+		var hood_mesh := CylinderMesh.new()
+		hood_mesh.top_radius    = 0.0
+		hood_mesh.bottom_radius = 0.40
+		hood_mesh.height        = 0.55
+		hood_mi.mesh       = hood_mesh
+		hood_mi.position.y = 1.75
+		hood_mi.set_surface_override_material(0, _mat(Color(0.07, 0.04, 0.11)))
+		_brujo.add_child(hood_mi)
 
 	# — Guanacos pequeños (3, dispersos) —
 	var guana_pos: Array[Vector3] = [
@@ -366,11 +494,14 @@ func _spawn_characters() -> void:
 		Vector3( 11, 0, -9),
 		Vector3(-9,  0, -14),
 	]
-	for gp: Vector3 in guana_pos:
-		_npc(gp, guanaco_mat, 0.75, "")
+	# Sólo si NO hay guanacos modelados: si los pusiste a mano, las cápsulas
+	# serían un rebaño fantasma encima del tuyo.
+	if _modelo_con_prefijo("guanaco") == null:
+		for gp: Vector3 in guana_pos:
+			_npc(gp + _desplazamiento, guanaco_mat, 0.75, "")
 
 	# — Guanaco herido (tumbado) —
-	_wounded = _npc(Vector3(8, 0, -6), guanaco_mat, 0.80, "¡Sana al guanaco!")
+	_wounded = _npc(Vector3(8, 0, -6) + _desplazamiento, guanaco_mat, 0.80, "¡Sana al guanaco!")
 	_wounded.rotation.z = PI / 2.0   # tumbado de lado
 
 	# Área de curación (solo Benjamín puede usarla)

@@ -766,7 +766,7 @@ entorno = ExtResource("96_entorno")
 transform = Transform3D(40, 0, 0, 0, 1, 0, 0, 0, 40, 137.135, -468.879, -74.623)
 
 [node name="GuardianSpawn" type="Marker3D" parent="." unique_id=940000001]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 138.135, 138.93561, -105.34)
+transform = Transform3D(1.562114, 0, 0, 0, 1.5520921, 0, 0, 0, 1.6870867, 137.85109, 138.93561, -105.34)
 script = ExtResource("93_vista")
 modelo = ExtResource("93_guardian")
 altura = 4.09

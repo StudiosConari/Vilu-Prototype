@@ -1,46 +1,61 @@
-[gd_scene format=3 uid="uid://v33hf6bt8sit"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://wmnvixf85mm6" path="res://scenes/core/WorldRoot.gd" id="1_world"]
-[ext_resource type="Terrain3DAssets" uid="uid://347pnk4gua0m" path="res://terrain_data/new_terrain_3d_assets.tres" id="2_jkw84"]
-[ext_resource type="Shader" uid="uid://biu6w43ct2i22" path="res://shaders/toon_terrain.gdshader" id="3_toon"]
+[ext_resource type="Script" path="res://scenes/core/WorldRoot.gd" id="1_world"]
+[ext_resource type="Terrain3DAssets" path="res://terrain_data/new_terrain_3d_assets.tres" id="2_jkw84"]
+[ext_resource type="Shader" path="res://shaders/toon_terrain.gdshader" id="3_toon"]
 [ext_resource type="PackedScene" path="res://scenes/core/AguaToon.tscn" id="4_48jlu"]
-[ext_resource type="PackedScene" uid="uid://bxf4c8k6njm0t" path="res://models/terreno/montana_de_baja_poligonalidad.glb" id="6_ic35k"]
-[ext_resource type="PackedScene" uid="uid://ds37g1t35x2kt" path="res://models/props/flora/arbusto.fbx" id="11_emhlx"]
-[ext_resource type="PackedScene" uid="uid://bpjxaniut2icg" path="res://models/puesto/comida_tradicional.glb" id="20_txmro"]
-[ext_resource type="PackedScene" uid="uid://disfxvkmpa1od" path="res://models/prop_pequeno/maceta_estilizada.glb" id="21_geclm"]
-[ext_resource type="PackedScene" uid="uid://bh2wd6ykrmfeq" path="res://models/prop_pequeno/macetero_de_madera.glb" id="22_ic35k"]
-[ext_resource type="PackedScene" uid="uid://bf12a3knpdqin" path="res://models/prop_mediano/farola_decorativa.glb" id="22_txmro"]
-[ext_resource type="PackedScene" uid="uid://3eelwpd34tjw" path="res://models/prop_mediano/planta_de_cactus.glb" id="23_geclm"]
-[ext_resource type="PackedScene" uid="uid://bn8grbbrtpiey" path="res://models/volcanes/isluga.glb" id="36_63qap"]
-[ext_resource type="PackedScene" uid="uid://b5sq118u6b1u" path="res://models/mina/establo_medieval_para_caballos.glb" id="37_j36mo"]
-[ext_resource type="PackedScene" uid="uid://bot1dgwxeg8wg" path="res://models/prop_mediano/banco_de_madera.glb" id="38_o8reu"]
-[ext_resource type="PackedScene" uid="uid://cupkjpcy7ro4x" path="res://models/prop_mediano/mesa_de_picnic.glb" id="39_ixx1a"]
-[ext_resource type="PackedScene" uid="uid://x4w0a3720asy" path="res://models/mina/muro_de_madera.glb" id="43_2owjj"]
-[ext_resource type="PackedScene" uid="uid://cogv2f3cy0g4i" path="res://models/mina/plataforma_de_madera.glb" id="44_n2pjq"]
-[ext_resource type="PackedScene" uid="uid://bnwepcmqjdiu1" path="res://models/volcanes/subida_a_isluga.glb" id="45_808ct"]
-[ext_resource type="PackedScene" uid="uid://cpesab4s5th47" path="res://models/prop_pequeno/baldosa_de_piedra.glb" id="46_o8reu"]
-[ext_resource type="PackedScene" uid="uid://d4hr2qt1y7htr" path="res://models/mina/barrera_de_cuerda_de_madera.glb" id="47_ixx1a"]
-[ext_resource type="PackedScene" uid="uid://dfwh3qcemjxx2" path="res://models/edificio/casa_estilizada.glb" id="52_jkaol"]
-[ext_resource type="PackedScene" uid="uid://rb38asmdeqqi" path="res://models/edificio/casa_de_adobe.glb" id="53_l6aue"]
-[ext_resource type="PackedScene" uid="uid://dskcrlmjrd830" path="res://models/edificio/arco_decorativo.glb" id="54_on1in"]
-[ext_resource type="PackedScene" uid="uid://b6eoosx2vvh7p" path="res://models/mina/bolsa_de_ladrillos_de_arcilla.glb" id="57_xvqct"]
-[ext_resource type="PackedScene" uid="uid://doivwhf7chptf" path="res://models/mina/muro_de_piedra_agrietado.glb" id="58_yvahe"]
-[ext_resource type="PackedScene" uid="uid://cqccyiof40qhp" path="res://models/edificio/fachada_de_bar.glb" id="60_q3004"]
-[ext_resource type="PackedScene" uid="uid://cuhwdfsyiw5va" path="res://models/edificio/tienda_de_brujas.glb" id="61_2nhnu"]
-[ext_resource type="PackedScene" uid="uid://ceuy2n7115jyb" path="res://models/prop_mediano/fuente_de_piedra_para_jardin.glb" id="62_pe8ao"]
-[ext_resource type="PackedScene" uid="uid://v35pmp5xsjq" path="res://models/prop_mediano/tablon_de_anuncios_de_madera.glb" id="63_g83qo"]
-[ext_resource type="PackedScene" uid="uid://24orc3v5dxw5" path="res://models/prop_pequeno/arreglo_floral.glb" id="65_ifc7c"]
-[ext_resource type="PackedScene" uid="uid://crtsasgvure1q" path="res://models/props/flora/arbol_tarapaca.fbx" id="70_jmifw"]
-[ext_resource type="PackedScene" uid="uid://b0g1ptilr3mls" path="res://models/props/flora/cactus_toon.fbx" id="71_m62vh"]
-[ext_resource type="PackedScene" uid="uid://bbksuvlpcwasj" path="res://models/props/flora/flor.fbx" id="72_1xqj4"]
-[ext_resource type="PackedScene" uid="uid://ceq3sm4ovx86l" path="res://models/props/flora/planta_de_cactus.fbx" id="73_54j23"]
-[ext_resource type="PackedScene" uid="uid://bacourh8xs61k" path="res://models/edificio/bus.glb" id="78_pe8ao"]
-[ext_resource type="PackedScene" uid="uid://b6oq5bb1d6kb5" path="res://models/edificio/estacion.glb" id="79_g83qo"]
+[ext_resource type="PackedScene" path="res://models/terreno/montana_de_baja_poligonalidad.glb" id="6_ic35k"]
+[ext_resource type="PackedScene" path="res://models/props/flora/arbusto.fbx" id="11_emhlx"]
+[ext_resource type="PackedScene" path="res://models/puesto/comida_tradicional.glb" id="20_txmro"]
+[ext_resource type="PackedScene" path="res://models/prop_pequeno/maceta_estilizada.glb" id="21_geclm"]
+[ext_resource type="PackedScene" path="res://models/prop_pequeno/macetero_de_madera.glb" id="22_ic35k"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/farola_decorativa.glb" id="22_txmro"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/planta_de_cactus.glb" id="23_geclm"]
+[ext_resource type="PackedScene" path="res://models/volcanes/isluga.glb" id="36_63qap"]
+[ext_resource type="PackedScene" path="res://models/mina/establo_medieval_para_caballos.glb" id="37_j36mo"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/banco_de_madera.glb" id="38_o8reu"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/mesa_de_picnic.glb" id="39_ixx1a"]
+[ext_resource type="PackedScene" path="res://models/edificio/camino_derrumbable_alicanto.glb" id="40_rbj0l"]
+[ext_resource type="PackedScene" path="res://models/focal/subida_ojos_del_salado.glb" id="41_hud0y"]
+[ext_resource type="PackedScene" path="res://models/edificio/puente_derrumbable_alicanto.glb" id="41_ma7w3"]
+[ext_resource type="PackedScene" path="res://models/focal/cristal_de_oro_alicanto.glb" id="42_hjagu"]
+[ext_resource type="PackedScene" path="res://models/mina/muro_de_madera.glb" id="43_2owjj"]
+[ext_resource type="PackedScene" path="res://models/edificio/puente_alicanto.glb" id="44_ied1p"]
+[ext_resource type="PackedScene" path="res://models/mina/plataforma_de_madera.glb" id="44_n2pjq"]
+[ext_resource type="PackedScene" path="res://models/edificio/bifurcacion_alicanto.glb" id="45_y6vb7"]
+[ext_resource type="PackedScene" path="res://models/prop_pequeno/baldosa_de_piedra.glb" id="46_o8reu"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/cama_aventurero_alicanto.glb" id="47_2xmuq"]
+[ext_resource type="PackedScene" path="res://models/mina/barrera_de_cuerda_de_madera.glb" id="47_ixx1a"]
+[ext_resource type="PackedScene" path="res://models/personaje/yastay.glb" id="48_y6vb7"]
+[ext_resource type="PackedScene" path="res://models/personaje/guanaco.glb" id="49_njr5k"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/monolito_de_roca_2.glb" id="50_2xmuq"]
+[ext_resource type="PackedScene" path="res://models/edificio/plataforma_circular.glb" id="51_vfank"]
+[ext_resource type="PackedScene" path="res://models/edificio/casa_estilizada.glb" id="52_jkaol"]
+[ext_resource type="PackedScene" path="res://models/edificio/casa_de_adobe.glb" id="53_l6aue"]
+[ext_resource type="PackedScene" path="res://models/personaje/cazador_joven.glb" id="53_pj81q"]
+[ext_resource type="PackedScene" path="res://models/edificio/arco_decorativo.glb" id="54_on1in"]
+[ext_resource type="PackedScene" path="res://models/personaje/cazador_adulto.glb" id="54_v8r7x"]
+[ext_resource type="PackedScene" path="res://models/personaje/cazadora_joven.glb" id="55_8atei"]
+[ext_resource type="PackedScene" path="res://models/personaje/cazadora_adulta.glb" id="56_biclm"]
+[ext_resource type="PackedScene" path="res://models/personaje/brujo.glb" id="57_v8r7x"]
+[ext_resource type="PackedScene" path="res://models/mina/bolsa_de_ladrillos_de_arcilla.glb" id="57_xvqct"]
+[ext_resource type="PackedScene" path="res://models/mina/muro_de_piedra_agrietado.glb" id="58_yvahe"]
+[ext_resource type="PackedScene" path="res://models/edificio/fachada_de_bar.glb" id="60_q3004"]
+[ext_resource type="PackedScene" path="res://models/edificio/tienda_de_brujas.glb" id="61_2nhnu"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/fuente_de_piedra_para_jardin.glb" id="62_pe8ao"]
+[ext_resource type="PackedScene" path="res://models/prop_mediano/tablon_de_anuncios_de_madera.glb" id="63_g83qo"]
+[ext_resource type="PackedScene" path="res://models/prop_pequeno/arreglo_floral.glb" id="65_ifc7c"]
+[ext_resource type="PackedScene" path="res://models/props/flora/arbol_tarapaca.fbx" id="70_jmifw"]
+[ext_resource type="PackedScene" path="res://models/props/flora/cactus_toon.fbx" id="71_m62vh"]
+[ext_resource type="PackedScene" path="res://models/props/flora/flor.fbx" id="72_1xqj4"]
+[ext_resource type="PackedScene" path="res://models/props/flora/planta_de_cactus.fbx" id="73_54j23"]
+[ext_resource type="PackedScene" path="res://models/edificio/bus.glb" id="78_pe8ao"]
+[ext_resource type="PackedScene" path="res://models/edificio/estacion.glb" id="79_g83qo"]
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="99_entrada"]
-[ext_resource type="Script" uid="uid://dv8dcpxhrs3c8" path="res://scenes/actors/Interactable.gd" id="h2_Interactable"]
-[ext_resource type="Script" uid="uid://bwajfkhy14w0t" path="res://scenes/actors/PobladoHub.gd" id="z1_PobladoHub"]
-[ext_resource type="Script" uid="uid://duhibb8cvr8oc" path="res://scenes/actors/AlicantoRescate.gd" id="z3_AlicantoRescate"]
-[ext_resource type="Script" uid="uid://b1u1i4x0jaib1" path="res://scenes/actors/YastayEncounter.gd" id="z4_YastayEncounter"]
+[ext_resource type="Script" path="res://scenes/actors/Interactable.gd" id="h2_Interactable"]
+[ext_resource type="Script" path="res://scenes/actors/PobladoHub.gd" id="z1_PobladoHub"]
+[ext_resource type="Script" path="res://scenes/actors/AlicantoRescate.gd" id="z3_AlicantoRescate"]
+[ext_resource type="Script" path="res://scenes/actors/YastayEncounter.gd" id="z4_YastayEncounter"]
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_5ef10"]
 _shader_parameters = {
@@ -79,74 +94,8 @@ world_background = 0
 shader_override_enabled = true
 shader_override = ExtResource("3_toon")
 
-[sub_resource type="StandardMaterial3D" id="h2_StandardMaterial3D_ktl6j"]
-albedo_color = Color(0.44, 0.37, 0.29, 1)
-
-[sub_resource type="StandardMaterial3D" id="h2_StandardMaterial3D_guml2"]
-albedo_color = Color(0.22, 0.19, 0.16, 1)
-
-[sub_resource type="StandardMaterial3D" id="h2_StandardMaterial3D_rkbse"]
-albedo_color = Color(0.34, 0.29, 0.24, 1)
-
 [sub_resource type="BoxShape3D" id="h2_BoxShape3D_pqh0a"]
 size = Vector3(10, 4, 3)
-
-[sub_resource type="StandardMaterial3D" id="h2_StandardMaterial3D_y30wu"]
-albedo_color = Color(0.4, 0.34, 0.27, 1)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_1ncoa"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="StandardMaterial3D" id="h2_StandardMaterial3D_v72f0"]
-albedo_color = Color(0.95, 0.79, 0.24, 1)
-emission_enabled = true
-emission = Color(0.52, 0.4, 0.05, 1)
-emission_energy_multiplier = 1.8
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_42kda"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_visd5"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_hddd2"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_cqhse"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_tjqvw"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_cpaj3"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_5xbwj"]
-size = Vector3(0.5, 0.25, 0.5)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_y3efg"]
-size = Vector3(0.7, 0.35, 0.7)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_rahsy"]
-size = Vector3(0.7, 0.35, 0.7)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_w5dn4"]
-size = Vector3(0.7, 0.35, 0.7)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_u6vpv"]
-size = Vector3(0.7, 0.35, 0.7)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_uj5cy"]
-size = Vector3(0.7, 0.35, 0.7)
-
-[sub_resource type="BoxMesh" id="h2_BoxMesh_cqrms"]
-size = Vector3(0.7, 0.35, 0.7)
-
-[sub_resource type="BoxShape3D" id="h2_BoxShape3D_mgmav"]
-size = Vector3(4.6, 4, 3)
-
-[sub_resource type="StandardMaterial3D" id="h2_StandardMaterial3D_tn0g1"]
-albedo_color = Color(0.44, 0.37, 0.29, 1)
 
 [sub_resource type="CapsuleMesh" id="h2_CapsuleMesh_wxamr"]
 radius = 0.323
@@ -157,20 +106,6 @@ albedo_color = Color(0.62, 0.5, 0.42, 1)
 
 [sub_resource type="SphereShape3D" id="h2_SphereShape3D_hi7r7"]
 radius = 2.4
-
-[sub_resource type="StandardMaterial3D" id="h3_StandardMaterial3D_d03ka"]
-albedo_color = Color(0.22, 0.2, 0.18, 1)
-
-[sub_resource type="StandardMaterial3D" id="h3_StandardMaterial3D_aetc0"]
-albedo_color = Color(0.32, 0.28, 0.24, 1)
-
-[sub_resource type="StandardMaterial3D" id="h3_StandardMaterial3D_i8718"]
-albedo_color = Color(0.85, 0.45, 0.12, 1)
-emission_enabled = true
-emission = Color(0.5, 0.2, 0.02, 1)
-
-[sub_resource type="StandardMaterial3D" id="h3_StandardMaterial3D_foil1"]
-albedo_color = Color(0.62, 0.14, 0.04, 1)
 
 [node name="World" type="Node3D" unique_id=100000001]
 script = ExtResource("1_world")
@@ -184,7 +119,7 @@ assets = ExtResource("2_jkw84")
 top_level = true
 metadata/_edit_lock_ = true
 
-[node name="AguaToon" parent="." unique_id=1444918785 instance=ExtResource("4_48jlu")]
+[node name="AguaToon" parent="." unique_id=1682235776 instance=ExtResource("4_48jlu")]
 transform = Transform3D(12.987591, 0, -0.08091438, 0, 0.8351757, 0, 0.08006467, 0, 13.125416, 1.5071888, -5.418274, 3.1122284)
 
 [node name="Poblado" type="Node3D" parent="." unique_id=700000001]
@@ -489,7 +424,7 @@ transform = Transform3D(-0.9569946, 0, -0.93185043, 0, 1.3357335, 0, 0.93185043,
 transform = Transform3D(1.3437294, 0, -0.6714659, 0, 1.6432143, 0, 0.7200385, 0, 1.2530836, 14.280612, 0.22756733, 0.8966522)
 
 [node name="tienda_de_brujas2" parent="Poblado/Edificios" unique_id=103205949 instance=ExtResource("61_2nhnu")]
-transform = Transform3D(1.5262392, 0, 1.0129333, 0, 1.8317859, 0, -1.0129333, 0, 1.5262392, -11.196566, 0.4986554, 0.90753174)
+transform = Transform3D(1.5262392, 0, 1.0129333, 0, 1.8317859, 0, -1.0129333, 0, 1.5262392, -11.464241, 0.4986554, 1.335823)
 
 [node name="fuente_de_piedra_para_jardin2" parent="Poblado/Edificios" unique_id=789412869 instance=ExtResource("62_pe8ao")]
 transform = Transform3D(3.3089564, 0, 0, 0, 3.3089564, 0, 0, 0, 3.3089564, 1.8342409, 0.22694197, 11.903091)
@@ -847,6 +782,20 @@ transform = Transform3D(-3.7540958, 0, 0.008953426, 0, 0.5083229, 0, -0.00895342
 [node name="baldosa_de_piedra525" parent="Poblado/Piso" unique_id=1625822485 instance=ExtResource("46_o8reu")]
 transform = Transform3D(-3.7540958, 0, 0.008953426, 0, 0.5083229, 0, -0.008953426, 0, -3.7540958, -15.956267, 0.09003234, -1.5673141)
 
+[node name="Terminal de Buses" type="Node3D" parent="." unique_id=1832802537]
+
+[node name="bus2" parent="Terminal de Buses" unique_id=240790577 instance=ExtResource("78_pe8ao")]
+transform = Transform3D(-0.023422683, 0, 0.99972576, 0, 1, 0, -0.99972576, 0, -0.023422683, -65.24376, 0.17186928, 127.843605)
+
+[node name="bus3" parent="Terminal de Buses" unique_id=839843459 instance=ExtResource("78_pe8ao")]
+transform = Transform3D(-0.023422683, 0, 0.99972576, 0, 1, 0, -0.99972576, 0, -0.023422683, -65.24376, 0.17186928, 134.85272)
+
+[node name="bus4" parent="Terminal de Buses" unique_id=1699009755 instance=ExtResource("78_pe8ao")]
+transform = Transform3D(-0.023422683, 0, 0.99972576, 0, 1, 0, -0.99972576, 0, -0.023422683, -65.24376, 0.17186928, 119.99492)
+
+[node name="estacion2" parent="Terminal de Buses" unique_id=1347606633 instance=ExtResource("79_g83qo")]
+transform = Transform3D(0.0065740626, 0, 1.4490865, 0, 1.4491013, 0, -1.4490865, 0, 0.0065740626, -69.02818, -0.06128159, 127.816574)
+
 [node name="Subida Ojos del Salado" type="Node3D" parent="." unique_id=1916915845]
 transform = Transform3D(0.5474242, 0, 0.24561478, 0, 0.59999996, 0, -0.24561478, 0, 0.5474242, -52.891724, 0, 93.81326)
 
@@ -957,9 +906,6 @@ transform = Transform3D(12.161017, 0, -1.519186, 0, 6.9022036, 0, 3.8410795, 0, 
 
 [node name="plataforma_de_madera2" parent="Subida Ojos del Salado" unique_id=994967977 instance=ExtResource("44_n2pjq")]
 transform = Transform3D(9.713448, 0, -2.8483534, 0, 5.1843557, 0, 4.432994, 0, 6.241233, 85.50865, -0.7204803, -29.795103)
-
-[node name="subida_a_isluga2" parent="Subida Ojos del Salado" unique_id=128017365 instance=ExtResource("45_808ct")]
-transform = Transform3D(5.6389065, 0, -2.5679402, 0, 6.1349397, 0, 2.5679402, 0, 5.6389065, 79.02588, 0.8867136, -13.7621765)
 
 [node name="establo_medieval_para_caballos2" parent="Subida Ojos del Salado" unique_id=171937882 instance=ExtResource("37_j36mo")]
 transform = Transform3D(2.5638876, 0, -1.1917901, 0, 2.8273458, 0, 1.1917901, 0, 2.5638876, 45.48529, 0.42626274, -55.81981)
@@ -2221,6 +2167,9 @@ target_region = "Isluga"
 prompt = "[E] Subir a la cima del Isluga"
 tamano = Vector3(16, 8, 16)
 
+[node name="subida_ojos_del_salado2" parent="Subida Ojos del Salado" unique_id=79561196 instance=ExtResource("41_hud0y")]
+transform = Transform3D(5.1629057, 0, -1.8564453, 0, 4.0075555, 0, 2.3164597, 0, 4.13763, 78.18227, -0.020324366, -12.926956)
+
 [node name="Desierto" type="Node3D" parent="." unique_id=267526383]
 
 [node name="montana_de_baja_poligonalidad2" parent="Desierto" unique_id=2105239581 instance=ExtResource("6_ic35k")]
@@ -2905,72 +2854,12 @@ transform = Transform3D(2.158176, 0, 0.045108445, 0, 2.1586468, 0, -0.045108445,
 transform = Transform3D(2.158176, 0, 0.045108445, 0, 2.1586468, 0, -0.045108445, 0, 2.158176, 16.812395, 0.22773398, 120.183655)
 
 [node name="Alicanto" type="Node3D" parent="." unique_id=700000003]
-transform = Transform3D(-0.99999976, 0, -0.00070481375, 0, 1, 0, 0.00070481375, 0, -0.99999976, -11.904385, 0, 178.08234)
+transform = Transform3D(-0.99999976, 0, -0.00070481375, 0, 1, 0, 0.00070481375, 0, -0.99999976, -15.696606, 0.3129034, 178.08234)
 script = ExtResource("z3_AlicantoRescate")
 geometria_fijada = true
 
 [node name="PlayerSpawn" type="Marker3D" parent="Alicanto" unique_id=800003001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 19)
-
-[node name="@CSGBox3D@53" type="CSGBox3D" parent="Alicanto" unique_id=682107518]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 8)
-material_override = SubResource("h2_StandardMaterial3D_ktl6j")
-use_collision = true
-size = Vector3(10, 1, 24)
-
-[node name="@CSGBox3D@54" type="CSGBox3D" parent="Alicanto" unique_id=90407195]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 3, 8)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(1, 6, 24)
-
-[node name="@CSGBox3D@55" type="CSGBox3D" parent="Alicanto" unique_id=604871568]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 3, 8)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(1, 6, 24)
-
-[node name="@CSGBox3D@56" type="CSGBox3D" parent="Alicanto" unique_id=49244235]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -6)
-material_override = SubResource("h2_StandardMaterial3D_ktl6j")
-use_collision = true
-size = Vector3(26, 1, 8)
-
-[node name="@CSGBox3D@57" type="CSGBox3D" parent="Alicanto" unique_id=1369859269]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -10.5)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(8, 6, 1)
-
-[node name="@CSGBox3D@58" type="CSGBox3D" parent="Alicanto" unique_id=118610688]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 3, -6)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(1, 6, 8)
-
-[node name="@CSGBox3D@59" type="CSGBox3D" parent="Alicanto" unique_id=977927844]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 3, -6)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(1, 6, 8)
-
-[node name="@CSGBox3D@60" type="CSGBox3D" parent="Alicanto" unique_id=2015701955]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 3, -24)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(1, 6, 28)
-
-[node name="@CSGBox3D@61" type="CSGBox3D" parent="Alicanto" unique_id=66574450]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 3, -24)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(1, 6, 28)
-
-[node name="@CSGBox3D@62" type="CSGBox3D" parent="Alicanto" unique_id=1556470935]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -38.5)
-material_override = SubResource("h2_StandardMaterial3D_guml2")
-use_collision = true
-size = Vector3(32, 6, 1)
 
 [node name="@Label3D@63" type="Label3D" parent="Alicanto" unique_id=298733363]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, -10)
@@ -2978,24 +2867,6 @@ billboard = 1
 modulate = Color(0.85, 0.75, 0.55, 1)
 text = "Quebrada del Alicanto"
 font_size = 22
-
-[node name="@CSGBox3D@64" type="CSGBox3D" parent="Alicanto" unique_id=532871880]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.5, 4)
-material_override = SubResource("h2_StandardMaterial3D_rkbse")
-use_collision = true
-size = Vector3(1.2, 1, 1.2)
-
-[node name="@CSGBox3D@65" type="CSGBox3D" parent="Alicanto" unique_id=1330358457]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0.5, 12)
-material_override = SubResource("h2_StandardMaterial3D_rkbse")
-use_collision = true
-size = Vector3(1.2, 1, 1.2)
-
-[node name="@CSGBox3D@66" type="CSGBox3D" parent="Alicanto" unique_id=1003298609]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.5, 16)
-material_override = SubResource("h2_StandardMaterial3D_rkbse")
-use_collision = true
-size = Vector3(1.2, 1, 1.2)
 
 [node name="@Area3D@67" type="Area3D" parent="Alicanto" unique_id=267731343]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -3.5)
@@ -3005,124 +2876,6 @@ collision_mask = 2
 [node name="@CollisionShape3D@68" type="CollisionShape3D" parent="Alicanto/@Area3D@67" unique_id=1784254133]
 shape = SubResource("h2_BoxShape3D_pqh0a")
 
-[node name="@CSGBox3D@69" type="CSGBox3D" parent="Alicanto" unique_id=1948005001]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -12)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@70" type="MeshInstance3D" parent="Alicanto" unique_id=1992148875]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.9, 0.15, -12)
-mesh = SubResource("h2_BoxMesh_1ncoa")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@CSGBox3D@71" type="CSGBox3D" parent="Alicanto" unique_id=1953645016]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -15.4)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@72" type="MeshInstance3D" parent="Alicanto" unique_id=1217509393]
-transform = Transform3D(0.87758255, 0, 0.47942555, 0, 1, 0, -0.47942555, 0, 0.87758255, -11, 0.15, -15.4)
-mesh = SubResource("h2_BoxMesh_42kda")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@CSGBox3D@73" type="CSGBox3D" parent="Alicanto" unique_id=1981251348]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -18.8)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@74" type="MeshInstance3D" parent="Alicanto" unique_id=1267862023]
-transform = Transform3D(0.5403023, 0, 0.84147096, 0, 1, 0, -0.84147096, 0, 0.5403023, -10.1, 0.15, -18.8)
-mesh = SubResource("h2_BoxMesh_visd5")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@CSGBox3D@75" type="CSGBox3D" parent="Alicanto" unique_id=810231038]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -22.2)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@76" type="MeshInstance3D" parent="Alicanto" unique_id=1874556585]
-transform = Transform3D(0.0707372, 0, 0.997495, 0, 1, 0, -0.997495, 0, 0.0707372, -11.9, 0.15, -22.2)
-mesh = SubResource("h2_BoxMesh_hddd2")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@CSGBox3D@77" type="CSGBox3D" parent="Alicanto" unique_id=77840035]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -25.6)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@78" type="MeshInstance3D" parent="Alicanto" unique_id=30178646]
-transform = Transform3D(-0.41614684, 0, 0.9092974, 0, 1, 0, -0.9092974, 0, -0.41614684, -11, 0.15, -25.6)
-mesh = SubResource("h2_BoxMesh_cqhse")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@CSGBox3D@79" type="CSGBox3D" parent="Alicanto" unique_id=90491431]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -29)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@80" type="MeshInstance3D" parent="Alicanto" unique_id=187156894]
-transform = Transform3D(-0.8011436, 0, 0.5984721, 0, 1, 0, -0.5984721, 0, -0.8011436, -10.1, 0.15, -29)
-mesh = SubResource("h2_BoxMesh_tjqvw")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@CSGBox3D@81" type="CSGBox3D" parent="Alicanto" unique_id=166316827]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -32.4)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@82" type="MeshInstance3D" parent="Alicanto" unique_id=962553871]
-transform = Transform3D(-0.9899925, 0, 0.14112, 0, 1, 0, -0.14112, 0, -0.9899925, -11.9, 0.15, -32.4)
-mesh = SubResource("h2_BoxMesh_cpaj3")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@CSGBox3D@83" type="CSGBox3D" parent="Alicanto" unique_id=1030731754]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, -0.5, -35.8)
-material_override = SubResource("h2_StandardMaterial3D_y30wu")
-use_collision = true
-size = Vector3(4.6, 1, 3.2)
-
-[node name="@MeshInstance3D@84" type="MeshInstance3D" parent="Alicanto" unique_id=1002772938]
-transform = Transform3D(-0.9364567, 0, -0.35078323, 0, 1, 0, 0.35078323, 0, -0.9364567, -11, 0.15, -35.8)
-mesh = SubResource("h2_BoxMesh_5xbwj")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@MeshInstance3D@85" type="MeshInstance3D" parent="Alicanto" unique_id=319901938]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 0.2, -36)
-mesh = SubResource("h2_BoxMesh_y3efg")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@MeshInstance3D@86" type="MeshInstance3D" parent="Alicanto" unique_id=1908804351]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0.2, -36)
-mesh = SubResource("h2_BoxMesh_rahsy")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@MeshInstance3D@87" type="MeshInstance3D" parent="Alicanto" unique_id=54864211]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 0.2, -36)
-mesh = SubResource("h2_BoxMesh_w5dn4")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@MeshInstance3D@88" type="MeshInstance3D" parent="Alicanto" unique_id=1079111086]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 0.55, -36)
-mesh = SubResource("h2_BoxMesh_u6vpv")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@MeshInstance3D@89" type="MeshInstance3D" parent="Alicanto" unique_id=105638110]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0.55, -36)
-mesh = SubResource("h2_BoxMesh_uj5cy")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
-[node name="@MeshInstance3D@90" type="MeshInstance3D" parent="Alicanto" unique_id=1674371617]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.25, 0.55, -36)
-mesh = SubResource("h2_BoxMesh_cqrms")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_v72f0")
-
 [node name="@Label3D@91" type="Label3D" parent="Alicanto" unique_id=1301591319]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 2, -30)
 billboard = 1
@@ -3130,31 +2883,16 @@ modulate = Color(1, 0.85, 0.3, 1)
 text = "Oro"
 font_size = 22
 
-[node name="@OmniLight3D@92" type="OmniLight3D" parent="Alicanto" unique_id=1670098205]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1.5, -30)
-light_color = Color(1, 0.82, 0.3, 1)
-light_energy = 1.8
-omni_range = 16.0
-
 [node name="@Area3D@93" type="Area3D" parent="Alicanto" unique_id=1862001124]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1.5, -13)
 collision_layer = 0
 collision_mask = 2
 
-[node name="@CollisionShape3D@94" type="CollisionShape3D" parent="Alicanto/@Area3D@93" unique_id=296620560]
-shape = SubResource("h2_BoxShape3D_mgmav")
-
-[node name="@CSGBox3D@95" type="CSGBox3D" parent="Alicanto" unique_id=23008374]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, -0.5, -25)
-material_override = SubResource("h2_StandardMaterial3D_tn0g1")
-use_collision = true
-size = Vector3(9, 1, 30)
-
 [node name="@Node3D@96" type="Node3D" parent="Alicanto" unique_id=549416786]
 transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 11, 0.3, -22)
 
 [node name="@MeshInstance3D@97" type="MeshInstance3D" parent="Alicanto/@Node3D@96" unique_id=1224475040]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.741, 0)
+transform = Transform3D(0.6708805, -0.06708159, 0.01742891, 0.044126187, 1.019353, 0.003079595, -0.011898971, -0.0019817525, 0.99408734, 9.283907, 2.929903, 2.1725159)
 mesh = SubResource("h2_CapsuleMesh_wxamr")
 surface_material_override/0 = SubResource("h2_StandardMaterial3D_hmypw")
 
@@ -3171,144 +2909,142 @@ script = ExtResource("h2_Interactable")
 prompt = "[E] Ayudar a la herida"
 
 [node name="@CollisionShape3D@99" type="CollisionShape3D" parent="Alicanto/@Node3D@96/@Area3D@98" unique_id=847908233]
+transform = Transform3D(0.6708805, -0.06708159, 0.01742891, 0.044126187, 1.019353, 0.003079595, -0.011898971, -0.0019817525, 0.99408734, 9.295848, 2.6596603, 2.17276)
 shape = SubResource("h2_SphereShape3D_hi7r7")
 
+[node name="puente_alicanto2" parent="Alicanto" unique_id=1842814988 instance=ExtResource("44_ied1p")]
+transform = Transform3D(1.8789433, 0, -0.014374652, 0, 1.8789983, 0, 0.014374652, 0, 1.8789433, -3.8160563, -5.0225534, 9.664124)
+
+[node name="bifurcacion_alicanto2" parent="Alicanto" unique_id=245425578 instance=ExtResource("45_y6vb7")]
+transform = Transform3D(0.9733582, 0.00028775615, 0.95138925, -0.12785682, 3.0172434, 0.1302326, -0.94420993, -0.40827253, 0.96312416, -3.4818068, -2.5095425, -8.169235)
+
+[node name="cama_aventurero_alicanto2" parent="Alicanto" unique_id=16254118 instance=ExtResource("47_2xmuq")]
+transform = Transform3D(-0.52519745, -0.36699316, 8.1075535, -0.18278475, 5.5796504, 0.524023, -8.358026, -0.09896252, -0.52091867, 8.170214, 7.96836, -20.631485)
+
+[node name="camino_derrumbable_alicanto2" parent="Alicanto" unique_id=1455830752 instance=ExtResource("40_rbj0l")]
+transform = Transform3D(0.70627517, -3.5527137e-15, -1.9172634, 7.1054274e-15, 0.6926896, 0, 1.0230901, 1.0699143e-15, 1.323554, -23.660183, 4.6440344, -31.740204)
+
+[node name="puente_derrumbable_alicanto2" parent="Alicanto" unique_id=770695513 instance=ExtResource("41_ma7w3")]
+transform = Transform3D(-0.85965306, 0, -0.8725777, -3.5527137e-15, 1.2249055, -3.5527137e-15, 0.8725777, -7.0882635e-15, -0.85965306, -14.124729, -1.7971728, -19.253342)
+
+[node name="cristal_de_oro_alicanto15" parent="Alicanto" unique_id=39789580 instance=ExtResource("42_hjagu")]
+transform = Transform3D(-0.19308437, 1.7763568e-15, 0.50508714, 0, 0.5407351, 0, -0.50508714, -5.4097754e-15, -0.19308437, -8.624844, 8.128467, -6.5203094)
+
+[node name="cristal_de_oro_alicanto19" parent="Alicanto" unique_id=1409439579 instance=ExtResource("42_hjagu")]
+transform = Transform3D(-0.19308437, 1.7763568e-15, 0.50508714, 0, 0.5407351, 0, -0.50508714, -5.401012e-15, -0.19308437, -9.924225, 9.059215, -9.267014)
+
+[node name="cristal_de_oro_alicanto20" parent="Alicanto" unique_id=1890965582 instance=ExtResource("42_hjagu")]
+transform = Transform3D(-0.19308437, 1.7763568e-15, 0.50508714, 0, 0.5407351, 0, -0.50508714, -5.3947524e-15, -0.19308437, -10.8848, 9.510827, -11.207031)
+
+[node name="cristal_de_oro_alicanto21" parent="Alicanto" unique_id=404879357 instance=ExtResource("42_hjagu")]
+transform = Transform3D(2.0174565, 1.4210855e-14, 2.789618, 2.1316282e-14, 3.4426868, -5.684342e-14, -2.789618, 2.6799416e-14, 2.0174565, -24.392403, 9.5108185, -35.749054)
+
+[node name="cristal_de_oro_alicanto16" parent="Alicanto" unique_id=2060457458 instance=ExtResource("42_hjagu")]
+transform = Transform3D(0.54008293, 7.1054274e-15, 0.026552292, -1.7763568e-15, 0.54073507, 1.2212453e-15, -0.026552292, 1.6811378e-15, 0.54008293, -6.610214, 8.4609375, -9.026321)
+
+[node name="cristal_de_oro_alicanto17" parent="Alicanto" unique_id=316411623 instance=ExtResource("42_hjagu")]
+transform = Transform3D(0.54008293, 7.1054274e-15, 0.0265523, -1.7763568e-15, 0.54073507, 1.2212453e-15, -0.0265523, 1.6801569e-15, 0.54008293, -5.1850014, 7.678894, -6.920517)
+
+[node name="cristal_de_oro_alicanto18" parent="Alicanto" unique_id=736264155 instance=ExtResource("42_hjagu")]
+transform = Transform3D(0.54008293, 7.1054274e-15, 0.02655231, -1.7763568e-15, 0.54073507, 1.2212453e-15, -0.02655231, 1.6791759e-15, 0.54008293, -7.98456, 9.178406, -12.431717)
+
+[node name="cazador_joven2" parent="Alicanto" unique_id=1914255799 instance=ExtResource("53_pj81q")]
+transform = Transform3D(-1.7207198, -0.09028573, 0.007900123, -0.11325867, 1.372676, -0.036341067, -0.004560531, -0.02434625, -2.0782573, 7.9069076, 8.960428, -19.822296)
+
 [node name="Yastay" type="Node3D" parent="." unique_id=700000004]
-transform = Transform3D(0.0003289953, 0, -0.99999994, 0, 1, 0, 0.99999994, 0, 0.0003289953, 46.406464, 0, 127.94954)
+transform = Transform3D(0.0003289953, 0, -0.99999994, 0, 1, 0, 0.99999994, 0, 0.0003289953, 23.849613, 0, 127.94954)
 script = ExtResource("z4_YastayEncounter")
 geometria_fijada = true
 
 [node name="PlayerSpawn" type="Marker3D" parent="Yastay" unique_id=800004001]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0011749268, 0.2, 11.430072)
 
-[node name="@CSGBox3D@100" type="CSGBox3D" parent="Yastay" unique_id=1320670177]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 3, 0)
-material_override = SubResource("h3_StandardMaterial3D_d03ka")
-use_collision = true
-size = Vector3(1, 6, 40)
+[node name="yastay2" parent="Yastay" unique_id=1581581347 instance=ExtResource("48_y6vb7")]
+transform = Transform3D(2.691747, 0, 0.053457454, 0, 2.6922781, 0, -0.053457454, 0, 2.691747, 0.0014190674, 0.89225006, -25.876184)
 
-[node name="@CSGBox3D@101" type="CSGBox3D" parent="Yastay" unique_id=1244760136]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 20.5)
-material_override = SubResource("h3_StandardMaterial3D_d03ka")
-use_collision = true
-size = Vector3(38, 6, 1)
+[node name="guanaco2" parent="Yastay" unique_id=1327050822 instance=ExtResource("49_njr5k")]
+transform = Transform3D(1.3258016, 0, 0.60090077, 0, 1.4556208, 0, -0.60090077, 0, 1.3258016, -2.382103, 0.9941077, -27.416262)
 
-[node name="@CSGBox3D@102" type="CSGBox3D" parent="Yastay" unique_id=219999758]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 3, -13)
-material_override = SubResource("h3_StandardMaterial3D_d03ka")
-use_collision = true
-size = Vector3(1, 6, 14)
+[node name="guanaco5" parent="Yastay" unique_id=1113064879 instance=ExtResource("49_njr5k")]
+transform = Transform3D(1.3922681, 0, -0.42476016, 0, 1.4556208, 0, 0.42476016, 0, 1.3922681, 2.5629654, 0.9941077, -27.414637)
 
-[node name="@CSGBox3D@103" type="CSGBox3D" parent="Yastay" unique_id=1665946913]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 3, 13)
-material_override = SubResource("h3_StandardMaterial3D_d03ka")
-use_collision = true
-size = Vector3(1, 6, 14)
+[node name="guanaco6" parent="Yastay" unique_id=1542736269 instance=ExtResource("49_njr5k")]
+transform = Transform3D(0.19758837, 0, -1.4421477, 0, 1.4556209, 0, 1.4421477, 0, 0.19758837, 9.021568, 0.9941077, -23.572329)
 
-[node name="@CSGBox3D@104" type="CSGBox3D" parent="Yastay" unique_id=1083063652]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 3, -20.5)
-material_override = SubResource("h3_StandardMaterial3D_d03ka")
-use_collision = true
-size = Vector3(14, 6, 1)
+[node name="guanaco7" parent="Yastay" unique_id=1870743907 instance=ExtResource("49_njr5k")]
+transform = Transform3D(-0.8532672, 0, -1.1793067, 0, 1.4556208, 0, 1.1793067, 0, -0.8532672, 7.782097, 1.006268, -17.322866)
 
-[node name="@CSGBox3D@105" type="CSGBox3D" parent="Yastay" unique_id=1023044417]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 3, -20.5)
-material_override = SubResource("h3_StandardMaterial3D_d03ka")
-use_collision = true
-size = Vector3(14, 6, 1)
+[node name="guanaco8" parent="Yastay" unique_id=1988457584 instance=ExtResource("49_njr5k")]
+transform = Transform3D(-0.97056574, 0, 1.0848192, 0, 1.4556205, 0, -1.0848192, 0, -0.97056574, -7.7104263, 0.9941077, -17.212057)
 
-[node name="@CSGBox3D@106" type="CSGBox3D" parent="Yastay" unique_id=995067366]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.7, -4)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="guanaco9" parent="Yastay" unique_id=803971611 instance=ExtResource("49_njr5k")]
+transform = Transform3D(0.008015562, 0, 1.4555982, 0, 1.4556205, 0, -1.4555982, 0, 0.008015562, -8.738022, 0.9941077, -23.261541)
 
-[node name="@CSGBox3D@107" type="CSGBox3D" parent="Yastay" unique_id=1033258251]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.7, 3)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="guanaco3" parent="Yastay" unique_id=1179572534 instance=ExtResource("49_njr5k")]
+transform = Transform3D(1.3258016, 0, 0.60090077, 0, 1.4556208, 0, -0.60090077, 0, 1.3258016, -4.029518, 0.9941077, -29.155817)
 
-[node name="@CSGBox3D@108" type="CSGBox3D" parent="Yastay" unique_id=920190954]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.7, -4)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="guanaco4" parent="Yastay" unique_id=439081008 instance=ExtResource("49_njr5k")]
+transform = Transform3D(1.3705657, 0, -0.49028537, 0, 1.4556208, 0, 0.49028537, 0, 1.3705657, 4.470848, 0.9941077, -28.681036)
 
-[node name="@CSGBox3D@109" type="CSGBox3D" parent="Yastay" unique_id=339679481]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.7, 3)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="monolito_de_roca_22" parent="Yastay" unique_id=726324232 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, -5.7393723, 0.005510481, -11.900339)
 
-[node name="@CSGBox3D@110" type="CSGBox3D" parent="Yastay" unique_id=433442466]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.7, -4)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="monolito_de_roca_23" parent="Yastay" unique_id=798010883 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, -10.296982, 0.005510481, -16.141657)
 
-[node name="@CSGBox3D@111" type="CSGBox3D" parent="Yastay" unique_id=1389052378]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.7, 3)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="monolito_de_roca_24" parent="Yastay" unique_id=1317789195 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, -11.019257, 0.005510481, -20.773455)
 
-[node name="@CSGBox3D@112" type="CSGBox3D" parent="Yastay" unique_id=1147993488]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0.7, -4)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="monolito_de_roca_25" parent="Yastay" unique_id=2015413807 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, -10.278786, 0.005510481, -25.56787)
 
-[node name="@CSGBox3D@113" type="CSGBox3D" parent="Yastay" unique_id=1322670061]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0.7, 3)
-material_override = SubResource("h3_StandardMaterial3D_aetc0")
-use_collision = true
-size = Vector3(1.6, 1.4, 1.6)
+[node name="monolito_de_roca_26" parent="Yastay" unique_id=295092674 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, -8.146805, -0.1004747, -29.433733)
 
-[node name="@CSGBox3D@114" type="CSGBox3D" parent="Yastay" unique_id=1002434700]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 3, -19.4)
-material_override = SubResource("h3_StandardMaterial3D_i8718")
-use_collision = true
-size = Vector3(1, 5, 0.6)
+[node name="monolito_de_roca_27" parent="Yastay" unique_id=781596122 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, -4.35524, -0.1004747, -32.38292)
 
-[node name="@CSGBox3D@115" type="CSGBox3D" parent="Yastay" unique_id=1668898832]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 3, -19.4)
-material_override = SubResource("h3_StandardMaterial3D_i8718")
-use_collision = true
-size = Vector3(1, 5, 0.6)
+[node name="monolito_de_roca_28" parent="Yastay" unique_id=846485759 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, 0.28028107, 0.005510481, -33.836876)
 
-[node name="@CSGBox3D@116" type="CSGBox3D" parent="Yastay" unique_id=1963370941]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, -19.4)
-material_override = SubResource("h3_StandardMaterial3D_i8718")
-use_collision = true
-size = Vector3(10, 0.6, 0.6)
+[node name="monolito_de_roca_29" parent="Yastay" unique_id=1235239868 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, 5.0744095, 0.005510481, -32.507088)
 
-[node name="@CSGBox3D@117" type="CSGBox3D" parent="Yastay" unique_id=2031877134]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, -0.35, -9)
-material_override = SubResource("h3_StandardMaterial3D_foil1")
-use_collision = true
-size = Vector3(2.5, 0.2, 12)
+[node name="monolito_de_roca_30" parent="Yastay" unique_id=995918738 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, 9.013893, 0.005510481, -29.659678)
 
-[node name="@CSGBox3D@118" type="CSGBox3D" parent="Yastay" unique_id=1727400962]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, -0.35, 5)
-material_override = SubResource("h3_StandardMaterial3D_foil1")
-use_collision = true
-size = Vector3(10, 0.2, 2)
+[node name="monolito_de_roca_31" parent="Yastay" unique_id=1788098248 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, 10.981407, 0.005510481, -25.53979)
 
-[node name="@CSGBox3D@119" type="CSGBox3D" parent="Yastay" unique_id=1533660305]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -0.35, 12)
-material_override = SubResource("h3_StandardMaterial3D_foil1")
-use_collision = true
-size = Vector3(4, 0.2, 3)
+[node name="monolito_de_roca_32" parent="Yastay" unique_id=1899573649 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, 11.562965, 0.005510481, -20.829638)
 
-[node name="bus2" parent="." unique_id=240790577 instance=ExtResource("78_pe8ao")]
-transform = Transform3D(-0.023422683, 0, 0.99972576, 0, 1, 0, -0.99972576, 0, -0.023422683, -65.24376, 0.17186928, 127.843605)
+[node name="monolito_de_roca_33" parent="Yastay" unique_id=2015300021 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, 10.095665, 0.005510481, -15.726847)
 
-[node name="bus3" parent="." unique_id=839843459 instance=ExtResource("78_pe8ao")]
-transform = Transform3D(-0.023422683, 0, 0.99972576, 0, 1, 0, -0.99972576, 0, -0.023422683, -65.24376, 0.17186928, 134.85272)
+[node name="monolito_de_roca_34" parent="Yastay" unique_id=1449950308 instance=ExtResource("50_2xmuq")]
+transform = Transform3D(0.00024364736, 0, 0.74058, 0, 1.5103358, 0, -0.74058, 0, 0.00024364736, 6.886528, 0.005510481, -11.983667)
 
-[node name="bus4" parent="." unique_id=1699009755 instance=ExtResource("78_pe8ao")]
-transform = Transform3D(-0.023422683, 0, 0.99972576, 0, 1, 0, -0.99972576, 0, -0.023422683, -65.24376, 0.17186928, 119.99492)
+[node name="plataforma_circular2" parent="Yastay" unique_id=1692548621 instance=ExtResource("51_vfank")]
+transform = Transform3D(5.8956056, 0.15891533, 1.6337683, -0.2536024, 7.308036, 0.43864653, -1.5867872, -0.57754016, 6.000057, -0.0043792725, -11.913034, -22.2125)
 
-[node name="estacion2" parent="." unique_id=1347606633 instance=ExtResource("79_g83qo")]
-transform = Transform3D(0.0065740626, 0, 1.4490865, 0, 1.4491013, 0, -1.4490865, 0, 0.0065740626, -69.02818, -0.06128159, 127.816574)
+[node name="puente_alicanto3" parent="Yastay" unique_id=1268080393 instance=ExtResource("44_ied1p")]
+transform = Transform3D(0.54567605, 0, 0.004804654, 0, 0.515686, 0, -0.004804654, 0, 0.54567605, -0.55130005, -1.4453726, -4.176628)
+
+[node name="puente_alicanto4" parent="Yastay" unique_id=1248117570 instance=ExtResource("44_ied1p")]
+transform = Transform3D(-0.54486585, 0, 0.030112123, 0, 0.5156859, 0, -0.030112123, 0, -0.54486585, -0.39944458, -1.4453726, -11.093557)
+
+[node name="cazador_joven2" parent="Yastay" unique_id=1064257994 instance=ExtResource("53_pj81q")]
+transform = Transform3D(-0.875264, 0, 0.48364544, 0, 1, 0, -0.48364544, 0, -0.875264, -5.613289, 0.95734847, -19.279902)
+
+[node name="cazador_adulto2" parent="Yastay" unique_id=2103436290 instance=ExtResource("54_v8r7x")]
+transform = Transform3D(-0.99755543, 0, -0.06988017, 0, 1, 0, 0.06988017, 0, -0.99755543, 3.0183945, 0.9772195, -20.837889)
+
+[node name="cazadora_joven2" parent="Yastay" unique_id=680495676 instance=ExtResource("55_8atei")]
+transform = Transform3D(-0.9117275, 0, 0.4107955, 0, 1, 0, -0.4107955, 0, -0.9117275, -2.4031143, 0.89047194, -20.886423)
+
+[node name="cazadora_adulta2" parent="Yastay" unique_id=902731998 instance=ExtResource("56_biclm")]
+transform = Transform3D(-0.9920751, 0, -0.12564616, 0, 1, 0, 0.12564616, 0, -0.9920751, 5.183342, 0.8909473, -18.726828)
+
+[node name="brujo2" parent="Yastay" unique_id=1334396469 instance=ExtResource("57_v8r7x")]
+transform = Transform3D(0.64429134, 0, -0.76478016, 0, 1, 0, 0.76478016, 0, 0.64429134, 7.579216, 0.99179536, -25.509752)
