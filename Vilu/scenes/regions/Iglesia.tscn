@@ -1,15 +1,43 @@
-[gd_scene format=3 uid="uid://vilu_iglesia_tirana"]
+[gd_scene load_steps=4 format=3 uid="uid://vilu_iglesia_tirana"]
 
-[ext_resource type="Script" path="res://scenes/actors/IglesiaInterior.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="2_exit"]
+; Interior del Santuario de La Tirana.
+;
+; Hasta ahora esto era un greybox de cajas CSG (lo construía IglesiaInterior.gd,
+; ya borrado). Lo reemplaza el mapa modelado a mano: interior_iglesia.glb,
+; 929 piezas y 454k tris, sin texturas (todo resuelto con materiales de color).
+;
+; NO pasó por el pipeline a propósito: ese horneado existe para fundir un
+; highpoly de una sola malla en un atlas, y acá borraría las 929 piezas
+; nombradas y, con el descarte de caras ocultas, se llevaría puesto el interior
+; entero — que es justamente lo que se juega.
+;
+; ORIENTACIÓN: la puerta principal mira a +Z (queda en z≈36) y la nave se
+; interna hacia -Z. El piso está en y=0.
+
+[ext_resource type="PackedScene" path="res://models/edificio/interior_iglesia.glb" id="1_modelo"]
+[ext_resource type="Script" path="res://scenes/core/PropsColision.gd" id="2_colision"]
+[ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="3_exit"]
 
 [node name="Iglesia" type="Node3D"]
-script = ExtResource("1_script")
 
+; El modelo cuelga de acá para que PropsColision le dé colisión de malla exacta
+; a cada pieza al arrancar. Tiene que ser trimesh y no convexa: la envolvente
+; convexa de una iglesia sella la nave y no se podría entrar ni caminar dentro.
+; Si alguna pieza decorativa no debe estorbar, va al grupo "col_none".
+[node name="Cuerpo" type="Node3D" parent="."]
+script = ExtResource("2_colision")
+trimesh_por_defecto = true
+
+[node name="interior_iglesia" parent="Cuerpo" instance=ExtResource("1_modelo")]
+
+; En el vestíbulo, justo pasando la puerta. El sitio se eligió sondeando el
+; modelo: acá hay 3,4 m de holgura lateral y 11 m de altura libre.
 [node name="PlayerSpawn" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 19.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 32)
 
-[node name="SalidaALaTirana" parent="." instance=ExtResource("2_exit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 22.2)
-target_region = "Region1_Tarapaca"
+; Entre el spawn y la puerta, a 2,8 m del punto de aparición: lo justo para no
+; salir de vuelta apenas entrás.
+[node name="SalidaALaTirana" parent="." instance=ExtResource("3_exit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 34.8)
+target_region = "Tarapaca"
 require_beat = -1

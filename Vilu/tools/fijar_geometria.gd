@@ -14,8 +14,8 @@ extends EditorScript
 ##
 ## CÓMO USARLO — EL ORDEN IMPORTA, NO LO CAMBIES
 ##   1. Abrí World.tscn y SELECCIONÁ en el panel de Escena el nodo de la zona
-##      que querés fijar: Poblado, Region1_Tarapaca, Region2_Alicanto o
-##      Region2_Yastay. Una por vez.
+##      que querés fijar: Poblado, Tarapaca, Alicanto o
+##      Yastay. Una por vez.
 ##   2. Abrí este archivo en el editor de Script y ejecutalo (Ctrl+Shift+X).
 ##   3. En ese mismo nodo, tildá `Geometria Fijada` en el inspector.
 ##   4. RECIÉN AHORA Ctrl+S.
@@ -41,7 +41,10 @@ extends EditorScript
 ## script deja de generarlo.
 ##
 ## SI ALGO SALE MAL: la escena limpia está en git. `git checkout --
-## scenes/regions/Region1_Tarapaca.tscn` la devuelve a 702 bytes.
+## scenes/core/World.tscn` la devuelve al último commit. Ojo con eso: como las
+## zonas ahora viven todas dentro de World.tscn, ese checkout se lleva puesto
+## TODO lo que hayas editado a mano en el mundo desde entonces, no sólo la zona
+## que estabas fijando. Commiteá antes de correr esto.
 ##
 ## OJO: es de ida. Una vez fijado, cambiar los números del script ya no hace
 ## nada (justamente por eso). Si te arrepentís, borrás los nodos del árbol y

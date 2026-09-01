@@ -52,14 +52,14 @@ const ZONAS := [
 		"radio": 36.0,
 	},
 	{
-		"id": "Region1_Tarapaca",
+		"id": "Tarapaca",
 		"inline": true,
 		"escena": "",
 		"pos": Vector3(0, 0, 160),
 		"radio": 34.0,
 	},
 	{
-		"id": "Region2_Alicanto",
+		"id": "Alicanto",
 		"inline": true,
 		"escena": "",
 		"pos": Vector3(0, 0, -70),
@@ -71,7 +71,7 @@ const ZONAS := [
 	# título dejaría de cargarlo, porque Game sólo entra al interior cuando la
 	# zona NO existe en el mundo.
 	{
-		"id": "Region2_Yastay",
+		"id": "Yastay",
 		"inline": true,
 		"escena": "",
 		"pos": Vector3(-145, 0, 55),
@@ -105,15 +105,15 @@ const SALIR_DE_LA_MINA := Vector3(0.0, -1.3, -8.0)
 ## cartel que dice "te faltan las ALAS", hay un vacío que sólo cruza Emilia
 ## planeando. El gate pasa a ser el terreno.
 const CAMINOS := [
-	["Poblado", "Region1_Tarapaca", 9.0, 0.0],     # sur
-	["Poblado", "Region2_Alicanto", 9.0, 0.0],     # norte
+	["Poblado", "Tarapaca", 9.0, 0.0],     # sur
+	["Poblado", "Alicanto", 9.0, 0.0],     # norte
 	# Alicanto -> Isluga: QUITADO. Ese tramo terminaba dentro del cráter, y como
 	# ahí el terreno está esculpido hacia abajo, las baldosas quedaban flotando
 	# sobre la lava. El acceso al volcán son ahora las plataformas puestas a
 	# mano, no un camino empedrado. Para recuperarlo:
-	#   ["Region2_Alicanto", "Isluga", 9.0, 0.0],
-	["Poblado", "Region2_Yastay", 9.0, 0.0],       # oeste
-	["Region2_Yastay", "Cumbre", 9.0, 9.0],        # grieta: pide ALAS
+	#   ["Alicanto", "Isluga", 9.0, 0.0],
+	["Poblado", "Yastay", 9.0, 0.0],       # oeste
+	["Yastay", "Cumbre", 9.0, 9.0],        # grieta: pide ALAS
 ]
 
 var _zonas := {}          # id -> Node3D (raíz de la zona, ya desplazada)
@@ -436,7 +436,9 @@ func _instanciar_zonas() -> void:
 		if z.get("inline", false):
 			var ya := get_node_or_null(NodePath(z["id"])) as Node3D
 			if ya == null:
-				push_warning("WorldRoot: la zona '%s' se declara inline pero no está en World.tscn" % z["id"])
+				push_warning(("WorldRoot: la zona '%s' se declara inline pero no hay " +
+						"ningún nodo con ese nombre en World.tscn. El nombre del nodo " +
+						"y el \"id\" de ZONAS tienen que ser IGUALES.") % z["id"])
 				continue
 			_zonas[z["id"]] = ya
 			_activas[z["id"]] = false
@@ -544,6 +546,14 @@ func _revisar_zona_del_jugador() -> void:
 
 	for z in ZONAS:
 		var id: String = z["id"]
+
+		# Zona declarada en ZONAS pero nunca registrada: pasa cuando al nodo de
+		# World.tscn le cambian el nombre y deja de coincidir con su "id".
+		# _instanciar_zonas ya avisó por consola al arrancar; acá se saltea,
+		# porque indexar _activas[id] rompería el _process en CADA cuadro.
+		if not _activas.has(id):
+			continue
+
 		var centro: Vector3 = _pos_de_zona(z)
 		var d := Vector2(pos.x - centro.x, pos.z - centro.z).length()
 		var dentro := d <= float(z["radio"])

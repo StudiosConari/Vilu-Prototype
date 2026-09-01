@@ -91,7 +91,7 @@ func _ready() -> void:
 	# del relato. El Poblado es el centro geográfico del mapa, pero empezar ahí
 	# dejaba al jugador parado en mitad de la trama, con la Bruja pidiéndole un
 	# talismán que todavía no fue a buscar.
-	var start := "Region1_Tarapaca"
+	var start := "Tarapaca"
 	if GameManager.debug_start_zone != "":
 		start = GameManager.debug_start_zone
 		GameManager.debug_start_zone = ""
@@ -160,7 +160,7 @@ func _spawn_party_open(zona: String) -> void:
 	for c in party:
 		c.hud = hud
 	_apply_active()
-	_colocar_en(world.spawn_point(zona if world.has_zone(zona) else "Region1_Tarapaca"))
+	_colocar_en(world.spawn_point(zona if world.has_zone(zona) else "Tarapaca"))
 	hud.show_swap_hint(party.size() > 1)
 
 

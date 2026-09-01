@@ -6,13 +6,13 @@ var _options: Control
 
 # Debug: [label, zona, beat, habilidades a desbloquear]
 const DEBUG_ZONES := [
-	["1 Tarapacá", "Region1_Tarapaca", 0, []],
+	["1 Tarapacá", "Tarapaca", 0, []],
 	["2 Mina", "Mina", 3, ["bow"]],
 	["3 Poblado/Bruja", "Poblado", 3, ["bow", "talisman_frag_1"]],
 	["4 Isluga", "Isluga", 4, ["bow", "talisman_frag_1"]],
-	["5 Alicanto", "Region2_Alicanto", 5, ["bow", "talisman_frag_1"]],
+	["5 Alicanto", "Alicanto", 5, ["bow", "talisman_frag_1"]],
 	["6 Poblado/Bar", "Poblado", 5, ["bow", "talisman_frag_1", "wings"]],
-	["7 Yastay", "Region2_Yastay", 5, ["bow", "talisman_frag_1", "wings"]],
+	["7 Yastay", "Yastay", 5, ["bow", "talisman_frag_1", "wings"]],
 	["8 Cumbre", "Cumbre", 6, ["bow", "wings", "guanaco"]],
 	["9 Regreso/Ocultista", "Poblado", 6, ["bow", "wings", "guanaco", "talisman_frag_1", "talisman_frag_2"]],
 	["Final", "Final", 7, ["bow", "wings", "guanaco"]],

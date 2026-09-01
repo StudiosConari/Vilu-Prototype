@@ -2,22 +2,29 @@ extends "res://addons/gut/test.gd"
 
 ## Interior del Santuario de La Tirana.
 ##
-## La traza puede seguir cambiando, así que lo que se comprueba acá son
-## invariantes que sobreviven al rediseño: que esté registrada, que las dos
-## puertas estén despejadas, que el pasillo central se pueda recorrer, que haya
-## suelo bajo el punto de aparición, que ese punto no caiga dentro del trigger
-## de salida (si cayera, entrar te escupiría afuera de inmediato) y que no haya
-## cajas solapadas produciendo z-fighting.
+## Hasta ahora esto era un greybox de cajas CSG (lo construía IglesiaInterior.gd,
+## script ya borrado) y los tests medían esas cajas. Ahora monta un mapa a mano
+## (models/edificio/interior_iglesia.glb, 929 piezas), así que lo que se
+## comprueba pasó a ser lo que de verdad decide si el interior se puede jugar:
+## que el modelo esté, que tenga colisión de malla exacta, que haya suelo bajo
+## el punto de aparición, que ahí quepa el jugador, que ese punto no caiga
+## dentro del trigger de salida —si cayera, entrar te escupiría afuera— y que
+## desde ahí se pueda llegar a la nave.
 ##
-## Las posiciones se derivan de las constantes del script, no van a mano: así
-## cambiar el largo de la nave no rompe el test.
+## Se mide con la física real, no con las cajas de la geometría: en un modelo
+## hecho a mano lo que importa es por dónde se puede caminar, y eso sólo lo
+## sabe el motor.
 ##
 ## La escena se monta en CADA test y no en before_all(): add_child_autofree()
 ## libera después de cada uno, así que una caché compartida queda con nodos
 ## muertos y todo revienta con "previously freed".
 
 const IGLESIA := preload("res://scenes/regions/Iglesia.tscn")
-const SCR := preload("res://scenes/actors/IglesiaInterior.gd")
+const WORLD_ROOT := preload("res://scenes/core/WorldRoot.gd")
+
+## Medidas del jugador, para las consultas de forma.
+const RADIO := 0.4
+const ALTO := 1.8
 
 
 func _montar() -> Node3D:
@@ -27,24 +34,38 @@ func _montar() -> Node3D:
 	return g
 
 
-func _cajas(g: Node3D) -> Array:
-	var out: Array = []
-	for c in g.get_children():
-		if c is CSGBox3D:
-			out.append(c)
-	return out
+func _espacio() -> PhysicsDirectSpaceState3D:
+	return get_tree().root.world_3d.direct_space_state
 
 
-## Los faldones de la bóveda están rotados; su caja real es la caja girada.
-func _caja_de(b: CSGBox3D) -> AABB:
-	return b.transform * AABB(-b.size * 0.5, b.size)
+## Altura del suelo bajo un punto, o INF si ahí no hay piso.
+func _suelo(x: float, z: float) -> float:
+	var q := PhysicsRayQueryParameters3D.create(Vector3(x, 6, z), Vector3(x, -3, z))
+	q.collision_mask = 1
+	var r := _espacio().intersect_ray(q)
+	return INF if r.is_empty() else float(r["position"].y)
 
 
-func _ocupado(cajas: Array, p: Vector3) -> bool:
-	for b in cajas:
-		if _caja_de(b).has_point(p):
-			return true
-	return false
+## ¿Cabe el jugador parado en (x, z), sobre el suelo que haya ahí?
+func _cabe(x: float, z: float) -> bool:
+	var y := _suelo(x, z)
+	if y == INF:
+		return false
+	var cap := CapsuleShape3D.new()
+	cap.radius = RADIO
+	cap.height = ALTO
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = cap
+	q.collision_mask = 1
+	q.transform = Transform3D(Basis(), Vector3(x, y + ALTO * 0.5 + 0.05, z))
+	return _espacio().intersect_shape(q, 1).is_empty()
+
+
+func _formas_de(n: Node, fuera: Array) -> void:
+	if n is CollisionShape3D:
+		fuera.append((n as CollisionShape3D).shape)
+	for c in n.get_children():
+		_formas_de(c, fuera)
 
 
 func test_registrada_en_travelmanager() -> void:
@@ -52,115 +73,37 @@ func test_registrada_en_travelmanager() -> void:
 		"la Iglesia tiene que estar en REGIONS o la puerta no carga nada")
 
 
-func test_se_construyo() -> void:
+func test_el_modelo_esta_montado() -> void:
 	var g := await _montar()
-	var cajas := _cajas(g)
-	gut.p("  cajas construidas: %d" % cajas.size())
-	assert_gt(cajas.size(), 40, "el interior se construyó")
+	var mallas := _mallas_de(g)
+	gut.p("  piezas del modelo: %d" % mallas.size())
+	assert_gt(mallas.size(), 500, "el mapa del interior está en la escena")
 
 
-## Solape entre cajas SIN ROTAR, que es donde puede haber z-fighting.
+## La colisión TIENE que ser de malla exacta.
 ##
-## Se saltan las rotadas a propósito. Los dos faldones del gablete se cruzan en
-## la cumbrera, que es exactamente como se arma un gablete, y sus caras se
-## encuentran a casi 50 grados: no son coplanares y no parpadean. Medirlas con
-## cajas envolventes alineadas a los ejes da un solape enorme que es puro
-## artefacto de la medición, no un defecto de la geometría.
-func test_sin_solapes() -> void:
+## Es el invariante más importante del interior y el más fácil de romper sin
+## darse cuenta: la envolvente convexa de una iglesia la sella entera —la puerta
+## incluida— y quedaría un bloque macizo en el que no se puede entrar. Por eso
+## el nodo Cuerpo lleva `trimesh_por_defecto`.
+func test_la_colision_es_de_malla_exacta() -> void:
 	var g := await _montar()
-	var rectas: Array = []
-	for b in _cajas(g):
-		if is_zero_approx((b as CSGBox3D).rotation.length()):
-			rectas.append(b)
-	gut.p("  cajas sin rotar revisadas: %d" % rectas.size())
-
-	var malos := 0
-	for i in rectas.size():
-		for j in range(i + 1, rectas.size()):
-			var a: CSGBox3D = rectas[i]
-			var b: CSGBox3D = rectas[j]
-			var ca := AABB(a.position - a.size * 0.5, a.size)
-			var cb := AABB(b.position - b.size * 0.5, b.size)
-			var inter: AABB = ca.intersection(cb)
-			var vol: float = inter.size.x * inter.size.y * inter.size.z
-			if vol <= 0.01:
-				continue
-			if not _parpadea(ca, cb):
-				continue
-			malos += 1
-			gut.p("  caras coplanares con %.1f m3 de solape: %s tam %s  x  %s tam %s"
-				% [vol, str(a.position), str(a.size), str(b.position), str(b.size)])
-	assert_eq(malos, 0, "z-fighting entre cajas")
-
-
-## ¿Estas dos cajas van a parpadear?
-##
-## Hacen falta DOS condiciones, y hay que exigir las dos o el test se llena de
-## falsos positivos:
-##
-##   1. Comparten el plano de alguna cara. Es lo que produce el parpadeo: dos
-##      superficies a la misma profundidad, donde la precisión del buffer no
-##      alcanza para decidir cuál va delante. Dos cajas que sólo se atraviesan
-##      en ángulo recto —un pilar subiendo a través de una losa— no comparten
-##      ningún plano y se ven perfectas.
-##
-##   2. Sobre ese plano, ninguna tapa por completo a la otra. Si una es más
-##      grande y se traga la cara de la otra, esa cara no se ve y no puede
-##      parpadear. Es el caso del fuste de un pilar con su basa y su capitel:
-##      comparten el plano de apoyo, pero la basa es más ancha.
-func _parpadea(a: AABB, b: AABB) -> bool:
-	const EPS := 0.005
-	var fin_a := a.position + a.size
-	var fin_b := b.position + b.size
-
-	for eje in 3:
-		var comparten: bool = absf(a.position[eje] - b.position[eje]) < EPS \
-			or absf(fin_a[eje] - fin_b[eje]) < EPS
-		if not comparten:
-			continue
-		# Contención mirada SOBRE ese plano, o sea en los otros dos ejes.
-		var a_en_b := true
-		var b_en_a := true
-		for otro in 3:
-			if otro == eje:
-				continue
-			if a.position[otro] < b.position[otro] - EPS or fin_a[otro] > fin_b[otro] + EPS:
-				a_en_b = false
-			if b.position[otro] < a.position[otro] - EPS or fin_b[otro] > fin_a[otro] + EPS:
-				b_en_a = false
-		if not (a_en_b or b_en_a):
-			return true
-	return false
-
-
-func test_las_dos_puertas_estan_abiertas() -> void:
-	var g := await _montar()
-	var cajas := _cajas(g)
-	var z_fachada: float = SCR.MEDIO_LARGO + SCR.ESPESOR * 0.5
-	var z_tabique: float = SCR.MEDIO_LARGO - SCR.FONDO_NARTEX
-	assert_false(_ocupado(cajas, Vector3(0.0, 2.0, z_fachada)),
-		"el hueco de la fachada está despejado")
-	assert_false(_ocupado(cajas, Vector3(0.0, 2.0, z_tabique)),
-		"el hueco del tabique del nártex está despejado")
-
-
-func test_el_pasillo_central_esta_libre() -> void:
-	var g := await _montar()
-	var cajas := _cajas(g)
-	var z: float = SCR.MEDIO_LARGO - SCR.FONDO_NARTEX - 1.0
-	var tope: float = -SCR.MEDIO_LARGO + SCR.FONDO_PRESBITERIO
-	var bloqueos := 0
-	while z > tope:
-		if _ocupado(cajas, Vector3(0.0, 1.0, z)):
-			bloqueos += 1
-			gut.p("  pasillo bloqueado en z=%.1f" % z)
-		z -= 1.0
-	assert_eq(bloqueos, 0, "el pasillo central se puede recorrer")
+	var formas: Array = []
+	_formas_de(g, formas)
+	var concavas := 0
+	var convexas := 0
+	for s in formas:
+		if s is ConcavePolygonShape3D:
+			concavas += 1
+		elif s is ConvexPolygonShape3D:
+			convexas += 1
+	gut.p("  formas: %d cóncavas, %d convexas" % [concavas, convexas])
+	assert_gt(concavas, 500, "cada pieza recibió colisión de malla exacta")
+	assert_eq(convexas, 0, "ninguna pieza quedó con envolvente convexa")
 
 
 func test_aparecer_es_seguro() -> void:
 	var g := await _montar()
-	var cajas := _cajas(g)
 	var spawn: Marker3D = g.get_node("PlayerSpawn")
 	var salida: Area3D = g.get_node("SalidaALaTirana")
 	var forma: BoxShape3D = (salida.get_child(0) as CollisionShape3D).shape
@@ -168,30 +111,80 @@ func test_aparecer_es_seguro() -> void:
 
 	assert_false(caja_salida.has_point(spawn.position),
 		"aparecés FUERA del trigger de salida")
-	assert_true(_ocupado(cajas, Vector3(spawn.position.x, -0.4, spawn.position.z)),
-		"hay suelo bajo el punto de aparición")
+
+	var y := _suelo(spawn.position.x, spawn.position.z)
+	gut.p("  suelo bajo el spawn: y=%.2f  (el marcador está en y=%.2f)"
+		% [y, spawn.position.y])
+	assert_ne(y, INF, "hay suelo bajo el punto de aparición")
+	assert_true(_cabe(spawn.position.x, spawn.position.z),
+		"el jugador cabe de pie en el punto de aparición")
 
 
-func test_las_estrellas_estan() -> void:
+## Desde el vestíbulo se tiene que poder llegar a la nave.
+##
+## El eje central está cortado por un escalón de casi un metro, así que el paso
+## son las naves LATERALES: basta con que exista alguna columna libre de punta a
+## punta. Si un día se cierran las tres, el interior queda en un vestíbulo sin
+## salida y este test lo caza.
+func test_se_puede_pasar_del_vestibulo_a_la_nave() -> void:
 	var g := await _montar()
-	var total := 0
-	for c in g.get_children():
-		if c is MultiMeshInstance3D:
-			total += (c as MultiMeshInstance3D).multimesh.instance_count
-	gut.p("  estrellas en la bóveda: %d" % total)
-	assert_gt(total, 200, "la bóveda estrellada es la firma del lugar")
+	var spawn: Marker3D = g.get_node("PlayerSpawn")
+	var libres: Array = []
+	for x in [-10.0, -8.0, 0.0, 8.0, 10.0]:
+		var pasa := true
+		var z: float = spawn.position.z - 2.0
+		while z > 23.0:
+			if not _cabe(x, z):
+				pasa = false
+				break
+			z -= 0.5
+		if pasa:
+			libres.append(x)
+	gut.p("  columnas libres hasta la nave: %s" % str(libres))
+	assert_false(libres.is_empty(),
+		"hay al menos un camino del vestíbulo a la nave")
 
+
+## La salida devuelve a La Tirana, que es una ZONA DEL MUNDO y no una región
+## cargable: Game la resuelve teletransportando dentro de World, no cargando una
+## escena. Preguntarle a TravelManager por ella da false, y así debe ser.
+func test_la_salida_lleva_a_la_tirana() -> void:
+	var g := await _montar()
+	var salida: Area3D = g.get_node("SalidaALaTirana")
+	assert_eq(salida.target_region, "Tarapaca", "la puerta devuelve a La Tirana")
+	var ids := []
+	for z in WORLD_ROOT.ZONAS:
+		ids.append(z["id"])
+	assert_true("Tarapaca" in ids, "La Tirana está registrada como zona del mundo")
 
 # ── La puerta desde La Tirana ────────────────────────────────────────────────
 
-const TARAPACA := preload("res://scenes/regions/Region1_Tarapaca.tscn")
+const WORLD := preload("res://scenes/core/World.tscn")
 
 
+## La Tirana dejó de ser una escena aparte: está construida DENTRO de World.tscn.
+## Para mirar la iglesia de la plaza hay que montar el mundo y pedirle su nodo
+## "Tarapaca" — que es el que se ve y se juega, no una copia guardada al lado.
 func _tarapaca() -> Node3D:
-	var r := TARAPACA.instantiate()
-	add_child_autofree(r)
+	# Terrain3D llama al instanciarse a una API que Godot 4.7 marcó obsoleta, y
+	# GUT cuenta cualquier error del motor como fallo. Se apaga sólo mientras se
+	# monta el mundo y se reenciende enseguida, así los errores que provoque el
+	# test en sí se siguen contando.
+	var antes = gut.error_tracker.treat_engine_errors_as
+	gut.error_tracker.treat_engine_errors_as = GutUtils.TREAT_AS.NOTHING
+
+	# Terrain3D busca la cámara activa del viewport y, si no encuentra ninguna,
+	# corta su _physics_process con un push_error. En el juego la cámara la trae
+	# Game.tscn; acá, que montamos el mundo suelto, hay que dársela.
+	var cam := Camera3D.new()
+	add_child_autofree(cam)
+	cam.current = true
+
+	var w := WORLD.instantiate()
+	add_child_autofree(w)
 	await wait_physics_frames(8)
-	return r
+	gut.error_tracker.treat_engine_errors_as = antes
+	return w.get_node("Tarapaca")
 
 
 func test_la_puerta_de_la_tirana_lleva_aca() -> void:
@@ -218,24 +211,21 @@ func test_la_puerta_de_la_tirana_lleva_aca() -> void:
 ## le sella la puerta y no se podría entrar nunca.
 func test_la_iglesia_deja_libre_el_spawn() -> void:
 	var r := await _tarapaca()
-	var cuerpo: Node3D = r.get_node_or_null("Iglesia/Cuerpo")
-	assert_not_null(cuerpo, "el contenedor con colisión existe")
+	var iglesia: Node3D = r.get_node_or_null("Iglesia")
+	assert_not_null(iglesia, "la iglesia está en la plaza")
 
 	var caja := AABB()
 	var primero := true
-	var caras := 0
-	for m in _mallas_de(cuerpo):
+	for m in _mallas_de(iglesia):
 		var a: AABB = m.global_transform * m.mesh.get_aabb()
 		if primero:
 			caja = a
 			primero = false
 		else:
 			caja = caja.merge(a)
-		var col = m.get_node_or_null("Colision")
-		if col != null:
-			var s = (col.get_child(0) as CollisionShape3D).shape
-			if s is ConcavePolygonShape3D:
-				caras += (s as ConcavePolygonShape3D).get_faces().size() / 3
+	assert_false(primero, "la iglesia tiene mallas visibles")
+
+	var caras := _caras_exactas(iglesia)
 
 	var spawn: Marker3D = r.get_node("PlayerSpawn")
 	gut.p("  la iglesia ocupa z %.1f a %.1f;  el spawn está en z %.1f"
@@ -246,6 +236,23 @@ func test_la_iglesia_deja_libre_el_spawn() -> void:
 
 	gut.p("  caras de colisión exacta: %d" % caras)
 	assert_gt(caras, 0, "la iglesia tiene colisión de malla exacta")
+
+
+## Caras de colisión de malla exacta que cuelgan de un nodo.
+##
+## La iglesia trae la suya DESDE EL MODELO: el .glb del pipeline exporta un
+## `iglesia-colonly`, y Godot lo convierte al importar en un StaticBody3D con
+## ConcavePolygonShape3D. Por eso no se busca un hijo llamado "Colision": ésa
+## era la forma del greybox hecho a mano, y el edificio de ahora es el modelo.
+func _caras_exactas(n: Node) -> int:
+	var total := 0
+	if n is CollisionShape3D:
+		var s = (n as CollisionShape3D).shape
+		if s is ConcavePolygonShape3D:
+			total += (s as ConcavePolygonShape3D).get_faces().size() / 3
+	for c in n.get_children():
+		total += _caras_exactas(c)
+	return total
 
 
 func _mallas_de(n: Node) -> Array:
