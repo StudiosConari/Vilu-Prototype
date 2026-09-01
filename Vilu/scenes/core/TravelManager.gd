@@ -6,23 +6,28 @@ extends Node
 ## negro + swap de escena; sin cinematica (greybox).
 ##
 ## Uso desde la escena de juego (Game.gd):
-##   await TravelManager.load_region(region_holder, "Region1_Tarapaca")
+##   await TravelManager.load_region(region_holder, "Iglesia")
 ##   await TravelManager.travel_to(region_holder, "Mina")
 
 signal region_changed(region_name: String)
 
 enum State { IDLE, TRAVELING }
 
+## Escenas que se cargan APARTE del mundo abierto: los interiores con puerta y
+## las escenas de puzzle.
+##
+## Las zonas del mundo (Tarapacá, Poblado, Alicanto, Yastay) YA NO están acá:
+## viven construidas dentro de World.tscn y las registra WorldRoot en su tabla
+## ZONAS. Ir a una de ellas no carga ninguna escena — es un teletransporte
+## dentro del mundo que ya está vivo (Game.teleport_to). Sus viejas escenas de
+## `scenes/regions/` se borraron para que nadie edite por error una copia que el
+## juego no usa.
 const REGIONS := {
-	"Region1_Tarapaca": "res://scenes/regions/Region1_Tarapaca.tscn",
 	"Mina": "res://scenes/regions/Mina.tscn",
-	"Poblado": "res://scenes/regions/Poblado.tscn",
-	"Region2_Alicanto": "res://scenes/regions/Region2_Alicanto.tscn",
-	"Region2_Yastay": "res://scenes/regions/Region2_Yastay.tscn",
+	"Iglesia": "res://scenes/regions/Iglesia.tscn",
 	"Isluga": "res://scenes/puzzles/Isluga.tscn",
 	"Cumbre": "res://scenes/puzzles/Cumbre.tscn",
 	"Final": "res://scenes/puzzles/Final.tscn",
-	"Iglesia": "res://scenes/regions/Iglesia.tscn",
 }
 
 var state: State = State.IDLE

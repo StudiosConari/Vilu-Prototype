@@ -1,7 +1,7 @@
 @tool
 extends Node3D
 
-## Directora de la Fiesta de La Tirana (Region1_Tarapaca).
+## Directora de la Fiesta de La Tirana (Tarapaca).
 ## Construye la escena de la fiesta proceduralmente: decorados, NPCs con burbujas,
 ## pistas y contador de clues para que CarmenNPC decida si revelar su identidad.
 
