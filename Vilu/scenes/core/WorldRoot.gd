@@ -24,6 +24,7 @@ signal zone_exited(id: String)
 const EXIT_SCENE := preload("res://scenes/actors/ZoneExit.tscn")
 const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
+const PARADA_DE_BUS := preload("res://scenes/actors/ParadaDeBus.gd")
 
 ## Layout del mapa, con el POBLADO (bar + bruja) como centro y punto de partida:
 ##
@@ -96,7 +97,17 @@ const BOCA_MINA := Vector3(88, 0, 55)
 ## Desde la boca hasta donde se reaparece al salir. Lo bastante lejos como para
 ## quedar fuera del disparador de entrada: si no, salir de la Mina te dejaría
 ## dentro del área que te vuelve a ofrecer entrar.
-const SALIR_DE_LA_MINA := Vector3(0.0, -1.3, -8.0)
+##
+## Va hacia el OESTE porque la boca mira al poblado: los arbustos y las raíces
+## que la flanquean están puestos simétricos respecto de su eje, todos con x
+## menor que ella. Antes esto era (0, -1.3, -8) —ocho metros hacia el norte—,
+## que con el modelo de entrada nuevo, que está girado, caía de costado y justo
+## por el borde del acantilado: se salía de la mina al mar.
+##
+## Esto es sólo el respaldo. Si hay un marcador en el grupo "salida_mina" manda
+## ése, y así la salida se arrastra a mano sin tocar código ni depender de hacia
+## dónde quede mirando el modelo el día de mañana.
+const SALIR_DE_LA_MINA := Vector3(-8.0, 0.4, 0.0)
 
 ## Caminos que unen las zonas: [desde, hasta, ancho, hueco].
 ##
@@ -145,8 +156,10 @@ func _ready() -> void:
 	if terreno_csg_de_respaldo:
 		_construir_terreno()
 	_instanciar_zonas()
-	_construir_caminos()
+	if construir_caminos:
+		_construir_caminos()
 	_construir_boca_mina()
+	_construir_paradas_de_bus()
 	if sombreado_toon:
 		# Al final de todo: hay que vestir lo que ya está construido.
 		var n: int = TOON_SKIN.new().aplicar(self)
@@ -158,6 +171,20 @@ func _ready() -> void:
 ## z-fighting. Encendelo sólo si te quedás sin terreno y necesitás algo que
 ## sostenga al jugador.
 @export var terreno_csg_de_respaldo: bool = false
+
+## Empedra los CUATRO caminos entre zonas al arrancar el juego (ver CAMINOS).
+##
+## Queda APAGADO: las rutas están puestas a mano en World.tscn, como el resto
+## del decorado, y éstos se generaban encima. Sólo corrían al jugar, así que en
+## el editor no se veían: aparecían recién al probar, y no había forma de
+## moverlos ni de borrarlos desde el árbol.
+##
+## OJO SI LO VOLVÉS A ENCENDER: el tramo Yastay→Cumbre no es un camino más. Se
+## genera con una GRIETA de 9 m en el medio, con su cartel, y esa grieta ES la
+## puerta que exige las ALAS. Con los caminos apagados esa puerta no existe, y
+## el paso a la Cumbre queda librado a lo que haya en el terreno: si querés
+## conservar el gate, hay que rehacerlo a mano.
+@export var construir_caminos: bool = false
 
 ## MODO EDICIÓN DE TERRENO. Con esto encendido no se construye NADA sobre el
 ## terreno al correr el juego: ni zonas, ni muros, ni caminos, ni props.
@@ -176,8 +203,12 @@ func _ready() -> void:
 ## casas y props no queden con luz PBR suave al lado del terreno cel-shaded.
 @export var sombreado_toon: bool = true
 
-## Dibuja en el editor la geometría real de cada zona, además de su silueta.
-## Apagalo si necesitás el terreno despejado para esculpir.
+## Dibuja en el editor la ayuda de referencia: la silueta celeste del radio de
+## activación de cada zona, su cartel con nombre y metros, el cartel de la boca
+## de la mina y la geometría de las zonas que no viven dentro de World.tscn.
+##
+## Apagalo y NO SE DIBUJA NADA DE ESO — que es lo que querés cuando estás
+## esculpiendo el terreno o acomodando props y las siluetas te tapan la vista.
 ##
 ## Tipo explícito a propósito: con `:= true` más un setter, Godot serializaba
 ## la propiedad como `null` en el .tscn, y al ser falso no se dibujaba nada.
@@ -224,6 +255,16 @@ func _previsualizar_zonas() -> void:
 			remove_child(hijo)
 			hijo.queue_free()
 
+	# Apagado: se limpia y no se dibuja nada más.
+	#
+	# Antes este interruptor no apagaba casi nada. Sólo se consultaba al
+	# instanciar las escenas de las zonas y al dibujar el bulto de la boca de la
+	# mina, así que las siluetas celestes y sus carteles seguían tapando el mapa
+	# aunque estuviera en false — que es justamente lo que uno quiere esconder
+	# cuando lo apaga.
+	if not mostrar_zonas_en_editor:
+		return
+
 	var raiz := Node3D.new()
 	raiz.name = "_preview"
 	add_child(raiz)
@@ -234,7 +275,7 @@ func _previsualizar_zonas() -> void:
 
 		# Geometría real de la zona (sin lógica: los scripts están dormidos).
 		# Las que viven dentro de World.tscn no se previsualizan: ya están ahí.
-		if mostrar_zonas_en_editor and not z.get("inline", false):
+		if not z.get("inline", false):
 			# Sin caché: si la escena de la zona se acaba de guardar, `load` a
 			# secas puede devolver la copia que el editor tenía en memoria y el
 			# refresco no serviría de nada. Esto sólo corre en el editor, así que
@@ -275,7 +316,7 @@ func _previsualizar_zonas() -> void:
 	# Boca de la Mina: el bulto real, igual que las zonas, para poder esculpir
 	# el terreno alrededor sabiendo dónde queda el socavón.
 	# Igual que arriba: con el modelo puesto no hace falta el bulto de CSG.
-	if mostrar_zonas_en_editor and _nodo_boca() == null:
+	if _nodo_boca() == null:
 		_geometria_boca_mina(raiz)
 
 	var m_lbl := Label3D.new()
@@ -351,6 +392,77 @@ func _construir_boca_mina() -> void:
 		salida.position = BOCA_MINA + Vector3(-4.5, 2.0, 0.0)
 
 
+## Margen alrededor del bus desde el que ya se puede subir, en metros.
+const MARGEN_PARADA := 2.5
+
+
+## Cuelga una parada de bus de cada autobús de la escena.
+##
+## Se hace en ejecución y no a mano en el .tscn para que los dos mundos —este y
+## el otro— funcionen igual sin tocar ninguna de las dos escenas: alcanza con
+## que el nodo del bus se llame "bus...".
+##
+## El área se ajusta al TAMAÑO REAL del modelo más el margen, en vez de ser una
+## esfera fija: el bus mide más de nueve metros de largo, y una esfera centrada
+## o no llega a las puntas o te deja subir desde el techo de al lado.
+func _construir_paradas_de_bus() -> void:
+	var etiqueta := "la otra región"
+	var juego := get_tree().get_first_node_in_group("game")
+	if juego != null and juego.has_method("nombre_del_otro_mundo"):
+		var n: String = juego.nombre_del_otro_mundo()
+		if n != "":
+			etiqueta = n
+
+	var n_paradas := 0
+	for hijo in get_children():
+		if not (hijo is Node3D) or not hijo.name.begins_with("bus"):
+			continue
+		var caja := _caja_de(hijo)
+		if caja.size == Vector3.ZERO:
+			continue
+
+		var area := Area3D.new()
+		area.set_script(PARADA_DE_BUS)
+		area.name = "Parada_" + hijo.name
+		area.bus = hijo.name
+		area.prompt = "[E] Viajar a %s" % etiqueta
+		add_child(area)
+		area.global_position = caja.position + caja.size * 0.5
+
+		var cs := CollisionShape3D.new()
+		var forma := BoxShape3D.new()
+		forma.size = caja.size + Vector3.ONE * (MARGEN_PARADA * 2.0)
+		cs.shape = forma
+		area.add_child(cs)
+		n_paradas += 1
+
+	if n_paradas > 0:
+		print("[mundo] paradas de bus: %d — viajan a %s" % [n_paradas, etiqueta])
+
+
+## Caja envolvente de un nodo, en coordenadas de mundo.
+func _caja_de(n: Node) -> AABB:
+	var caja := AABB()
+	var primero := true
+	for m in _mallas_de(n):
+		var a: AABB = m.global_transform * m.mesh.get_aabb()
+		if primero:
+			caja = a
+			primero = false
+		else:
+			caja = caja.merge(a)
+	return caja
+
+
+func _mallas_de(n: Node) -> Array:
+	var out: Array = []
+	if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+		out.append(n)
+	for c in n.get_children():
+		out.append_array(_mallas_de(c))
+	return out
+
+
 ## Sólo el bulto visible de la boca: cerro, socavón, entable y cartel.
 ##
 ## Va aparte del ZoneExit para poder dibujarla también en el editor. Antes la
@@ -405,6 +517,11 @@ func _geometria_boca_mina(padre: Node3D) -> void:
 
 ## Punto donde reaparece el jugador al salir de la Mina (frente a la boca).
 func mine_mouth() -> Vector3:
+	# Marcador puesto a mano: manda siempre. Poné un Marker3D donde quieras que
+	# la party aparezca al salir y metelo en el grupo "salida_mina".
+	var m := get_tree().get_first_node_in_group("salida_mina") as Node3D
+	if m != null:
+		return m.global_position
 	return to_global(_pos_boca() + SALIR_DE_LA_MINA)
 
 

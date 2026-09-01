@@ -9,6 +9,14 @@ extends Node3D
 ##
 ## Durante la huida: 8 mineros normales + 4 bloques de derrumbe del techo.
 
+## Ambiente propio de la cueva. Game lo aplica al entrar y apaga el sol; al
+## salir devuelve el de afuera. Ver Game._aplicar_ambiente_interior.
+##
+## Sin esto la mina se iluminaba con el ambiente del mundo abierto y parecía un
+## exterior: las 23 antorchas y linternas no se notaban porque no había
+## oscuridad que llenar. Dejalo vacío y vuelve a verse como antes.
+@export var ambiente: Environment = preload("res://scenes/core/ambiente_mina.tres")
+
 ## Los mineros corruptos: mismas caracteristicas que EnemyNormal pero con su
 ## modelo. Se usan tanto en el combate como en la huida.
 const MINERO          := preload("res://scenes/enemies/MineroCorrupto.tscn")

@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_ajustes")
+activo = false
 saturacion = 0.8
-tinte_sombra = Color(0.74, 0.77, 0.9, 1)
 contorno_activo = false
 contorno_grosor = 0.005
 pantalla_opacidad = 0.0

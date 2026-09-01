@@ -1,0 +1,34 @@
+[gd_resource type="Environment" format=3 uid="uid://vilu_ambiente_mina"]
+
+; Ambiente de cueva, para los interiores de la Mina.
+;
+; Lo aplica Game.gd al entrar (ver _aplicar_ambiente_interior) y lo devuelve al
+; salir. Sin esto dentro de la mina seguía actuando el ambiente del mundo
+; abierto —luz ambiente 0.85, la mitad aportada por el cielo, más el sol a
+; 1.15—, así que las 23 antorchas y linternas no se notaban: no había oscuridad
+; que llenar.
+;
+; PARA AJUSTARLO: lo único que decide cuánta boca abre la oscuridad es
+; `ambient_light_energy`. Subilo si te perdés, bajalo si querés más agobio.
+; En 0.0 sólo se ve lo que tocan las antorchas, que es demasiado.
+
+[resource]
+
+; Color liso y oscuro en vez del cielo: dentro de una cueva el cielo no pinta
+; nada, y dejarlo hacía que cualquier hueco entre rocas brillara como el día.
+background_mode = 1
+background_color = Color(0.035, 0.03, 0.045, 1)
+
+; COLOR (2), no SKY: la luz ambiente deja de venir del cielo.
+ambient_light_source = 2
+; Azulado y frío, para que contraste con el naranja de las antorchas: lo que
+; está iluminado se lee cálido, y lo que no, azul de piedra.
+ambient_light_color = Color(0.42, 0.44, 0.6, 1)
+ambient_light_energy = 0.13
+
+; Igual que el de afuera, para que el salto al entrar no cambie el tratamiento
+; de color, sólo la cantidad de luz.
+tonemap_mode = 2
+adjustment_enabled = true
+adjustment_contrast = 1.1
+adjustment_saturation = 1.12

@@ -7,7 +7,30 @@ extends Node3D
 
 const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
 const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
-const WORLD_SCENE := preload("res://scenes/core/World.tscn")
+## Mundo que se monta al empezar.
+##
+## Es @export y no const para poder cambiar de región desde el inspector del
+## nodo Game, sin tocar código: `WorldAtacama.tscn` es la copia de Tarapacá que
+## sirve de punto de partida para la segunda región.
+##
+## OJO con el terreno: cada mundo tiene que apuntar a SU carpeta de datos de
+## Terrain3D (`data_directory` en el nodo Terrain3D). Si dos mundos comparten
+## una, esculpir en uno deforma el otro.
+@export var escena_del_mundo: PackedScene = preload("res://scenes/core/World.tscn")
+
+## El otro mundo, al que lleva el bus. Los dos se intercambian al viajar, así
+## que el viaje de vuelta sale gratis.
+@export var mundo_alterno: PackedScene = preload("res://scenes/core/WorldAtacama.tscn")
+
+## Cómo se llama cada mundo en el cartel del bus.
+const NOMBRES_DE_MUNDO := {
+	"res://scenes/core/World.tscn": "Tarapacá",
+	"res://scenes/core/WorldAtacama.tscn": "Atacama",
+}
+
+## Metros que se camina hacia el poblado al bajarse del bus. Lo justo para
+## quedar fuera del área de la parada y no volver a subirse sin querer.
+const BAJADA_DEL_BUS := 8.0
 const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
 const PANTALLA_LOGROS := preload("res://scenes/ui/PantallaLogros.gd")
 
@@ -97,7 +120,7 @@ func _ready() -> void:
 		GameManager.debug_start_zone = ""
 
 	# El mundo abierto (todas las zonas al aire libre) vive siempre.
-	world = WORLD_SCENE.instantiate()
+	world = escena_del_mundo.instantiate()
 	add_child(world)
 
 	hud = HUD_SCENE.instantiate()
@@ -489,7 +512,49 @@ func enter_interior(id: String) -> void:
 		# El interior se construye recién ahora, así que se lo viste acá.
 		if r != null:
 			TOON_SKIN.new().aplicar(r, ajustes_toon)
+		_aplicar_ambiente_interior(r)
 		_move_to_spawn(r))
+
+
+## Ambiente de afuera, guardado para devolverlo al salir de un interior.
+var _env_exterior: Environment = null
+
+
+## Un interior puede traer su propio ambiente y apagar el sol.
+##
+## Es OPCIONAL a propósito: el que no declare `ambiente` se queda con el de
+## afuera. La Iglesia, por ejemplo, no tiene luces propias, así que a oscuras
+## quedaría negra.
+func _aplicar_ambiente_interior(r: Node) -> void:
+	if r == null or not ("ambiente" in r):
+		return
+	var amb: Environment = r.ambiente
+	if amb == null:
+		return
+	var we := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we == null:
+		return
+	if _env_exterior == null:
+		_env_exterior = we.environment
+	we.environment = amb
+
+	# El sol también, o seguiría entrando luz direccional por todas partes: una
+	# luz direccional no la para ninguna pared, sólo su sombra.
+	var sol := get_node_or_null("Sun") as DirectionalLight3D
+	if sol != null:
+		sol.visible = false
+
+
+func _restaurar_ambiente() -> void:
+	var sol := get_node_or_null("Sun") as DirectionalLight3D
+	if sol != null:
+		sol.visible = true
+	if _env_exterior == null:
+		return
+	var we := get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we != null:
+		we.environment = _env_exterior
+	_env_exterior = null
 
 
 ## Sale del interior de vuelta al mundo, aterrizando en la zona indicada.
@@ -497,6 +562,7 @@ func exit_interior(zona: String, use_travel_spawn := false) -> void:
 	await TravelManager.fade_then(func() -> void:
 		TravelManager.clear_region(_region_holder)
 		_interior = ""
+		_restaurar_ambiente()
 		if world:
 			world.visible = true
 			world.process_mode = Node.PROCESS_MODE_INHERIT
@@ -515,6 +581,94 @@ func exit_interior(zona: String, use_travel_spawn := false) -> void:
 				var marcador := "TravelSpawn" if use_travel_spawn else "PlayerSpawn"
 				destino = world.spawn_point(zona, marcador)
 		_colocar_en(destino if destino != Vector3.INF else _pos_antes_interior))
+
+
+## Nombre de la región a la que lleva el bus. Lo usa WorldRoot para el cartel.
+func nombre_del_otro_mundo() -> String:
+	if mundo_alterno == null:
+		return ""
+	return NOMBRES_DE_MUNDO.get(mundo_alterno.resource_path, "la otra región")
+
+
+## Viaje en bus: descarga este mundo entero y monta el otro.
+##
+## No se parece a nada de lo que ya había. `enter_interior` sólo ESCONDE el
+## mundo y carga la escena chica en el holder; acá el mundo se va del todo,
+## porque el destino es otra escena con su propio terreno.
+##
+## `bus` es el nombre del autobús al que te subiste. Del otro lado se busca el
+## que se llama igual, así que subirse al bus3 te deja junto al bus3 de allá.
+func viajar_en_bus(bus: String) -> void:
+	if mundo_alterno == null:
+		return
+	await TravelManager.fade_then(func() -> void:
+		# El prompt del bus que se está por liberar: si no se limpia, el cartel
+		# queda pegado en el HUD apuntando a un nodo que ya no existe.
+		for c in party:
+			if c.has_method("clear_interactable"):
+				c.clear_interactable(c.get("_interactable"))
+		if hud and hud.has_method("hide_prompt"):
+			hud.hide_prompt()
+
+		# Intercambio: al que voy pasa a ser el actual, y el que dejo queda de
+		# alterno. Con eso el viaje de vuelta funciona sin nada más.
+		var destino: PackedScene = mundo_alterno
+		mundo_alterno = escena_del_mundo
+		escena_del_mundo = destino
+
+		if is_instance_valid(world):
+			# remove_child antes de liberar: queue_free es diferido, y si no se
+			# saca del árbol quedan DOS mundos en el grupo "world" durante un
+			# cuadro. Todo lo que busca el mundo por grupo elegiría cualquiera.
+			remove_child(world)
+			world.queue_free()
+		world = escena_del_mundo.instantiate()
+		add_child(world)
+
+		_interior = ""
+		_bajar_del_bus(bus))
+
+
+## Deja al party junto al bus homólogo, un poco más allá y mirando al poblado.
+func _bajar_del_bus(bus: String) -> void:
+	var nodo := world.get_node_or_null(NodePath(bus)) as Node3D
+	if nodo == null:
+		# El bus con ese nombre no está en el otro mundo: sirve cualquiera.
+		for c in world.get_children():
+			if c is Node3D and c.name.begins_with("bus"):
+				nodo = c
+				break
+	if nodo == null:
+		_colocar_en(world.spawn_point("Poblado"))
+		return
+
+	# Hacia dónde queda el pueblo. Se mide contra el nodo del Poblado en vez de
+	# fijar un rumbo: los dos mundos van a divergir, y esto sigue valiendo.
+	var hacia := Vector3.FORWARD
+	var poblado := world.get_node_or_null("Poblado") as Node3D
+	if poblado != null:
+		var d: Vector3 = poblado.global_position - nodo.global_position
+		d.y = 0.0
+		if d.length() > 0.01:
+			hacia = d.normalized()
+
+	_colocar_en(nodo.global_position + hacia * BAJADA_DEL_BUS)
+	_mirar_hacia(hacia)
+
+
+## Gira la cámara para que mire en esa dirección.
+##
+## Con yaw 0 la cámara se planta en +Z del foco y mira hacia -Z (ver
+## _update_camera), así que el ángulo que deja la vista en `dir` es
+## atan2(-dir.x, -dir.z).
+func _mirar_hacia(dir: Vector3) -> void:
+	if dir.length() < 0.01:
+		return
+	_cam_yaw = atan2(-dir.x, -dir.z)
+	var act := active_character()
+	if act != null:
+		_cam_focus = act.global_position + Vector3(0.0, _cam_alto, 0.0)
+	_update_camera()
 
 
 ## Teletransporte dentro del mundo abierto (viaje rápido de los Guardianes).

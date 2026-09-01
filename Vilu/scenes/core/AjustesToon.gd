@@ -26,6 +26,19 @@ class_name AjustesToon
 ##   contorno_grosor 0.018 · pantalla_opacidad 0.85
 ##   pantalla_umbral_profundidad 0.4 · pantalla_umbral_normal 0.6
 
+## Interruptor general del sombreado toon.
+##
+## En false, ToonSkin.aplicar() no convierte NADA y cada modelo se queda con el
+## material que trae de su .glb. Es el único mando que apaga el toon entero:
+## `sombreado_toon` del nodo World sólo cubría el mundo abierto, así que los
+## interiores —la Mina— lo seguían recibiendo por Game.enter_interior y por las
+## cuatro llamadas propias de MinaCueva, y quedaban escalonados mientras el
+## mundo ya no lo estaba.
+##
+## Lo que escalona es `floor(nl * pasos_luz)` en toon_objeto.gdshader. Si en vez
+## de apagarlo querés suavizarlo, subí `pasos_luz` a 6.
+@export var activo: bool = true
+
 @export_group("Color")
 ## Cuánto se aviva el color base. 1.0 = el color tal cual viene de la textura;
 ## por encima de eso se satura, y es lo que hace que los tonos canten.
