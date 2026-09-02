@@ -43,7 +43,7 @@ const ESPERA_CIERRE := 3.5
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 
 ## Zonas que NO son parte del mundo continuo: se cargan aparte al entrar.
-const INTERIORES := ["Mina", "Final", "Iglesia", "Isluga"]
+const INTERIORES := ["Mina", "Final", "Iglesia", "Isluga", "OjosDelSalado"]
 
 ## Interiores a los que se entra por una PUERTA que está dentro de una zona.
 ##
@@ -51,7 +51,7 @@ const INTERIORES := ["Mina", "Final", "Iglesia", "Isluga"]
 ## por el que entró, no al punto de aparición de la zona. La Mina no está acá
 ## porque tiene su propio punto curado (`mine_mouth()`), unos metros delante del
 ## socavón, que queda mejor que el sitio exacto donde estabas parado.
-const INTERIORES_DE_PUERTA := ["Iglesia", "Isluga"]
+const INTERIORES_DE_PUERTA := ["Iglesia", "Isluga", "OjosDelSalado"]
 
 @onready var _region_holder: Node3D = $RegionHolder
 
@@ -95,6 +95,11 @@ var _resetting := false
 var player: CharacterBody3D          # personaje primario/activo de referencia
 var hud: CanvasLayer
 var world: Node3D                    # WorldRoot: todas las zonas al aire libre
+
+## Avisa de que el party acaba de reaparecer, por caída o por reinicio. Las
+## escenas que dejan cosas a medias —una plataforma parada a mitad de recorrido,
+## por ejemplo— se enganchan acá para volver a dejarlas listas.
+signal jugador_reaparecio
 
 var _respawn_pos := Vector3.ZERO      # dónde reaparecer al caer al vacío
 var _interior := ""                   # interior abierto ("" = estás en el mundo)
@@ -276,6 +281,7 @@ func volver_al_punto_seguro(motivo: String, dano := 0.0) -> void:
 
 func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 	_resetting = true
+	jugador_reaparecio.emit()
 	if hud and hud.has_method("show_banner"):
 		hud.show_banner(motivo)
 
@@ -297,8 +303,12 @@ func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 	_apply_active()
 	if hud and hud.has_method("clear_banner"):
 		get_tree().create_timer(1.5).timeout.connect(func() -> void:
-			if is_instance_valid(hud) and hud.has_method("clear_banner"):
-				hud.clear_banner())
+			# Se busca de nuevo en vez de capturarlo: una lambda que captura un nodo
+			# y sobrevive a que lo liberen da "Lambda capture was freed", aunque se
+			# compruebe is_instance_valid antes de usarlo.
+			var h := get_tree().get_first_node_in_group("hud")
+			if h != null and h.has_method("clear_banner"):
+				h.clear_banner())
 	_resetting = false
 
 

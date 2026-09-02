@@ -25,7 +25,17 @@ func _ready() -> void:
 	_build()
 
 
+## Si el nodo YA trae un modelo —porque el guion se le colgó a la estatua puesta
+## en la escena— no se le dibuja la cápsula del greybox encima.
+##
+## Todo lo que se le cuelga se divide por su escala: la estatua está a escala 3,
+## y sin descontarla el cartel se iría a 7.5 m de alto y la zona para hablarle
+## tendría 7.5 m de radio.
 func _build() -> void:
+	var f := global_transform.basis.get_scale()
+	var k: float = 1.0 / maxf(f.y, 0.001)
+	var tiene_modelo := _primera_malla(self) != null
+
 	# Material azul hielo con emisión
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color           = Color(0.48, 0.76, 0.95)
@@ -34,19 +44,20 @@ func _build() -> void:
 	mat.emission_energy_multiplier = 1.6
 
 	# Cuerpo visual
-	var mi  := MeshInstance3D.new()
-	var cap := CapsuleMesh.new()
-	cap.radius = 0.35
-	cap.height = 1.6
-	mi.mesh = cap
-	mi.position.y = 0.8
-	mi.set_surface_override_material(0, mat)
-	add_child(mi)
+	if not tiene_modelo:
+		var mi  := MeshInstance3D.new()
+		var cap := CapsuleMesh.new()
+		cap.radius = 0.35
+		cap.height = 1.6
+		mi.mesh = cap
+		mi.position.y = 0.8
+		mi.set_surface_override_material(0, mat)
+		add_child(mi)
 
 	# Texto flotante
 	var lbl             := Label3D.new()
 	lbl.text             = "Guardián Ojos del Salado"
-	lbl.position.y       = 2.5
+	lbl.position.y       = 2.5 * k
 	lbl.pixel_size       = 0.007
 	lbl.billboard        = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.modulate         = Color(0.60, 0.88, 1.0)
@@ -57,9 +68,9 @@ func _build() -> void:
 
 	# Halo de luz azul
 	var light          := OmniLight3D.new()
-	light.position.y   = 1.0
+	light.position.y   = 1.0 * k
 	light.light_color  = Color(0.55, 0.80, 1.0)
-	light.omni_range   = 4.5
+	light.omni_range   = 4.5 * k
 	light.light_energy = 1.4
 	add_child(light)
 
@@ -73,7 +84,7 @@ func _build() -> void:
 
 	var cs  := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
-	sph.radius = 2.5
+	sph.radius = 2.5 * k
 	cs.shape = sph
 	zone.add_child(cs)
 
@@ -103,3 +114,13 @@ func _open_map() -> void:
 	map.current_volcano_idx = 1    # Ojos del Salado = ubicación actual
 	map.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(map)
+
+
+func _primera_malla(n: Node) -> MeshInstance3D:
+	for h in n.get_children():
+		if h is MeshInstance3D:
+			return h
+		var hondo := _primera_malla(h)
+		if hondo != null:
+			return hondo
+	return null

@@ -61,25 +61,6 @@ func test_hold_returns_to_post() -> void:
 	assert_lt(dir.x, 0.0, "sin enemigos, vuelve hacia su puesto (-x)")
 
 
-func test_guard_commits_to_target() -> void:
-	GameManager.reset_progress()
-	var emilia := PLAYER.instantiate()
-	emilia.is_archer = false
-	add_child_autofree(emilia)
-	emilia.global_position = Vector3.ZERO
-	emilia.set_active(false)
-	emilia.set_ai_mode(false)             # guardia en (0,0,0)
-	var enemy := preload("res://scenes/enemies/EnemyNormal.tscn").instantiate()
-	add_child_autofree(enemy)
-	enemy.global_position = Vector3(2, 0, 0)   # en rango de defensa, fuera de melee
-	emilia._hold_behavior()
-	var t: Node = emilia._guard_target
-	assert_not_null(t, "el guardia adquiere el objetivo en rango")
-	enemy.global_position = Vector3(6, 0, 0)   # se aleja, pero dentro de la correa (14)
-	emilia._hold_behavior()
-	assert_eq(emilia._guard_target, t, "lo persigue: mantiene el mismo objetivo hasta rematarlo")
-
-
 func test_triple_arrow_needs_tirana_and_energy() -> void:
 	var benja := PLAYER.instantiate()
 	benja.is_archer = true
@@ -126,3 +107,80 @@ func test_arena_uses_configured_enemy_and_color() -> void:
 	var e = arena.get_current_enemies()[0]
 	assert_almost_eq(e.base_color.r, 1.0, 0.02)
 	assert_almost_eq(e.base_color.g, 0.55, 0.02)
+
+
+## El compañero acompaña, no pelea.
+##
+## Antes tenía una IA de combate que perseguía y remataba sola. Se quitó a
+## propósito: las peleas son del personaje que estás llevando.
+func test_el_companero_se_pone_atras_y_al_costado() -> void:
+	var lider := PLAYER.instantiate()
+	lider.is_archer = false
+	add_child_autofree(lider)
+	lider.global_position = Vector3.ZERO
+	lider.set_active(true)
+
+	var comp := PLAYER.instantiate()
+	comp.is_archer = true
+	add_child_autofree(comp)
+	comp.set_active(false)
+	comp.set_ai_mode(true)                      # R: te sigue
+	comp.global_position = Vector3(0, 0, 20)    # lejos, detrás
+
+	var dir: Vector3 = comp._ai_behavior()
+	assert_gt(dir.length(), 0.5, "estando lejos, va hacia su sitio")
+
+	# Ya colocado en su sitio, se queda quieto y no tiembla pegado al líder.
+	var frente: Vector3 = -(lider as Node3D).global_transform.basis.z
+	var derecha: Vector3 = Vector3.UP.cross(frente).normalized()
+	var atras: float = comp.seguir_atras
+	var costado: float = comp.seguir_costado
+	comp.global_position = (lider as Node3D).global_position - frente * atras \
+		+ derecha * costado
+	assert_almost_eq(comp._ai_behavior().length(), 0.0, 0.01,
+		"en su sitio no se mueve")
+
+
+func test_el_companero_no_ataca_aunque_tenga_un_enemigo_encima() -> void:
+	var comp := PLAYER.instantiate()
+	comp.is_archer = false
+	add_child_autofree(comp)
+	comp.global_position = Vector3.ZERO
+	comp.set_active(false)
+	comp.set_ai_mode(true)
+	var enemigo := preload("res://scenes/enemies/EnemyNormal.tscn").instantiate()
+	add_child_autofree(enemigo)
+	enemigo.global_position = Vector3(0.5, 0, 0)   # pegado
+	var vida: float = float(enemigo.health)
+	comp._ai_behavior()
+	assert_eq(enemigo.health, vida, "no le pega: el combate es del activo")
+
+
+func test_el_companero_no_recibe_dano() -> void:
+	var comp := PLAYER.instantiate()
+	comp.is_archer = false
+	add_child_autofree(comp)
+	comp.set_active(false)
+	var vida: int = int(comp.health)
+	comp.take_damage(40.0)
+	assert_eq(comp.health, vida, "al que no llevás no se le puede pegar")
+
+	comp.set_active(true)
+	comp.take_damage(40.0)
+	assert_lt(comp.health, vida, "al activo sí")
+
+
+func test_quieto_no_pelea_solo_vuelve_a_su_puesto() -> void:
+	var comp := PLAYER.instantiate()
+	comp.is_archer = false
+	add_child_autofree(comp)
+	comp.global_position = Vector3.ZERO
+	comp.set_active(false)
+	comp.set_ai_mode(false)                        # T: se queda quieto
+	var enemigo := preload("res://scenes/enemies/EnemyNormal.tscn").instantiate()
+	add_child_autofree(enemigo)
+	enemigo.global_position = Vector3(2, 0, 0)     # dentro del viejo rango de defensa
+	var vida: float = float(enemigo.health)
+	var dir: Vector3 = comp._hold_behavior()
+	assert_eq(enemigo.health, vida, "ya no defiende el puesto a golpes")
+	assert_almost_eq(dir.length(), 0.0, 0.01, "y estando en su puesto no se mueve")

@@ -38,11 +38,18 @@ var _yastay_label: Label3D = null
 var _hunters: Array = []
 var _inspected: Array = []
 var _wounded: Node3D = null
+## Los guanacos que hay que sanar, y los que ya se sanaron.
+var _heridos: Array = []
+var _sanados: Array = []
 var _wound_healed := false
 var _yastay_stomp_cd := 0.0
 var _brujo: Node3D = null
 var _iniciado := false   # la secuencia ya arrancó (no se repite al volver)
 var _en_zona := false    # el jugador está dentro de la quebrada
+
+## Dónde estaba el Yastay antes de perseguir a nadie. Al calmarse vuelve ahí,
+## junto a su rebaño, en vez de quedarse plantado encima del jugador.
+var _yastay_origen := Transform3D.IDENTITY
 
 ## Cuánto se corrió la arena respecto de las coordenadas con que se escribió
 ## esta escena. Sale de dónde está el modelo del Yastay puesto a mano, y se le
@@ -267,6 +274,11 @@ func _on_inspect(player: Node, body: Node3D, zone: Area3D) -> void:
 
 func _begin_aggressive() -> void:
 	_phase = Phase.AGGRESSIVE
+	# Se anota AQUÍ, justo antes de la primera persecución, y no al nacer: si se
+	# tomara antes, el apoyo en el suelo todavía no habría corrido y el sitio
+	# guardado sería el de la cápsula enterrada.
+	if is_instance_valid(_yastay):
+		_yastay_origen = _yastay.transform
 	if is_instance_valid(_yastay_label):
 		_yastay_label.text = "Yastay\n¡Intruso!"
 	_banner("¡El Yastay os ve! Emilia: esquiva sus cargas. Benjamín: sana al guanaco herido.", 6.0)
@@ -294,7 +306,7 @@ func _yastay_think(delta: float) -> void:
 	if dist > 2.0:
 		_yastay.global_position += to_t.normalized() * 3.8 * delta
 	if dist > 0.5:
-		_yastay.look_at(_yastay.global_position + to_t.normalized(), Vector3.UP)
+		_encarar(to_t.normalized())
 
 	# Golpe al alcanzar al jugador
 	_yastay_stomp_cd = max(0.0, _yastay_stomp_cd - delta)
@@ -305,9 +317,80 @@ func _yastay_think(delta: float) -> void:
 		_banner("¡Golpe del Yastay! ¡Esquiva!", 1.8)
 
 
+## Gira el Yastay para que MIRE hacia `dir`.
+##
+## `look_at` apunta el -Z del nodo al objetivo, pero los modelos de este proyecto
+## miran hacia +Z: usándolo a secas, el bicho persigue de espaldas y cocea con
+## las patas traseras. Es el mismo motivo por el que Enemy.gd tiene su
+## `giro_modelo = 180`.
+func _encarar(dir: Vector3) -> void:
+	if not is_instance_valid(_yastay) or dir.length() < 0.01:
+		return
+	_yastay.look_at(_yastay.global_position + dir, Vector3.UP)
+	_yastay.rotate_object_local(Vector3.UP, PI)
+
+
 # ─── Curación ─────────────────────────────────────────────────────────────────
 
-func _on_heal_entered(body: Node3D) -> void:
+## Cuántos guanacos heridos hay que sanar, si no los marcaste vos.
+const HERIDOS_POR_DEFECTO := 4
+
+
+## Qué guanacos hay que sanar.
+##
+## Manda el grupo "guanaco_herido": seleccionás los que quieras en el editor,
+## los metés al grupo y son ésos. Es lo mismo que se hace con "boca_mina" o
+## "salida_mina", y no depende de nombres ni de cuántos haya.
+##
+## Si no marcaste ninguno se toman los CUATRO MÁS LEJANOS del Yastay. Hoy eso da
+## exactamente los de los costados —los que estaban siendo cazados— porque el
+## rebaño está apiñado junto a él: los de la manada quedan a 2-5 m y los otros a
+## 9-12 m. Es una suposición razonable, no una regla: por eso avisa por consola
+## cuáles eligió, para que se pueda corregir metiéndolos al grupo.
+func _elegir_heridos() -> Array:
+	var marcados: Array = []
+	for c in get_children():
+		if c is Node3D and c.is_in_group("guanaco_herido"):
+			marcados.append(c)
+	if not marcados.is_empty():
+		return marcados
+
+	var manada := _modelos_con_prefijo("guanaco")
+	if manada.size() <= HERIDOS_POR_DEFECTO:
+		return manada
+	var centro: Vector3 = _yastay.position if is_instance_valid(_yastay) else Vector3.ZERO
+	manada.sort_custom(func(a: Node3D, b: Node3D) -> bool:
+		return Vector2(a.position.x - centro.x, a.position.z - centro.z).length() \
+			> Vector2(b.position.x - centro.x, b.position.z - centro.z).length())
+	var elegidos := manada.slice(0, HERIDOS_POR_DEFECTO)
+	var nombres := []
+	for e in elegidos:
+		nombres.append(e.name)
+	print(("[yastay] sin guanacos en el grupo 'guanaco_herido'; se toman los %d "
+		+ "más lejanos: %s. Metelos al grupo para fijarlo.")
+		% [HERIDOS_POR_DEFECTO, ", ".join(nombres)])
+	return elegidos
+
+
+## Le cuelga a un guanaco su zona de curación.
+func _zona_de_cura(g: Node3D) -> void:
+	if g.has_node("ZonaCura"):
+		return
+	var area := Area3D.new()
+	area.name = "ZonaCura"
+	area.collision_layer = 0
+	area.collision_mask = 2
+	area.monitoring = true
+	g.add_child(area)
+	var cs := CollisionShape3D.new()
+	var sph := SphereShape3D.new()
+	sph.radius = 2.2
+	cs.shape = sph
+	area.add_child(cs)
+	area.body_entered.connect(_on_heal_entered.bind(g))
+
+
+func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 	if _wound_healed or _phase != Phase.AGGRESSIVE:
 		return
 	if not body.is_in_group("player"):
@@ -315,27 +398,67 @@ func _on_heal_entered(body: Node3D) -> void:
 	if body.get("is_archer") != true:
 		_banner("Sólo Benjamín puede sanar al guanaco.", 2.5)
 		return
+	if guanaco == null:
+		guanaco = _heridos[0] if not _heridos.is_empty() else null
+	if guanaco == null or guanaco in _sanados:
+		return
+
+	_sanados.append(guanaco)
+	_levantar(guanaco)
+	if _sanados.size() < _heridos.size():
+		_banner("Guanacos sanados: %d/%d" % [_sanados.size(), _heridos.size()], 2.5)
+		return
 	_heal()
+
+
+## Un guanaco sanado: se incorpora y pierde el cartel de herido.
+func _levantar(g: Node3D) -> void:
+	if not is_instance_valid(g):
+		return
+	var tw := get_tree().create_tween()
+	# La altura y el giro sólo se tocan en las cápsulas: los modelos los pusiste
+	# vos de pie y en su sitio, y "incorporarlos" los movería sin motivo.
+	if _es_capsula(g):
+		tw.tween_property(g, "rotation:z", 0.0, 0.9)
+	var lbl := g.get_node_or_null("Label3D")
+	if lbl != null:
+		tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5)
+	var z := g.get_node_or_null("ZonaCura") as Area3D
+	if z != null:
+		z.set_deferred("monitoring", false)
 
 
 func _heal() -> void:
 	_wound_healed = true
 	_phase = Phase.RESOLVED
-	_hint("El guanaco herido se recupera. El Yastay asiente…")
+	_hint("Los guanacos se recuperan. El Yastay asiente…")
 
-	# El guanaco herido se levanta
-	if is_instance_valid(_wounded):
-		var tw := get_tree().create_tween()
-		tw.tween_property(_wounded, "rotation:z", 0.0, 0.9)
-		# Quitar el cartel de herido
-		var lbl := _wounded.get_node_or_null("Label3D")
-		if lbl:
-			tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5)
+	# Los guanacos ya se levantaron uno a uno en _levantar(); acá sólo queda
+	# cerrar la secuencia.
 
 	# Yastay se calma
 	if is_instance_valid(_yastay_label):
 		_yastay_label.text = "Yastay"
+	_volver_a_su_sitio()
 	get_tree().create_timer(2.2).timeout.connect(_yastay_speaks)
+
+
+## Segundos que tarda el Yastay en volver caminando a su sitio.
+const REGRESO := 2.6
+
+
+## Devuelve al Yastay adonde estaba antes de perseguirte, con su rebaño.
+##
+## Sin esto se queda plantado encima del jugador, en mitad de la arena y
+## mirándolo, que es exactamente la pose de amenaza de la que acaba de salir.
+func _volver_a_su_sitio() -> void:
+	if not is_instance_valid(_yastay) or _yastay_origen == Transform3D.IDENTITY:
+		return
+	var tw := get_tree().create_tween()
+	tw.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(_yastay, "position", _yastay_origen.origin, REGRESO)
+	tw.parallel().tween_property(_yastay, "quaternion",
+		_yastay_origen.basis.get_rotation_quaternion(), REGRESO)
 
 
 ## El Yastay se acerca y habla. La bendición sólo llega al terminar el diálogo.
@@ -500,22 +623,19 @@ func _spawn_characters() -> void:
 		for gp: Vector3 in guana_pos:
 			_npc(gp + _desplazamiento, guanaco_mat, 0.75, "")
 
-	# — Guanaco herido (tumbado) —
-	_wounded = _npc(Vector3(8, 0, -6) + _desplazamiento, guanaco_mat, 0.80, "¡Sana al guanaco!")
-	_wounded.rotation.z = PI / 2.0   # tumbado de lado
+	# — Guanacos heridos —
+	_heridos = _elegir_heridos()
+	if _heridos.is_empty():
+		# Ninguno modelado: se cae al greybox de siempre, uno solo y tumbado.
+		var g := _npc(Vector3(8, 0, -6) + _desplazamiento, guanaco_mat, 0.80,
+			"¡Sana al guanaco!")
+		g.rotation.z = PI / 2.0   # tumbado de lado
+		_heridos.append(g)
+	_wounded = _heridos[0]   # el guion viejo mira esta variable en algún sitio
 
-	# Área de curación (solo Benjamín puede usarla)
-	var heal_area := Area3D.new()
-	heal_area.collision_layer = 0
-	heal_area.collision_mask  = 2
-	heal_area.monitoring      = true
-	var cs  := CollisionShape3D.new()
-	var sph := SphereShape3D.new()
-	sph.radius = 2.2
-	cs.shape   = sph
-	heal_area.add_child(cs)
-	heal_area.body_entered.connect(_on_heal_entered)
-	_wounded.add_child(heal_area)
+	for h: Node3D in _heridos:
+		_cartel_para(h, "¡Sana al guanaco!", 0.80)
+		_zona_de_cura(h)
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -590,5 +710,9 @@ func _banner(text: String, dur := 0.0) -> void:
 	hud.show_banner(text)
 	if dur > 0.0:
 		get_tree().create_timer(dur).timeout.connect(func() -> void:
-			if is_instance_valid(hud) and hud.has_method("clear_banner"):
-				hud.clear_banner())
+			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que
+			# captura un nodo y sobrevive a que lo liberen da "Lambda capture at index 0
+			# was freed", aunque se compruebe is_instance_valid antes de usarlo.
+			var h := get_tree().get_first_node_in_group("hud")
+			if h != null and h.has_method("clear_banner"):
+				h.clear_banner())

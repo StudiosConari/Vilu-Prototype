@@ -6,7 +6,7 @@ extends Control
 # [nombre, región, y_normalizado (0=norte/1=sur), region_id_viaje, beat_mínimo]
 const VOLCANOES := [
 	["Isluga",          "I Tarapacá",  0.10, "Isluga",  -1],
-	["Ojos del Salado", "III Atacama", 0.48, "Cumbre",   7],
+	["Ojos del Salado", "III Atacama", 0.48, "OjosDelSalado", 7],
 ]
 
 ## Índice del volcán donde se encuentra el jugador ahora (0=Isluga, 1=Salado, …).

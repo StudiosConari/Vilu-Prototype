@@ -79,13 +79,9 @@ const ZONAS := [
 		"pos": Vector3(-145, 0, 55),
 		"radio": 34.0,
 	},
-	{
-		# NO MOVER: su cráter está esculpido a esta posición exacta.
-		"id": "Cumbre",
-		"escena": "res://scenes/puzzles/Cumbre.tscn",
-		"pos": Vector3(-145, 0, -125),
-		"radio": 42.0,
-	},
+	# La CUMBRE tampoco está acá. Se renombró a Ojos del Salado y, como el
+	# Isluga, dejó de ser una zona del mundo: ahora es un interior al que se
+	# entra por la puerta del monumento de su subida. Ver INTERIORES en Game.gd.
 ]
 # La arena de oleadas (Region2_Volcan) se eliminó: era contenido suelto del
 # prototipo anterior, fuera de la ruta narrativa.
@@ -125,12 +121,14 @@ const CAMINOS := [
 	# mano, no un camino empedrado. Para recuperarlo:
 	#   ["Alicanto", "Isluga", 9.0, 0.0],
 	["Poblado", "Yastay", 9.0, 0.0],       # oeste
-	["Yastay", "Cumbre", 9.0, 9.0],        # grieta: pide ALAS
+	# El tramo Yastay->Cumbre se fue con ella: la Cumbre ya no es zona del mundo.
 ]
 
 var _zonas := {}          # id -> Node3D (raíz de la zona, ya desplazada)
 var _zona_actual := ""
 var _activas := {}        # id -> true si su guion está corriendo
+## Zonas del catálogo que este mundo NO tiene. Se junta y se informa una vez.
+var _ausentes: Array = []
 
 
 func _ready() -> void:
@@ -577,6 +575,7 @@ func _pos_de_zona(z: Dictionary) -> Vector3:
 
 
 func _instanciar_zonas() -> void:
+	_ausentes.clear()
 	for z in ZONAS:
 		# Zona construida a mano dentro de World.tscn: ya está en el árbol y
 		# sólo hay que registrarla. Instanciar además su escena pondría una
@@ -585,9 +584,12 @@ func _instanciar_zonas() -> void:
 		if z.get("inline", false):
 			var ya := get_node_or_null(NodePath(z["id"])) as Node3D
 			if ya == null:
-				push_warning(("WorldRoot: la zona '%s' se declara inline pero no hay " +
-						"ningún nodo con ese nombre en World.tscn. El nombre del nodo " +
-						"y el \"id\" de ZONAS tienen que ser IGUALES.") % z["id"])
+				# NO es un aviso: ZONAS es el catálogo de TODAS las zonas del
+				# juego y hay dos mundos que se reparten unas y otras. Que
+				# Tarapacá no esté en Atacama, o Yastay en Tarapacá, es lo
+				# normal desde que se partió el mapa. Antes esto gritaba una
+				# advertencia por cada zona ausente en cada arranque.
+				_ausentes.append(str(z["id"]))
 				continue
 			_zonas[z["id"]] = ya
 			_activas[z["id"]] = false
@@ -602,6 +604,10 @@ func _instanciar_zonas() -> void:
 		inst.position = z["pos"]
 		_zonas[z["id"]] = inst
 		_activas[z["id"]] = false
+
+	print("[mundo] zonas de este mapa: %s" % ", ".join(PackedStringArray(_zonas.keys())))
+	if not _ausentes.is_empty():
+		print("[mundo] del catálogo, en este mapa no están: %s" % ", ".join(PackedStringArray(_ausentes)))
 
 
 ## Pistas de tierra entre zonas. Van de BORDE a borde (no de centro a centro,

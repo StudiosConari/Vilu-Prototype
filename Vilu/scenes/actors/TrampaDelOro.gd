@@ -25,13 +25,6 @@ const CAIDA := 12.0
 const DURACION := 1.1
 ## Desde que empieza a caer hasta que el jugador reaparece. Deja ver la caída.
 const ESPERA_RESPAWN := 1.3
-## Margen alrededor de cada modelo para su disparador, en metros.
-const MARGEN := 0.5
-## Alto de la losa que detecta el pisotón: un cuerpo de pie entra de sobra.
-const ALTO_PISADA := 2.6
-## Cuánto se hunde la losa dentro del modelo, para que atrape aunque el jugador
-## se apoye un poco encajado en la geometría.
-const HUNDIDO := 0.4
 
 var puente: Node3D = null
 var camino: Node3D = null
@@ -44,57 +37,70 @@ var _origen := Vector3.ZERO
 func _ready() -> void:
 	if puente == null or camino == null:
 		push_warning("TrampaDelOro: faltan el puente o el camino; la trampa no se arma")
+		set_physics_process(false)
 		return
 	_origen = camino.global_position
-	_area_sobre(puente, _al_pisar_puente)
-	_area_sobre(camino, _al_pisar_camino)
 
 
-## Un disparador que cubre la PLANTA del modelo y se apoya sobre su cara
-## superior, no una caja que lo envuelva entero.
+## Se mira QUÉ PISA el jugador, no en qué caja está metido.
 ##
-## La diferencia importa: envolviendo el modelo, el disparador del puente medía
-## trece metros de alto y se activaba pasando por debajo, sin pisar nada. Como
-## lo que se quiere detectar es que alguien lo pise, basta una losa a la altura
-## de los pies.
-func _area_sobre(nodo: Node3D, quien: Callable) -> void:
-	var caja := _caja_de(nodo)
-	if caja.size == Vector3.ZERO:
-		push_warning("TrampaDelOro: %s no tiene malla; sin disparador" % nodo.name)
+## Antes eran dos Area3D con la planta de cada modelo. No servía: el puente y el
+## camino se solapan cinco metros, así que parado en la punta del puente ya
+## estabas dentro del área del camino y el oro se derrumbaba antes de saltar.
+## Agrandar o achicar las cajas no lo arregla, porque el solape está en los
+## modelos mismos.
+##
+## Un rayo corto bajo los pies sí distingue: dice sobre cuál de los dos estás
+## apoyado. Es exactamente "apenas toque la tierra del frente".
+func _physics_process(_delta: float) -> void:
+	if _cayendo or camino == null:
 		return
-	var area := Area3D.new()
-	area.name = "Disparador_" + nodo.name
-	area.collision_layer = 0
-	area.collision_mask = 2          # sólo el jugador
-	add_child(area)
-
-	var techo := caja.position.y + caja.size.y
-	area.global_position = Vector3(
-		caja.position.x + caja.size.x * 0.5,
-		techo - HUNDIDO + ALTO_PISADA * 0.5,
-		caja.position.z + caja.size.z * 0.5)
-
-	var cs := CollisionShape3D.new()
-	var forma := BoxShape3D.new()
-	forma.size = Vector3(
-		caja.size.x + MARGEN * 2.0, ALTO_PISADA, caja.size.z + MARGEN * 2.0)
-	cs.shape = forma
-	area.add_child(cs)
-	area.body_entered.connect(quien)
-
-
-func _al_pisar_puente(cuerpo: Node3D) -> void:
-	if _armada or not cuerpo.is_in_group("player"):
+	var p := _jugador()
+	if p == null:
 		return
-	_armada = true
-	_aviso("El puente cruje. El oro está cerca... y el suelo no se ve firme.")
-
-
-func _al_pisar_camino(cuerpo: Node3D) -> void:
-	# Sin haber pisado el puente no pasa nada: la trampa se arma al comprometerse
-	# con el ramal, no por rozar el camino desde el otro lado.
-	if _cayendo or not _armada or not cuerpo.is_in_group("player"):
+	var pisa := _que_pisa(p)
+	if pisa == null:
 		return
+	if not _armada and _es_parte_de(pisa, puente):
+		_armada = true
+		_aviso("El puente cruje. El oro está cerca... y el suelo no se ve firme.")
+	elif _armada and _es_parte_de(pisa, camino):
+		_derrumbar()
+
+
+func _jugador() -> Node3D:
+	for p in get_tree().get_nodes_in_group("player"):
+		if p is Node3D and "active" in p and p.active:
+			return p
+	return null
+
+
+## Sobre qué cuerpo está parado: rayo corto desde los tobillos hacia abajo.
+func _que_pisa(p: Node3D) -> Node:
+	var esp := get_world_3d().direct_space_state
+	if esp == null:
+		return null
+	var desde: Vector3 = p.global_position + Vector3.UP * 0.3
+	var q := PhysicsRayQueryParameters3D.create(desde, desde + Vector3.DOWN * 1.6)
+	q.collision_mask = 1
+	if p is CollisionObject3D:
+		q.exclude = [(p as CollisionObject3D).get_rid()]
+	var r := esp.intersect_ray(q)
+	return r.get("collider") if not r.is_empty() else null
+
+
+func _es_parte_de(nodo: Node, raiz: Node) -> bool:
+	var n := nodo
+	while n != null:
+		if n == raiz:
+			return true
+		n = n.get_parent()
+	return false
+
+
+## Se lo lleva abajo. Sólo pasa si ya pisó el puente: la trampa se arma al
+## comprometerse con el ramal, no por rozar el camino desde el otro lado.
+func _derrumbar() -> void:
 	_cayendo = true
 	_aviso("¡El oro cede bajo tus pies!")
 
@@ -129,28 +135,10 @@ func _aviso(texto: String) -> void:
 	if hud != null and hud.has_method("show_banner"):
 		hud.show_banner(texto)
 		get_tree().create_timer(3.0).timeout.connect(func() -> void:
-			if is_instance_valid(hud) and hud.has_method("clear_banner"):
-				hud.clear_banner())
+			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que
+			# captura un nodo y sobrevive a que lo liberen da "Lambda capture at index 0
+			# was freed", aunque se compruebe is_instance_valid antes de usarlo.
+			var h := get_tree().get_first_node_in_group("hud")
+			if h != null and h.has_method("clear_banner"):
+				h.clear_banner())
 
-
-## Caja envolvente de un nodo, en coordenadas de mundo.
-func _caja_de(n: Node) -> AABB:
-	var caja := AABB()
-	var primero := true
-	for m in _mallas_de(n):
-		var a: AABB = m.global_transform * m.mesh.get_aabb()
-		if primero:
-			caja = a
-			primero = false
-		else:
-			caja = caja.merge(a)
-	return caja
-
-
-func _mallas_de(n: Node) -> Array:
-	var out: Array = []
-	if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
-		out.append(n)
-	for c in n.get_children():
-		out.append_array(_mallas_de(c))
-	return out

@@ -132,5 +132,35 @@ func _cartel(texto: String) -> void:
 	if hud and hud.has_method("show_banner"):
 		hud.show_banner(texto)
 		get_tree().create_timer(3.0).timeout.connect(func() -> void:
-			if is_instance_valid(hud) and hud.has_method("clear_banner"):
-				hud.clear_banner())
+			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que
+			# captura un nodo y sobrevive a que lo liberen da "Lambda capture at index 0
+			# was freed", aunque se compruebe is_instance_valid antes de usarlo.
+			var h := get_tree().get_first_node_in_group("hud")
+			if h != null and h.has_method("clear_banner"):
+				h.clear_banner())
+
+
+## Agranda el blanco sin agrandar el modelo.
+##
+## El bloque mide 0.94 m y hay que acertarle de lejos, esquivando una muralla
+## que lo tapa parte del tiempo: con la colisión justa del modelo cuesta
+## demasiado. Se le añade una caja invisible alrededor, sólo en la capa de lo
+## golpeable, así que no estorba al caminar ni cambia nada más.
+func agrandar_blanco(margen: float) -> void:
+	if _cuerpo == null or margen <= 0.0:
+		return
+	if _cuerpo.has_node("MargenDeGolpe"):
+		return
+	var lado := 0.0
+	for h in _cuerpo.get_children():
+		if h is CollisionShape3D and (h as CollisionShape3D).shape != null:
+			var ab := (h as CollisionShape3D).shape.get_debug_mesh().get_aabb()
+			lado = maxf(lado, maxf(ab.size.x, maxf(ab.size.y, ab.size.z)))
+	if lado <= 0.0:
+		return
+	var caja := CollisionShape3D.new()
+	caja.name = "MargenDeGolpe"
+	var forma := BoxShape3D.new()
+	forma.size = Vector3.ONE * (lado + margen * 2.0)
+	caja.shape = forma
+	_cuerpo.add_child(caja)

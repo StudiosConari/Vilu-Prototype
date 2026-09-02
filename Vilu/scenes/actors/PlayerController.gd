@@ -27,8 +27,12 @@ signal arrow_fired
 
 const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
 const GUANACO_COMP_SCR := preload("res://scenes/actors/GuanacoCompanion.gd")
+const EMILIA_ANIM_SCR := preload("res://scenes/actors/EmiliaAnimator.gd")
 
-enum AiMode { COMBAT, FROZEN }
+## SIGUIENDO: acompaña al activo, un paso atrás y al costado. QUIETO: se queda
+## en su sitio. En ninguno de los dos pelea ni recibe daño: las batallas son del
+## personaje que estás llevando.
+enum AiMode { SIGUIENDO, FROZEN }
 
 @export_group("Rol")
 @export var is_archer := false
@@ -56,15 +60,26 @@ enum AiMode { COMBAT, FROZEN }
 @export var arrow_speed := 26.0
 @export var arrow_damage := 10.0
 @export var charge_time := 0.4      # mantener el clic este tiempo = flecha cargada
-@export var defense_radius := 3.0   # en modo QUIETO, defiende si un enemigo entra a este rango
-@export var guard_leash := 14.0     # persigue y REMATA al objetivo hasta esta distancia del puesto
-@export var ai_attack_cooldown := 0.45   # cadencia de ataque de la IA
+## Cuánto dura el agarre del golpe cargado, y con qué lo remata.
+@export_group("Agarre")
+@export var AGARRE_DURACION := 0.9
+@export var AGARRE_ALCANCE := 1.6
+@export var AGARRE_GOLPES := 4
+@export var AGARRE_MULTIPLICADOR := 2.4
+
+@export_group("Rodada")
+## Lo que dura la rodada. Va con la animación: 36 frames a 30 fps.
+@export var rodada_duracion := 1.2
+@export var rodada_velocidad := 9.0
+@export var rodada_espera := 0.8
+
+@export_group("Combate")
 
 var health: int
 var energy: float
 var input_locked := false
 var active := true
-var ai_mode: int = AiMode.COMBAT
+var ai_mode: int = AiMode.SIGUIENDO
 
 # Estados de habilidad
 var can_glide := false
@@ -77,6 +92,7 @@ var hud: CanvasLayer
 var _interactable: Node = null
 
 @onready var _visual: Node3D = $Visual
+var _emilia: Node3D = null
 @onready var _wings_vis: Node3D = get_node_or_null("Visual/Wings")
 @onready var _guanaco_vis: Node3D = get_node_or_null("Visual/Guanaco")
 
@@ -87,13 +103,15 @@ var _q_held_prev := false
 var _combo_step := 0
 var _combo_timer := 0.0
 var _attack_cd := 0.0
-var _ai_atk_cd := 0.0
 var _charging := false
 var _charge_t := 0.0
+var _carga_usada := false
+var _rodando := 0.0
+var _rodada_cd := 0.0
+var _rodada_dir := Vector3.ZERO
 var _energy_shown := -1
 var forced_run_dir := Vector3.ZERO  # cuando no es ZERO, el personaje corre en esa dirección sin input (huida)
 var _hold_pos := Vector3.ZERO      # puesto a defender en modo QUIETO
-var _guard_target: Node3D = null   # enemigo con el que el guardia se compromete
 
 
 func _ready() -> void:
@@ -101,9 +119,14 @@ func _ready() -> void:
 	energy = float(max_energy)
 	health_changed.emit(health, max_health)
 	energy_changed.emit(int(energy), max_energy)
-	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void: input_locked = true)
-	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void: input_locked = false)
+	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void:
+		input_locked = true
+		if _emilia != null: _emilia.hablar(true))
+	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void:
+		input_locked = false
+		if _emilia != null: _emilia.hablar(false))
 	can_glide = (not is_archer) and GameManager.has_ability("wings")
+	_montar_emilia()
 	GameManager.ability_unlocked.connect(_on_ability_unlocked)
 	TravelManager.region_changed.connect(func(_r: String) -> void: forced_run_dir = Vector3.ZERO)
 
@@ -121,9 +144,14 @@ func _upgraded() -> bool:
 func _physics_process(delta: float) -> void:
 	_combo_timer = max(0.0, _combo_timer - delta)
 	_attack_cd = max(0.0, _attack_cd - delta)
-	_ai_atk_cd = max(0.0, _ai_atk_cd - delta)
+	_rodada_cd = maxf(0.0, _rodada_cd - delta)
+	_rodando = maxf(0.0, _rodando - delta)
 	if _charging:
 		_charge_t += delta
+		# Emilia: mantener el clic saca el golpe cargado, una sola vez por pulsación.
+		if not is_archer and not _carga_usada and _charge_t >= charge_time:
+			_carga_usada = true
+			_golpe_cargado()
 	energy = min(float(max_energy), energy + energy_regen * delta)
 	if int(energy) != _energy_shown:
 		_energy_shown = int(energy)
@@ -164,14 +192,14 @@ func _physics_process(delta: float) -> void:
 			var right := forced_run_dir.cross(Vector3.UP).normalized()
 			dir = (forced_run_dir + right * ix * 0.5).normalized()
 	elif forced_run_dir != Vector3.ZERO:
-		# Huida forzada: corre sin pasar por _ai_behavior (evita ataques al aire).
+		# Huida forzada: corre sin pasar por el seguimiento.
 		# Pero sí por la esquiva: la mina está llena de pilares y correr a ciegas
 		# en línea recta es justamente lo que lo dejaba clavado contra uno.
 		dir = _rumbo_esquivando(forced_run_dir)
-	elif ai_mode == AiMode.COMBAT:
+	elif ai_mode == AiMode.SIGUIENDO:
 		dir = _rumbo_esquivando(_ai_behavior())
 	else:
-		dir = _hold_behavior()   # QUIETO: defiende el puesto y vuelve
+		dir = _hold_behavior()   # QUIETO: se queda en su puesto
 
 	# La IA/guardia no se tira a los vacíos... salvo que enfrente haya donde caer.
 	#
@@ -204,12 +232,20 @@ func _physics_process(delta: float) -> void:
 			_jumps_done = 1
 			_cruzando_hueco = saltar_hueco
 
+	# Rodando manda la rodada: dirección fija desde que arrancó y a su velocidad,
+	# sin que el WASD la desvíe. Es lo que la hace servir para esquivar; si se
+	# pudiera girar a mitad, sería sólo correr más rápido.
+	if _rodando > 0.0:
+		dir = _rodada_dir
+
 	var speed := walk_speed
-	if forced_run_dir != Vector3.ZERO:
+	if _rodando > 0.0:
+		speed = rodada_velocidad
+	elif forced_run_dir != Vector3.ZERO:
 		speed = run_speed
 	elif active and not input_locked and Input.is_action_pressed("run"):
 		speed = run_speed
-	elif not active and ai_mode == AiMode.COMBAT:
+	elif not active and ai_mode == AiMode.SIGUIENDO:
 		speed = _velocidad_de_escolta()
 	# Cruzando un hueco hace falta carrerilla: el salto dura ~0.67 s, y a paso de
 	# caminar eso son 2.7 m de alcance. Con la velocidad de correr pasan de 5 m,
@@ -230,7 +266,7 @@ func _physics_process(delta: float) -> void:
 	# imposibles esos puzzles. Tampoco se le rescata en el aire: cruzando un
 	# hueco está lejos y sin avanzar en horizontal, que es exactamente lo que el
 	# detector confunde con estar atascado.
-	if not active and ai_mode == AiMode.COMBAT and forced_run_dir == Vector3.ZERO \
+	if not active and ai_mode == AiMode.SIGUIENDO and forced_run_dir == Vector3.ZERO \
 			and not _cruzando_hueco:
 		_vigilar_atasco(delta)
 
@@ -372,17 +408,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not active or input_locked or _dormido > 0.0:
 		return
 	# Ataque (melee, o flecha normal/cargada del arquero).
+	if event.is_action_pressed("rodar") and not event.is_echo():
+		_rodar()
+		return
 	if event.is_action_pressed("attack"):
-		if is_archer:
-			_charging = true
-			_charge_t = 0.0
-		else:
+		_charging = true
+		_charge_t = 0.0
+		_carga_usada = false
+		if not is_archer:
+			# El golpe de la cadena sale YA, al pulsar. Si además mantenés, el
+			# cargado se dispara solo al pasar `charge_time` (ver _physics_process).
+			# Hacerlo al soltar le habría quitado respuesta a la cadena de cuatro.
 			_melee_attack()
 	elif event.is_action_released("attack"):
 		if is_archer and _charging:
 			var charged := _charge_t >= charge_time
 			_charging = false
 			_shoot_arrow(charged)
+		else:
+			_charging = false
 	# Flecha triple (Benjamín). El clic derecho quedó para rotar la cámara.
 	elif event.is_action_pressed("triple_arrow") and not event.is_echo():
 		if is_archer:
@@ -812,137 +856,7 @@ func _rescatar(lider: Node3D) -> void:
 			return
 
 
-func _ai_behavior() -> Vector3:
-	var enemy := _nearest_enemy()
-	if enemy != null:
-		var to: Vector3 = enemy.global_position - global_position
-		to.y = 0.0
-		var dist := to.length()
-		# Esquivar telegrafiados
-		if enemy.has_method("is_telegraphing") and enemy.is_telegraphing():
-			var danger := 2.0
-			if enemy.has_method("danger_radius"):
-				danger = enemy.danger_radius()
-			if dist < danger + 1.2:
-				return (-to).normalized()
-		var atk_range := 6.5 if is_archer else 1.5
-		if dist > atk_range:
-			return to.normalized()
-		_face(to)
-		_ai_attack(enemy)
-		if is_archer and dist < 3.5:
-			return (-to).normalized()   # el arquero mantiene distancia
-		return Vector3.ZERO
-	# Sin enemigos: ir al costado del líder (paralelo, no atrás).
-	var leader := _leader()
-	if leader != null:
-		var lv := Vector3(leader.velocity.x, 0.0, leader.velocity.z)
-		# Perpendicular derecha al movimiento; si el líder está quieto usa +X global.
-		var side: Vector3
-		if lv.length() > 0.5:
-			side = Vector3.UP.cross(lv.normalized())
-		else:
-			side = Vector3(1.0, 0.0, 0.0)
-		var target := leader.global_position + side * 1.5
-		var to := target - global_position
-		to.y = 0.0
-		if to.length() > 0.4:
-			return to.normalized()
-	return Vector3.ZERO
-
-
-func _ai_attack(enemy: Node3D) -> void:
-	if _ai_atk_cd > 0.0:
-		return
-	_ai_atk_cd = ai_attack_cooldown
-	if is_archer:
-		var d: Vector3 = enemy.global_position - global_position
-		d.y = 0.0
-		_spawn_arrow(d.normalized(), false)   # básico: flecha normal
-		Sfx.play_at("fire", global_position, -9.0)
-	else:
-		_squash()
-		_spawn_melee_hit(melee_damage[0])      # básico: 1 golpe
-		Sfx.play_at("punch", global_position, -7.0)
-
-
-## Hay tiro despejado hasta el enemigo, o hay roca en medio?
-##
-## Sin esto el blanco se elige por distancia pura y la IA dispara contra el
-## muro: en la mina, despierta Lola, queda a pocos metros al otro lado de la
-## pared y el companero la toma de blanco igual. Se mide de pecho a pecho, no
-## de origen a origen: los origenes estan en los pies y el propio suelo
-## cortaria el rayo. Solo tapa el entorno; ni enemigos ni personajes.
-func _hay_tiro(e: Node3D) -> bool:
-	var alto := Vector3(0, 0.9, 0)
-	var q := PhysicsRayQueryParameters3D.create(
-		global_position + alto, e.global_position + alto)
-	q.collision_mask = 1
-	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
-
-
-func _nearest_enemy(max_dist := 12.0) -> Node3D:
-	var best: Node3D = null
-	var bd := 1e9
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if not is_instance_valid(e):
-			continue
-		var d := global_position.distance_to(e.global_position)
-		# La distancia primero: al que ya no puede ganar no se le tira el rayo.
-		if d >= bd:
-			continue
-		if not _hay_tiro(e):
-			continue
-		bd = d
-		best = e
-	if best != null and bd <= max_dist:
-		return best
-	return null
-
-
-## Modo QUIETO (tras T): defiende el puesto. Si un enemigo entra en
-## defense_radius, se COMPROMETE a derrotarlo (lo persigue hasta guard_leash del
-## puesto) antes de volver; luego atiende al siguiente. Emilia se acerca a
-## golpear; Benjamín dispara desde el sitio.
-func _hold_behavior() -> Vector3:
-	# Soltar el objetivo si murió (nodo liberado) o se alejó demasiado del puesto.
-	if _guard_target != null and not is_instance_valid(_guard_target):
-		_guard_target = null
-	if _guard_target != null and _hold_pos.distance_to(_guard_target.global_position) > guard_leash:
-		_guard_target = null
-	# Adquirir un objetivo nuevo solo si entra al rango de defensa.
-	if _guard_target == null:
-		_guard_target = _nearest_enemy(defense_radius)
-
-	if _guard_target != null:
-		var to: Vector3 = _guard_target.global_position - global_position
-		to.y = 0.0
-		var dist := to.length()
-		if _guard_target.has_method("is_telegraphing") and _guard_target.is_telegraphing():
-			var danger := 2.0
-			if _guard_target.has_method("danger_radius"):
-				danger = _guard_target.danger_radius()
-			if dist < danger + 0.8:
-				return (-to).normalized()
-		if is_archer:
-			_face(to)
-			_ai_attack(_guard_target)   # dispara desde el sitio
-			return Vector3.ZERO
-		if dist > 1.4:
-			return to.normalized()      # Emilia se acerca a rematar
-		_face(to)
-		_ai_attack(_guard_target)
-		return Vector3.ZERO
-
-	# Sin objetivo: volver al puesto.
-	var back := _hold_pos - global_position
-	back.y = 0.0
-	if back.length() > 0.4:
-		return back.normalized()
-	return Vector3.ZERO
-
-
-## ¿Hay piso ~1.1m adelante en 'dir'? Evita que la IA/guardia se tire a un vacío.
+## ¿Hay piso ~1.1m adelante en `dir`? Evita que el compañero se tire a un vacío.
 func _has_ground_ahead(dir: Vector3) -> bool:
 	var space := get_world_3d().direct_space_state
 	var from := global_position + dir.normalized() * 1.1 + Vector3(0.0, 0.5, 0.0)
@@ -993,8 +907,7 @@ func set_active(a: bool) -> void:
 
 ## true = IA de combate (pelea solo); false = QUIETO/guardia (defiende su puesto).
 func set_ai_mode(combat: bool) -> void:
-	ai_mode = AiMode.COMBAT if combat else AiMode.FROZEN
-	_guard_target = null
+	ai_mode = AiMode.SIGUIENDO if combat else AiMode.FROZEN
 	if not combat:
 		_hold_pos = global_position   # fija el puesto a defender
 		velocity.x = 0.0
@@ -1002,7 +915,14 @@ func set_ai_mode(combat: bool) -> void:
 
 
 # --- Vida ---
+## Sólo el personaje ACTIVO recibe daño.
+##
+## El compañero es intocable a propósito: si pudiera morir mientras lo llevás de
+## la mano, la pelea volvería a ser de los dos y volveríamos a lo de antes. Lo
+## que estás peleando es tuyo y de nadie más.
 func take_damage(amount: float, _from: Vector3 = Vector3.ZERO) -> void:
+	if not active:
+		return
 	if health <= 0:
 		return
 	health = max(0, health - int(round(amount)))
@@ -1033,3 +953,183 @@ func _banner(text: String) -> void:
 func orientar_hacia(yaw: float) -> void:
 	if _visual != null:
 		_visual.rotation.y = yaw
+
+
+## Le pone a Emilia su modelo con animaciones, en lugar del muñeco de cajas.
+##
+## Sólo a ella: Benjamín todavía no tiene modelo y se queda con la cápsula.
+func _montar_emilia() -> void:
+	if is_archer or _visual == null:
+		return
+	_emilia = Node3D.new()
+	_emilia.name = "Emilia"
+	_emilia.set_script(EMILIA_ANIM_SCR)
+	_visual.add_child(_emilia)
+	_emilia.call("montar", self)
+	# Los golpes se leen de la señal que ya existía, así el animador no tiene que
+	# saber nada de cómo funciona el combo.
+	melee_hit.connect(func(paso: int) -> void:
+		if _emilia != null:
+			_emilia.call("golpe", paso))
+
+
+## Golpe cargado de Emilia: más daño, corta la cadena y tiene su propia espera.
+##
+## FALTA la mecánica de agarre que describiste —inmovilizar al rival mientras lo
+## golpea, sólo con los jefes aturdidos y normal con los enemigos chicos—. Eso
+## necesita un estado de aturdimiento en los jefes y uno de agarrado en los
+## enemigos, que hoy no existen; esto por ahora es un golpe fuerte.
+func _golpe_cargado() -> void:
+	_attack_cd = AGARRE_DURACION + 0.2
+	_combo_step = 0
+	_combo_timer = 0.0
+	_face_aim()
+	_squash()
+	if _emilia != null:
+		_emilia.call("golpe_cargado")
+
+	var presa := _presa_de_agarre()
+	if presa != null and presa.call("agarrar", AGARRE_DURACION):
+		_agarrar(presa)
+		return
+
+	# Sin presa agarrable —o jefe con la guardia alta— queda un golpe fuerte.
+	Sfx.play("kick", -2.0, 0.85)
+	_attack_cd = 0.6
+	_spawn_melee_hit(melee_damage[melee_damage.size() - 1] * 1.6)
+
+
+## El enemigo al alcance que SÍ se deja agarrar.
+##
+## Se pregunta al enemigo en vez de mirar si es jefe desde acá: la regla —los
+## chicos siempre, los jefes sólo aturdidos— vive en él, que es quien sabe en
+## qué estado está.
+func _presa_de_agarre() -> Node3D:
+	var mejor: Node3D = null
+	var mas_cerca := AGARRE_ALCANCE
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e) or not (e is Node3D):
+			continue
+		if not e.has_method("puede_ser_agarrado") or not e.call("puede_ser_agarrado"):
+			continue
+		var d: float = global_position.distance_to((e as Node3D).global_position)
+		if d < mas_cerca:
+			mas_cerca = d
+			mejor = e
+	return mejor
+
+
+## Lo sujeta y le mete la tanda de golpes.
+##
+## El daño se reparte en varios impactos en vez de darlo de una: así se ve y se
+## oye que lo está machacando, y el número que sale en pantalla acompaña.
+func _agarrar(presa: Node3D) -> void:
+	var por_golpe: float = melee_damage[melee_damage.size() - 1] * AGARRE_MULTIPLICADOR \
+		/ float(AGARRE_GOLPES)
+	for i in AGARRE_GOLPES:
+		var cuando: float = AGARRE_DURACION * float(i) / float(AGARRE_GOLPES)
+		get_tree().create_timer(cuando).timeout.connect(
+			_golpe_de_agarre.bind(presa, por_golpe))
+
+
+func _golpe_de_agarre(presa: Node3D, dmg: float) -> void:
+	if not is_instance_valid(presa) or not presa.has_method("take_damage"):
+		return
+	# Sin empuje: mientras dura el agarre está sujeta, no sale despedida.
+	presa.call("take_damage", dmg, global_position, 0.0)
+	Sfx.play("punch", -4.0, randf_range(1.05, 1.25))
+
+
+## Rodada de esquiva (Ctrl).
+##
+## Sólo en el suelo y sólo para Emilia: Benjamín tiene el guanaco y el arco, y
+## además no hay animación suya.
+##
+## La dirección se congela al arrancar: hacia donde te movés, o hacia donde mira
+## el personaje si estabas quieto. Corta lo que estuviera haciendo —la cadena de
+## golpes y el cargado— porque rodar es justamente salir de ahí.
+func _rodar() -> void:
+	if is_archer or not is_on_floor() or _rodando > 0.0 or _rodada_cd > 0.0:
+		return
+	if not active or input_locked or _dormido > 0.0 or mounted:
+		return
+
+	var d := _player_input()
+	if d.length() < 0.05:
+		d = -_visual.global_transform.basis.z   # quieto: rueda hacia adelante
+	d.y = 0.0
+	if d.length() < 0.05:
+		return
+	_rodada_dir = d.normalized()
+
+	_rodando = rodada_duracion
+	_rodada_cd = rodada_duracion + rodada_espera
+	# Se cancela el golpe en curso: no se rueda a media patada.
+	_charging = false
+	_combo_timer = 0.0
+	_attack_cd = maxf(_attack_cd, rodada_duracion)
+	Sfx.play("punch", -10.0, 0.7)
+	if _emilia != null:
+		_emilia.call("rodar")
+
+
+## Si está en plena rodada. Lo consulta quien necesite saberlo.
+func esta_rodando() -> bool:
+	return _rodando > 0.0
+
+
+# ─── El compañero ─────────────────────────────────────────────────────────────
+#
+# El que no llevás NO pelea y NO recibe daño. Antes tenía una IA de combate que
+# perseguía, esquivaba telegrafiados y remataba por su cuenta, y eso volvía las
+# peleas asistidas: la mitad del trabajo lo hacía él. Ahora sólo acompaña, y el
+# combate es del personaje que tenés en la mano.
+
+## Cuánto se queda atrás y a un lado del que llevás, en metros.
+@export_group("Compañero")
+@export var seguir_atras := 1.4
+@export var seguir_costado := 1.0
+## Por debajo de esto ya está bastante cerca y se queda quieto, para que no
+## tiemble pegado al líder.
+@export var seguir_holgura := 0.5
+
+
+## Acompaña al activo: un paso atrás y al costado, siempre.
+##
+## El sitio se calcula respecto de HACIA DÓNDE MIRA el líder, no de su velocidad:
+## así se queda en el mismo lugar relativo aunque el líder esté parado, y no
+## salta de un lado a otro cada vez que arranca o frena.
+func _ai_behavior() -> Vector3:
+	var lider := _leader()
+	if lider == null:
+		return Vector3.ZERO
+
+	var frente := -lider.global_transform.basis.z
+	var vis := lider.get_node_or_null("Visual") as Node3D
+	if vis != null:
+		frente = -vis.global_transform.basis.z
+	frente.y = 0.0
+	if frente.length() < 0.01:
+		frente = Vector3.FORWARD
+	frente = frente.normalized()
+	var derecha := Vector3.UP.cross(frente).normalized()
+
+	var sitio: Vector3 = lider.global_position - frente * seguir_atras \
+		+ derecha * seguir_costado
+	var hacia := sitio - global_position
+	hacia.y = 0.0
+	if hacia.length() <= seguir_holgura:
+		return Vector3.ZERO
+	return hacia.normalized()
+
+
+## Modo QUIETO (T): se queda en su puesto. Tampoco pelea.
+##
+## Antes defendía el puesto: agarraba objetivos dentro de `defense_radius` y los
+## perseguía hasta `guard_leash`. Se fue con el resto del combate automático.
+func _hold_behavior() -> Vector3:
+	var back := _hold_pos - global_position
+	back.y = 0.0
+	if back.length() > 0.4:
+		return back.normalized()
+	return Vector3.ZERO
