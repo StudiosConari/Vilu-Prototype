@@ -26,7 +26,7 @@ const REGIONS := {
 	"Mina": "res://scenes/regions/Mina.tscn",
 	"Iglesia": "res://scenes/regions/Iglesia.tscn",
 	"Isluga": "res://scenes/puzzles/Isluga.tscn",
-	"Cumbre": "res://scenes/puzzles/Cumbre.tscn",
+	"OjosDelSalado": "res://scenes/puzzles/OjosDelSalado.tscn",
 	"Final": "res://scenes/puzzles/Final.tscn",
 }
 

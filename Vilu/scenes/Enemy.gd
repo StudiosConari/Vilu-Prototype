@@ -65,6 +65,12 @@ const ENCAJAR := preload("res://scenes/core/EncajarModelo.gd")
 ## de fábrica es el del aplastamiento corriente.
 @export var color_area := Color(1.0, 0.4, 0.05)
 
+@export_group("Agarre")
+## Lo que queda aturdido un jefe despues de FALLAR un especial. Es la unica
+## ventana en la que se le puede aplicar un agarre: si se pudiera siempre, los
+## jefes dejarian de ser jefes.
+@export var aturdimiento_tras_fallar := 2.5
+
 @export_group("Estado inicial")
 ## Arranca inerte: ni se mueve, ni es objetivo, ni se le puede pegar.
 ##
@@ -79,6 +85,10 @@ var health: float
 var _target: Node3D
 var _cd := 0.0
 var _stun := 0.0
+## Inmovilizado por un agarre: no se mueve ni ataca mientras dure.
+var _agarrado := 0.0
+## Ventana de vulnerabilidad del jefe tras fallar un especial.
+var _aturdido := 0.0
 var _slow_time := 0.0
 var _slow_factor := 1.0
 var _windup := 0.0
@@ -339,17 +349,21 @@ func _animar(mov: Vector3) -> void:
 ## `_hit_target` sigue existiendo para el ataque normal, que es de uno contra
 ## uno; si el aplastamiento usara aquel, con los dos personajes dentro del
 ## círculo sólo se llevaría el golpe uno.
-func _golpe_de_area(radio: float, dmg: float) -> void:
+## Devuelve si alcanzó a alguien: de eso depende que el jefe quede aturdido.
+func _golpe_de_area(radio: float, dmg: float) -> bool:
+	var acerto := false
 	for p in get_tree().get_nodes_in_group("player"):
 		if not is_instance_valid(p) or not (p is Node3D):
 			continue
 		var to_p: Vector3 = (p as Node3D).global_position - global_position
 		if Vector2(to_p.x, to_p.z).length() > radio or absf(to_p.y) > 1.8:
 			continue
+		acerto = true
 		if p.has_method("take_damage"):
 			p.take_damage(dmg, global_position)
 		if duerme > 0.0 and p.has_method("dormir"):
 			p.dormir(duerme)
+	return acerto
 
 
 ## Lo llama el mecanismo que la libera (el obelisco, en la mina).
@@ -465,7 +479,8 @@ func _process_charge(delta: float) -> Vector3:
 			_body.scale = Vector3.ONE
 			_charge_state = 0
 			_cd = attack_cooldown
-			_golpe_de_area(attack_range * 2.4 * 1.05, damage * 2.2)
+			if not _golpe_de_area(attack_range * 2.4 * 1.05, damage * 2.2):
+				_aturdir()   # aplastó donde no había nadie
 		return Vector3.ZERO
 	if _charge_state == 1:  # aviso: quieto, super armadura (no cancelable)
 		_charge_t -= delta
@@ -491,6 +506,8 @@ func _process_charge(delta: float) -> Vector3:
 		_charge_state = 0
 		_cd = attack_cooldown
 		_body.scale = Vector3.ONE
+		if not _charge_hit:
+			_aturdir()   # embistió al vacío: ahí queda abierto
 		return Vector3.ZERO
 	return _charge_dir * charge_speed
 
@@ -559,6 +576,8 @@ func _physics_process(delta: float) -> void:
 	# llega ya cargado el día que lo sueltan.
 	_cd_area = maxf(0.0, _cd_area - delta)
 	_stun = maxf(0.0, _stun - delta)
+	_agarrado = maxf(0.0, _agarrado - delta)
+	_aturdido = maxf(0.0, _aturdido - delta)
 	if _slow_time > 0.0:
 		_slow_time = maxf(0.0, _slow_time - delta)
 		if _slow_time <= 0.0:
@@ -596,7 +615,14 @@ func _physics_process(delta: float) -> void:
 	var dist := to.length()
 
 	var desired := Vector3.ZERO
-	if _charge_state > 0:
+	if _agarrado > 0.0:
+		# Agarrado: ni se mueve ni ataca. Se le corta cualquier telegrafiado a
+		# medias, o al soltarlo remataria un golpe que ya no venia a cuento.
+		if _windup > 0.0:
+			_windup = 0.0
+			_telegraph.visible = false
+		desired = Vector3.ZERO
+	elif _charge_state > 0:
 		# EMBESTIDA del jefe: no se cancela con golpes (super armadura).
 		desired = _process_charge(delta)
 	elif _stun > 0.0:
@@ -648,6 +674,14 @@ func _physics_process(delta: float) -> void:
 		_mat.emission = Color(0.25, 0.9, 0.35)
 		_mat.emission_energy_multiplier = 1.0
 
+	# Aturdido: parpadeo amarillo. Va DESPUÉS del de las enredaderas para que gane
+	# si coinciden; es la señal de que la ventana de agarre está abierta y hay que
+	# poder verla de un vistazo.
+	if _aturdido > 0.0:
+		_mat.emission_enabled = true
+		_mat.emission = Color(1.0, 0.85, 0.2)
+		_mat.emission_energy_multiplier = 1.2 + 0.8 * sin(_aturdido * 14.0)
+
 	# La embestida ignora el knockback (no la desvia).
 	if _charge_state > 0:
 		velocity.x = desired.x
@@ -668,3 +702,46 @@ func _physics_process(delta: float) -> void:
 	# exactamente lo que se ve mal.
 	_encarar(delta, to if dist > 0.05 else desired)
 	move_and_slide()
+
+
+# ─── Agarre ───────────────────────────────────────────────────────────────────
+
+## Deja al jefe abierto tras fallar un especial.
+##
+## Sólo los jefes: los enemigos chicos ya se aturden con cualquier golpe, y
+## además a ellos el agarre les entra siempre.
+func _aturdir() -> void:
+	if not is_boss:
+		return
+	_aturdido = maxf(_aturdido, aturdimiento_tras_fallar)
+
+
+## Si ahora mismo se le puede aplicar un agarre.
+##
+## La regla vive acá y no en quien golpea: es el enemigo el que sabe si está en
+## condiciones de ser agarrado. Los chicos, siempre. Los jefes, SÓLO mientras
+## están aturdidos, o sea justo después de fallar una embestida o un
+## aplastamiento; fuera de esa ventana el agarre rebota y queda un golpe normal.
+func puede_ser_agarrado() -> bool:
+	return (not is_boss) or _aturdido > 0.0
+
+
+func esta_aturdido() -> bool:
+	return _aturdido > 0.0
+
+
+## Lo inmoviliza. Devuelve si el agarre prendió.
+func agarrar(segundos: float) -> bool:
+	if not puede_ser_agarrado():
+		return false
+	_agarrado = maxf(_agarrado, segundos)
+	_knockback = Vector3.ZERO   # sujeto: no sale despedido con cada golpe
+	if _windup > 0.0:
+		_windup = 0.0
+		if is_instance_valid(_telegraph):
+			_telegraph.visible = false
+	return true
+
+
+func esta_agarrado() -> bool:
+	return _agarrado > 0.0

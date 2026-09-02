@@ -38,7 +38,7 @@ const ONDA_ESCALA := 0.006    # más chico = colinas más anchas
 ##   base     = dónde vuelve a nivel del suelo
 const VOLCANES := [
 	["Isluga", 34.0, 58.0, 95.0, 26.0],
-	["Cumbre", 46.0, 74.0, 118.0, 38.0],
+	["Ojos del Salado", 46.0, 74.0, 118.0, 38.0],
 ]
 
 ## Paso de muestreo en metros. 1.0 = máxima fidelidad y más lento.

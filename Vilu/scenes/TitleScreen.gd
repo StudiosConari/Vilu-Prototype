@@ -13,7 +13,7 @@ const DEBUG_ZONES := [
 	["5 Alicanto", "Alicanto", 5, ["bow", "talisman_frag_1"]],
 	["6 Poblado/Bar", "Poblado", 5, ["bow", "talisman_frag_1", "wings"]],
 	["7 Yastay", "Yastay", 5, ["bow", "talisman_frag_1", "wings"]],
-	["8 Cumbre", "Cumbre", 6, ["bow", "wings", "guanaco"]],
+	["8 Ojos del Salado", "OjosDelSalado", 6, ["bow", "wings", "guanaco"]],
 	["9 Regreso/Ocultista", "Poblado", 6, ["bow", "wings", "guanaco", "talisman_frag_1", "talisman_frag_2"]],
 	["Final", "Final", 7, ["bow", "wings", "guanaco"]],
 ]

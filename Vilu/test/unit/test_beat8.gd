@@ -22,7 +22,7 @@ const WORLD_ROOT := preload("res://scenes/core/WorldRoot.gd")
 ## ZONAS de WorldRoot. Preguntarle a TravelManager por una zona del mundo da
 ## false, y eso es correcto.
 func test_all_beat_zones_registered() -> void:
-	for zone in ["Mina", "Isluga", "Cumbre", "Final"]:
+	for zone in ["Mina", "Isluga", "OjosDelSalado", "Final"]:
 		assert_true(TravelManager.is_valid_region(zone),
 			"escena registrada en TravelManager: %s" % zone)
 

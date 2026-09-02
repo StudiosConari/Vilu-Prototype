@@ -7,11 +7,31 @@ extends Node3D
 ## Este nodo sigue a Benjamín en todo momento.
 ## Al embestir sale disparado y vuelve luego de frenar.
 
+const MODELO := preload("res://models/personaje/guanaco_espiritual.glb")
+
+## El modelo mira hacia +Z y el resto del juego toma -Z como frente, así que el
+## visual entero va girado media vuelta. Es la misma corrección que llevan los
+## enemigos, y se confirma con el guanaco de cajas al que reemplaza: aquél tenía
+## la cabeza en -Z.
+const GIRO_MODELO := PI
+## A escala 1 el modelo mide 0.98 m de alto. Al doble queda en 1.96 m, que es lo
+## que pediste y lo que hace que se lea como una montura y no como un perro.
+const ESCALA := 2.0
+## Por debajo de esta velocidad se considera quieto y no camina.
+const VELOCIDAD_MINIMA := 0.15
+## Qué tan rápido acompaña el giro de Benjamín. Se suaviza en vez de copiarlo
+## de golpe: pegado a su ángulo exacto daba tirones al mover la cámara.
+const GIRO_SUAVE := 8.0
+
 const CHARGE_SPEED  := 18.0
 const CHARGE_DAMAGE := 60.0
-const CHARGE_CD     := 5.0
+## Recarga de la embestida. Bajó de 5 s: con tantos botones que golpear en la
+## cumbre, esperar cinco segundos entre uno y otro cortaba el ritmo.
+const CHARGE_CD     := 2.0
 const FOLLOW_SPEED  := 6.0
-const FOLLOW_DIST   := 2.5    # distancia objetivo al lado de Benjamín
+## Distancia a la que se pone a la DERECHA de Benjamín. A 1.3 se le montaba
+## encima ahora que el modelo mide el doble; a 2.5 quedaba lejísimos.
+const FOLLOW_DIST   := 1.8
 
 var _charging    := false
 var _charge_vel  := Vector3.ZERO
@@ -23,11 +43,21 @@ var _mounted     := false
 
 var _g_prev      := false
 var _label: Label3D = null
+var _anim: AnimationPlayer = null
+var _caminar := ""
+var _pos_previa := Vector3.ZERO
 
 
 func _ready() -> void:
 	add_to_group("guanaco_companion")
 	_build_visual()
+
+
+## Si está en plena embestida. Lo consultan los botones que sólo ceden al
+## golpe del guanaco, que no pueden mirar colisiones porque este nodo no es un
+## cuerpo físico: se mueve desplazando su posición a mano.
+func esta_embistiendo() -> bool:
+	return _charging
 
 
 ## Llamado por PlayerController al montar/desmontar (tecla Q).
@@ -46,6 +76,7 @@ func _process(delta: float) -> void:
 
 	_t += delta
 	_charge_cd = max(0.0, _charge_cd - delta)
+	_animar(delta)
 
 	if _mounted:
 		_ride_benja()
@@ -79,12 +110,28 @@ func _follow_benja(delta: float) -> void:
 	var benja := _find_benja()
 	if benja == null:
 		return
-	var offset := benja.global_transform.basis.x * FOLLOW_DIST
-	var target  := benja.global_position + offset + Vector3(0, 0.4, 0)
+	# La derecha se toma del nodo Visual, que es el que gira con la cámara. El
+	# CUERPO de Benjamín no rota, así que su eje X apuntaba siempre a la misma
+	# dirección del mundo y el guanaco terminaba delante o encima según hacia
+	# dónde estuvieras mirando.
+	var vis := benja.get_node_or_null("Visual") as Node3D
+	var derecha: Vector3 = benja.global_transform.basis.x
+	if vis != null:
+		derecha = vis.global_transform.basis.x
+	derecha.y = 0.0
+	if derecha.length() < 0.01:
+		derecha = Vector3.RIGHT
+	var target := benja.global_position + derecha.normalized() * FOLLOW_DIST + Vector3(0, 0.4, 0)
 	var diff    := target - global_position
 	diff.y      = 0.0
 	if diff.length() > 0.1:
 		global_position += diff.normalized() * min(diff.length(), FOLLOW_SPEED * delta)
+
+	# Y mira hacia donde mirás vos. Antes esto sólo pasaba estando MONTADO, así
+	# que el guanaco invocado te seguía de lado o de espaldas según hubiera
+	# quedado al aparecer, y no giraba nunca.
+	if vis != null:
+		rotation.y = lerp_angle(rotation.y, vis.global_rotation.y, minf(delta * GIRO_SUAVE, 1.0))
 
 
 func _launch() -> void:
@@ -128,56 +175,85 @@ func _find_benja() -> Node3D:
 	return null
 
 
+## Monta el guanaco de verdad en lugar de las cápsulas del greybox.
 func _build_visual() -> void:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color           = Color(0.88, 0.79, 0.56)
-	mat.emission_enabled       = true
-	mat.emission               = Color(0.22, 0.16, 0.03)
-	mat.emission_energy_multiplier = 0.9
+	# El modelo cuelga de un nodo girado, no del guanaco mismo: así la media
+	# vuelta no se pierde cada vez que el código toca `rotation.y` para
+	# encararlo hacia donde mira Benjamín.
+	var vis := Node3D.new()
+	vis.name = "Visual"
+	vis.rotation.y = GIRO_MODELO
+	add_child(vis)
 
-	# Cuerpo (horizontal, como guanaco real)
-	var body_mi   := MeshInstance3D.new()
-	var body_mesh := CapsuleMesh.new()
-	body_mesh.radius = 0.28
-	body_mesh.height = 1.0
-	body_mi.mesh   = body_mesh
-	body_mi.rotation.z = PI / 2.0
-	body_mi.position.y = 0.5
-	body_mi.set_surface_override_material(0, mat)
-	add_child(body_mi)
+	var modelo := MODELO.instantiate() as Node3D
+	modelo.scale = Vector3.ONE * ESCALA
+	vis.add_child(modelo)
 
-	# Cabeza
-	var head_mi   := MeshInstance3D.new()
-	var head_mesh := SphereMesh.new()
-	head_mesh.radius = 0.20
-	head_mi.mesh   = head_mesh
-	head_mi.set_surface_override_material(0, mat)
-	head_mi.position = Vector3(0.0, 0.8, -0.52)
-	add_child(head_mi)
+	_anim = _buscar_anim(modelo)
+	if _anim == null:
+		push_warning("Guanaco: el modelo vino sin AnimationPlayer; no va a caminar")
+	else:
+		_caminar = _animacion_de_caminar()
+		if _caminar == "":
+			push_warning("Guanaco: no encuentro la animación de caminar")
+		else:
+			# Viene sin bucle: al caminar tiene que repetirse sola o daría un
+			# paso y se quedaría clavada en el último frame.
+			var a := _anim.get_animation(_caminar)
+			if a != null:
+				a.loop_mode = Animation.LOOP_LINEAR
 
-	# Patas (4 cilindros simples)
-	var leg_mat := StandardMaterial3D.new()
-	leg_mat.albedo_color = Color(0.75, 0.65, 0.45)
-	var leg_positions: Array[Vector3] = [
-		Vector3( 0.35, 0.18, -0.28),
-		Vector3(-0.35, 0.18, -0.28),
-		Vector3( 0.35, 0.18,  0.28),
-		Vector3(-0.35, 0.18,  0.28),
-	]
-	for lp: Vector3 in leg_positions:
-		var leg_mi   := MeshInstance3D.new()
-		var leg_mesh := CapsuleMesh.new()
-		leg_mesh.radius = 0.07
-		leg_mesh.height = 0.38
-		leg_mi.mesh   = leg_mesh
-		leg_mi.position = lp
-		leg_mi.set_surface_override_material(0, leg_mat)
-		add_child(leg_mi)
-
-	# Etiqueta
+	# Etiqueta: va colgada del guanaco y NO del visual girado, para que el texto
+	# no salga del revés.
 	_label           = Label3D.new()
 	_label.text      = "Guanaco\n[G] embestir · [Q] montar"
 	_label.font_size = 18
-	_label.position  = Vector3(0, 1.4, 0)
+	# Por encima de la cabeza: con el modelo al doble, a 1.4 quedaba dentro suyo.
+	_label.position  = Vector3(0, 0.6 + 0.98 * ESCALA, 0)
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(_label)
+
+	_pos_previa = global_position
+
+
+func _buscar_anim(n: Node) -> AnimationPlayer:
+	if n is AnimationPlayer:
+		return n
+	for h in n.get_children():
+		var x := _buscar_anim(h)
+		if x != null:
+			return x
+	return null
+
+
+## Se busca por nombre en vez de dar por hecho que hay una sola: si mañana le
+## sumás correr o saltar, esto sigue eligiendo la de caminar.
+func _animacion_de_caminar() -> String:
+	var lista := _anim.get_animation_list()
+	for n in lista:
+		var b := String(n).to_lower()
+		if b.contains("walk") or b.contains("camin"):
+			return n
+	return lista[0] if lista.size() > 0 else ""
+
+
+## Camina cuando se está moviendo de verdad, y se queda quieto cuando no.
+##
+## Se mide cuánto se desplazó desde el frame anterior en vez de mirar un estado
+## interno: así vale igual siguiendo a Benjamín, montado o embistiendo, sin
+## tener que acordarse de encender la animación en cada sitio.
+func _animar(delta: float) -> void:
+	if _anim == null or _caminar == "":
+		return
+	var d := global_position - _pos_previa
+	d.y = 0.0
+	_pos_previa = global_position
+	var vel := d.length() / maxf(delta, 0.0001)
+
+	if vel > VELOCIDAD_MINIMA:
+		# El paso acompaña a la velocidad; si fuera fijo, patinaría.
+		_anim.speed_scale = clamp(vel / 4.0, 0.7, 2.4)
+		if not _anim.is_playing():
+			_anim.play(_caminar)
+	elif _anim.is_playing():
+		_anim.pause()

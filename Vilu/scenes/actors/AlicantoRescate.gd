@@ -14,6 +14,12 @@ extends Node3D
 ## del nivel ES la moraleja.
 
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
+const MODELO_ALICANTO := preload("res://models/personaje/alicanto.glb")
+
+## A qué altura vuela el ave sobre el suelo, y a qué distancia de la persona
+## rescatada baja si no colocaste un modelo.
+const ALTO_VUELO := 3.0
+const DISTANCIA_AL_RESCATE := 7.0
 const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
 
 const TALK_FORK := "~ start
@@ -109,16 +115,9 @@ func _reponer_logica() -> void:
 	elif not trap.body_entered.is_connected(_on_gold_path_entered):
 		trap.body_entered.connect(_on_gold_path_entered)
 
-	# Las ocho losas que se caen una tras otra, buscadas en las coordenadas con
-	# que se generaron. Sin esto el derrumbe muestra el cartel y no pasa nada.
-	_gold_tiles.clear()
-	for i in 8:
-		var t := _nodo_en(Vector3(-11.0, -0.5, -12.0 - float(i) * 3.4))
-		if t != null:
-			_gold_tiles.append(t)
-	if _gold_tiles.size() < 8:
-		push_warning("Alicanto: sólo %d de las 8 losas del oro; el derrumbe se verá corto"
-			% _gold_tiles.size())
+	# Las ocho losas de CSG del camino del oro ya no se buscan: la trampa dejó de
+	# ser greybox y ahora la llevan tus modelos, con TrampaDelOro.gd. Buscarlas
+	# sólo servía para avisar en cada arranque que no había ninguna.
 
 	# El ave, si la colocaste, arranca escondida: aparece al superar la prueba.
 	var ave := _hijo_que_empieza_con("alicanto")
@@ -224,8 +223,7 @@ func _personaje_mas_cerca(pos: Vector3, radio: float) -> Node3D:
 			d = dd
 			mejor = c
 	if mejor != null:
-		push_warning("Alicanto: '%s' pasa a ser la persona herida (a %.1f m)"
-			% [mejor.name, d])
+		print("[alicanto] '%s' pasa a ser la persona herida (a %.1f m)" % [mejor.name, d])
 	return mejor
 
 
@@ -304,11 +302,19 @@ func _hijo_que_empieza_con(prefijo: String) -> Node3D:
 	return null
 
 
+## Cuánto sube y baja el ave al aletear, en metros, y a qué ritmo.
+const ALETEO_ALTO := 0.5
+const ALETEO_RITMO := 2.2
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	if is_instance_valid(_alicanto):
-		_alicanto.position.y = _alicanto_y + sin(_t * 1.2) * 0.35
-		_alicanto.rotation.y += delta * 0.4
+		# Sólo sube y baja, aleteando en el sitio. Antes giraba sobre su eje
+		# (rotation.y += delta * 0.4): eso servía para una esfera de greybox sin
+		# frente ni espalda, pero con el modelo puesto el ave se ve dando
+		# vueltas sobre sí misma en vez de sostenerse en el aire.
+		_alicanto.position.y = _alicanto_y + sin(_t * ALETEO_RITMO) * ALETEO_ALTO
 
 
 # ─── Bifurcación ─────────────────────────────────────────────────────────────
@@ -379,72 +385,57 @@ func _summon_alicanto() -> void:
 
 # ─── Alicanto ────────────────────────────────────────────────────────────────
 
+## Hace bajar al Alicanto y le pone su zona de encuentro.
+##
+## TRES cosas cambiaron respecto del greybox, y las tres se veían en el juego:
+##
+##  · Ya no es una esfera con dos cajas por alas: usa el modelo de verdad. Si
+##    colocaste un nodo que empiece por "alicanto" baja AHÍ; si no, se instancia
+##    el .glb junto a la persona que acabás de rescatar.
+##
+##  · Nace RELATIVO al rescate, no en (11, 6, -34) fijo. Esa coordenada era del
+##    greybox y con la zona rehecha cae sobre el vacío: el ave aparecía flotando
+##    fuera del mapa.
+##
+##  · Sin la luz dorada. Un OmniLight de energía 2.4 y radio 14 pegado al ave es
+##    el resplandor raro que se veía; sobre un modelo con textura no aporta.
 func _build_alicanto() -> void:
-	# Si pusiste un modelo de alicanto en la zona, el ave baja AHÍ. Es la forma
-	# de elegir el sitio sin tocar código: la posición de abajo es sólo la que
-	# tenía el greybox, y con la herida movida ya no le corresponde a nada.
-	#
-	# El modelo se mantiene oculto hasta este momento (ver _reponer_logica): el
-	# Alicanto tiene que APARECER al superar la prueba, no estar ahí desde que
-	# entrás a la quebrada.
-	var modelo := _hijo_que_empieza_con("alicanto")
-	if modelo != null:
-		_alicanto = modelo
-		_alicanto_y = modelo.position.y
-		modelo.visible = true
-		return
+	var puesto := _hijo_que_empieza_con("alicanto")
+	if puesto != null:
+		_alicanto = puesto
+		puesto.visible = true
+	else:
+		_alicanto = MODELO_ALICANTO.instantiate()
+		_alicanto.name = "AlicantoInvocado"
+		add_child(_alicanto)
+		_alicanto.position = _sitio_del_ave()
+	_alicanto_y = _alicanto.position.y
+	_cartel_de(_alicanto, "Alicanto")
 
-	_alicanto = Node3D.new()
-	_alicanto.position = Vector3(11.0, 6.0, -34.0)
-	_alicanto_y = 6.0
-	add_child(_alicanto)
-
-	var bird := _mat_emit(Color(0.98, 0.82, 0.30), Color(0.66, 0.50, 0.08), 2.6)
-	var mi   := MeshInstance3D.new()
-	var body := SphereMesh.new()
-	body.radius = 0.55
-	body.height = 1.1
-	mi.mesh  = body
-	mi.set_surface_override_material(0, bird)
-	_alicanto.add_child(mi)
-
-	for side: float in [-1.0, 1.0]:
-		var wing_mi   := MeshInstance3D.new()
-		var wing_mesh := BoxMesh.new()
-		wing_mesh.size = Vector3(0.85, 0.09, 0.44)
-		wing_mi.mesh   = wing_mesh
-		wing_mi.position   = Vector3(side * 0.66, 0.12, 0.0)
-		wing_mi.rotation.z = side * -0.30
-		wing_mi.set_surface_override_material(0, bird)
-		_alicanto.add_child(wing_mi)
-
-	var light          := OmniLight3D.new()
-	light.light_color  = Color(1.0, 0.85, 0.40)
-	light.omni_range   = 14.0
-	light.light_energy = 2.4
-	_alicanto.add_child(light)
-
-	var lbl       := Label3D.new()
-	lbl.text      = "Alicanto"
-	lbl.font_size = 24
-	lbl.position.y = 1.5
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.modulate  = Color(1.0, 0.88, 0.45)
-	_alicanto.add_child(lbl)
-
-	# Zona de encuentro al final del camino derecho
-	var zone             := Area3D.new()
+	# Zona de encuentro PEGADA AL AVE y bajando hasta el suelo. Antes era una
+	# caja suelta a 1.5 m de altura en una coordenada fija: no coincidía con
+	# donde estaba el ave y había que saltar para alcanzarla.
+	var zone := Area3D.new()
+	zone.name = "ZonaDelAlicanto"
 	zone.collision_layer = 0
-	zone.collision_mask  = 2
-	zone.monitoring      = true
-	zone.position        = Vector3(11.0, 1.5, -34.0)
+	zone.collision_mask = 2
+	zone.monitoring = true
 	add_child(zone)
-	var cs  := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = Vector3(9.0, 4.0, 4.0)
-	cs.shape = box
+	zone.position = _alicanto.position - Vector3(0.0, ALTO_VUELO * 0.5, 0.0)
+	var cs := CollisionShape3D.new()
+	var sph := SphereShape3D.new()
+	sph.radius = 6.0
+	cs.shape = sph
 	zone.add_child(cs)
 	zone.body_entered.connect(_on_alicanto_reached)
+
+
+## Dónde baja el ave si no colocaste un modelo: al lado de quien rescataste,
+## hacia el fondo de la quebrada y a la altura del vuelo.
+func _sitio_del_ave() -> Vector3:
+	if is_instance_valid(_hurt):
+		return _hurt.position + Vector3(0.0, ALTO_VUELO, -DISTANCIA_AL_RESCATE)
+	return Vector3(11.0, 6.0, -34.0)   # el sitio del greybox, como último recurso
 
 
 func _on_alicanto_reached(body: Node3D) -> void:
@@ -683,5 +674,9 @@ func _banner(text: String, dur := 0.0) -> void:
 	hud.show_banner(text)
 	if dur > 0.0:
 		get_tree().create_timer(dur).timeout.connect(func() -> void:
-			if is_instance_valid(hud) and hud.has_method("clear_banner"):
-				hud.clear_banner())
+			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que
+			# captura un nodo y sobrevive a que lo liberen da "Lambda capture at index 0
+			# was freed", aunque se compruebe is_instance_valid antes de usarlo.
+			var h := get_tree().get_first_node_in_group("hud")
+			if h != null and h.has_method("clear_banner"):
+				h.clear_banner())

@@ -94,23 +94,28 @@ func test_zones_do_not_overlap() -> void:
 ## El spawn de cada zona tiene que resolver a coordenadas MUNDIALES, no locales.
 func test_spawn_points_are_world_coordinates() -> void:
 	var game := await _nuevo_juego()
-	var sp: Vector3 = game.world.spawn_point("Cumbre")
-	var centro: Vector3 = game.world.zone_node("Cumbre").global_position
-	assert_ne(sp, Vector3.INF, "Cumbre tiene spawn")
+	# Se mide sobre TARAPACÁ y no sobre la Cumbre: aquélla se renombró a Ojos
+	# del Salado y pasó a ser un interior con puerta, así que ya no es una zona
+	# del mundo y no tiene spawn que consultar.
+	var sp: Vector3 = game.world.spawn_point("Tarapaca")
+	var centro: Vector3 = game.world.zone_node("Tarapaca").global_position
+	assert_ne(sp, Vector3.INF, "Tarapacá tiene spawn")
 	assert_lt(sp.distance_to(centro), 60.0,
 		"el spawn cae dentro de su zona, no en el origen del mundo")
-	assert_gt(centro.length(), 50.0, "Cumbre está desplazada del origen")
+	assert_gt(centro.length(), 50.0, "Tarapacá está desplazada del origen")
 
 
 func test_debug_start_zone() -> void:
 	GameManager.reset_progress()
-	GameManager.debug_start_zone = "Cumbre"
+	# El Poblado, no Tarapacá: ésa es la zona de arranque por defecto y el test
+	# no distinguiría si la bandera se respetó o se ignoró.
+	GameManager.debug_start_zone = "Poblado"
 	var game := GAME.instantiate()
 	add_child_autofree(game)
 	await get_tree().process_frame
 	await get_tree().process_frame
 	assert_eq(GameManager.debug_start_zone, "", "se limpia tras usarla")
-	var destino: Vector3 = game.world.spawn_point("Cumbre")
+	var destino: Vector3 = game.world.spawn_point("Poblado")
 	assert_lt(game.party[0].global_position.distance_to(destino), 6.0,
 		"arranca junto al spawn mundial de la zona de debug")
 

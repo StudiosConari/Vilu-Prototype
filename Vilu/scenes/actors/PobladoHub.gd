@@ -420,5 +420,9 @@ func _banner(text: String, dur := 0.0) -> void:
 	hud.show_banner(text)
 	if dur > 0.0:
 		get_tree().create_timer(dur).timeout.connect(func() -> void:
-			if is_instance_valid(hud) and hud.has_method("clear_banner"):
-				hud.clear_banner())
+			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que
+			# captura un nodo y sobrevive a que lo liberen da "Lambda capture at index 0
+			# was freed", aunque se compruebe is_instance_valid antes de usarlo.
+			var h := get_tree().get_first_node_in_group("hud")
+			if h != null and h.has_method("clear_banner"):
+				h.clear_banner())
