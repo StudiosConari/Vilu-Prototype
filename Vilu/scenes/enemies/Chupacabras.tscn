@@ -20,3 +20,6 @@ charge_windup = 1.0
 modelo = ExtResource("2_modelo")
 altura_visual = 2.4
 giro_modelo = 180.0
+anim_aparecer = "Howl"
+anim_caminar = "Run"
+anim_atacar = "Bite"

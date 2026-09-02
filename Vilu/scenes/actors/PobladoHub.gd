@@ -14,6 +14,8 @@ extends Node3D
 ##       descubrís que uno estaba escuchando junto al bar, y se escapa.
 
 const WITCH_SCR    := preload("res://scenes/actors/WitchNPC.gd")
+const ENCAJAR      := preload("res://scenes/core/EncajarModelo.gd")
+const POSE         := preload("res://scenes/core/PoseAnimada.gd")
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 const EXIT_SCENE   := preload("res://scenes/actors/ZoneExit.tscn")
 const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
@@ -158,11 +160,18 @@ func _open_exit() -> void:
 
 # ─── Bruja ───────────────────────────────────────────────────────────────────
 
+## Le cuelga la lógica de la Bruja al modelo que está puesto en el mundo.
+##
+## Si no lo encuentra vuelve a la cápsula del greybox, en su sitio de siempre.
 func _spawn_witch() -> void:
-	var w := Node3D.new()
+	var w := _modelo_del_mundo("bruja")
+	if w == null:
+		w = Node3D.new()
+		w.position = Vector3(-10.0, 0.0, -3.0)
+		add_child(w)
+		push_warning("Poblado: no hay modelo de bruja; se usa la cápsula")
 	w.set_script(WITCH_SCR)
-	w.position = Vector3(-10.0, 0.0, -3.0)
-	add_child(w)
+	w.call("_ready")   # el nodo ya está en el árbol: no se dispara sola
 	if w.has_signal("revealed_ocultists"):
 		w.revealed_ocultists.connect(_on_ocultists_revealed)
 
@@ -218,14 +227,30 @@ func _after_flee() -> void:
 
 # ─── Bar ─────────────────────────────────────────────────────────────────────
 
+## Los parroquianos del bar.
+##
+## Ya no se dibujan: son los modelos que están puestos en la escena. El que lleva
+## la conversación es el más cercano al bar; si no hubiera ninguno se vuelve a
+## las cápsulas, en sus sitios de siempre.
 func _spawn_bar_folk() -> void:
 	var folk_mat := _mat(Color(0.38, 0.30, 0.24))
-	# Tres parroquianos en la barra
-	_npc(Vector3( 8.5, 0, -5.0), folk_mat, 1.0, "")
-	_npc(Vector3(11.5, 0, -5.0), folk_mat, 1.0, "")
-
-	var talker := _npc(Vector3(10.0, 0, -3.0), _mat(Color(0.46, 0.34, 0.22)), 1.0,
-		"Parroquiano")
+	var gente := _gente_del_bar()
+	var talker: Node3D = null
+	if gente.is_empty():
+		push_warning("Poblado: no hay modelos de parroquianos; se usan cápsulas")
+		_npc(Vector3( 8.5, 0, -5.0), folk_mat, 1.0, "")
+		_npc(Vector3(11.5, 0, -5.0), folk_mat, 1.0, "")
+		talker = _npc(Vector3(10.0, 0, -3.0), _mat(Color(0.46, 0.34, 0.22)), 1.0,
+			"Parroquiano")
+	else:
+		talker = gente[0]
+		# Todos los del bar están sentados: cada uno con la suya, que se llama
+		# distinto según el personaje ("sentado_victoria", "sentada_riendo"…).
+		var sentados := 0
+		for p in gente:
+			if POSE.poner(p, "sentad", true):
+				sentados += 1
+		print("[poblado] sentados en el bar: %d de %d" % [sentados, gente.size()])
 	var zone             := Area3D.new()
 	zone.collision_layer = 0
 	zone.collision_mask  = 2
@@ -235,7 +260,9 @@ func _spawn_bar_folk() -> void:
 
 	var cs  := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
-	sph.radius = 2.8
+	# La escala del modelo se descuenta: los que pusiste están a ~1.28, y sin esto
+	# la zona para escuchar tendría casi cuatro metros de radio.
+	sph.radius = 2.8 / maxf(talker.global_transform.basis.get_scale().y, 0.001)
 	cs.shape   = sph
 	zone.add_child(cs)
 	zone.interacted.connect(_on_bar_talk)
@@ -243,7 +270,8 @@ func _spawn_bar_folk() -> void:
 	# El ocultista espía junto al bar. Se crea SIEMPRE (oculto) porque el pueblo
 	# ya no se reconstruye al llegar a la etapa 3: si dependiera de _stage en
 	# _ready(), empezando la partida en la etapa 1 no existiría nunca.
-	_ocultista = _npc(Vector3(15.0, 0, -1.0), _mat(Color(0.09, 0.07, 0.13)), 1.05, "???")
+	_ocultista = _persona("res://models/personaje/ocultista_hombre.glb",
+		Vector3(15.0, 0, -1.0), 1.8, "???")
 	_ocultista.visible = false
 
 
@@ -426,3 +454,91 @@ func _banner(text: String, dur := 0.0) -> void:
 			var h := get_tree().get_first_node_in_group("hud")
 			if h != null and h.has_method("clear_banner"):
 				h.clear_banner())
+
+
+## Busca por nombre un modelo ya colocado a mano en el mundo.
+##
+## Los personajes del pueblo dejaron de ser cápsulas: están puestos en la escena
+## y lo que hace el código es colgarles la lógica encima, no dibujar otro encima
+## del que ya está. Se busca desde la RAÍZ y no desde el Poblado porque los
+## pusiste colgando del mundo, no del hub.
+func _modelo_del_mundo(prefijo: String) -> Node3D:
+	var raiz := get_tree().current_scene
+	if raiz == null:
+		raiz = get_parent()
+	if raiz == null:
+		return null
+	for n in raiz.find_children("%s*" % prefijo, "", true, false):
+		if n is Node3D and (n as Node).scene_file_path != "":
+			return n
+	return null
+
+
+## Los modelos de parroquianos puestos en el mundo, del más cercano al bar al más
+## lejano.
+##
+## El bar está en (10, 0, -4) del Poblado; se ordena por distancia para que el
+## que lleva la conversación sea el que tenés más a mano al acercarte.
+const GENTE_DEL_BAR := ["cazador_joven", "cazadora_joven", "cazador_adulto",
+	"cazadora_adulta"]
+const BARRA := Vector3(10.0, 0.0, -4.0)
+## Hasta dónde se considera "gente del bar". Sin este límite la búsqueda barría
+## el mundo entero y sentaba también a los cazadores de la quebrada del Yastay,
+## que tienen que caer derrotados.
+const RADIO_DEL_BAR := 30.0
+
+
+func _gente_del_bar() -> Array:
+	var raiz := get_tree().current_scene
+	if raiz == null:
+		raiz = get_parent()
+	if raiz == null:
+		return []
+	var punto := to_global(BARRA)
+	var todos: Array = []
+	for prefijo in GENTE_DEL_BAR:
+		for n in raiz.find_children("%s*" % prefijo, "", true, false):
+			# Sólo los que están COLOCADOS en la escena: un modelo instanciado tiene
+			# `scene_file_path`, y sus nodos internos no. Sin este filtro cada
+			# persona aparecía dos veces —ella y su nodo de adentro— y la pose se
+			# aplicaba encima de sí misma.
+			if not (n is Node3D) or (n as Node).scene_file_path == "":
+				continue
+			if (n as Node3D).global_position.distance_to(punto) > RADIO_DEL_BAR:
+				continue
+			todos.append(n)
+	todos.sort_custom(func(a: Node3D, b: Node3D) -> bool:
+		return a.global_position.distance_to(punto) < b.global_position.distance_to(punto))
+	return todos
+
+
+## Crea una persona con su modelo, ajustada a la altura pedida y apoyada en el
+## suelo.
+##
+## Para los que NO están puestos a mano en la escena, como el ocultista que
+## espía: era el único que seguía siendo una cápsula entre puros modelos.
+func _persona(ruta: String, pos: Vector3, altura: float, etiqueta: String) -> Node3D:
+	var raiz := Node3D.new()
+	raiz.position = pos
+	add_child(raiz)
+
+	var escena := load(ruta) as PackedScene
+	if escena == null:
+		push_warning("Poblado: no encuentro el modelo %s" % ruta)
+		return raiz
+	var modelo := escena.instantiate() as Node3D
+	raiz.add_child(modelo)
+	# El .glb viene a su tamaño y con el origen donde sea: se encaja.
+	ENCAJAR.encajar(modelo, altura)
+	# Los modelos miran a +Z y el juego toma -Z como frente.
+	modelo.rotation.y = PI
+
+	if etiqueta != "":
+		var lbl := Label3D.new()
+		lbl.name = "Label3D"
+		lbl.text = etiqueta
+		lbl.font_size = 20
+		lbl.position.y = altura + 0.35
+		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		raiz.add_child(lbl)
+	return raiz

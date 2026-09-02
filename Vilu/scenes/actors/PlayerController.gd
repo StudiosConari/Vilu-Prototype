@@ -94,6 +94,8 @@ enum AiMode { SIGUIENDO, FROZEN }
 ## El clip del disparo rápido dura 2.47 s: a ritmo 1 Benjamín tiraría una flecha
 ## cada dos segundos y medio. A 4x queda en 0.62 s.
 @export var ritmo_flecha := 4.0
+## Cuánto se acelera el tramo de soltar y volver a reposo. Suelto dura 1.69 s.
+@export var ritmo_soltar := 2.5
 
 @export_group("Combate")
 
@@ -472,7 +474,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				# Cargada: termina la animación desde donde quedó tensando.
 				# Rápida: es otro clip, y acelerado.
 				if charged:
-					_emilia.call("soltar")
+					_emilia.call("soltar", ritmo_soltar)
 				else:
 					_emilia.call("flecha", ritmo_flecha)
 			_shoot_arrow(charged)
@@ -623,7 +625,7 @@ func _triple_arrow() -> void:
 	_attack_cd = 0.3
 	# La habilidad se ve entera: la espera la marca su propio clip.
 	if _emilia != null:
-		var dura: float = _emilia.call("flecha_triple")
+		var dura: float = _emilia.call("flecha_triple", ritmo_flecha)
 		if dura > 0.0:
 			_attack_cd = dura
 	energy -= float(triple_cost)
@@ -1112,14 +1114,15 @@ func _golpe_de_agarre(presa: Node3D, dmg: float) -> void:
 
 ## Rodada de esquiva (Ctrl).
 ##
-## Sólo en el suelo y sólo para Emilia: Benjamín tiene el guanaco y el arco, y
-## además no hay animación suya.
+## Sólo en el suelo, y ahora para LOS DOS. Al principio la tenía prohibida al
+## arquero porque no existía su animación; desde que Benjamín la trae, ese
+## cerrojo era lo único que le impedía rodar.
 ##
 ## La dirección se congela al arrancar: hacia donde te movés, o hacia donde mira
 ## el personaje si estabas quieto. Corta lo que estuviera haciendo —la cadena de
 ## golpes y el cargado— porque rodar es justamente salir de ahí.
 func _rodar() -> void:
-	if is_archer or not is_on_floor() or _rodando > 0.0 or _rodada_cd > 0.0:
+	if not is_on_floor() or _rodando > 0.0 or _rodada_cd > 0.0:
 		return
 	if not active or input_locked or _dormido > 0.0 or mounted:
 		return

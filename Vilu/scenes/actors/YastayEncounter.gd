@@ -11,6 +11,7 @@ extends Node3D
 ##   4. Al curar al guanaco, el Yastay se calma y da la Bendición del Guanaco
 ##      a Benjamín (Q = montar, G = embestir).
 
+const POSE := preload("res://scenes/core/PoseAnimada.gd")
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
 
@@ -213,13 +214,17 @@ func _defeat_hunter(idx: int) -> void:
 		return
 	var h: Node3D = _hunters[idx]
 
-	var tw := get_tree().create_tween()
-	tw.tween_property(h, "rotation:z", PI / 2.0, 0.35)
-	# La altura sólo se toca en las cápsulas. El 0.30 de siempre es absoluto y
-	# suponía el suelo en y=0; sobre el terreno esculpido hundiría a un modelo
-	# puesto a mano. Al girar 90° el cuerpo ya queda tendido sin bajarlo.
-	if _es_capsula(h):
-		tw.parallel().tween_property(h, "position:y", 0.30, 0.35)
+	# Si el cazador tiene su animación de derrota, cae con ella. Girarlo 90° era
+	# el apaño de las cápsulas: sobre un modelo de verdad se ve como un muñeco
+	# volcado, no como alguien que cae.
+	if not POSE.poner(h, "derrotad", false):
+		var tw := get_tree().create_tween()
+		tw.tween_property(h, "rotation:z", PI / 2.0, 0.35)
+		# La altura sólo se toca en las cápsulas. El 0.30 de siempre es absoluto y
+		# suponía el suelo en y=0; sobre el terreno esculpido hundiría a un modelo
+		# puesto a mano. Al girar 90° el cuerpo ya queda tendido sin bajarlo.
+		if _es_capsula(h):
+			tw.parallel().tween_property(h, "position:y", 0.30, 0.35)
 
 	var lbl := h.get_node_or_null("Label3D") as Label3D
 	if lbl:
