@@ -67,8 +67,11 @@
 [ext_resource type="PackedScene" uid="uid://b28bo24qikf30" path="res://models/focal/estatua_alada.glb" id="72_2jpx7"]
 [ext_resource type="PackedScene" uid="uid://ceq3sm4ovx86l" path="res://models/props/flora/planta_de_cactus.fbx" id="73_54j23"]
 [ext_resource type="PackedScene" uid="uid://57x4kchcpgl7" path="res://models/prop_pequeno/antorcha_de_pared.glb" id="77_2nhnu"]
+[ext_resource type="PackedScene" uid="uid://cs8jqb8gr4cpx" path="res://models/personaje/bruja.glb" id="77_g83qo"]
+[ext_resource type="PackedScene" uid="uid://kg7gq2tavi0v" path="res://models/personaje/cazadora_joven.glb" id="78_jmifw"]
 [ext_resource type="PackedScene" uid="uid://bacourh8xs61k" path="res://models/edificio/bus.glb" id="78_pe8ao"]
 [ext_resource type="PackedScene" uid="uid://b6oq5bb1d6kb5" path="res://models/edificio/estacion.glb" id="79_g83qo"]
+[ext_resource type="PackedScene" uid="uid://b3omffdhvc527" path="res://models/personaje/cazador_joven.glb" id="79_m62vh"]
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="99_entrada"]
 [ext_resource type="Script" uid="uid://bwajfkhy14w0t" path="res://scenes/actors/PobladoHub.gd" id="z1_PobladoHub"]
 [ext_resource type="PackedScene" uid="uid://hhvgjv0ufdu4" path="res://models/props/banderas/bandera_chilena.fbx" id="z2_bandera_chilena"]
@@ -2047,7 +2050,7 @@ transform = Transform3D(-0.9569946, 0, -0.93185043, 0, 1.3357335, 0, 0.93185043,
 transform = Transform3D(1.3437294, 0, -0.6714659, 0, 1.6432143, 0, 0.7200385, 0, 1.2530836, 14.280612, 0.22756733, 0.8966522)
 
 [node name="tienda_de_brujas2" parent="Poblado/Edificios" unique_id=103205949 instance=ExtResource("61_2nhnu")]
-transform = Transform3D(1.5262392, 0, 1.0129333, 0, 1.8317859, 0, -1.0129333, 0, 1.5262392, -11.196566, 0.4986554, 0.90753174)
+transform = Transform3D(1.5262392, 0, 1.0129333, 0, 1.8317859, 0, -1.0129333, 0, 1.5262392, -11.196566, 0.035341352, 0.90753174)
 
 [node name="fuente_de_piedra_para_jardin2" parent="Poblado/Edificios" unique_id=789412869 instance=ExtResource("62_pe8ao")]
 transform = Transform3D(3.3089564, 0, 0, 0, 3.3089564, 0, 0, 0, 3.3089564, 1.8342409, 0.22694197, 11.903091)
@@ -4488,3 +4491,18 @@ transform = Transform3D(-0.023422683, 0, 0.99972576, 0, 1, 0, -0.99972576, 0, -0
 
 [node name="estacion2" parent="." unique_id=1347606633 instance=ExtResource("79_g83qo")]
 transform = Transform3D(0.0065740626, 0, 1.4490865, 0, 1.4491013, 0, -1.4490865, 0, 0.0065740626, -69.02818, -0.06128159, 127.816574)
+
+[node name="bruja2" parent="." unique_id=836915632 instance=ExtResource("77_g83qo")]
+transform = Transform3D(1.0665244, 0, 0.7974879, 0, 1.3317137, 0, -0.7974879, 0, 1.0665244, -21.326698, 0.22818987, 120.599335)
+
+[node name="cazadora_joven2" parent="." unique_id=680495676 instance=ExtResource("78_jmifw")]
+transform = Transform3D(-1.273273, 0, 0.12182711, 0, 1.2790883, 0, -0.12182711, 0, -1.273273, 1.9903426, 0.22794242, 122.265976)
+
+[node name="cazadora_joven3" parent="." unique_id=1263300134 instance=ExtResource("78_jmifw")]
+transform = Transform3D(-1.1762085, 0, 0.5025929, 0, 1.2790883, 0, -0.5025929, 0, -1.1762085, -0.14345211, 0.22794242, 121.13108)
+
+[node name="cazador_joven2" parent="." unique_id=1914255799 instance=ExtResource("79_m62vh")]
+transform = Transform3D(-1.0180186, 0, 0.6484079, 0, 1.2069776, 0, -0.6484079, 0, -1.0180186, -1.0687529, 0.21790603, 120.64167)
+
+[node name="cazador_joven3" parent="." unique_id=1755236641 instance=ExtResource("79_m62vh")]
+transform = Transform3D(-1.1507219, 0, 0.36418903, 0, 1.2069776, 0, -0.36418903, 0, -1.1507219, 0.92403615, 0.21790603, 121.52743)

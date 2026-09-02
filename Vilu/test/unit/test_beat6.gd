@@ -74,14 +74,29 @@ func test_triple_arrow_needs_tirana_and_energy() -> void:
 	assert_eq(benja.energy, 5.0, "sin energía no dispara triple")
 
 
+## Las alas sólo se ven mientras se USAN: del segundo salto hasta tocar suelo, y
+## planeando. Tener la habilidad no basta; antes aparecían al desbloquearla y ya
+## no se guardaban nunca, ni caminando.
 func test_ability_visuals_toggle() -> void:
 	var p := PLAYER.instantiate()
 	add_child_autofree(p)
-	assert_false(p.get_node("Visual/Wings").visible, "alas ocultas por defecto")
+	var alas: Node3D = p.get_node("Visual/Wings")
+	assert_false(alas.visible, "alas ocultas por defecto")
+
 	p.can_glide = true
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	assert_true(p.get_node("Visual/Wings").visible, "alas visibles con can_glide")
+	assert_false(alas.visible, "con la habilidad pero sin usarlas, siguen guardadas")
+
+	p._jumps_done = 2                      # acaba de hacer el salto doble
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert_true(alas.visible, "en el salto doble se despliegan")
+
+	p._jumps_done = 0                      # tocó suelo
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	assert_false(alas.visible, "al aterrizar se guardan")
 
 
 ## El cubo café Visual/Guanaco quedó obsoleto: la montura ahora es el
