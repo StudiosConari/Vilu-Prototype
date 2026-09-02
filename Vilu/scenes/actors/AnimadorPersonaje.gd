@@ -38,6 +38,8 @@ const SIN_INTERRUMPIR := ["patada_final"]
 const MIEMBROS := ["mixamorig_LeftHand", "mixamorig_RightHand",
 	"mixamorig_LeftFoot", "mixamorig_RightFoot"]
 const HUESO_CADERA := "mixamorig_Hips"
+## Puntas de los dedos, para saber si la mano está abierta o cerrada.
+const PUNTAS_DE_DEDO := ["Index4", "Middle4", "Ring4", "Pinky4", "Thumb4"]
 ## Cuántos puntos se prueban a lo largo del clip al buscar el impacto.
 const MUESTRAS := 60
 
@@ -88,7 +90,7 @@ func montar(jugador: CharacterBody3D, escena: PackedScene, escala: float) -> voi
 		if not SIN_INTERRUMPIR.has(n):
 			_impacto[n] = _cuando_impacta(n)
 	if _anim.has_animation(FLECHA_CARGADA):
-		_tension = _cuando_impacta(FLECHA_CARGADA)
+		_tension = _cuando_abre_la_mano(FLECHA_CARGADA)
 	_anim.play(REPOSO)   # medir dejó la pose donde fuera; se la devuelve
 
 	# El muñeco de cajas se apaga, pero NO se borra: sigue sirviendo de
@@ -392,18 +394,29 @@ func tensar() -> void:
 
 
 ## Suelta: la animación termina desde donde haya quedado.
-func soltar() -> float:
+##
+## `ritmo` acelera sólo ESE tramo, el de soltar y volver a reposo, que suelto es
+## largo y deja al arquero clavado esperando.
+func soltar(ritmo: float = 1.0) -> float:
 	if _anim == null or not _tensando:
 		return 0.0
 	_tensando = false
 	_anim.play(FLECHA_CARGADA)
 	if _anim.current_animation_position < _tension:
 		_anim.seek(_tension, true)
-	return _anim.get_animation(FLECHA_CARGADA).length - _tension
+	var r: float = maxf(ritmo, 0.1)
+	_anim.speed_scale = r
+	return (_anim.get_animation(FLECHA_CARGADA).length - _tension) / r
 
 
-## La habilidad: se ve entera, sin cortes.
-func flecha_triple() -> float:
+## La habilidad usa la animación del disparo RÁPIDO.
+##
+## Tenía la suya, pero calzaba peor con el gesto: el clip de la rápida encaja
+## mejor con soltar tres flechas de una. Si algún día vuelve a existir uno propio
+## se usa ése.
+func flecha_triple(ritmo: float = 1.0) -> float:
+	if _anim != null and _anim.has_animation(FLECHA):
+		return flecha(ritmo)
 	return _una_pasada(FLECHA_TRIPLE)
 
 
@@ -434,3 +447,64 @@ func _vigilar_tension() -> void:
 		return
 	if _anim.current_animation_position >= _tension:
 		_anim.pause()
+
+
+## El último instante en que el arquero TODAVÍA sujeta la cuerda.
+##
+## La señal son los dedos: se mide cuánto se separan las puntas del hueso de la
+## mano. Puño cerrado da poco y mano abierta da mucho, y abrir la mano es, en un
+## humano, soltar. El punto que se devuelve es la última muestra antes de ese
+## salto.
+##
+## Es la tercera vara que pruebo y la primera que corresponde a lo que se ve. Con
+## el recorrido de la mano el punto caía en 0.87 s, con el arco a medio abrir; con
+## la apertura entre manos caía en 2.25 s, ya con la mano abierta o sea con la
+## flecha ya soltada. Los dedos no dejan lugar a interpretación.
+func _cuando_abre_la_mano(clip: String) -> float:
+	if _anim == null or not _anim.has_animation(clip):
+		return 0.0
+	var esq := _buscar_esqueleto(get_parent())
+	if esq == null:
+		esq = _buscar_esqueleto(self)
+	if esq == null:
+		return 0.0
+	var a := _anim.get_animation(clip)
+	_anim.play(clip)
+	_anim.pause()
+
+	# Se mide la apertura de las DOS manos y gana la que más cambia: es la que
+	# suelta, y así no hay que saber de antemano si el arquero es diestro o zurdo.
+	var mejor_rango := -1.0
+	var t_suelta := 0.0
+	for lado in ["Left", "Right"]:
+		var mano := esq.find_bone("mixamorig_%sHand" % lado)
+		if mano < 0:
+			continue
+		var curva: Array = []
+		for i in MUESTRAS + 1:
+			_anim.seek(a.length * float(i) / float(MUESTRAS), true)
+			var suma := 0.0
+			var n := 0
+			for p in PUNTAS_DE_DEDO:
+				var idx := esq.find_bone("mixamorig_%sHand%s" % [lado, p])
+				if idx < 0:
+					continue
+				suma += esq.get_bone_global_pose(idx).origin.distance_to(
+					esq.get_bone_global_pose(mano).origin)
+				n += 1
+			curva.append(suma / maxf(n, 1))
+		var bajo: float = curva.min()
+		var alto: float = curva.max()
+		if alto - bajo <= mejor_rango:
+			continue
+		mejor_rango = alto - bajo
+		# A mitad de camino entre puño y mano abierta: ahí ya soltó.
+		var umbral: float = bajo + (alto - bajo) * 0.5
+		t_suelta = a.length
+		for i in curva.size():
+			if curva[i] >= umbral:
+				# La muestra ANTERIOR es la última con la cuerda todavía sujeta.
+				t_suelta = a.length * float(maxi(i - 1, 0)) / float(MUESTRAS)
+				break
+	_anim.stop()
+	return t_suelta

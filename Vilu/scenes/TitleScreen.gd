@@ -4,14 +4,20 @@ extends Control
 
 var _options: Control
 
-# Debug: [label, zona, beat, habilidades a desbloquear]
+# Debug: [label, zona, beat, habilidades a desbloquear, mundo (opcional)]
+#
+# El mundo sólo se pone cuando la entrada NO está en Tarapacá. Los dos mundos
+# son copias del mismo poblado, así que "Poblado" a secas es ambiguo y hay que
+# decir en cuál.
+const MUNDO_ATACAMA := "res://scenes/core/WorldAtacama.tscn"
+
 const DEBUG_ZONES := [
 	["1 Tarapacá", "Tarapaca", 0, []],
 	["2 Mina", "Mina", 3, ["bow"]],
 	["3 Poblado/Bruja", "Poblado", 3, ["bow", "talisman_frag_1"]],
 	["4 Isluga", "Isluga", 4, ["bow", "talisman_frag_1"]],
 	["5 Alicanto", "Alicanto", 5, ["bow", "talisman_frag_1"]],
-	["6 Poblado/Bar", "Poblado", 5, ["bow", "talisman_frag_1", "wings"]],
+	["6 Poblado/Bar", "Poblado", 5, ["bow", "talisman_frag_1", "wings"], MUNDO_ATACAMA],
 	["7 Yastay", "Yastay", 5, ["bow", "talisman_frag_1", "wings"]],
 	["8 Ojos del Salado", "OjosDelSalado", 6, ["bow", "wings", "guanaco"]],
 	["9 Regreso/Ocultista", "Poblado", 6, ["bow", "wings", "guanaco", "talisman_frag_1", "talisman_frag_2"]],
@@ -97,16 +103,18 @@ func _build_debug_zones() -> void:
 		var b := Button.new()
 		b.text = z[0]
 		b.add_theme_font_size_override("font_size", 18)
-		b.pressed.connect(_on_debug_zone.bind(z[1], z[2], z[3]))
+		b.pressed.connect(_on_debug_zone.bind(z[1], z[2], z[3],
+			String(z[4]) if z.size() > 4 else ""))
 		row.add_child(b)
 
 
-func _on_debug_zone(zone: String, beat: int, abilities: Array) -> void:
+func _on_debug_zone(zone: String, beat: int, abilities: Array, mundo := "") -> void:
 	GameManager.reset_progress()
 	GameManager.set_beat(beat)
 	for a in abilities:
 		GameManager.unlock(a)
 	GameManager.debug_start_zone = zone
+	GameManager.debug_start_world = mundo
 	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")
 
 

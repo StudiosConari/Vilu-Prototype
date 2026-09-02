@@ -641,13 +641,7 @@ func viajar_en_bus(bus: String) -> void:
 
 ## Deja al party junto al bus homólogo, un poco más allá y mirando al poblado.
 func _bajar_del_bus(bus: String) -> void:
-	var nodo := world.get_node_or_null(NodePath(bus)) as Node3D
-	if nodo == null:
-		# El bus con ese nombre no está en el otro mundo: sirve cualquiera.
-		for c in world.get_children():
-			if c is Node3D and c.name.begins_with("bus"):
-				nodo = c
-				break
+	var nodo := _buscar_bus(bus)
 	if nodo == null:
 		_colocar_en(world.spawn_point("Poblado"))
 		return
@@ -664,6 +658,32 @@ func _bajar_del_bus(bus: String) -> void:
 
 	_colocar_en(nodo.global_position + hacia * BAJADA_DEL_BUS)
 	_mirar_hacia(hacia)
+
+
+## El autobús que se llama así en el mundo recién montado; si no está, cualquiera.
+##
+## Se busca en TODO el árbol y no entre los hijos de la raíz: en WorldAtacama los
+## buses se agruparon dentro de "Terminal de Buses", y buscando arriba no
+## aparecía ninguno. Sin bus, el viaje caía al respaldo y te dejaba plantado en
+## medio del poblado en vez de bajarte en el terminal.
+func _buscar_bus(nombre: String) -> Node3D:
+	var buses := _buses_de(world)
+	for b: Node3D in buses:
+		if b.name == nombre:
+			return b
+	if buses.is_empty():
+		return null
+	return buses[0]
+
+
+func _buses_de(desde: Node) -> Array:
+	var encontrados: Array = []
+	for hijo in desde.get_children():
+		if hijo is Node3D and String(hijo.name).begins_with("bus"):
+			encontrados.append(hijo)
+			continue
+		encontrados.append_array(_buses_de(hijo))
+	return encontrados
 
 
 ## Gira la cámara para que mire en esa dirección.

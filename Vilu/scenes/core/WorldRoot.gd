@@ -444,9 +444,7 @@ func _construir_paradas_de_bus() -> void:
 			etiqueta = n
 
 	var n_paradas := 0
-	for hijo in get_children():
-		if not (hijo is Node3D) or not hijo.name.begins_with("bus"):
-			continue
+	for hijo in _buscar_buses():
 		var caja := _caja_de(hijo)
 		if caja.size == Vector3.ZERO:
 			continue
@@ -468,6 +466,25 @@ func _construir_paradas_de_bus() -> void:
 
 	if n_paradas > 0:
 		print("[mundo] paradas de bus: %d — viajan a %s" % [n_paradas, etiqueta])
+
+
+## Todos los autobuses de la escena, estén colgados donde estén.
+##
+## Se recorre el árbol ENTERO y no sólo los hijos de la raíz. En World.tscn los
+## buses cuelgan de arriba, pero en WorldAtacama.tscn se agruparon dentro de un
+## nodo "Terminal de Buses": mirando sólo el primer nivel, esa región se quedaba
+## sin una sola parada, o sea sin viaje de vuelta.
+##
+## Al dar con uno no se sigue bajando: las piezas de dentro del modelo no son
+## paradas, y basta con que alguna empiece por "bus" para duplicarla.
+func _buscar_buses(desde: Node = self) -> Array:
+	var encontrados: Array = []
+	for hijo in desde.get_children():
+		if hijo is Node3D and String(hijo.name).begins_with("bus"):
+			encontrados.append(hijo)
+			continue
+		encontrados.append_array(_buscar_buses(hijo))
+	return encontrados
 
 
 ## Caja envolvente de un nodo, en coordenadas de mundo.

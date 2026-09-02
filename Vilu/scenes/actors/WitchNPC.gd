@@ -48,38 +48,49 @@ func _ready() -> void:
 	_build()
 
 
+## Si el nodo YA trae un modelo —porque el guion se le colgó a la bruja que está
+## puesta en la escena— no se le dibuja la cápsula ni el sombrero cónico encima.
+##
+## Lo que se le cuelga se divide por su escala: la bruja del mundo está a 1.33, y
+## sin descontarla el cartel y la zona de conversación se irían de tamaño.
 func _build() -> void:
+	var f := global_transform.basis.get_scale()
+	var k: float = 1.0 / maxf(f.y, 0.001)
+	var tiene_modelo := _primera_malla(self) != null
+
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color           = Color(0.32, 0.08, 0.50)
 	mat.emission_enabled       = true
 	mat.emission               = Color(0.12, 0.02, 0.24)
 	mat.emission_energy_multiplier = 1.4
 
-	var mi  := MeshInstance3D.new()
-	var cap := CapsuleMesh.new()
-	cap.radius = 0.35
-	cap.height = 1.7
-	mi.mesh    = cap
-	mi.position.y = 0.85
-	mi.set_surface_override_material(0, mat)
-	add_child(mi)
+	if not tiene_modelo:
+		var mi  := MeshInstance3D.new()
+		var cap := CapsuleMesh.new()
+		cap.radius = 0.35
+		cap.height = 1.7
+		mi.mesh    = cap
+		mi.position.y = 0.85
+		mi.set_surface_override_material(0, mat)
+		add_child(mi)
 
-	# Sombrero cónico (cono invertido aplastado)
-	var hat_mat := StandardMaterial3D.new()
-	hat_mat.albedo_color = Color(0.10, 0.04, 0.18)
-	var hat_mi  := MeshInstance3D.new()
-	var cone    := CylinderMesh.new()
-	cone.top_radius    = 0.0
-	cone.bottom_radius = 0.38
-	cone.height        = 0.60
-	hat_mi.mesh        = cone
-	hat_mi.position.y  = 2.05
-	hat_mi.set_surface_override_material(0, hat_mat)
-	add_child(hat_mi)
+	# Sombrero cónico del greybox: sólo si no hay modelo, que ya trae el suyo.
+	if not tiene_modelo:
+		var hat_mat := StandardMaterial3D.new()
+		hat_mat.albedo_color = Color(0.10, 0.04, 0.18)
+		var hat_mi  := MeshInstance3D.new()
+		var cone    := CylinderMesh.new()
+		cone.top_radius    = 0.0
+		cone.bottom_radius = 0.38
+		cone.height        = 0.60
+		hat_mi.mesh        = cone
+		hat_mi.position.y  = 2.05
+		hat_mi.set_surface_override_material(0, hat_mat)
+		add_child(hat_mi)
 
 	var lbl             := Label3D.new()
 	lbl.text             = "Bruja"
-	lbl.position.y       = 2.7
+	lbl.position.y       = 2.7 * k
 	lbl.pixel_size       = 0.007
 	lbl.billboard        = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.modulate         = Color(0.75, 0.45, 1.0)
@@ -89,9 +100,9 @@ func _build() -> void:
 	add_child(lbl)
 
 	var light          := OmniLight3D.new()
-	light.position.y   = 1.0
+	light.position.y   = 1.0 * k
 	light.light_color  = Color(0.65, 0.30, 1.0)
-	light.omni_range   = 4.0
+	light.omni_range   = 4.0 * k
 	light.light_energy = 1.2
 	add_child(light)
 
@@ -104,7 +115,7 @@ func _build() -> void:
 
 	var cs  := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
-	sph.radius = 2.5
+	sph.radius = 2.5 * k
 	cs.shape   = sph
 	zone.add_child(cs)
 
@@ -139,3 +150,13 @@ func _on_interacted(_player: Node) -> void:
 func _show(text: String) -> void:
 	var res := DialogueManager.create_resource_from_text(text)
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
+
+
+func _primera_malla(n: Node) -> MeshInstance3D:
+	for h in n.get_children():
+		if h is MeshInstance3D:
+			return h
+		var hondo := _primera_malla(h)
+		if hondo != null:
+			return hondo
+	return null

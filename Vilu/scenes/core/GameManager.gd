@@ -47,6 +47,13 @@ const LOGROS := [
 ## Debug: si no está vacío, Game arranca cargando esta zona (selector del título).
 var debug_start_zone := ""
 
+## Debug: ruta del mundo en el que arrancar, si no es el de siempre.
+##
+## Hay entradas del selector que viven en Atacama y no en Tarapacá —el Bar es la
+## primera—, y el nombre de la zona no alcanza para distinguirlas: las dos
+## regiones salieron de la misma copia y tienen un "Poblado" cada una.
+var debug_start_world := ""
+
 
 func get_beat() -> int:
 	return Save.beat_index
