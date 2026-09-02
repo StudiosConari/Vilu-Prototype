@@ -315,7 +315,10 @@ func _previsualizar_zonas() -> void:
 
 	# Boca de la Mina: el bulto real, igual que las zonas, para poder esculpir
 	# el terreno alrededor sabiendo dónde queda el socavón.
-	# Igual que arriba: con el modelo puesto no hace falta el bulto de CSG.
+	# Igual que arriba: con el modelo puesto no hace falta el bulto de CSG. Y si
+	# este mundo no tiene Mina, tampoco hay nada que previsualizar.
+	if not _hay_mina():
+		return
 	if _nodo_boca() == null:
 		_geometria_boca_mina(raiz)
 
@@ -370,7 +373,24 @@ func _pos_boca() -> Vector3:
 	return to_local(n.global_position) if n != null else BOCA_MINA
 
 
+## Si este mundo tiene la Mina.
+##
+## Igual que con ZONAS, el catálogo es de TODO el juego pero el mapa está
+## partido en dos mundos, y la Mina es de Tarapacá. Sin esta comprobación
+## Atacama montaba igual el cerro de greybox de la boca —con su cartel y su
+## disparador de "[E] Entrar a la Mina"— plantado en medio del desierto, al
+## lado de la quebrada del Yastay y a la vista de todos.
+##
+## Vale cualquiera de las dos señas: el modelo de la entrada en su grupo, o el
+## nodo "Mina" del que cuelga. Con el greybox no había ninguna de las dos, y por
+## eso se construía en los dos mundos.
+func _hay_mina() -> bool:
+	return _nodo_boca() != null or get_node_or_null("Mina") != null
+
+
 func _construir_boca_mina() -> void:
+	if not _hay_mina():
+		return
 	var modelo := _nodo_boca()
 	# El bulto de CSG sólo se arma si NO hay modelo. Estaba para marcar el sitio
 	# mientras la boca era un greybox; con la entrada de madera puesta sería un
@@ -588,7 +608,33 @@ func _process(_delta: float) -> void:
 ## que se sigan instanciando, como la Cumbre.
 func _pos_de_zona(z: Dictionary) -> Vector3:
 	var n := get_node_or_null(NodePath(z["id"])) as Node3D
-	return n.position if n != null else z["pos"]
+	if n == null:
+		return z["pos"]
+	# La zona puede decir dónde está su centro DE VERDAD. El nodo marca dónde se
+	# empezó a construir, que no tiene por qué ser el medio: el del Yastay está
+	# al pie del puente y su quebrada queda 23 m al este, así que medir desde el
+	# nodo hacía que la zona llegara hasta el poblado.
+	#
+	# Va en coordenadas de mundo, igual que `position` acá: la raíz del mundo
+	# está en el origen, así que local y global coinciden para sus hijos.
+	var propio: Variant = n.get("centro_de_zona")
+	if propio is Vector3 and propio != Vector3.ZERO:
+		return propio
+	return n.position
+
+
+## El radio con que se activa una zona.
+##
+## El del catálogo dice cuánto OCUPA la zona en el mapa —de ahí salen las pistas
+## de tierra que la unen con sus vecinas—, pero cuándo empieza su guion es otra
+## cosa, y la zona puede fijarlo por su cuenta.
+func _radio_de_activacion(z: Dictionary) -> float:
+	var n := get_node_or_null(NodePath(z["id"])) as Node3D
+	if n != null:
+		var propio: Variant = n.get("radio_de_zona")
+		if propio is float and propio > 0.0:
+			return propio
+	return float(z["radio"])
 
 
 func _instanciar_zonas() -> void:
@@ -714,7 +760,7 @@ func _revisar_zona_del_jugador() -> void:
 	var p: Node3D = _jugador_activo()
 	if p == null:
 		return
-	var pos: Vector3 = p.global_position
+	var gana := zona_en(p.global_position)
 
 	for z in ZONAS:
 		var id: String = z["id"]
@@ -726,14 +772,42 @@ func _revisar_zona_del_jugador() -> void:
 		if not _activas.has(id):
 			continue
 
-		var centro: Vector3 = _pos_de_zona(z)
-		var d := Vector2(pos.x - centro.x, pos.z - centro.z).length()
-		var dentro := d <= float(z["radio"])
-
-		if dentro and not _activas[id]:
+		if id == gana and not _activas[id]:
 			_activar(id)
-		elif not dentro and _activas[id]:
+		elif id != gana and _activas[id]:
 			_desactivar(id)
+
+
+## En qué zona está ese punto, o "" si está en el camino entre dos.
+##
+## Estar en una zona es EXCLUSIVO: cuando dos se pisan gana la más metida, o sea
+## aquella de cuyo radio ocupa la fracción menor. Se mide en fracción y no en
+## metros para que una zona chica no pierda siempre contra una grande que
+## empieza más lejos.
+##
+## Antes se activaban TODAS las que contuvieran al jugador, y eso vale mientras
+## las zonas no se toquen. En Atacama sí se tocan: el Poblado y la quebrada del
+## Yastay tienen los centros a 39 m con radios de 36 y 34, así que desde el bar
+## ya contabas como "dentro" del Yastay y la escena del encuentro arrancaba
+## sola, a media región de distancia. Poblado y Alicanto se pisan igual.
+func zona_en(pos: Vector3) -> String:
+	var gana := ""
+	var mejor := INF
+	for z in ZONAS:
+		var id: String = z["id"]
+		if not _activas.has(id):
+			continue
+		var r: float = _radio_de_activacion(z)
+		if r <= 0.0:
+			continue
+		var centro: Vector3 = _pos_de_zona(z)
+		# En planta: las zonas se reparten el mapa, no la altura.
+		var d := Vector2(pos.x - centro.x, pos.z - centro.z).length()
+		var metido := d / r
+		if metido <= 1.0 and metido < mejor:
+			mejor = metido
+			gana = id
+	return gana
 
 
 func _activar(id: String) -> void:

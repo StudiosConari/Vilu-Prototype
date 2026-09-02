@@ -67,11 +67,34 @@ func test_fall_returns_to_safe_point() -> void:
 
 # ─── Mundo abierto ──────────────────────────────────────────────────────────
 
+## ZONAS es el catálogo de TODO el juego, y el mapa está partido en dos mundos:
+## Tarapacá tiene unas zonas y Atacama otras (Alicanto y Yastay son de Atacama).
+## Exigirle el catálogo entero a un solo mundo fallaba siempre por esas dos, y
+## dos fallos permanentes tapan los de verdad. Lo que sí tiene que valer es que
+## ninguna zona del catálogo se haya quedado sin mundo.
 func test_world_loads_every_outdoor_zone() -> void:
 	var game := await _nuevo_juego()
 	assert_not_null(game.world, "Game monta el mundo abierto")
 	for z in game.world.ZONAS:
-		assert_true(game.world.has_zone(z["id"]), "zona instanciada: %s" % z["id"])
+		var id: String = z["id"]
+		if game.world.has_zone(id):
+			continue
+		assert_true(_escena_tiene_nodo(game.mundo_alterno, id),
+			"la zona '%s' no está en ninguno de los dos mundos" % id)
+
+
+## Si esa escena trae un nodo con ese nombre, SIN instanciarla.
+##
+## Montar el otro mundo entero para mirar un nombre cuesta el terreno y todo lo
+## que cuelga de él; el estado empaquetado ya lo dice.
+func _escena_tiene_nodo(escena: PackedScene, nombre: String) -> bool:
+	if escena == null:
+		return false
+	var st := escena.get_state()
+	for i in st.get_node_count():
+		if String(st.get_node_name(i)) == nombre:
+			return true
+	return false
 
 
 ## Cada zona tiene que caer en su propio lugar del mapa: si dos se superponen,
