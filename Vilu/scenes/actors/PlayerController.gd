@@ -27,7 +27,11 @@ signal arrow_fired
 
 const ARROW_SCRIPT := preload("res://scenes/Arrow.gd")
 const GUANACO_COMP_SCR := preload("res://scenes/actors/GuanacoCompanion.gd")
-const EMILIA_ANIM_SCR := preload("res://scenes/actors/EmiliaAnimator.gd")
+const ANIMADOR_SCR := preload("res://scenes/actors/AnimadorPersonaje.gd")
+const MODELO_EMILIA := preload("res://models/personaje/emilia.glb")
+const MODELO_BENJAMIN := preload("res://models/personaje/benjamin.glb")
+## Los modelos miden 1.00 m: la escala son sus metros de alto.
+const ALTO_PERSONAJE := 1.9
 
 ## SIGUIENDO: acompaña al activo, un paso atrás y al costado. QUIETO: se queda
 ## en su sitio. En ninguno de los dos pelea ni recibe daño: las batallas son del
@@ -68,10 +72,28 @@ enum AiMode { SIGUIENDO, FROZEN }
 @export var AGARRE_MULTIPLICADOR := 2.4
 
 @export_group("Rodada")
-## Lo que dura la rodada. Va con la animación: 36 frames a 30 fps.
-@export var rodada_duracion := 1.2
-@export var rodada_velocidad := 9.0
+## Reserva por si no hay animación. Con Emilia manda el clip: escribir su
+## duración a mano ya quedó obsoleto una vez —la rodada pasó de 1.20 a 0.97 s— y
+## el personaje seguía deslizándose un cuarto de segundo sin animación.
+@export var rodada_duracion := 1.0
+## Con 4.5 recorría 3.14 m y quedaba corta; a 6.75 son la mitad más.
+@export var rodada_velocidad := 6.75
+## Cuánto se acelera la animación de la rodada. A 1.0 dura 1.17 s; a 1.6, 0.73 s.
+@export var rodada_ritmo := 1.6
 @export var rodada_espera := 0.8
+
+@export_group("Patada corriendo")
+## A qué velocidad se queda mientras patea en carrera. Sin esto seguía a 7.5 m/s
+## durante todo el clip: 7.7 metros deslizándose en pose de patada.
+@export var patada_velocidad := 3.0
+## Impulso hacia arriba al patear DESDE EL SUELO. En el aire no se aplica: ahí ya
+## venís volando y sumarle empuje alargaría el salto.
+@export var patada_impulso := 3.0
+
+@export_group("Arco")
+## El clip del disparo rápido dura 2.47 s: a ritmo 1 Benjamín tiraría una flecha
+## cada dos segundos y medio. A 4x queda en 0.62 s.
+@export var ritmo_flecha := 4.0
 
 @export_group("Combate")
 
@@ -92,6 +114,8 @@ var hud: CanvasLayer
 var _interactable: Node = null
 
 @onready var _visual: Node3D = $Visual
+## El animador del personaje. Se llama `_emilia` por historia: al principio sólo
+## ella tenía modelo. Ahora lo usan los dos.
 var _emilia: Node3D = null
 @onready var _wings_vis: Node3D = get_node_or_null("Visual/Wings")
 @onready var _guanaco_vis: Node3D = get_node_or_null("Visual/Guanaco")
@@ -109,6 +133,7 @@ var _carga_usada := false
 var _rodando := 0.0
 var _rodada_cd := 0.0
 var _rodada_dir := Vector3.ZERO
+var _pateando := 0.0
 var _energy_shown := -1
 var forced_run_dir := Vector3.ZERO  # cuando no es ZERO, el personaje corre en esa dirección sin input (huida)
 var _hold_pos := Vector3.ZERO      # puesto a defender en modo QUIETO
@@ -146,6 +171,7 @@ func _physics_process(delta: float) -> void:
 	_attack_cd = max(0.0, _attack_cd - delta)
 	_rodada_cd = maxf(0.0, _rodada_cd - delta)
 	_rodando = maxf(0.0, _rodando - delta)
+	_pateando = maxf(0.0, _pateando - delta)
 	if _charging:
 		_charge_t += delta
 		# Emilia: mantener el clic saca el golpe cargado, una sola vez por pulsación.
@@ -241,6 +267,9 @@ func _physics_process(delta: float) -> void:
 	var speed := walk_speed
 	if _rodando > 0.0:
 		speed = rodada_velocidad
+	elif _pateando > 0.0:
+		# En plena patada de carrera se frena: es un golpe, no un desplazamiento.
+		speed = patada_velocidad
 	elif forced_run_dir != Vector3.ZERO:
 		speed = run_speed
 	elif active and not input_locked and Input.is_action_pressed("run"):
@@ -276,8 +305,11 @@ func _physics_process(delta: float) -> void:
 		var target_yaw := atan2(-hv.x, -hv.z)
 		_visual.rotation.y = lerp_angle(_visual.rotation.y, target_yaw, turn_speed * delta)
 
+	# Las alas del Alicanto sólo se ven cuando se están USANDO: desde el segundo
+	# salto hasta tocar suelo, y mientras planeás. Antes aparecían en cuanto
+	# desbloqueabas la habilidad y ya no se guardaban nunca, ni caminando.
 	if _wings_vis:
-		_wings_vis.visible = can_glide
+		_wings_vis.visible = can_glide and (_jumps_done >= 2 or _planeando())
 	# El cubo café placeholder ya no se usa: la montura es el guanaco compañero real.
 	if _guanaco_vis:
 		_guanaco_vis.visible = false
@@ -285,6 +317,7 @@ func _physics_process(delta: float) -> void:
 	# Si el guanaco desapareció (cambio de zona, etc.) dejamos de estar montados.
 	if mounted and guanaco_companion() == null:
 		mounted = false
+		_pose_de_montado(false)
 	# Montado: el jinete se eleva para quedar sobre el lomo del guanaco.
 	_visual.position.y = lerp(_visual.position.y, 0.75 if mounted else 0.0, 12.0 * delta)
 
@@ -346,9 +379,11 @@ func _player_input() -> Vector3:
 		if is_on_floor():
 			velocity.y = jump_velocity * (1.15 if mounted else 1.0)
 			_jumps_done = 1
+			_animar_salto(dir)
 		elif can_glide and _jumps_done < 2:
 			velocity.y = jump_velocity
 			_jumps_done = 2
+			_animar_salto(dir)
 	_jump_held_prev = jump_held
 
 	# Interacción (E)
@@ -377,11 +412,13 @@ func _cycle_guanaco() -> void:
 		mounted = true
 		if g.has_method("set_mounted"):
 			g.set_mounted(true)
+		_pose_de_montado(true)
 		_banner("Guanaco: MONTADO · [Q] guardar")
 	else:
 		mounted = false
 		if g.has_method("set_mounted"):
 			g.set_mounted(false)
+		_pose_de_montado(false)
 		g.queue_free()
 		_banner("Guanaco guardado · [Q] invocar")
 
@@ -389,7 +426,7 @@ func _cycle_guanaco() -> void:
 func _summon_guanaco() -> void:
 	var g := Node3D.new()
 	g.set_script(GUANACO_COMP_SCR)
-	get_tree().current_scene.add_child(g)
+	_al_mundo(g)
 	g.global_position = global_position + _visual.global_transform.basis.x * 1.8
 	_banner("Guanaco invocado · [Q] montar · [G] embestir")
 
@@ -415,15 +452,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		_charging = true
 		_charge_t = 0.0
 		_carga_usada = false
-		if not is_archer:
-			# El golpe de la cadena sale YA, al pulsar. Si además mantenés, el
-			# cargado se dispara solo al pasar `charge_time` (ver _physics_process).
-			# Hacerlo al soltar le habría quitado respuesta a la cadena de cuatro.
-			_melee_attack()
+		if is_archer and _emilia != null:
+			# Empieza a tensar y se queda en la máxima extensión hasta que sueltes.
+			_emilia.call("tensar")
+		# Emilia NO pega al pulsar: pegaba un jab y encima salía el cargado, dos
+		# golpes por una sola pulsación. Ahora el toque corto saca el golpe de la
+		# cadena al SOLTAR, y mantener saca sólo el cargado (ver _physics_process).
 	elif event.is_action_released("attack"):
-		if is_archer and _charging:
+		if not is_archer:
+			var fue_cargado := _carga_usada
+			_charging = false
+			_carga_usada = false
+			if not fue_cargado:
+				_melee_attack()   # fue un toque: golpe normal de la cadena
+		elif is_archer and _charging:
 			var charged := _charge_t >= charge_time
 			_charging = false
+			if _emilia != null:
+				# Cargada: termina la animación desde donde quedó tensando.
+				# Rápida: es otro clip, y acelerado.
+				if charged:
+					_emilia.call("soltar")
+				else:
+					_emilia.call("flecha", ritmo_flecha)
 			_shoot_arrow(charged)
 		else:
 			_charging = false
@@ -511,6 +562,26 @@ func _melee_attack() -> void:
 	_spawn_melee_hit(dmg)
 	melee_hit.emit(_combo_step)
 
+	# La espera hasta el golpe siguiente la marca la ANIMACIÓN: se puede encadenar
+	# EN EL IMPACTO, cuando el brazo o la pierna llegan a su máxima extensión, que
+	# es donde el golpe conecta. Antes eran 0.28 s fijos y el clip se cortaba mucho
+	# antes de la mitad.
+	#
+	# El remate de la cadena es la excepción: ése se ve entero.
+	if _emilia != null:
+		var corte: float = _emilia.call("golpe", _combo_step)
+		if corte > 0.0:
+			_attack_cd = corte
+		if String(_emilia.call("ultimo_clip")) == "patada_corriendo":
+			_pateando = corte
+			# Un saltito, sólo si sale del suelo. El arco lo pone la gravedad, no la
+			# animación: al clip se le aplanó la altura porque despegaba 1.89 m.
+			if is_on_floor() and patada_impulso > 0.0:
+				velocity.y = patada_impulso
+			# La ventana tiene que seguir abierta cuando termine la espera, o la
+			# cadena se reiniciaría sola antes de poder encadenar.
+			_combo_timer = _attack_cd + combo_window
+
 
 func _spawn_melee_hit(dmg: float) -> void:
 	var hit := Area3D.new()
@@ -521,7 +592,7 @@ func _spawn_melee_hit(dmg: float) -> void:
 	sh.radius = melee_range
 	cs.shape = sh
 	hit.add_child(cs)
-	get_tree().current_scene.add_child(hit)
+	_al_mundo(hit)
 	hit.global_position = global_position + Vector3(0.0, 0.9, 0.0) + _facing() * 1.0
 	var hit_pos := hit.global_position
 	hit.body_entered.connect(func(b: Node3D) -> void:
@@ -550,6 +621,11 @@ func _triple_arrow() -> void:
 	if _attack_cd > 0.0:
 		return
 	_attack_cd = 0.3
+	# La habilidad se ve entera: la espera la marca su propio clip.
+	if _emilia != null:
+		var dura: float = _emilia.call("flecha_triple")
+		if dura > 0.0:
+			_attack_cd = dura
 	energy -= float(triple_cost)
 	var fwd := _face_aim()      # apunta el abanico hacia el mouse
 	for ang in [-0.22, 0.0, 0.22]:
@@ -561,7 +637,7 @@ func _triple_arrow() -> void:
 func _spawn_arrow(dir: Vector3, pierce: bool) -> void:
 	var arrow := Area3D.new()
 	arrow.set_script(ARROW_SCRIPT)
-	get_tree().current_scene.add_child(arrow)
+	_al_mundo(arrow)
 	arrow.add_to_group("arrow")
 	arrow.global_position = global_position + Vector3(0.0, 1.2, 0.0) + dir * 0.6
 	arrow.setup(dir, arrow_speed * (1.3 if pierce else 1.0), arrow_damage * (1.8 if pierce else 1.0), pierce)
@@ -955,22 +1031,16 @@ func orientar_hacia(yaw: float) -> void:
 		_visual.rotation.y = yaw
 
 
-## Le pone a Emilia su modelo con animaciones, en lugar del muñeco de cajas.
-##
-## Sólo a ella: Benjamín todavía no tiene modelo y se queda con la cápsula.
+## Le pone al personaje su modelo con animaciones, en lugar del muñeco de cajas.
 func _montar_emilia() -> void:
-	if is_archer or _visual == null:
+	if _visual == null:
 		return
 	_emilia = Node3D.new()
-	_emilia.name = "Emilia"
-	_emilia.set_script(EMILIA_ANIM_SCR)
+	_emilia.name = "Animador"
+	_emilia.set_script(ANIMADOR_SCR)
 	_visual.add_child(_emilia)
-	_emilia.call("montar", self)
-	# Los golpes se leen de la señal que ya existía, así el animador no tiene que
-	# saber nada de cómo funciona el combo.
-	melee_hit.connect(func(paso: int) -> void:
-		if _emilia != null:
-			_emilia.call("golpe", paso))
+	_emilia.call("montar", self,
+		MODELO_BENJAMIN if is_archer else MODELO_EMILIA, ALTO_PERSONAJE)
 
 
 ## Golpe cargado de Emilia: más daño, corta la cadena y tiene su propia espera.
@@ -1062,15 +1132,18 @@ func _rodar() -> void:
 		return
 	_rodada_dir = d.normalized()
 
-	_rodando = rodada_duracion
-	_rodada_cd = rodada_duracion + rodada_espera
+	var dura := rodada_duracion
+	if _emilia != null:
+		var del_clip: float = _emilia.call("rodar", rodada_ritmo)
+		if del_clip > 0.0:
+			dura = del_clip
+	_rodando = dura
+	_rodada_cd = dura + rodada_espera
 	# Se cancela el golpe en curso: no se rueda a media patada.
 	_charging = false
 	_combo_timer = 0.0
-	_attack_cd = maxf(_attack_cd, rodada_duracion)
+	_attack_cd = maxf(_attack_cd, dura)
 	Sfx.play("punch", -10.0, 0.7)
-	if _emilia != null:
-		_emilia.call("rodar")
 
 
 ## Si está en plena rodada. Lo consulta quien necesite saberlo.
@@ -1133,3 +1206,55 @@ func _hold_behavior() -> Vector3:
 	if back.length() > 0.4:
 		return back.normalized()
 	return Vector3.ZERO
+
+
+## Lanza la animación de salto EN EL MOMENTO de saltar.
+##
+## Antes se elegía mirando si estaba en el aire, y eso llegaba tarde: la
+## animación arrancaba con el personaje ya volando y se cortaba al aterrizar. El
+## animador además se saltea el impulso del clip y le ajusta el ritmo al vuelo,
+## que se calcula acá porque depende de la gravedad y del impulso de este
+## personaje, no de la animación.
+func _animar_salto(dir: Vector3) -> void:
+	if _emilia == null:
+		return
+	var vuelo: float = 2.0 * velocity.y / maxf(gravity, 0.01)
+	_emilia.call("saltar", dir.length() > 0.1, vuelo)
+
+
+## Cuelga un nodo del mundo, no del personaje.
+##
+## Las cajas de golpe, las flechas y el guanaco tienen que quedarse donde
+## nacieron y no seguir al que los creó. Iban a `current_scene` a secas, pero eso
+## es null fuera de una partida —en los tests, por ejemplo— y reventaba con un
+## "add_child sobre un valor nulo" en medio del combate.
+func _al_mundo(n: Node) -> void:
+	var destino: Node = get_tree().current_scene
+	if destino == null:
+		destino = get_parent()
+	if destino == null:
+		destino = get_tree().root
+	destino.add_child(n)
+
+
+## Si está planeando ahora mismo.
+##
+## Son los dos casos en que las alas trabajan: cayendo despacio con Espacio
+## mantenido, y subiendo por una corriente ascendente. En la corriente la
+## velocidad es POSITIVA, así que mirar sólo "va cayendo" dejaba las alas
+## guardadas justo cuando más se están usando.
+func _planeando() -> bool:
+	if not can_glide or is_on_floor() or not active:
+		return false
+	if not Input.is_action_pressed("jump"):
+		return false
+	return in_updraft or velocity.y < 0.0
+
+
+## Pone o quita la pose de ir a caballo del guanaco.
+##
+## El clip son dos fotogramas: no es una animación, es una postura que se
+## mantiene mientras dure el paseo.
+func _pose_de_montado(activo: bool) -> void:
+	if _emilia != null:
+		_emilia.call("montado", activo)
