@@ -124,6 +124,17 @@ func _ready() -> void:
 		start = GameManager.debug_start_zone
 		GameManager.debug_start_zone = ""
 
+	# Hay entradas del selector que están en el OTRO mundo: el Bar es el del
+	# poblado de Atacama, no el de Tarapacá. Se intercambian los dos antes de
+	# instanciar nada, y así el bus sigue llevando al de siempre sin tocar nada
+	# más — el viaje ya funciona intercambiándolos.
+	if GameManager.debug_start_world != "":
+		var pedido: String = GameManager.debug_start_world
+		GameManager.debug_start_world = ""
+		if pedido != escena_del_mundo.resource_path:
+			mundo_alterno = escena_del_mundo
+			escena_del_mundo = load(pedido) as PackedScene
+
 	# El mundo abierto (todas las zonas al aire libre) vive siempre.
 	world = escena_del_mundo.instantiate()
 	add_child(world)

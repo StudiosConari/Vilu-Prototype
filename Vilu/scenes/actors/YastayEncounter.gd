@@ -51,6 +51,9 @@ var _en_zona := false    # el jugador está dentro de la quebrada
 ## Dónde estaba el Yastay antes de perseguir a nadie. Al calmarse vuelve ahí,
 ## junto a su rebaño, en vez de quedarse plantado encima del jugador.
 var _yastay_origen := Transform3D.IDENTITY
+## Lo mismo pero en coordenadas de MUNDO, para la correa: quien mueve al Yastay
+## trabaja en global, y mezclar los dos espacios lo mandaba a otra región.
+var _yastay_casa := Vector3.ZERO
 
 ## Cuánto se corrió la arena respecto de las coordenadas con que se escribió
 ## esta escena. Sale de dónde está el modelo del Yastay puesto a mano, y se le
@@ -154,6 +157,10 @@ func _ready() -> void:
 	if not geometria_fijada:
 		_build_arena()
 	_spawn_characters()
+	# Recién ahora: _spawn_characters es quien adopta el modelo del Yastay, que
+	# es el respaldo si esta quebrada no tuviera anillo de monolitos.
+	centro_de_zona = _centro_de_la_arena()
+	radio_de_zona = radio_de_activacion
 	# Diferido: en _ready() el espacio físico todavía no acepta consultas.
 	if not Engine.is_editor_hint():
 		_apoyar_en_el_suelo.call_deferred()
@@ -183,13 +190,71 @@ func deactivate() -> void:
 
 func _begin_hunt() -> void:
 	_phase = Phase.HUNTING
+	await _escena_de_presentacion()
+	_begin_aggressive()
+
+
+## La presentación del Yastay, contada con la cámara.
+##
+## Antes todo esto pasaba a espaldas del jugador: los cazadores caían por
+## temporizador mientras la cámara seguía al personaje, y cuando llegabas a la
+## quebrada ya estaba todo tirado en el suelo y el brujo se había ido. Lo que se
+## ve ahora es la pelea: la cámara va al Yastay, acompaña a cada cazador que
+## cae, sigue al brujo que escapa, se planta en el Yastay, y RECIÉN entonces
+## vuelve al jugador y empieza el ataque.
+##
+## Durante la escena se le quita el control al jugador. Si no, se puede caminar
+## fuera del cuadro —o meterse en la pelea— mientras la cámara mira para otro
+## lado, y al devolverla el personaje no está donde la escena lo dejó.
+func _escena_de_presentacion() -> void:
+	var juego := get_tree().get_first_node_in_group("game")
+	var con_camara: bool = juego != null and juego.has_method("focus_camera_on")
+	_trabar_a_los_jugadores(true)
+
+	# Plano general de la quebrada: se ve al Yastay y a los cazadores alrededor.
+	if con_camara and is_instance_valid(_yastay):
+		juego.focus_camera_on(_yastay, 0.0, 16.0, 3.0)
+	await get_tree().create_timer(1.2).timeout
+
+	# Uno por uno: la cámara se acerca al cazador ANTES de que caiga, para que se
+	# vea la caída entera y no el cuerpo ya en el suelo.
 	for i in _hunters.size():
-		get_tree().create_timer(0.6 + i * 0.65).timeout.connect(
-			func() -> void: _defeat_hunter(i))
-	var done := 0.6 + (_hunters.size() - 1) * 0.65 + 1.0
-	# El brujo que los mandaba ve caer al último cazador y arranca.
-	get_tree().create_timer(done - 0.4).timeout.connect(_brujo_escapes)
-	get_tree().create_timer(done).timeout.connect(_begin_aggressive)
+		var h: Node3D = _hunters[i]
+		if con_camara and is_instance_valid(h):
+			juego.focus_camera_on(h, 0.0, 9.0, 1.6)
+		await get_tree().create_timer(0.5).timeout
+		_defeat_hunter(i)
+		await get_tree().create_timer(0.8).timeout
+
+	# El brujo, que los dirigía desde atrás, arranca.
+	if is_instance_valid(_brujo):
+		if con_camara:
+			juego.focus_camera_on(_brujo, 0.0, 11.0, 2.0)
+		await get_tree().create_timer(0.6).timeout
+	_brujo_escapes()
+	# Menos de lo que dura su huida a propósito: al terminarla se libera, y una
+	# cámara apuntando a un nodo liberado salta de golpe al jugador.
+	await get_tree().create_timer(1.5).timeout
+
+	# Paneo de vuelta al Yastay, que queda solo en medio de la quebrada.
+	if con_camara and is_instance_valid(_yastay):
+		juego.focus_camera_on(_yastay, 0.0, 12.0, 3.0)
+	await get_tree().create_timer(1.8).timeout
+
+	if con_camara:
+		juego.clear_camera_focus()
+	# La cámara vuelve sola, pero interpolando: se le da el viaje antes de
+	# devolver el control y antes de que el Yastay ataque, o el primer golpe cae
+	# con la imagen todavía en camino.
+	await get_tree().create_timer(1.2).timeout
+	_trabar_a_los_jugadores(false)
+
+
+## Quita o devuelve el control a los dos protagonistas.
+func _trabar_a_los_jugadores(trabado: bool) -> void:
+	for p in get_tree().get_nodes_in_group("player"):
+		if "input_locked" in p:
+			p.input_locked = trabado
 
 
 ## El brujo dirigía a los cazadores desde atrás. Al ver que el Yastay los
@@ -284,6 +349,7 @@ func _begin_aggressive() -> void:
 	# guardado sería el de la cápsula enterrada.
 	if is_instance_valid(_yastay):
 		_yastay_origen = _yastay.transform
+		_yastay_casa = _yastay.global_position
 	if is_instance_valid(_yastay_label):
 		_yastay_label.text = "Yastay\n¡Intruso!"
 	_banner("¡El Yastay os ve! Emilia: esquiva sus cargas. Benjamín: sana al guanaco herido.", 6.0)
@@ -310,6 +376,14 @@ func _yastay_think(delta: float) -> void:
 	# Persecución lenta pero amenazante
 	if dist > 2.0:
 		_yastay.global_position += to_t.normalized() * 3.8 * delta
+
+	# La correa: es un guardián de SU quebrada, no un perseguidor. Sin esto
+	# bastaba con salir corriendo para arrastrarlo hasta el poblado, porque el
+	# guardia de `_en_zona` sólo lo frena cuando el mundo avisa de que saliste
+	# de la zona, y eso llega tarde o no llega. El tope es geométrico y no
+	# depende de que nadie avise.
+	_atar_a_su_sitio()
+
 	if dist > 0.5:
 		_encarar(to_t.normalized())
 
@@ -320,6 +394,75 @@ func _yastay_think(delta: float) -> void:
 		if target.has_method("take_damage"):
 			target.take_damage(25.0)
 		_banner("¡Golpe del Yastay! ¡Esquiva!", 1.8)
+
+
+## Radio, en metros, del territorio del Yastay: hasta dónde se aleja del sitio
+## donde estaba cuando te vio. El anillo de monolitos mide 11 m de radio, así
+## que con esto llega a cualquier rincón de la quebrada y a ninguno de fuera.
+@export var correa := 22.0
+
+
+## Radio, en metros, dentro del cual EMPIEZA el encuentro.
+##
+## Se mide desde el centro del anillo de monolitos, no desde este nodo: el nodo
+## está plantado al oeste, al pie del puente, y el catálogo de ZONAS le daba 34
+## metros desde ahí. Eso llegaba hasta el poblado, y por eso la escena arrancaba
+## estando en el bar.
+##
+## Con 16 m el disparo cae a mitad del puente: el anillo mide 11 de radio y el
+## puente se extiende hasta 18,6 desde ese centro.
+@export var radio_de_activacion := 16.0
+
+## Lo lee WorldRoot para saber DÓNDE y con qué radio activar esta zona, en vez
+## del sitio del nodo y el radio del catálogo. Se rellenan en _ready().
+var centro_de_zona := Vector3.ZERO
+var radio_de_zona := 0.0
+
+
+## El centro real de la quebrada: el del anillo de monolitos.
+##
+## Se toma el centro de su caja envolvente y no el promedio de los monolitos:
+## el anillo no está repartido parejo y el promedio se corre hacia el lado que
+## tiene más piedras.
+func _centro_de_la_arena() -> Vector3:
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for c in get_children():
+		if not (c is Node3D) or not String(c.name).begins_with("monolito"):
+			continue
+		var p: Vector3 = (c as Node3D).global_position
+		lo = lo.min(Vector2(p.x, p.z))
+		hi = hi.max(Vector2(p.x, p.z))
+	if lo.x == INF:
+		# Sin anillo, el mejor sitio que queda es el propio Yastay.
+		if is_instance_valid(_yastay):
+			return _yastay.global_position
+		return global_position
+	var m := (lo + hi) * 0.5
+	return Vector3(m.x, global_position.y, m.y)
+
+
+## Lo devuelve al borde de su territorio si se pasó persiguiendo.
+##
+## Se corrige la posición en vez de frenar la persecución: frenarla lo dejaría
+## plantado mirando el límite, y así sigue encarando y amenazando desde el borde
+## —que es lo que hace un animal que defiende un sitio—.
+func _atar_a_su_sitio() -> void:
+	if not is_instance_valid(_yastay):
+		return
+	# En coordenadas de MUNDO, igual que `_yastay_think`, que es quien lo mueve.
+	# `_yastay_origen` NO sirve acá: guarda la transformación LOCAL —la que
+	# necesita `_volver_a_su_sitio` para el tween de "position"— y restarla de la
+	# global daba un vector de 130 m, o sea "siempre fuera", y la correa mandaba
+	# al bicho a 22 m del origen del mapa: desaparecía de la quebrada.
+	var fuera := _yastay.global_position - _yastay_casa
+	fuera.y = 0.0
+	if fuera.length() <= correa:
+		return
+	var borde := _yastay_casa + fuera.normalized() * correa
+	# La altura no se toca: la manda el terreno, no la correa.
+	borde.y = _yastay.global_position.y
+	_yastay.global_position = borde
 
 
 ## Gira el Yastay para que MIRE hacia `dir`.
