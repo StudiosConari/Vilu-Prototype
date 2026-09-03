@@ -272,7 +272,7 @@ prompt = "[E] Entrar a la iglesia"
 tamano = Vector3(8, 5, 3)
 
 [node name="estatua_alada2" parent="Tarapaca/Iglesia" unique_id=1556550883 instance=ExtResource("72_2jpx7")]
-transform = Transform3D(-0.98521614, 0, -0.013658695, 0, 1, 0, 0.019712424, 0, -0.68265414, 9.009703, 12.154585, -15.273041)
+transform = Transform3D(-0.98521614, 0, -0.013658695, 0, 1, 0, 0.019712424, 0, -0.68265414, -1.8270378, 12.154585, -17.114456)
 
 [node name="props" type="Node3D" parent="Tarapaca" unique_id=478958466]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.20457077, 0, 0)
@@ -2054,9 +2054,6 @@ transform = Transform3D(1.5262392, 0, 1.0129333, 0, 1.8317859, 0, -1.0129333, 0,
 
 [node name="fuente_de_piedra_para_jardin2" parent="Poblado/Edificios" unique_id=789412869 instance=ExtResource("62_pe8ao")]
 transform = Transform3D(3.3089564, 0, 0, 0, 3.3089564, 0, 0, 0, 3.3089564, 1.8342409, 0.22694197, 11.903091)
-
-[node name="tablon_de_anuncios_de_madera2" parent="Poblado/Edificios" unique_id=159740935 instance=ExtResource("63_g83qo")]
-transform = Transform3D(-0.011860233, 0, 1.8698579, 0, 1.8698955, 0, -1.8698579, 0, -0.011860233, -44.287823, -0.014451712, 13.624542)
 
 [node name="tablon_de_anuncios_de_madera3" parent="Poblado/Edificios" unique_id=2066249474 instance=ExtResource("63_g83qo")]
 transform = Transform3D(-0.011860233, 0, 1.8698579, 0, 1.8698955, 0, -1.8698579, 0, -0.011860233, -44.287823, -0.014451712, 5.4746704)

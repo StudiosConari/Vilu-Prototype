@@ -55,3 +55,29 @@ func test_los_enemigos_chicos_no_se_aturden_como_los_jefes() -> void:
 	e._aturdir()
 	assert_false(e.esta_aturdido(),
 		"el aturdimiento de ventana es cosa de jefes; los chicos ya se frenan con cada golpe")
+
+
+## Matar a la presa a mitad del agarre no puede reventar la tanda de golpes.
+##
+## Regresión: `_golpe_de_agarre` declaraba `presa: Node3D`, y los golpes que
+## quedaban pendientes llegaban con la presa ya liberada. GDScript convierte los
+## argumentos ANTES de entrar en la función, así que la llamada moría en la
+## conversión —"Cannot convert argument 1 from Object to Object"— sin llegar
+## siquiera al `is_instance_valid` que estaba puesto para este caso.
+func test_soltar_los_golpes_con_la_presa_muerta_no_falla() -> void:
+	var p: CharacterBody3D = load("res://scenes/actors/Player.tscn").instantiate()
+	p.is_archer = false
+	add_child_autofree(p)
+	# A mano y NO con `_enemigo`: ese usa add_child_autofree, y acÃ¡ la presa se
+	# libera dentro de la prueba a propÃ³sito.
+	var presa: Node3D = MINERO.instantiate()
+	add_child(presa)
+	await wait_physics_frames(2)
+
+	p._agarrar(presa)
+	presa.free()   # muere en el primer golpe; quedan tres temporizadores vivos
+	# Los golpes se reparten a lo largo de AGARRE_DURACION: se espera de sobra.
+	await wait_seconds(p.AGARRE_DURACION + 0.3)
+
+	assert_eq(get_errors().size(), 0,
+		"los golpes pendientes con la presa liberada no dan error")

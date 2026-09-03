@@ -436,7 +436,7 @@ transform = Transform3D(-2.117519, 0, 0.554579, 0, 2.188937, 0, -0.554579, 0, -2
 transform = Transform3D(5.8723, 0, 0, 0, 5.8723, 0, 0, 0, 5.8723, -0.84212434, 7.1899805, -1.6040214)
 script = ExtResource("35_antor")
 alcance = 6.0
-energia = 1.8
+energia = 2.7
 altura_relativa = 0.45
 vaiven = 0.1
 
@@ -444,7 +444,7 @@ vaiven = 0.1
 transform = Transform3D(5.8723, 0, 0, 0, 5.8723, 0, 0, 0, 5.8723, -0.84212434, 7.1899805, -21.430908)
 script = ExtResource("35_antor")
 alcance = 6.0
-energia = 1.8
+energia = 2.7
 altura_relativa = 0.45
 vaiven = 0.1
 
@@ -452,7 +452,7 @@ vaiven = 0.1
 transform = Transform3D(5.8723, 0, 0, 0, 5.8723, 0, 0, 0, 5.8723, -0.84212434, 7.1899805, -43.61975)
 script = ExtResource("35_antor")
 alcance = 6.0
-energia = 1.8
+energia = 2.7
 altura_relativa = 0.45
 vaiven = 0.1
 

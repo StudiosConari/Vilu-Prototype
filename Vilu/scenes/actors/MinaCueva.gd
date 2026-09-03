@@ -75,6 +75,11 @@ var _chupa_hit_cd   := 0.0
 func _ready() -> void:
 	_setup_triggers()
 	_spawn_talisman()
+	# Volvés a buscar al Chupacabras: la mina tiene que estar como la dejaste.
+	# Diferido para que los obeliscos y las barreras hayan corrido su _ready y
+	# haya a quién encender y qué derribar.
+	if _toca_el_duelo():
+		_dejar_como_tras_la_huida.call_deferred()
 	_precalentar_shaders()
 
 
@@ -395,6 +400,11 @@ func _on_nest_enter(body: Node3D) -> void:
 		# El duelo NO exige haber despejado a los mineros: se vuelve a la mina a
 		# propósito, a buscarlo, y el camino hasta el nido está abierto.
 		_iniciar_duelo()
+	elif GameManager.tiene_logro("mina"):
+		# Ya escapaste de acá una vez y volviste a buscarlo, pero todavía no
+		# toca. Sin decir QUÉ falta, el viaje se hace a ciegas: llegás al nido,
+		# no pasa nada y no hay forma de saber por qué.
+		_avisar_lo_que_falta()
 	elif _combat_cleared:
 		_start_chase()
 
@@ -403,6 +413,18 @@ func _on_nest_enter(body: Node3D) -> void:
 ##
 ## Se entra en este modo cuando están TODOS los logros menos el suyo: es lo
 ## último que le queda al prototipo, así que la mina deja de ser una huida.
+## Dice en pantalla qué logros faltan para que el Chupacabras plante cara.
+func _avisar_lo_que_falta() -> void:
+	var faltan: PackedStringArray = []
+	for l in GameManager.LOGROS:
+		if l["id"] != "chupacabras" and not GameManager.tiene_logro(l["id"]):
+			faltan.append(str(l["titulo"]))
+	if faltan.is_empty():
+		return
+	_banner("El Chupacabras todavía no da la cara. Te falta: %s"
+		% ", ".join(faltan), 6.0)
+
+
 func _toca_el_duelo() -> bool:
 	if GameManager.tiene_logro("chupacabras"):
 		return false
@@ -492,27 +514,7 @@ func _start_chase() -> void:
 	_rumbo_ultimo = Vector3.ZERO
 	_cuadros_rumbo = 0
 
-	# 8 mineros de escape (solo normales, unkillable)
-	var escape_pos: Array[Vector3] = [
-		Vector3( 1.75, 0.35, -36.4),
-		Vector3(-1.4,  0.35, -32.2),
-		Vector3( 2.1,  0.35, -27.3),
-		Vector3(-2.45, 0.35, -21.7),
-		Vector3( 1.4,  0.35, -16.8),
-		Vector3(-1.75, 0.35, -11.9),
-		Vector3( 1.05, 0.35,  -7.0),
-		Vector3(-1.05, 0.35,  -3.5),
-	]
-	escape_pos = _puntos_de("SpawnsHuida", escape_pos)
-	for pos in escape_pos:
-		var m: CharacterBody3D = MINERO.instantiate()
-		m.base_color = miner_color
-		m.speed      = 1.5
-		m.max_health = 999.0
-		add_child(m)
-		TOON_SKIN.new().aplicar(m)
-		m.global_position = _sitio_libre(pos)
-		m.remove_from_group("enemies")  # el compañero no los ataca durante la huida
+	_poblar_pasillo_central(false)
 
 	# Bloques de derrumbe del techo (staggered)
 	var debris_z  := [-45.0, -35.0, -24.0, -10.0]
@@ -859,3 +861,76 @@ func _banner(text: String, auto_clear := 0.0) -> void:
 			var h := get_tree().get_first_node_in_group("hud")
 			if h != null and h.has_method("clear_banner"):
 				h.clear_banner())
+
+
+## Dónde se planta la fila de mineros del pasillo central.
+##
+## Se usa en las DOS visitas: en la huida son bulto que esquivar, y al volver al
+## duelo tienen que estar igual —el jugador dejó la mina así—. Escribirlas dos
+## veces era garantía de que una de las dos se quedara vieja.
+const MINEROS_DEL_PASILLO: Array[Vector3] = [
+	Vector3( 1.75, 0.35, -36.4),
+	Vector3(-1.4,  0.35, -32.2),
+	Vector3( 2.1,  0.35, -27.3),
+	Vector3(-2.45, 0.35, -21.7),
+	Vector3( 1.4,  0.35, -16.8),
+	Vector3(-1.75, 0.35, -11.9),
+	Vector3( 1.05, 0.35,  -7.0),
+	Vector3(-1.05, 0.35,  -3.5),
+]
+
+
+## Llena el pasillo central de mineros.
+##
+## `peleables` decide qué son. En la HUIDA no: son invulnerables y fuera del
+## grupo "enemies", porque ahí no hay que pelear con nadie —hay que correr— y un
+## compañero parándose a atacarlos te deja atrás. En el DUELO sí: ya no huís, así
+## que quedarte pegando a muñecos inmortales alrededor del jefe no tendría
+## sentido.
+func _poblar_pasillo_central(peleables: bool) -> void:
+	for pos in _puntos_de("SpawnsHuida", MINEROS_DEL_PASILLO):
+		var m: CharacterBody3D = MINERO.instantiate()
+		m.base_color = miner_color
+		m.speed = 1.5
+		if not peleables:
+			m.max_health = 999.0
+		add_child(m)
+		TOON_SKIN.new().aplicar(m)
+		m.global_position = _sitio_libre(pos)
+		if not peleables:
+			m.remove_from_group("enemies")
+
+
+## Deja la mina como la dejaste al salir corriendo.
+##
+## Se llama al entrar cuando toca el duelo con el Chupacabras: volvés a un sitio
+## por el que ya pasaste, y encontrarlo de cero —las barreras otra vez de pie,
+## los mineros del pasillo de la derecha resucitados— contradice lo que jugaste.
+## Lo que queda es: obeliscos encendidos, sector derecho despejado y el pasillo
+## central con su gente, que es la foto de cuando huiste.
+func _dejar_como_tras_la_huida() -> void:
+	_combat_started = true
+	_combat_cleared = true
+	_alive = 0
+	# El diálogo de las garras es el de descubrirlas. Ya las viste: repetirlo al
+	# volver sonaría a que nadie se acuerda de lo que pasó.
+	_claw_fired = true
+
+	var encendidos := 0
+	for n in _todos_los_nodos(self):
+		if n.has_method("activar") and n.get_script() != null \
+				and String(n.get_script().resource_path).ends_with("Obelisco.gd"):
+			n.call("activar", false)
+			encendidos += 1
+
+	_poblar_pasillo_central(true)
+	print("[mina] vuelta para el duelo: %d obeliscos ya encendidos, sector"
+		% encendidos + " derecho despejado y el pasillo central poblado")
+
+
+func _todos_los_nodos(n: Node) -> Array:
+	var r: Array = []
+	for h in n.get_children():
+		r.append(h)
+		r.append_array(_todos_los_nodos(h))
+	return r

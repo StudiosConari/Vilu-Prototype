@@ -36,10 +36,10 @@ const LOGROS := [
 	 "pista": "Rescatar al Alicanto"},
 	{"id": "yastay",      "titulo": "El Yastay",
 	 "pista": "Superar al Yastay"},
-	{"id": "ojos_salado", "titulo": "Ojos del Salado",
-	 "pista": "Llegar a la cima del Ojos del Salado"},
 	{"id": "talisman_2",  "titulo": "El segundo talismán",
 	 "pista": "Llevarle a la bruja el segundo fragmento"},
+	{"id": "ojos_salado", "titulo": "Ojos del Salado",
+	 "pista": "Llegar a la cima del Ojos del Salado"},
 	{"id": "chupacabras", "titulo": "El Chupacabras",
 	 "pista": "Vencer al Chupacabras"},
 ]

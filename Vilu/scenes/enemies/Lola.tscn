@@ -24,3 +24,6 @@ duerme = 4.0
 cooldown_area = 6.0
 color_area = Color(1, 0.08, 0.08, 1)
 dormido = true
+anim_caminar = "Levitate_Idle"
+anim_atacar = "Melee_Hook"
+anim_morir = "Death_A"
