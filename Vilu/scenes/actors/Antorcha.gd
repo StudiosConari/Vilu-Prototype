@@ -15,7 +15,7 @@ extends Node3D
 @export var color := Color(1.0, 0.62, 0.25)
 ## Radio que alcanza a iluminar, en metros.
 @export_range(0.5, 25.0, 0.1) var alcance := 7.0
-@export_range(0.0, 8.0, 0.05) var energia := 2.2
+@export_range(0.0, 8.0, 0.05) var energia := 3.3
 
 @export_group("Colocación")
 ## Dónde va la luz dentro de la altura del modelo. 1 = justo en la punta.

@@ -48,6 +48,17 @@ const ENCAJAR := preload("res://scenes/core/EncajarModelo.gd")
 @export var anim_caminar := ""
 @export var anim_atacar := ""
 
+## Clip de muerte. Si está puesto, el cuerpo se queda a la vista mientras dura
+## en vez de desaparecer en el acto.
+##
+## La señal `died` sale IGUAL de inmediato: lo que se demora es sólo el cuerpo.
+## Nada de lo que cuelga de morir —los logros, las puertas que se abren, la
+## huida de la Mina— espera a la animación, y así añadirla no puede atascar el
+## guion de ninguna zona.
+@export var anim_morir := ""
+
+var _muriendo := false
+
 @export_group("Sueño")
 ## Segundos que deja dormido al personaje alcanzado por el golpe de ÁREA.
 ## En 0 el golpe sólo hace daño.
@@ -527,7 +538,27 @@ func take_damage(dmg: float, from_pos: Vector3, force: float = 4.5, burn: bool =
 		_knockback = dir.normalized() * (force / maxf(scale_factor, 0.6))
 	if health <= 0.0:
 		died.emit(global_position, _xp_worth())
+		_morir()
+
+
+## Saca al enemigo del juego, con su animación de muerte si la tiene.
+func _morir() -> void:
+	if _muriendo:
+		return
+	_muriendo = true
+	if anim_morir == "" or _anim == null or not _anim.has_animation(anim_morir):
 		queue_free()
+		return
+	# Deja de jugar: ni se mueve, ni pega, ni estorba, ni lo apuntan. Sólo cae.
+	set_physics_process(false)
+	collision_layer = 0
+	remove_from_group("enemies")
+	velocity = Vector3.ZERO
+	_anim.play(anim_morir)
+	get_tree().create_timer(_anim.get_animation(anim_morir).length).timeout.connect(
+		func() -> void:
+			if is_instance_valid(self):
+				queue_free())
 
 
 func _spawn_damage_number(amount: float, big: bool) -> void:
@@ -596,7 +627,7 @@ func _physics_process(delta: float) -> void:
 			_spawn_damage_number(burn_dps * 0.5, false)
 			if health <= 0.0:
 				died.emit(global_position, _xp_worth())
-				queue_free()
+				_morir()   # morir quemado también merece su animación
 				return
 	else:
 		_mat.emission_enabled = false

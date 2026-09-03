@@ -80,6 +80,9 @@ script = ExtResource("1_cima")
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=941184287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.086365, 28.884237)
 
+[node name="CheckpointBifurcacion" type="Marker3D" parent="." unique_id=941184288]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 109.5, -22.2)
+
 [node name="MountPlate" type="Area3D" parent="." unique_id=1600259397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.17746, 20.888905)
 collision_layer = 0

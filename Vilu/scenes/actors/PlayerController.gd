@@ -1104,7 +1104,15 @@ func _agarrar(presa: Node3D) -> void:
 			_golpe_de_agarre.bind(presa, por_golpe))
 
 
-func _golpe_de_agarre(presa: Node3D, dmg: float) -> void:
+## `presa` va SIN tipo a propósito.
+##
+## La tanda de golpes son varios temporizadores, y el agarre suele MATAR a la
+## presa antes de que salten todos: los que quedan llegan con un objeto ya
+## liberado. GDScript convierte los argumentos ANTES de entrar en la función,
+## así que declarándola `Node3D` la llamada reventaba en la conversión —"Cannot
+## convert argument 1 from Object to Object"— sin llegar nunca al
+## `is_instance_valid` de acá abajo, que es justo lo que estaba para eso.
+func _golpe_de_agarre(presa, dmg: float) -> void:
 	if not is_instance_valid(presa) or not presa.has_method("take_damage"):
 		return
 	# Sin empuje: mientras dura el agarre está sujeta, no sale despedida.

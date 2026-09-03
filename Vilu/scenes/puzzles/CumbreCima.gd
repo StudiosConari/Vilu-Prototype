@@ -58,25 +58,38 @@ func _ready() -> void:
 	_spawn_guardian()
 
 
-## Las dos pasarelas que no se pueden pisar: tocarlas devuelve al inicio.
+## Las dos pasarelas que no se pueden pisar: tocarlas devuelve al checkpoint.
 ##
-## Son `camino_de_ladrillos_de_piedra3` y `4`, los dos que cuelgan de
-## "Plataforma". No se les quita la colisión: hay que poder pisarlas para que la
-## trampa se note, igual que en la del oro.
-const PASARELAS_MORTALES := ["camino_de_ladrillos_de_piedra3",
-	"camino_de_ladrillos_de_piedra4"]
+## Van por RUTA y no por nombre suelto. En la escena hay DOS nodos llamados
+## `camino_de_ladrillos_de_piedra3`: el de acá y el de `FinalTrigger`, que es la
+## plataforma del Guardián. Buscándolos por nombre, `find_child` recorría el
+## árbol entero y devolvía el primero —el del Guardián, que está antes—, así que
+## la trampa quedaba puesta en la plataforma final: pisarla para hablar con él te
+## echaba de vuelta al principio, y la pasarela mortal de verdad no hacía nada.
+##
+## No se les quita la colisión: hay que poder pisarlas para que la trampa se
+## note, igual que en la del oro.
+const PASARELAS_MORTALES := ["Plataforma/camino_de_ladrillos_de_piedra3",
+	"Plataforma/camino_de_ladrillos_de_piedra4"]
+
+## Marcador al que se vuelve al pisar una pasarela mortal: la bifurcación de los
+## dos caminos. Si no está en la escena se cae al `PlayerSpawn` del principio.
+const CHECKPOINT := "CheckpointBifurcacion"
 
 var _pasarelas: Array = []
 var _reiniciando := false
 
 
 func _armar_pasarelas_mortales() -> void:
-	for nombre in PASARELAS_MORTALES:
-		var n := find_child(nombre, true, false) as Node3D
+	for ruta in PASARELAS_MORTALES:
+		var n := get_node_or_null(NodePath(ruta)) as Node3D
 		if n == null:
-			push_warning("Cumbre: no encuentro la pasarela '%s'" % nombre)
+			push_warning("Cumbre: no encuentro la pasarela '%s'" % ruta)
 			continue
 		_pasarelas.append(n)
+	print("[cumbre] pasarelas mortales: %s"
+		% ", ".join(PackedStringArray(_pasarelas.map(
+			func(x: Node3D) -> String: return str(get_path_to(x))))))
 
 
 ## Se comprueba QUÉ PISA el jugador, no en qué caja está.
@@ -109,11 +122,19 @@ func _vigilar_pasarelas() -> void:
 
 func _reiniciar_intento() -> void:
 	_reiniciando = true
-	_hint("Esa pasarela no aguanta. Volvés al principio.")
 	var juego := get_tree().get_first_node_in_group("game")
-	var marca := get_node_or_null("PlayerSpawn") as Node3D
+	# El checkpoint de la bifurcación si está puesto; si no, el principio.
+	var marca := get_node_or_null(CHECKPOINT) as Node3D
+	if marca != null:
+		_hint("Esa pasarela no aguanta. Volvés a la bifurcación.")
+	else:
+		marca = get_node_or_null("PlayerSpawn") as Node3D
+		_hint("Esa pasarela no aguanta. Volvés al principio.")
 	if juego != null and juego.has_method("_colocar_en") and marca != null:
 		juego.call("_colocar_en", marca.global_position)
+		# `_colocar_en` ya deja ahí el punto seguro del juego, así que caerse
+		# después tampoco devuelve al principio: las dos formas de fallar
+		# cuestan lo mismo.
 	reiniciar_plataforma_principal()
 	get_tree().create_timer(1.0).timeout.connect(func() -> void: _reiniciando = false)
 

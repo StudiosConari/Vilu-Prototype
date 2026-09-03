@@ -498,7 +498,7 @@ func go_to(region_name: String, use_travel_spawn: bool = false) -> void:
 			hud.clear_banner()
 
 	if region_name in INTERIORES:
-		await enter_interior(region_name)
+		await enter_interior(region_name, use_travel_spawn)
 	elif _interior != "":
 		_volviendo_de = _interior
 		await exit_interior(region_name, use_travel_spawn)
@@ -523,8 +523,17 @@ func _al_superar_el_prototipo() -> void:
 				PANTALLA_LOGROS.mostrar(self))
 
 
-func enter_interior(id: String) -> void:
-	_pos_antes_interior = active_character().global_position if active_character() else _respawn_pos
+func enter_interior(id: String, use_travel_spawn := false) -> void:
+	# El sitio del mundo al que se vuelve SÓLO se anota viniendo de fuera.
+	#
+	# `_pos_antes_interior` quiere decir "dónde estaba en el mundo abierto antes
+	# de meterme adentro". Viajando de un interior a OTRO —con el mapa del
+	# Guardián, por ejemplo— se anotaba la posición dentro del interior anterior,
+	# que son coordenadas de otra escena: el Ojos del Salado está a 110 m de
+	# altura, así que al salir del Isluga te dejaba en la cima del volcán en vez
+	# de en su entrada.
+	if _interior == "":
+		_pos_antes_interior = active_character().global_position if active_character() else _respawn_pos
 	await TravelManager.travel_to_then(_region_holder, id, func(r: Node) -> void:
 		_interior = id
 		if world:
@@ -534,7 +543,11 @@ func enter_interior(id: String) -> void:
 		if r != null:
 			TOON_SKIN.new().aplicar(r, ajustes_toon)
 		_aplicar_ambiente_interior(r)
-		_move_to_spawn(r))
+		# El viaje rÃ¡pido entra por el TravelSpawn, junto al guardiÃ¡n. Antes este
+		# argumento se perdÃ­a por el camino y el mapa te dejaba en el PlayerSpawn,
+		# o sea al principio del puzle: habÃ­a que rehacerlo entero para volver a
+		# hablar con Ã©l.
+		_move_to_spawn(r, use_travel_spawn))
 
 
 ## Ambiente de afuera, guardado para devolverlo al salir de un interior.

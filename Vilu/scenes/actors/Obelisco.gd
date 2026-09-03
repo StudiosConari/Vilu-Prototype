@@ -66,20 +66,33 @@ func _ready() -> void:
 func _on_interacted(jugador: Node) -> void:
 	if _activado:
 		return
-	_activado = true
-	_encender()
-	_derribar()
-	_despertar_a_lo_de_detras()
-	if mensaje != "":
-		_cartel(mensaje)
-	Sfx.play_at("fire", global_position, -3.0, 1.6)
-
+	activar(true)
 	# Retirar la zona: sin esto el cartel del HUD se queda puesto mientras el
 	# jugador siga al lado de un obelisco que ya no hace nada.
 	if jugador and jugador.has_method("clear_interactable"):
 		jugador.clear_interactable(_zona)
-	_zona.queue_free()
-	_zona = null
+
+
+## Lo enciende. Con `avisar` a false, en silencio y sin efectos de sonido.
+##
+## Se puede llamar sin jugador delante: la mina lo usa para dejar los obeliscos
+## ya activados cuando volvés al duelo con el Chupacabras: encontrarte las
+## barreras otra vez de pie, después de haberlas tirado, sería deshacerte el
+## trabajo.
+func activar(avisar := true) -> void:
+	if _activado:
+		return
+	_activado = true
+	_encender()
+	_derribar()
+	_despertar_a_lo_de_detras()
+	if avisar:
+		if mensaje != "":
+			_cartel(mensaje)
+		Sfx.play_at("fire", global_position, -3.0, 1.6)
+	if _zona != null:
+		_zona.queue_free()
+		_zona = null
 
 
 ## Brillo azul que deja claro cuál ya se usó.
