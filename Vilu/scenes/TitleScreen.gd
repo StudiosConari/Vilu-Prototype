@@ -249,6 +249,9 @@ func _on_debug_zone(indice: int) -> void:
 	# los ocho previos y no había forma de tenerlos desde el menú.
 	for id in _logros_previos(indice):
 		GameManager.conceder(id)
+	# Y la cadena de misiones, DESPUÉS de conceder: el reset de arriba la mandó
+	# a la primera misión y hay que volver a colocarla donde deja esta parada.
+	Misiones.sincronizar_con_los_logros()
 	GameManager.debug_start_zone = z["zona"]
 	GameManager.debug_start_world = z["mundo"]
 	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")

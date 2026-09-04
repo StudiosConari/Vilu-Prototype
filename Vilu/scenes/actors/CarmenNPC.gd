@@ -12,7 +12,7 @@ extends CharacterBody3D
 ##  4. clues >= 4: Revelación → desbloquea bow + beat 2.
 ##  5. Habilidad ya dada: despedida corta.
 
-const BALLOON := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON := "res://scenes/ui/GloboDeDialogo.tscn"
 
 ## Con el que empieza: la guía del museo, de calle.
 @export var modelo: PackedScene = preload("res://models/personaje/carmen_museo.glb")
@@ -164,6 +164,7 @@ func _montar(escena: PackedScene, traje: String) -> void:
 	if capsula != null:
 		capsula.visible = false
 
+	_enganchar_los_huesos_sueltos(m)
 	_arreglar_transparencias(m)
 	_hundir_la_piel(m)
 	_traje = traje
@@ -224,12 +225,90 @@ func _arreglar_transparencias(raiz: Node3D) -> void:
 		print("[carmen] %d capas de la cara ordenadas a mano" % tocados)
 
 
-## Las mallas que van POR DEBAJO de otras y no deben asomar: la piel bajo la
-## ropa, y el interior de la boca dentro de la cabeza.
-const POR_DEBAJO := ["cuerpo", "boca", "epiglotis"]
+## De quién pasan a colgar los huesos que vinieron sueltos.
+const HUESO_QUE_ADOPTA := "cabeza"
 
-## Cuánto se hunden, en metros.
-@export var hundir_la_piel := 0.0025
+
+## Cuelga de la cabeza los huesos que el .glb trajo sin padre.
+##
+## `solo epiglotis` —el interior rosado de la boca— viene pesada AL 100 % a
+## `neutral_bone`: el hueso que Blender inventa al exportar a glTF para colgar
+## de él la geometría que quedó sin pesar a nada. Ese hueso no tiene padre, así
+## que no sigue a nadie: al girar Carmen la cabeza, la boca se quedaba donde
+## estaba y asomaba entera por la mejilla. No era cosa nuestra —pasa igual en el
+## .glb crudo, sin ningún script— ni se arregla hundiendo la malla, porque no es
+## que se solape con la cara: es que se queda atrás.
+##
+## Se adopta al huérfano en vez de repesar los vértices: la postura de amarre
+## del skin va en coordenadas de la MALLA y no cambia al mover el hueso de sitio
+## en la jerarquía, así que la boca se queda exactamente donde estaba y desde
+## ahora se mueve con la cara.
+##
+## Sólo se adoptan huérfanos SIN HIJOS: la raíz de verdad también está sin padre
+## y de ella cuelga el esqueleto entero.
+func _enganchar_los_huesos_sueltos(raiz: Node3D) -> void:
+	var esq := _esqueleto(raiz)
+	if esq == null:
+		return
+	var padre := esq.find_bone(HUESO_QUE_ADOPTA)
+	if padre < 0:
+		return
+	var con_hijos := {}
+	for i in esq.get_bone_count():
+		if esq.get_bone_parent(i) >= 0:
+			con_hijos[esq.get_bone_parent(i)] = true
+	var g_padre := esq.get_bone_global_rest(padre)
+	for i in esq.get_bone_count():
+		# Godot exige que el padre vaya ANTES que el hijo en la lista.
+		if i <= padre or esq.get_bone_parent(i) >= 0 or con_hijos.has(i):
+			continue
+		var g := esq.get_bone_global_rest(i)
+		esq.set_bone_parent(i, padre)
+		# El descanso pasa a ser relativo al nuevo padre: se recalcula para que
+		# el hueso siga en el mismo sitio del mundo que tenía.
+		esq.set_bone_rest(i, g_padre.affine_inverse() * g)
+		esq.reset_bone_pose(i)
+
+
+func _esqueleto(n: Node) -> Skeleton3D:
+	if n is Skeleton3D:
+		return n
+	for h in n.get_children():
+		var x := _esqueleto(h)
+		if x != null:
+			return x
+	return null
+
+
+## Las capas, de dentro hacia fuera. Cada una se aparta un poco más que la de
+## debajo, y así ninguna asoma por la de encima.
+##
+## El interior de la boca NO está en ninguna: es una lámina fina y moverla a lo
+## largo de sus normales la invierte —hundiéndola aparecían manchas rosas en la
+## mejilla, peor cuanto más se hundía—. Lo suyo se arregla en el esqueleto, con
+## `_enganchar_los_huesos_sueltos`, no aquí.
+const LA_PIEL := ["cuerpo"]
+const LA_ROPA := ["polera", "pantalon", "zapatilla"]
+const LOS_ADORNOS := ["logo", "credencial"]
+
+## Cuánto se hunde la piel, en metros.
+##
+## Sola no alcanza: con 2,5 mm quedaba una lengüeta de piel en el hombro al
+## levantar el brazo, que es cuando la manga más se estira. Y subirla hasta
+## taparlo por sí sola —6 mm— adelgaza también la cara. Comprobado con fotos
+## del motor: 4 mm es lo que aguanta la cara sin notarse.
+@export var hundir_la_piel := 0.004
+
+## Cuánto se infla la ropa. Es la otra mitad del arreglo del hombro: separa la
+## tela de la piel sin tocar la cara.
+@export var inflar_la_ropa := 0.006
+
+## Y cuánto los adornos. Va por encima de `inflar_la_ropa` a propósito: si la
+## polera crece y ellos no, la tela se traga el logo y la credencial.
+##
+## Tampoco conviene pasarse: la credencial es un objeto de verdad, no una calca,
+## y engordarla mucho le convierte la pinza en un pegote blanco.
+@export var inflar_los_adornos := 0.009
 
 
 ## Mete la piel un pelo hacia dentro para que no atraviese la ropa.
@@ -244,24 +323,45 @@ const POR_DEBAJO := ["cuerpo", "boca", "epiglotis"]
 ## de la MALLA y no en metros: este modelo llega diez veces más grande que el
 ## personaje, así que hay que dividir por la escala a la que se montó.
 func _hundir_la_piel(raiz: Node3D) -> void:
+	_separar(raiz, LA_PIEL, -hundir_la_piel)
+	_separar(raiz, LA_ROPA, inflar_la_ropa)
+	_separar(raiz, LOS_ADORNOS, inflar_los_adornos)
+
+
+## Mueve un grupo de mallas a lo largo de sus normales, en metros.
+##
+## `grow_amount` va en unidades de la MALLA y no en metros: este modelo llega
+## diez veces más grande que el personaje, así que hay que dividir por la escala
+## a la que se montó.
+func _separar(raiz: Node3D, claves: Array, metros: float) -> void:
+	if is_zero_approx(metros):
+		return
 	var escala: float = maxf(raiz.scale.x, 0.0001)
 	for mi: MeshInstance3D in _mallas(raiz):
 		var n := mi.name.to_lower()
 		var toca := false
-		for clave in POR_DEBAJO:
-			if n.contains(clave):
+		for clave in claves:
+			if n.contains(String(clave)):
 				toca = true
 		if not toca or mi.mesh == null:
 			continue
+		# La MALLA se duplica, y con ella sus materiales. El .glb comparte ambos
+		# entre todas las instancias, así que tocarlos en crudo se los cambiaría
+		# a cualquier otro que use el mismo modelo.
+		#
+		# Se duplica en vez de dejar el original y colgar materiales en la lista
+		# de sustitutos del nodo: en modo sin ventana esa lista deja materiales
+		# sin RID y el motor protesta al liberar el nodo ("Parameter material is
+		# null"), que es ruido pero ensucia la batería de pruebas.
+		mi.mesh = mi.mesh.duplicate()
 		for s in mi.mesh.get_surface_count():
 			var mat := mi.mesh.surface_get_material(s) as BaseMaterial3D
 			if mat == null:
 				continue
-			# Duplicado: el material del .glb lo comparten todas las instancias.
 			var propio := mat.duplicate() as BaseMaterial3D
 			propio.grow = true
-			propio.grow_amount = -hundir_la_piel / escala
-			mi.set_surface_override_material(s, propio)
+			propio.grow_amount = metros / escala
+			mi.mesh.surface_set_material(s, propio)
 
 
 ## Alto del cuerpo, SIN el gorro.

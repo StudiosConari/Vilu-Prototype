@@ -130,6 +130,30 @@ func test_los_avisos_de_la_celebracion_no_se_pierden() -> void:
 	assert_eq(Misiones.hechos(), 2, "las dos pistas que llegaron a destiempo cuentan")
 
 
+## Los dos volcanes se cuentan igual: LLEGAR es una misión y ACTIVARLO es otra.
+##
+## Subir a la cima se cumple al entrar a la región —el principio del puzzle—, y
+## activar el volcán al hablar con el guardián, que es quien abre el mapa de
+## viajes entre cumbres. Los tuve un rato pegados a la cima del puzzle y eran
+## dos momentos distintos del juego.
+func test_llegar_al_volcan_y_activarlo_son_dos_misiones() -> void:
+	var hasta := func(id: String) -> void:
+		while not Misiones.terminada() and String(Misiones.actual()["id"]) != id:
+			var m: Dictionary = Misiones.actual()
+			Misiones.hecho(String(m["id"]), int(m["total"]))
+			await wait_seconds(Misiones.ESPERA + 0.15)
+
+	await hasta.call("ojos_cima")
+	assert_eq(String(Misiones.actual()["texto"]),
+		"Sube a la cima del volcán Ojos del Salado")
+	Misiones.llegue_a("OjosDelSalado")
+	assert_eq(Misiones.hechos(), 1, "llegar a la región cumple la de subir")
+
+	await wait_seconds(Misiones.ESPERA + 0.2)
+	assert_eq(String(Misiones.actual()["id"]), "ojos_volcan",
+		"y activarlo queda como misión aparte")
+
+
 ## Los nueve logros llevan los títulos del guion, con su ordinal.
 func test_los_titulares_de_los_logros() -> void:
 	var esperados := {

@@ -52,6 +52,8 @@ var _jugador: CharacterBody3D = null
 var _escala := 1.9
 var _anim: AnimationPlayer = null
 var _unica := ""        ## clip de una sola pasada que está sonando ahora
+## Yendo a lomos del guanaco. Manda sobre todo lo demás menos hablar.
+var _montado := false
 var _hablando := false
 ## En qué segundo de cada clip de salto el personaje deja el suelo. Se calcula
 ## al montar, no se escribe a mano: si mañana rebajás las animaciones, el número
@@ -107,8 +109,17 @@ func _process(_delta: float) -> void:
 	if _anim == null or _jugador == null:
 		return
 	_vigilar_tension()
-	if _hablando or _unica != "":
-		return          # hablando, tensando o en pleno golpe: nada que decidir
+	if _hablando:
+		return
+	# Yendo montado no se decide nada: ni correr, ni caer, ni saltar. El salto
+	# pisaba la pose y, al terminar su clip, volvía a elegir "reposo": Benjamín
+	# se quedaba DE PIE sobre el lomo del guanaco el resto del viaje.
+	if _montado:
+		if _anim.assigned_animation != MONTADO:
+			_poner_pose_de_montado()
+		return
+	if _unica != "":
+		return          # tensando o en pleno golpe: nada que decidir
 	var quiere := _clip_de_movimiento()
 	if quiere != "" and _anim.current_animation != quiere:
 		_anim.play(quiere)
@@ -243,6 +254,10 @@ func _buscar_anim(n: Node) -> AnimationPlayer:
 ## que la caída del clip coincida con tocar el suelo en vez de quedarse a medias.
 func saltar(en_movimiento: bool, vuelo: float) -> void:
 	if _anim == null:
+		return
+	# El que salta es el guanaco: el jinete sigue sentado. Sin esto el clip de
+	# salto pisaba la pose de montar y ya no volvía.
+	if _montado:
 		return
 	var clip: String = SALTO_MOVIENDO if en_movimiento else SALTO_QUIETO
 	if not _anim.has_animation(clip):
@@ -424,15 +439,26 @@ func flecha_triple(ritmo: float = 1.0) -> float:
 func montado(activo: bool) -> void:
 	if _anim == null or not _anim.has_animation(MONTADO):
 		return
+	_montado = activo
 	if activo:
-		_unica = MONTADO
-		_anim.play(MONTADO)
-		_anim.pause()
-		# Al primer fotograma, no al último: buscar el final de un clip de dos
-		# fotogramas lo da por terminado y lo descarta, y la pose se pierde.
-		_anim.seek(0.0, true)
+		_poner_pose_de_montado()
 	elif _unica == MONTADO:
 		_unica = ""
+		# La pose se sostiene con el reproductor EN PAUSA. Desmontando en el aire
+		# nadie elige clip hasta tocar el suelo, y hasta entonces el personaje
+		# bajaba congelado en postura de jinete. Se lo despierta a mano.
+		if _anim.has_animation(REPOSO):
+			_anim.play(REPOSO)
+
+
+func _poner_pose_de_montado() -> void:
+	_unica = MONTADO
+	_anim.speed_scale = 1.0
+	_anim.play(MONTADO)
+	_anim.pause()
+	# Al primer fotograma, no al último: buscar el final de un clip de dos
+	# fotogramas lo da por terminado y lo descarta, y la pose se pierde.
+	_anim.seek(0.0, true)
 
 
 ## Mientras tensa, el clip se detiene al llegar a la máxima extensión.

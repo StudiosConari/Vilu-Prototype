@@ -19,7 +19,7 @@ const POSE         := preload("res://scenes/core/PoseAnimada.gd")
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 const EXIT_SCENE   := preload("res://scenes/actors/ZoneExit.tscn")
 const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
-const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 
 const TALK_BAR_1 := "~ start
 Parroquiano: Salud. Acá no se habla de la mina, ¿estamos?

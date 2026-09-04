@@ -29,6 +29,11 @@ const CHARGE_DAMAGE := 60.0
 ## cumbre, esperar cinco segundos entre uno y otro cortaba el ritmo.
 const CHARGE_CD     := 2.0
 const FOLLOW_SPEED  := 6.0
+## Lo que sube o baja por segundo al perseguir la altura de Benjamín. Más rápido
+## que cualquier plataforma del juego, para que no se quede atrás en el viaje.
+const VELOCIDAD_VERTICAL := 8.0
+## Desnivel a partir del cual se planta de una vez en vez de subir despacio.
+const SALTO_DE_ALTURA := 6.0
 ## Distancia a la que se pone a la DERECHA de Benjamín. A 1.3 se le montaba
 ## encima ahora que el modelo mide el doble; a 2.5 quedaba lejísimos.
 const FOLLOW_DIST   := 1.8
@@ -99,9 +104,24 @@ func _ride_benja() -> void:
 	var benja := _find_benja()
 	if benja == null:
 		return
-	global_position = benja.global_position
-	_base_y = benja.global_position.y
 	var vis := benja.get_node_or_null("Visual") as Node3D
+	# El guanaco se adelanta un poco respecto de Benjamín, que es lo mismo que
+	# sentarlo más ATRÁS sobre el animal: puestos en el mismo punto, el jinete
+	# quedaba sobre el arranque del cuello en vez de en mitad del lomo.
+	#
+	# El cuánto vive en el jugador, no acá: este nodo lo crea el código al
+	# invocar al guanaco y no sale en el editor, así que un @export suyo no se
+	# podría tocar. El del Player sí.
+	var adelante := 0.0
+	if "avance_de_montura" in benja:
+		adelante = float(benja.get("avance_de_montura"))
+	var frente := Vector3.ZERO
+	if vis != null and adelante != 0.0:
+		frente = -vis.global_transform.basis.z
+		frente.y = 0.0
+		frente = frente.normalized() if frente.length() > 0.01 else Vector3.ZERO
+	global_position = benja.global_position + frente * adelante
+	_base_y = benja.global_position.y
 	if vis:
 		rotation.y = vis.global_rotation.y
 
@@ -127,11 +147,35 @@ func _follow_benja(delta: float) -> void:
 	if diff.length() > 0.1:
 		global_position += diff.normalized() * min(diff.length(), FOLLOW_SPEED * delta)
 
+	_seguir_la_altura(benja, delta)
+
 	# Y mira hacia donde mirás vos. Antes esto sólo pasaba estando MONTADO, así
 	# que el guanaco invocado te seguía de lado o de espaldas según hubiera
 	# quedado al aparecer, y no giraba nunca.
 	if vis != null:
 		rotation.y = lerp_angle(rotation.y, vis.global_rotation.y, minf(delta * GIRO_SUAVE, 1.0))
+
+
+## La altura también se persigue, no sólo el plano.
+##
+## `_base_y` se tomaba UNA sola vez, en el primer frame, y no se volvía a tocar:
+## el guanaco quedaba flotando para siempre a la altura donde lo invocaste. Al
+## subir en una plataforma te ibas vos solo y él se quedaba abajo; al bajar,
+## colgado en el aire.
+##
+## Sólo copia la altura cuando Benjamín está PISANDO algo. Si no, cada salto se
+## llevaría al guanaco de paseo por el aire, y una caída lo haría desplomarse
+## con él.
+func _seguir_la_altura(benja: Node3D, delta: float) -> void:
+	if benja.has_method("is_on_floor") and not benja.is_on_floor():
+		return
+	var desnivel: float = benja.global_position.y - _base_y
+	if absf(desnivel) > SALTO_DE_ALTURA:
+		# Un teletransporte o una caída larga no se persiguen a paso de guanaco.
+		_base_y = benja.global_position.y
+	else:
+		_base_y = move_toward(_base_y, benja.global_position.y,
+			VELOCIDAD_VERTICAL * delta)
 
 
 func _launch() -> void:

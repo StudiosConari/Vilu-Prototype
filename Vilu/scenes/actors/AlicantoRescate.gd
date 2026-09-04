@@ -20,7 +20,16 @@ const MODELO_ALICANTO := preload("res://models/personaje/alicanto.glb")
 ## rescatada baja si no colocaste un modelo.
 const ALTO_VUELO := 3.0
 const DISTANCIA_AL_RESCATE := 7.0
-const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+
+## La cámara cuando mira al Alicanto: lo bastante lejos y alto para que se le
+## vean las alas enteras estando el ave a tres metros del suelo.
+const DISTANCIA_CAMARA := 10.0
+const ALTO_CAMARA := 2.5
+## Cuánto se queda mirándolo al bajar, antes de devolverle la cámara a Emilia.
+const SEGUNDOS_MIRANDO_AL_AVE := 4.5
+## Y cuánto acompaña su subida al final.
+const SEGUNDOS_DE_LA_SUBIDA := 3.4
+const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 
 const TALK_FORK := "~ start
 Benjamín: El camino se parte en dos.
@@ -334,8 +343,8 @@ func _on_gold_path_entered(body: Node3D) -> void:
 	if _phase == Phase.DONE or not body.is_in_group("player"):
 		return
 	_banner("El oro brilla... y el suelo empieza a ceder.", 3.0)
-	# Se eligió mal: la misión se vuelve a pedir, y con otro texto.
-	Misiones.reintentar("camino")
+	# La misión se vuelve a pedir AL REAPARECER, no acá: mientras caes no estás
+	# mirando el recuadro. Lo hace TrampaDelOro al devolverte al poblado.
 	# Las losas caen una tras otra: no da tiempo a volver
 	for i in _gold_tiles.size():
 		get_tree().create_timer(0.18 * float(i)).timeout.connect(
@@ -383,6 +392,22 @@ func _summon_alicanto() -> void:
 	_banner("Al fondo de la quebrada se enciende una luz.", 4.0)
 	_hint("Algo bajó al final del camino de la derecha.")
 	_build_alicanto()
+	# La cámara se va al ave en cuanto baja. El Alicanto aparece al fondo de la
+	# quebrada, a espaldas del jugador y por encima de su cabeza: hasta ahora
+	# sólo se enteraba por un cartel que decía que algo había bajado.
+	_mirar_al_alicanto(SEGUNDOS_MIRANDO_AL_AVE)
+
+
+## Manda la cámara al Alicanto. Con `segundos` en 0 se queda ahí hasta que
+## alguien la suelte.
+func _mirar_al_alicanto(segundos := 0.0) -> void:
+	var juego := get_tree().get_first_node_in_group("game")
+	if juego == null or not juego.has_method("focus_camera_on"):
+		return
+	if not is_instance_valid(_alicanto):
+		juego.clear_camera_focus()
+		return
+	juego.focus_camera_on(_alicanto, segundos, DISTANCIA_CAMARA, ALTO_CAMARA)
 
 
 # ─── Alicanto ────────────────────────────────────────────────────────────────
@@ -444,6 +469,8 @@ func _on_alicanto_reached(body: Node3D) -> void:
 	if _phase != Phase.SAVED or not body.is_in_group("player"):
 		return
 	_phase = Phase.DONE
+	# Mientras habla, la cámara se queda en él: es quien tiene la palabra.
+	_mirar_al_alicanto()
 	DialogueManager.dialogue_ended.connect(_give_wings.unbind(1), CONNECT_ONE_SHOT)
 	_show(TALK_WINGS)
 
@@ -460,6 +487,8 @@ func _give_wings() -> void:
 		var tw := get_tree().create_tween()
 		tw.tween_property(_alicanto, "position",
 			_alicanto.position + Vector3(0, 9.0, 0), 3.0)
+	# Acompaña la subida y devuelve la cámara a Emilia al terminar.
+	_mirar_al_alicanto(SEGUNDOS_DE_LA_SUBIDA)
 
 
 # ─── Geometría ───────────────────────────────────────────────────────────────

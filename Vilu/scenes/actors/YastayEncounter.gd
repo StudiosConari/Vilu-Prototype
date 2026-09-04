@@ -13,7 +13,7 @@ extends Node3D
 
 const POSE := preload("res://scenes/core/PoseAnimada.gd")
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
-const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 
 const TALK_BLESSING := "~ start
 Yastay: Alto. Bajad las armas.
@@ -329,7 +329,11 @@ func _on_inspect(player: Node, body: Node3D, zone: Area3D) -> void:
 	if player and player.has_method("clear_interactable"):
 		player.clear_interactable(zone)
 
-	Misiones.hecho("cazadores")
+	# Se avisa de cuántos van EN TOTAL, no de "uno más". Sumando de a uno, un
+	# aviso que llegue antes de que la misión esté activa —los cuerpos se pueden
+	# revisar mientras todavía corre la de los guanacos— descuadra el contador
+	# para siempre y deja la cadena colgada en 3/4.
+	Misiones.contar("cazadores", _inspected.size())
 	var total := _hunters.size()
 	if _inspected.size() < total:
 		_banner("Cuerpos revisados: %d/%d" % [_inspected.size(), total], 2.5)
@@ -553,7 +557,7 @@ func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 		return
 
 	_sanados.append(guanaco)
-	Misiones.hecho("guanacos")
+	Misiones.contar("guanacos", _sanados.size())
 	_levantar(guanaco)
 	if _sanados.size() < _heridos.size():
 		_banner("Guanacos sanados: %d/%d" % [_sanados.size(), _heridos.size()], 2.5)

@@ -67,6 +67,14 @@ var _celebrando := false
 var _reintentos := {}
 ## Avisos que llegaron mientras se celebraba la anterior.
 var _pendientes: Array = []
+## Avisos que llegaron ANTES de que su misión estuviera activa, por id.
+##
+## Pasa de verdad y deja la cadena colgada: los cuerpos de los cazadores se
+## pueden revisar mientras la misión que corre todavía es la de los guanacos,
+## y esos avisos se tiraban. Al llegarle el turno a "cazadores" ya no quedaban
+## cuatro cuerpos por revisar, sólo tres, y el contador se quedaba en 3/4 para
+## siempre. Guardados aquí, se aplican en cuanto la misión se activa.
+var _adelantados := {}
 
 
 ## Qué misiones cierra el llegar a cada zona o región.
@@ -92,6 +100,16 @@ func _ready() -> void:
 	# una vez en vez de repartir llamadas por nueve escenas.
 	GameManager.logro_obtenido.connect(_al_conseguir_logro)
 	TravelManager.region_changed.connect(_al_cambiar_de_region)
+	# La cadena vive en un autoload y sobrevive al cambio de escena: sin esto,
+	# empezar una partida nueva la dejaba donde estuviera de la anterior.
+	GameManager.progreso_reiniciado.connect(_volver_a_empezar)
+
+
+func _volver_a_empezar() -> void:
+	_reintentos.clear()
+	_adelantados.clear()
+	_pendientes.clear()
+	sincronizar_con_los_logros()
 
 
 func _al_conseguir_logro(id: String) -> void:
@@ -162,14 +180,53 @@ func hecho(id: String, cuantos := 1) -> void:
 	# cima del Ojos del Salado cierra subir y activar— y el segundo aviso llega
 	# mientras el primero todavía se está celebrando.
 	if _celebrando:
-		_pendientes.append([id, cuantos])
+		_pendientes.append([id, cuantos, false])
 		return
 	if String(actual()["id"]) != id:
+		_anotar_para_despues(id, cuantos, false)
 		return
 	_hechos = mini(_hechos + cuantos, _total())
 	avance.emit(_hechos, _total())
 	if _hechos >= _total():
 		_celebrar()
+
+
+## Avisa de CUÁNTAS van en total, no de que pasó una más.
+##
+## Para las misiones que llevan una lista —los cuatro guanacos, los cuatro
+## cuerpos—: la escena ya sabe cuántos lleva, y decirlo entero es a prueba de
+## avisos perdidos. Sumando de a uno, un aviso que se cae por el camino
+## descuadra el contador para siempre; diciendo "van 4", el último aviso
+## cierra la misión aunque los tres anteriores se hubieran perdido.
+func contar(id: String, van: int) -> void:
+	if terminada():
+		return
+	if _celebrando:
+		_pendientes.append([id, van, true])
+		return
+	if String(actual()["id"]) != id:
+		_anotar_para_despues(id, van, true)
+		return
+	_hechos = mini(maxi(_hechos, van), _total())
+	avance.emit(_hechos, _total())
+	if _hechos >= _total():
+		_celebrar()
+
+
+## Guarda un aviso que llegó antes de tiempo, si es de una misión que aún no
+## llegó. Los de misiones ya pasadas se ignoran, como siempre.
+func _anotar_para_despues(id: String, cuantos: int, absoluto: bool) -> void:
+	if _indice_de(id) <= _indice:
+		return
+	var previo := int(_adelantados.get(id, 0))
+	_adelantados[id] = maxi(previo, cuantos) if absoluto else previo + cuantos
+
+
+func _indice_de(id: String) -> int:
+	for i in CADENA.size():
+		if String(CADENA[i]["id"]) == id:
+			return i
+	return -1
 
 
 ## Marca que esta misión se falló y hay que repetirla, con otro texto.
@@ -195,13 +252,22 @@ func _celebrar() -> void:
 	_hechos = 0
 	if terminada():
 		_pendientes.clear()
+		_adelantados.clear()
 		cambio.emit({})
 		cadena_terminada.emit()
 		return
 	cambio.emit(actual())
 	avance.emit(_hechos, _total())
-	# Los avisos que llegaron durante la celebración, ahora sí.
+	# Los avisos que llegaron durante la celebración, ahora sí. Y antes que
+	# ésos, lo que ya se había hecho de esta misión sin que tocara todavía.
 	var cola: Array = _pendientes.duplicate()
 	_pendientes.clear()
+	var id_nuevo := String(actual()["id"])
+	if _adelantados.has(id_nuevo):
+		cola.push_front([id_nuevo, int(_adelantados[id_nuevo]), true])
+		_adelantados.erase(id_nuevo)
 	for aviso in cola:
-		hecho(String(aviso[0]), int(aviso[1]))
+		if bool(aviso[2]):
+			contar(String(aviso[0]), int(aviso[1]))
+		else:
+			hecho(String(aviso[0]), int(aviso[1]))

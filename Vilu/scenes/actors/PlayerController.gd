@@ -111,6 +111,15 @@ var ai_mode: int = AiMode.SIGUIENDO
 var can_glide := false
 var glide_gravity_scale := 0.35
 var mounted := false
+## Cuánto sube el jinete al montar, en metros desde sus pies. Es la altura del
+## lomo del guanaco: por encima se ve flotando y por debajo se le hunden las
+## piernas. Está expuesto porque el número depende del modelo, y el modelo
+## cambia.
+@export var alto_de_montura := 0.64
+## Cuánto se adelanta el guanaco respecto del jinete, en metros. Sube este
+## número y Benjamín se sienta más ATRÁS, hacia la grupa; bájalo y se va hacia
+## el cuello. En 0 quedan en el mismo punto, que es como iba antes.
+@export var avance_de_montura := 0.20
 var in_updraft := false             # dentro de una corriente ascendente (lo setea Updraft.gd)
 
 # Interacción
@@ -355,7 +364,8 @@ func _physics_process(delta: float) -> void:
 		mounted = false
 		_pose_de_montado(false)
 	# Montado: el jinete se eleva para quedar sobre el lomo del guanaco.
-	_visual.position.y = lerp(_visual.position.y, 0.75 if mounted else 0.0, 12.0 * delta)
+	_visual.position.y = lerp(_visual.position.y,
+		alto_de_montura if mounted else 0.0, 12.0 * delta)
 
 
 ## Cuánto queda dormido, en segundos. 0 = despierto.

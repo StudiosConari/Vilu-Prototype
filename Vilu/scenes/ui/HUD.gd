@@ -215,11 +215,18 @@ func show_swap_hint(on: bool) -> void:
 
 
 ## Panel de instrucción persistente (transparente) para puzzles.
+## El cartel de abajo ya no se muestra: lo reemplazó el recuadro de misiones.
+##
+## La función se queda —vacía a propósito— porque medio juego la llama para
+## contar qué toca hacer ahora, y eso es justo lo que dice el recuadro. Borrarla
+## obligaría a tocar una docena de escenas para no ganar nada; así el texto se
+## sigue escribiendo en el nodo, por si alguna vez hace falta volver, pero no
+## tapa la pantalla.
 func show_hint(text: String) -> void:
 	if _hint_label:
 		_hint_label.text = text
 	if _hint:
-		_hint.visible = true
+		_hint.visible = false
 
 
 func clear_hint() -> void:

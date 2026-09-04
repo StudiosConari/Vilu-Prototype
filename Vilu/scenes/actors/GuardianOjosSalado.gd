@@ -3,7 +3,7 @@ extends Node3D
 ## Guardián Ojos del Salado — aparece en la cima de Cumbre (Beat 7).
 ## CumbreCima.gd lo instancia dinámicamente en _ready().
 
-const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 const MAP_SCR      := preload("res://scenes/ui/ChileMapUI.gd")
 
@@ -106,6 +106,9 @@ func _show_dialogue(text: String) -> void:
 
 
 func _open_map() -> void:
+	# Hablar con el guardián ES activar el volcán: lo que abre el mapa de
+	# viajes entre cumbres.
+	Misiones.hecho("ojos_volcan")
 	var layer := CanvasLayer.new()
 	layer.layer = 20
 	get_tree().current_scene.add_child(layer)

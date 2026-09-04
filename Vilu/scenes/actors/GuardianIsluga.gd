@@ -3,7 +3,7 @@ extends Node3D
 ## Guardián del Isluga — NPC en la plataforma superior que muestra el mapa de Chile.
 ## PuzzleIsluga.gd lo instancia dinámicamente en _ready().
 
-const BALLOON       := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON       := "res://scenes/ui/GloboDeDialogo.tscn"
 const INTERACT_SCR  := preload("res://scenes/actors/Interactable.gd")
 const MAP_SCR       := preload("res://scenes/ui/ChileMapUI.gd")
 const MODELO        := preload("res://models/personaje/guardian_del_isluga.glb")
