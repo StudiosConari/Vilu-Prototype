@@ -5,8 +5,10 @@ extends "res://addons/gut/test.gd"
 ## escenas narrativas (AlicantoRescate -> alas, YastayEncounter -> guanaco).
 
 const PLAYER := preload("res://scenes/actors/Player.tscn")
-const WAVE_ARENA := preload("res://scenes/actors/WaveArena.tscn")
-const ENEMY_FAST := preload("res://scenes/enemies/EnemyFast.tscn")
+# Cobaya para las pruebas que sólo necesitan "un enemigo". Antes eran las
+# cápsulas de greybox (EnemyNormal, EnemyFast), que se borraron junto con la
+# arena de oleadas: ese contenido ya no forma parte del juego.
+const MINERO := preload("res://scenes/enemies/MineroCorrupto.tscn")
 
 func before_each() -> void:
 	GameManager.reset_progress()
@@ -111,19 +113,6 @@ func test_guanaco_placeholder_stays_hidden() -> void:
 		"el cubo placeholder no se usa como montura")
 
 
-func test_arena_uses_configured_enemy_and_color() -> void:
-	var arena := WAVE_ARENA.instantiate()
-	add_child_autofree(arena)
-	arena.enemy_a = ENEMY_FAST
-	arena.enemy_color = Color(1, 0.55, 0.1)
-	arena.waves = [1]
-	arena.b_every = 0   # solo tipo A
-	arena.start()
-	var e = arena.get_current_enemies()[0]
-	assert_almost_eq(e.base_color.r, 1.0, 0.02)
-	assert_almost_eq(e.base_color.g, 0.55, 0.02)
-
-
 ## El compañero acompaña, no pelea.
 ##
 ## Antes tenía una IA de combate que perseguía y remataba sola. Se quitó a
@@ -163,7 +152,7 @@ func test_el_companero_no_ataca_aunque_tenga_un_enemigo_encima() -> void:
 	comp.global_position = Vector3.ZERO
 	comp.set_active(false)
 	comp.set_ai_mode(true)
-	var enemigo := preload("res://scenes/enemies/EnemyNormal.tscn").instantiate()
+	var enemigo := MINERO.instantiate()
 	add_child_autofree(enemigo)
 	enemigo.global_position = Vector3(0.5, 0, 0)   # pegado
 	var vida: float = float(enemigo.health)
@@ -192,7 +181,7 @@ func test_quieto_no_pelea_solo_vuelve_a_su_puesto() -> void:
 	comp.global_position = Vector3.ZERO
 	comp.set_active(false)
 	comp.set_ai_mode(false)                        # T: se queda quieto
-	var enemigo := preload("res://scenes/enemies/EnemyNormal.tscn").instantiate()
+	var enemigo := MINERO.instantiate()
 	add_child_autofree(enemigo)
 	enemigo.global_position = Vector3(2, 0, 0)     # dentro del viejo rango de defensa
 	var vida: float = float(enemigo.health)

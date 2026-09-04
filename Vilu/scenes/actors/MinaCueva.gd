@@ -17,8 +17,8 @@ extends Node3D
 ## oscuridad que llenar. Dejalo vacío y vuelve a verse como antes.
 @export var ambiente: Environment = preload("res://scenes/core/ambiente_mina.tres")
 
-## Los mineros corruptos: mismas caracteristicas que EnemyNormal pero con su
-## modelo. Se usan tanto en el combate como en la huida.
+## Los mineros corruptos: el enemigo común de la mina, en el combate y en la
+## huida. Antes salían de EnemyNormal, la cápsula de greybox, que ya no existe.
 const MINERO          := preload("res://scenes/enemies/MineroCorrupto.tscn")
 const CHUPACABRAS     := preload("res://models/personaje/chupacabras.glb")
 ## El Chupacabras COMO ENEMIGO, para el duelo final. Distinto del glb de arriba,

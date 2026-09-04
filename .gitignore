@@ -23,3 +23,8 @@ desktop.ini
 # temporales y los reemplaza su versión decimada, que sí entra a git en
 # models/props/<categoría>/. Ver Vilu/models/props/_sin_optimizar/LEEME.md
 Vilu/models/props/_sin_optimizar/
+
+# Empaquetados del propio proyecto (Vilu.zip llegó a pesar 7 GB y GitHub
+# rechaza cualquier archivo de más de 100 MB: un push con esto dentro no puede
+# completarse nunca).
+*.zip
