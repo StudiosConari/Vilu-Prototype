@@ -83,6 +83,7 @@ func activar(avisar := true) -> void:
 	if _activado:
 		return
 	_activado = true
+	Misiones.hecho("obeliscos")
 	_encender()
 	_derribar()
 	_despertar_a_lo_de_detras()

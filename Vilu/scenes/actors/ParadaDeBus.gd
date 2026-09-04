@@ -36,6 +36,9 @@ func _ready() -> void:
 func _al_entrar(cuerpo: Node3D) -> void:
 	if cuerpo.is_in_group("player") and cuerpo.has_method("set_interactable"):
 		cuerpo.set_interactable(self)
+		# Llegar a la parada YA cumple la misión de buscar el terminal; viajar
+		# es la siguiente.
+		Misiones.hecho("terminal")
 
 
 func _al_salir(cuerpo: Node3D) -> void:

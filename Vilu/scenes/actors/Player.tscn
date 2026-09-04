@@ -1,6 +1,8 @@
 [gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scenes/actors/PlayerController.gd" id="1_ctrl"]
+[ext_resource type="Script" path="res://scenes/actors/AlasEspirituales.gd" id="4_alas"]
+[ext_resource type="Script" path="res://scenes/actors/ArmaDeBenjamin.gd" id="5_arma"]
 [ext_resource type="Material" path="res://art_placeholders/mat_player.tres" id="2_body"]
 [ext_resource type="Material" path="res://art_placeholders/mat_prop.tres" id="3_nose"]
 
@@ -56,6 +58,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.15, 0.28)
 mesh = SubResource("mesh_wings")
 material_override = SubResource("mat_wings")
 
+[node name="AlasEspirituales" type="Node3D" parent="Visual/Wings"]
+script = ExtResource("4_alas")
+
 [node name="Guanaco" type="MeshInstance3D" parent="Visual"]
 visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0.1)
@@ -72,3 +77,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 1, 0)
 
 [node name="Head" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+
+[node name="Arma" type="Node3D" parent="."]
+script = ExtResource("5_arma")

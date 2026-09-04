@@ -334,6 +334,8 @@ func _on_gold_path_entered(body: Node3D) -> void:
 	if _phase == Phase.DONE or not body.is_in_group("player"):
 		return
 	_banner("El oro brilla... y el suelo empieza a ceder.", 3.0)
+	# Se eligió mal: la misión se vuelve a pedir, y con otro texto.
+	Misiones.reintentar("camino")
 	# Las losas caen una tras otra: no da tiempo a volver
 	for i in _gold_tiles.size():
 		get_tree().create_timer(0.18 * float(i)).timeout.connect(

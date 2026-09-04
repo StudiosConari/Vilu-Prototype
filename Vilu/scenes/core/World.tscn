@@ -79,6 +79,7 @@
 [ext_resource type="Script" uid="uid://y46uyb4p6cqd" path="res://scenes/actors/FiestaDirector.gd" id="z2_FiestaDirector"]
 [ext_resource type="PackedScene" uid="uid://b4sh6lu7uwqof" path="res://models/props/banderas/guirnalda_de_banderas.fbx" id="z2_guirnalda_de_banderas"]
 [ext_resource type="PackedScene" uid="uid://dq4w3x7vbdn2v" path="res://models/props/banderas/guirnalda_de_lazos.fbx" id="z2_guirnalda_de_lazos"]
+[ext_resource type="Script" uid="uid://dgk4bshgwkfwe" path="res://scenes/actors/BailarinFiesta.gd" id="z3_bailarin"]
 
 [sub_resource type="Terrain3DMaterial" id="Terrain3DMaterial_5ef10"]
 _shader_parameters = {
@@ -163,7 +164,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.886237, 0, 175.24411)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.20457077, 0, -4.6335907)
 
 [node name="Carmen" parent="Tarapaca" unique_id=673401798 instance=ExtResource("z2_Carmen")]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2.2972994, 0, 0.08857727)
+transform = Transform3D(1.2180315, 0, -0.023371648, 0, 1.2182558, 0, 0.023371648, 0, 1.2180315, -3.2167406, 0.19631672, 6.054428)
+puerta_iglesia = NodePath("../Iglesia/PuertaIglesia")
+sitio_de_baile = NodePath("../SitioDeLaTirana")
+
+[node name="SitioDeLaTirana" type="Marker3D" parent="Tarapaca" unique_id=673401799]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -1.8458, 0.25, -9.31)
 
 [node name="FiestaDirector" type="Node3D" parent="Tarapaca" unique_id=783046542]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.20457077, 0, 0)
@@ -171,7 +177,7 @@ script = ExtResource("z2_FiestaDirector")
 geometria_fijada = true
 
 [node name="@StaticBody3D@43887" type="StaticBody3D" parent="Tarapaca/FiestaDirector" unique_id=1973545844]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, -3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2389836, 0, -5.1095123)
 collision_mask = 0
 
 [node name="@CollisionShape3D@43889" type="CollisionShape3D" parent="Tarapaca/FiestaDirector/@StaticBody3D@43887" unique_id=1634612445]
@@ -188,7 +194,7 @@ font_size = 18
 outline_size = 6
 
 [node name="_StaticBody3D_43891" type="StaticBody3D" parent="Tarapaca/FiestaDirector" unique_id=1449542823]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, -5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.470321, 0, -5.1228027)
 collision_mask = 0
 
 [node name="@CollisionShape3D@43893" type="CollisionShape3D" parent="Tarapaca/FiestaDirector/_StaticBody3D_43891" unique_id=883963517]
@@ -205,7 +211,7 @@ font_size = 18
 outline_size = 6
 
 [node name="@StaticBody3D@43895" type="StaticBody3D" parent="Tarapaca/FiestaDirector" unique_id=48619137]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.2566957, 0, -7.487687)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.4518013, 0, -10.563721)
 collision_mask = 0
 
 [node name="@CollisionShape3D@43897" type="CollisionShape3D" parent="Tarapaca/FiestaDirector/@StaticBody3D@43895" unique_id=1944886881]
@@ -222,7 +228,7 @@ font_size = 18
 outline_size = 6
 
 [node name="@StaticBody3D@43899" type="StaticBody3D" parent="Tarapaca/FiestaDirector" unique_id=865118653]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.599074, 0, -10.262283)
 collision_mask = 0
 
 [node name="@CollisionShape3D@43901" type="CollisionShape3D" parent="Tarapaca/FiestaDirector/@StaticBody3D@43899" unique_id=1730039663]
@@ -259,14 +265,14 @@ outline_size = 6
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.20457077, 0, 26)
 
 [node name="iglesia2" parent="Tarapaca/Iglesia" unique_id=135217526 instance=ExtResource("34_mr8ex")]
-transform = Transform3D(-1.4460597, 0, -0.016054546, 0, 1.4461489, 0, 0.016054546, 0, -1.4460597, -1.7383032, 0.22821693, -5.3669586)
+transform = Transform3D(-1.4460597, 0, -0.016054546, 0, 1.4461489, 0, 0.016054546, 0, -1.4460597, -1.7383032, -0.12621565, -5.3669586)
 
 [node name="Cuerpo" type="Node3D" parent="Tarapaca/Iglesia" unique_id=651943875]
 script = ExtResource("6_f7wa7")
 trimesh_por_defecto = true
 
 [node name="PuertaIglesia" parent="Tarapaca/Iglesia" unique_id=685114117 instance=ExtResource("99_entrada")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.11922884, 0.5814884, -17.280045)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2183924, 0.15843654, -16.172287)
 target_region = "Iglesia"
 prompt = "[E] Entrar a la iglesia"
 tamano = Vector3(8, 5, 3)
@@ -396,9 +402,36 @@ transform = Transform3D(-0.025969028, 0, 2.1112444, 0, 2.1114042, 0, -2.1112444,
 
 [node name="chica_demonio2" parent="Tarapaca/props" unique_id=1376554612 instance=ExtResource("43_2nhnu")]
 transform = Transform3D(1.1926548, 0, 0, 0, 1.1926548, 0, 0, 0, 1.1926548, 3.4698, 0.2158203, -14.957062)
+script = ExtResource("z3_bailarin")
 
 [node name="chica_disfrazada2" parent="Tarapaca/props" unique_id=756247582 instance=ExtResource("44_pe8ao")]
-transform = Transform3D(1.3196929, 0, 0, 0, 1.3196929, 0, 0, 0, 1.3196929, 7.237194, 0.21576063, -7.581604)
+transform = Transform3D(1.3196929, 0, 0, 0, 1.3196929, 0, 0, 0, 1.3196929, 0.72171116, 0.21576063, -7.581604)
+script = ExtResource("z3_bailarin")
+
+[node name="chica_disfrazada3" parent="Tarapaca/props" unique_id=1057778587 instance=ExtResource("44_pe8ao")]
+transform = Transform3D(1.3196929, 0, 0, 0, 1.3196929, 0, 0, 0, 1.3196929, 0.72171116, 0.21576063, -9.308777)
+script = ExtResource("z3_bailarin")
+
+[node name="chica_disfrazada4" parent="Tarapaca/props" unique_id=2024844694 instance=ExtResource("44_pe8ao")]
+transform = Transform3D(1.3196929, 0, 0, 0, 1.3196929, 0, 0, 0, 1.3196929, 0.72171116, 0.21576063, -10.697479)
+script = ExtResource("z3_bailarin")
+
+[node name="chica_disfrazada8" parent="Tarapaca/props" unique_id=2054783391 instance=ExtResource("44_pe8ao")]
+transform = Transform3D(0.17937978, 0, -1.3074448, 0, 1.3196927, 0, 1.3074448, 0, 0.17937978, 4.510733, 0.21576063, -10.697479)
+script = ExtResource("z3_bailarin")
+quieto = true
+
+[node name="chica_disfrazada5" parent="Tarapaca/props" unique_id=1628030416 instance=ExtResource("44_pe8ao")]
+transform = Transform3D(1.3196929, 0, 0, 0, 1.3196929, 0, 0, 0, 1.3196929, -4.0041227, 0.21576063, -7.581604)
+script = ExtResource("z3_bailarin")
+
+[node name="chica_disfrazada6" parent="Tarapaca/props" unique_id=681349855 instance=ExtResource("44_pe8ao")]
+transform = Transform3D(1.3196929, 0, 0, 0, 1.3196929, 0, 0, 0, 1.3196929, -4.0041227, 0.21576063, -9.308777)
+script = ExtResource("z3_bailarin")
+
+[node name="chica_disfrazada7" parent="Tarapaca/props" unique_id=545359601 instance=ExtResource("44_pe8ao")]
+transform = Transform3D(1.3196929, 0, 0, 0, 1.3196929, 0, 0, 0, 1.3196929, -4.0041227, 0.21576063, -10.697479)
+script = ExtResource("z3_bailarin")
 
 [node name="cruz_decorativa2" parent="Tarapaca/props" unique_id=27563328 instance=ExtResource("45_g83qo")]
 transform = Transform3D(-0.02624292, 0, 1.5534824, 0, 1.553704, 0, -1.5534824, 0, -0.02624292, 12.633255, 0.22479694, 17.6371)
@@ -431,16 +464,35 @@ transform = Transform3D(-0.70266116, 0, 0.030349523, 0, 0.7033164, 0, -0.0303495
 transform = Transform3D(-0.70266116, 0, 0.030349523, 0, 0.7033164, 0, -0.030349523, 0, -0.70266116, 13.778412, 1.8572291, 4.6423798)
 
 [node name="mascara_de_demonio2" parent="Tarapaca/props" unique_id=571803856 instance=ExtResource("47_m62vh")]
-transform = Transform3D(1.3387494, 0, 0, 0, 1.3387494, 0, 0, 0, 1.5797857, -5.0018873, 0.24269482, -8.897995)
+transform = Transform3D(1.3387494, 0, 0, 0, 1.3387494, 0, 0, 0, 1.5797857, -4.208083, 0.24269482, -5.5657654)
+script = ExtResource("z3_bailarin")
+
+[node name="mascara_de_demonio3" parent="Tarapaca/props" unique_id=1470250796 instance=ExtResource("47_m62vh")]
+transform = Transform3D(0.22704251, 0, 1.5569012, 0, 1.3387494, 0, -1.3193566, 0, 0.26792058, -8.416875, 0.24269482, -10.458328)
+script = ExtResource("z3_bailarin")
+quieto = true
 
 [node name="mascara_de_dragon2" parent="Tarapaca/props" unique_id=1679391503 instance=ExtResource("48_1xqj4")]
-transform = Transform3D(1.2592106, 0, 0, 0, 1.2592106, 0, 0, 0, 1.426107, -7.0344095, 0.2613517, -4.8610687)
+transform = Transform3D(1.2592106, 0, 0, 0, 1.2592106, 0, 0, 0, 1.426107, 0.5094023, 0.2613517, -5.4989166)
+script = ExtResource("z3_bailarin")
+
+[node name="mascara_de_dragon3" parent="Tarapaca/props" unique_id=50008275 instance=ExtResource("48_1xqj4")]
+transform = Transform3D(-0.43801084, 0, -1.3370494, 0, 1.2592106, 0, 1.1805753, 0, -0.49606505, 4.869992, 0.2613517, -5.4989166)
+script = ExtResource("z3_bailarin")
+quieto = true
 
 [node name="nativo_americano2" parent="Tarapaca/props" unique_id=424465925 instance=ExtResource("49_54j23")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.0162973, 0.24259591, -3.0526428)
+transform = Transform3D(1.272068, 0, 0, 0, 1.272068, 0, 0, 0, 1.272068, -1.9599743, 0.24259591, -3.9178314)
+script = ExtResource("z3_bailarin")
+
+[node name="nativo_americano3" parent="Tarapaca/props" unique_id=1088976221 instance=ExtResource("49_54j23")]
+transform = Transform3D(0.20480798, 0, 1.3872437, 0, 1.3137927, 0, -1.3872437, 0, 0.20480798, -8.398465, 0.24259591, -5.5162354)
+script = ExtResource("z3_bailarin")
+quieto = true
 
 [node name="nino_diablo_rojo2" parent="Tarapaca/props" unique_id=266661533 instance=ExtResource("50_pe0b5")]
 transform = Transform3D(0.71411186, 0, -0.2791903, 0, 0.76674837, 0, 0.2791903, 0, 0.71411186, 4.423908, 0.24133594, -14.87822)
+script = ExtResource("z3_bailarin")
 
 [node name="virgen_del_carmen2" parent="Tarapaca/props" unique_id=259023784 instance=ExtResource("51_f4h0g")]
 transform = Transform3D(0.3524188, 0, 0.93584245, 0, 1, 0, -0.93584245, 0, 0.3524188, 15.278879, 0.17622383, -6.00502)

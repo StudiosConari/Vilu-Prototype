@@ -160,7 +160,9 @@ func _colgar_interaccion(npc: Node3D, clue: String) -> void:
 	area.collision_mask = 2
 	area.prompt = "[E] Hablar"
 	area.clue = clue
-	area.clue_triggered.connect(func() -> void: clues_given += 1)
+	area.clue_triggered.connect(func() -> void:
+		clues_given += 1
+		Misiones.hecho("pistas"))
 	npc.add_child(area)
 	var sshape := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
