@@ -27,7 +27,7 @@ const CHUPACABRAS     := preload("res://models/personaje/chupacabras.glb")
 const CHUPACABRAS_JEFE := preload("res://scenes/enemies/Chupacabras.tscn")
 const ENCAJAR         := preload("res://scenes/core/EncajarModelo.gd")
 const TOON_SKIN       := preload("res://scenes/core/ToonSkin.gd")
-const BALLOON         := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON         := "res://scenes/ui/GloboDeDialogo.tscn"
 const TALISMAN_SCR    := preload("res://scenes/actors/TalismanFragment.gd")
 
 const DIALOGUE_GARRAS := "~ start
@@ -75,6 +75,14 @@ var _chupa_hit_cd   := 0.0
 func _ready() -> void:
 	_setup_triggers()
 	_spawn_talisman()
+	# El que dispara la huida es el TALISMÁN, no llegar al nido.
+	#
+	# Se escucha la habilidad y no el prop porque el fragmento se puede conseguir
+	# por dos caminos —rompiendo la barricada de tablones o recogiendo el panel
+	# flotante, según cómo esté puesta la mina— y así los dos sirven sin repetir
+	# el enganche en cada uno.
+	if not GameManager.ability_unlocked.is_connected(_al_conseguir_habilidad):
+		GameManager.ability_unlocked.connect(_al_conseguir_habilidad)
 	# Volvés a buscar al Chupacabras: la mina tiene que estar como la dejaste.
 	# Diferido para que los obeliscos y las barreras hayan corrido su _ready y
 	# haya a quién encender y qué derribar.
@@ -370,7 +378,10 @@ func _on_miner_died(_pos: Vector3, _xp: int) -> void:
 		_banner("Sector despejado… hay algo más abajo.", 3.0)
 		if GameManager.get_beat() < 3:
 			GameManager.set_beat(3)
-		GameManager.conceder("mina")
+		# El logro "El Correcaminos" NO se da aquí. Despejar el sector es el
+		# principio de la mina —antes de los obeliscos, antes del talismán y
+		# antes de que el Chupacabras aparezca—, y el logro es por escapar. Se
+		# concede al cruzar la boca huyendo, en `_stop_chase`.
 
 
 # ─── Pasillo de Garras (S3) ───────────────────────────────────────────────────
@@ -461,6 +472,26 @@ func _al_vencer_al_chupacabras(_pos: Vector3, _xp: int) -> void:
 	_chupa_jefe = null
 	_banner("El Chupacabras cae. Vilu vuelve a respirar.", 6.0)
 	GameManager.conceder("chupacabras")
+
+
+## Recoger el primer fragmento del talismán despierta al Chupacabras.
+##
+## Antes la huida esperaba a que llegaras al nido con los mineros despejados, y
+## el talismán —que es el motivo por el que bajaste— no hacía nada. Ahora lo
+## agarras y sale.
+func _al_conseguir_habilidad(cual: String) -> void:
+	if cual != "talisman_frag_1":
+		return
+	# La única visita en la que NO hay que salir corriendo es la del duelo. Lo
+	# decide `_toca_el_duelo()`, que mira si están todos los logros menos el
+	# suyo.
+	#
+	# Antes esto miraba el logro de la mina, y eso dejaba sin huida a quien
+	# entrara por una parada del menú que ya lo concede: era su primera vez en la
+	# mina, recogía el talismán y no pasaba nada.
+	if _chase_active or _duelo_activo or _toca_el_duelo():
+		return
+	_start_chase()
 
 
 func _start_chase() -> void:
@@ -827,6 +858,10 @@ func _stop_chase() -> void:
 	if not _chase_active:
 		return
 	_chase_active = false
+	# Aquí sí: se cruzó la boca de la mina con el Chupacabras detrás. Este
+	# guardia de `_chase_active` es el que asegura que sólo cuente escapando —no
+	# se llega a esta línea sin haber corrido.
+	GameManager.conceder("mina")
 	for p in _forced_players:
 		if not is_instance_valid(p) or not ("forced_run_dir" in p):
 			continue

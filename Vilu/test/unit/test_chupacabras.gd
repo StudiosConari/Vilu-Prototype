@@ -26,6 +26,19 @@ func after_all() -> void:
 
 
 func test_alcanza_al_jugador_fuera_del_eje() -> void:
+	# El tablonado de z=-37 se rompe ANTES de armar la mina.
+	#
+	# No es un detalle del montaje: ese tablonado tapa el túnel de pared a pared
+	# y es justo lo que hay que romper para llevarse el primer fragmento del
+	# talismán. Romperlo es lo que dispara la huida, así que cuando el
+	# Chupacabras sale de su nido el paso YA está abierto. Empezando la
+	# persecución con los tablones puestos, la bestia nace emparedada en el
+	# fondo: no hay ruta que encontrar y el fallo no es suyo.
+	#
+	# El prop arranca roto solo si la habilidad ya está concedida al construirse
+	# la escena, de ahí que esto vaya antes del instantiate.
+	GameManager.unlock("talisman_frag_1")
+
 	var m := MINA.instantiate()
 	add_child_autofree(m)
 	await wait_physics_frames(4)

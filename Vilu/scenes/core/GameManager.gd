@@ -15,6 +15,10 @@ signal ability_unlocked(ability: String)
 signal logro_obtenido(id: String)
 ## Se emite una sola vez, cuando cae el último logro que faltaba.
 signal prototipo_superado
+## Se borró todo y se empieza de cero. Lo escucha lo que lleva su propio estado
+## fuera del Save —la cadena de misiones—, que también vive en un autoload y no
+## se enteraba de que había empezado otra partida.
+signal progreso_reiniciado
 
 const BEAT_COUNT := 8
 const ABILITIES := ["bow", "wings", "guanaco", "talisman_frag_1", "talisman_frag_2"]
@@ -167,5 +171,15 @@ func reset_progress() -> void:
 	Save.has_talisman_1 = false
 	Save.has_talisman_2 = false
 	Save.logros = PackedStringArray()
+	# Y se OLVIDA por dónde arrancar.
+	#
+	# Estas dos viven en el autoload, que sobrevive al cambio de escena: usando
+	# una vez "Seleccionar zona", el "Nueva partida" de después reseteaba el
+	# progreso pero te seguía dejando en la zona elegida. Parecía que el botón
+	# no hacía nada. El selector las vuelve a poner DESPUÉS de llamar aquí, así
+	# que limpiarlas no le estorba.
+	debug_start_zone = ""
+	debug_start_world = ""
 	Save.save_progress()
 	beat_changed.emit(0)
+	progreso_reiniciado.emit()

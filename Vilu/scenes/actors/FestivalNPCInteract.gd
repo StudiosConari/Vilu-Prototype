@@ -6,7 +6,7 @@ extends Area3D
 
 signal clue_triggered
 
-const BALLOON := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON := "res://scenes/ui/GloboDeDialogo.tscn"
 
 @export var prompt  := "[E] Hablar"
 @export var clue    := ""   # texto que se muestra al interactuar

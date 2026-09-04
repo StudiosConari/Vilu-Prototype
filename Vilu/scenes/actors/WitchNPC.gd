@@ -5,7 +5,7 @@ extends Node3D
 ## Con talisman_frag_1: reconoce el símbolo y pide buscar el resto.
 ## PobladoHub.gd la instancia dinámicamente en _ready().
 
-const BALLOON      := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 
 const TALK_NONE := "~ start

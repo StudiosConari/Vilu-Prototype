@@ -34,12 +34,77 @@ var _cayendo := false
 var _origen := Vector3.ZERO
 
 
+## Los cristales de oro que hay sembrados sobre el camino.
+const PREFIJO_ORO := "cristal_de_oro"
+
+## Cuánto se agranda la planta del camino al buscar el oro que lleva encima, en
+## metros. Los cristales asoman por los bordes de la losa.
+@export var margen_del_oro := 2.5
+
+
 func _ready() -> void:
 	if puente == null or camino == null:
 		push_warning("TrampaDelOro: faltan el puente o el camino; la trampa no se arma")
 		set_physics_process(false)
 		return
 	_origen = camino.global_position
+	_adoptar_el_oro()
+
+
+## Cuelga del camino el oro que lleva encima.
+##
+## Los cristales están puestos en la escena como HERMANOS del camino, así que al
+## derrumbarse la losa el oro se quedaba flotando en el aire, sobre el vacío.
+## Adoptándolos pasan a caer, girar y volver con ella sin animarlos aparte.
+##
+## Se eligen por posición y no por nombre: hay cristales sembrados por toda la
+## quebrada, y sólo tienen que irse abajo los que están sobre el trozo que cede.
+func _adoptar_el_oro() -> void:
+	var zona := camino.get_parent()
+	if zona == null:
+		return
+	var caja := _planta(camino).grow(margen_del_oro)
+	var adoptados := 0
+	for n: Node3D in _oro_de(zona):
+		if not caja.has_point(Vector3(n.global_position.x, caja.get_center().y,
+				n.global_position.z)):
+			continue
+		# `owner` a null antes de mudarlo: si no, Godot avisa de que su dueño ya
+		# no lo contiene. Lo mismo que hizo falta con las piezas del arco.
+		n.owner = null
+		n.reparent(camino, true)
+		adoptados += 1
+	if adoptados == 0:
+		push_warning("TrampaDelOro: no encuentro oro sobre el camino que se cae")
+
+
+## La caja del camino en el mundo, aplanada a su altura media: lo que interesa
+## es qué cristales caen DENTRO de su planta, no a qué altura están.
+func _planta(n: Node3D) -> AABB:
+	var caja := AABB(n.global_position, Vector3.ZERO)
+	for mi in _mallas(n):
+		var c: AABB = (mi as MeshInstance3D).global_transform * (mi as MeshInstance3D).get_aabb()
+		caja = caja.merge(c)
+	caja.position.y = caja.get_center().y - 50.0
+	caja.size.y = 100.0
+	return caja
+
+
+func _mallas(n: Node) -> Array:
+	var r: Array = []
+	for h in n.get_children():
+		if h is MeshInstance3D:
+			r.append(h)
+		r.append_array(_mallas(h))
+	return r
+
+
+func _oro_de(n: Node) -> Array:
+	var r: Array = []
+	for h in n.get_children():
+		if h is Node3D and String(h.name).begins_with(PREFIJO_ORO):
+			r.append(h)
+	return r
 
 
 ## Se mira QUÉ PISA el jugador, no en qué caja está metido.
@@ -116,6 +181,10 @@ func _devolver_al_poblado() -> void:
 	var juego := get_tree().get_first_node_in_group("game")
 	if juego != null and juego.has_method("teleport_to"):
 		juego.teleport_to("Poblado")
+	# La misión cambia AL REAPARECER, no al pisar el oro: cayéndote no estás
+	# mirando el recuadro, y al volver al poblado lo primero que querés saber es
+	# qué te toca hacer otra vez.
+	Misiones.reintentar("camino")
 	# Se rearma tras el viaje: la trampa tiene que poder volver a funcionar, o
 	# el segundo intento regalaría el oro.
 	get_tree().create_timer(ESPERA_RESPAWN + 1.2).timeout.connect(_rearmar)

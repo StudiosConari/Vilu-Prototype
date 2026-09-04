@@ -659,6 +659,13 @@ func viajar_en_bus(bus: String) -> void:
 		world = escena_del_mundo.instantiate()
 		add_child(world)
 
+		# El bus cambia el MUNDO entero, no una región: no pasa por
+		# TravelManager y su señal `region_changed` nunca se emite, así que la
+		# cadena de misiones no se enteraba de que habías llegado a Atacama. El
+		# nombre sale de la escena de destino, que es el dato que ya se maneja.
+		if destino != null and destino.resource_path.contains("Atacama"):
+			Misiones.hecho("viajar")
+
 		_interior = ""
 		_bajar_del_bus(bus))
 

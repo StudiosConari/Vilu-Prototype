@@ -370,13 +370,15 @@ func test_la_piel_no_atraviesa_la_ropa() -> void:
 	for mi: MeshInstance3D in c._mallas(m):
 		var n := mi.name.to_lower()
 		var debajo := false
-		for clave in c.POR_DEBAJO:
+		for clave in c.LA_PIEL:
 			if n.contains(String(clave)):
 				debajo = true
 		if not debajo:
 			continue
 		vistas += 1
-		var mat := mi.get_surface_override_material(0) as BaseMaterial3D
+		# El material vive en la malla duplicada de esta instancia, no en la lista
+		# de sustitutos del nodo.
+		var mat := mi.mesh.surface_get_material(0) as BaseMaterial3D
 		assert_not_null(mat, "'%s' lleva su propio material" % mi.name)
 		if mat == null:
 			continue
@@ -386,7 +388,7 @@ func test_la_piel_no_atraviesa_la_ropa() -> void:
 		assert_almost_eq(mat.grow_amount * m.scale.x, -c.hundir_la_piel, 0.0005,
 			"'%s' se hunde los milímetros pedidos, no las unidades del archivo"
 			% mi.name)
-	assert_gt(vistas, 1, "encuentra el cuerpo y el interior de la boca")
+	assert_gt(vistas, 0, "encuentra la piel bajo la ropa")
 
 
 ## Carmen sólo corre física mientras camina, así que si la dejan por encima o

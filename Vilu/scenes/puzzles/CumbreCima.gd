@@ -238,14 +238,15 @@ func _solve() -> void:
 	if _solved:
 		return
 	_solved = true
-	# Llegar a la cima cierra las dos misiones del Ojos del Salado: subir y
-	# activarlo. Aquí no hay dos hitos separados, el puzzle termina de una vez.
-	Misiones.hecho("ojos_cima")
-	Misiones.hecho("ojos_volcan")
+	# Las misiones del Ojos del Salado NO se cierran aquí: "subir a la cima" es
+	# llegar al principio del puzzle —lo cierra entrar a la región— y "activar
+	# el volcán" es hablar con el guardián, que es quien abre el mapa de viajes.
 	_hint("¡Cima de VILU alcanzada por los dos!")
 	if GameManager.get_beat() < advance_to_beat:
 		GameManager.set_beat(advance_to_beat)
-	GameManager.conceder("ojos_salado")
+	# El logro "Viajero Volcánico" NO se concede aquí: se gana cruzando por el
+	# portal al Isluga y saliendo de él. Lo lleva TravelManager, que es quien
+	# sabe de dónde se viene. Aquí se concedía antes de tiempo.
 	reached_summit.emit()
 
 

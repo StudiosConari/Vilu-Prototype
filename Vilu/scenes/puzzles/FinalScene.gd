@@ -6,7 +6,7 @@ extends Node3D
 ## IMPORTANTE: el texto de abajo es PLACEHOLDER. Reemplazar con los diálogos de
 ## la historia del norte ya escritos (ver docs/NARRATIVA_TODO.md).
 
-const BALLOON := "res://addons/dialogue_manager/example_balloon/example_balloon.tscn"
+const BALLOON := "res://scenes/ui/GloboDeDialogo.tscn"
 const CLOSING := "~ start
 Narrador: Has alcanzado la cima. El viento del norte lo sabe.
 Narrador: (PLACEHOLDER — reemplazar con los diálogos de la historia del norte.)

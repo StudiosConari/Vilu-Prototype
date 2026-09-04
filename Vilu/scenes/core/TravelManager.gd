@@ -52,6 +52,7 @@ func load_region(holder: Node, region_name: String) -> Node:
 	var packed: PackedScene = load(REGIONS[region_name])
 	var region := packed.instantiate()
 	holder.add_child(region)
+	_anotar_el_cruce(region_name)
 	current_region = region_name
 	state = State.IDLE
 	region_changed.emit(region_name)
@@ -104,7 +105,25 @@ func fade_then(accion: Callable) -> void:
 func clear_region(holder: Node) -> void:
 	for child in holder.get_children():
 		child.queue_free()
+	_anotar_el_cruce("")
 	current_region = ""
+
+
+## El logro "Viajero Volcánico" no es llegar a una cima: es CRUZAR de un volcán
+## al otro por el portal y salir del segundo.
+##
+## Se lleva la cuenta aquí porque es el único sitio que sabe de dónde se viene:
+## la cima del Ojos del Salado no distingue si después vas a cruzar o te vuelves
+## por donde entraste. Antes se concedía allí, y saltaba antes de tiempo.
+var _cruzo_por_el_portal := false
+
+
+func _anotar_el_cruce(nueva: String) -> void:
+	if current_region == "OjosDelSalado" and nueva == "Isluga":
+		_cruzo_por_el_portal = true
+	elif _cruzo_por_el_portal and current_region == "Isluga" and nueva != "Isluga":
+		_cruzo_por_el_portal = false
+		GameManager.conceder("ojos_salado")
 
 
 func _ensure_fade() -> void:
