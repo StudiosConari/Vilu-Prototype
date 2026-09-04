@@ -82,7 +82,11 @@ func test_triple_arrow_needs_tirana_and_energy() -> void:
 func test_ability_visuals_toggle() -> void:
 	var p := PLAYER.instantiate()
 	add_child_autofree(p)
-	var alas: Node3D = p.get_node("Visual/Wings")
+	await get_tree().physics_frame
+	# Se mira el nodo de las ALAS, no el `Visual/Wings` que las sostiene: ese
+	# quedó siempre visible cuando el placeholder plano dio paso al modelo del
+	# artista, porque ahora quien las esconde es la disolución del shader.
+	var alas: Node3D = p.get_node("Visual/Wings/AlasEspirituales")
 	assert_false(alas.visible, "alas ocultas por defecto")
 
 	p.can_glide = true
@@ -91,13 +95,14 @@ func test_ability_visuals_toggle() -> void:
 	assert_false(alas.visible, "con la habilidad pero sin usarlas, siguen guardadas")
 
 	p._jumps_done = 2                      # acaba de hacer el salto doble
-	await get_tree().physics_frame
-	await get_tree().physics_frame
+	# El fundido tarda: se le dan cuadros suficientes para que salgan del todo.
+	for i in 40:
+		await get_tree().process_frame
 	assert_true(alas.visible, "en el salto doble se despliegan")
 
 	p._jumps_done = 0                      # tocó suelo
-	await get_tree().physics_frame
-	await get_tree().physics_frame
+	for i in 40:
+		await get_tree().process_frame
 	assert_false(alas.visible, "al aterrizar se guardan")
 
 

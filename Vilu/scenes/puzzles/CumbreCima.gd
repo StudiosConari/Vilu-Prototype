@@ -238,6 +238,10 @@ func _solve() -> void:
 	if _solved:
 		return
 	_solved = true
+	# Llegar a la cima cierra las dos misiones del Ojos del Salado: subir y
+	# activarlo. Aquí no hay dos hitos separados, el puzzle termina de una vez.
+	Misiones.hecho("ojos_cima")
+	Misiones.hecho("ojos_volcan")
 	_hint("¡Cima de VILU alcanzada por los dos!")
 	if GameManager.get_beat() < advance_to_beat:
 		GameManager.set_beat(advance_to_beat)

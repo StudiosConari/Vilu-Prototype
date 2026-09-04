@@ -24,25 +24,38 @@ const ABILITIES := ["bow", "wings", "guanaco", "talisman_frag_1", "talisman_frag
 ## El orden importa para la pantalla de logros; la lógica no depende de él, cada
 ## uno se concede por su cuenta desde donde ocurre.
 const LOGROS := [
-	{"id": "tirana",      "titulo": "La Tirana",
+	{"id": "tirana",      "titulo": "Investigador Cultural",
 	 "pista": "Descubrir a la Tirana y aprender el combo de 4 golpes y el disparo triple"},
-	{"id": "mina",        "titulo": "Escape de la mina",
+	{"id": "mina",        "titulo": "El Correcaminos",
 	 "pista": "Salir de la mina después de ver al Chupacabras"},
-	{"id": "talisman_1",  "titulo": "El primer talismán",
+	{"id": "talisman_1",  "titulo": "Investigador del Misterio",
 	 "pista": "Llevarle a la bruja el primer fragmento"},
-	{"id": "isluga",      "titulo": "Volcán Isluga",
+	{"id": "isluga",      "titulo": "Activador de Volcanes",
 	 "pista": "Hablar con el guardián del Isluga"},
-	{"id": "alicanto",    "titulo": "El Alicanto",
+	{"id": "alicanto",    "titulo": "El Primer Humano Volador",
 	 "pista": "Rescatar al Alicanto"},
-	{"id": "yastay",      "titulo": "El Yastay",
+	{"id": "yastay",      "titulo": "El Sanador",
 	 "pista": "Superar al Yastay"},
-	{"id": "talisman_2",  "titulo": "El segundo talismán",
+	{"id": "talisman_2",  "titulo": "Ocultistas",
 	 "pista": "Llevarle a la bruja el segundo fragmento"},
-	{"id": "ojos_salado", "titulo": "Ojos del Salado",
+	{"id": "ojos_salado", "titulo": "Viajero Volcánico",
 	 "pista": "Llegar a la cima del Ojos del Salado"},
-	{"id": "chupacabras", "titulo": "El Chupacabras",
+	{"id": "chupacabras", "titulo": "Adiestrador de Chupacabras",
 	 "pista": "Vencer al Chupacabras"},
 ]
+
+## "Primer logro", "Segundo logro"… para el cartel que sale al conseguirlo.
+const ORDINALES := ["Primer", "Segundo", "Tercer", "Cuarto", "Quinto",
+	"Sexto", "Séptimo", "Octavo", "Noveno"]
+
+
+## El texto del cartel de un logro: "Primer logro: Investigador Cultural".
+func titular_de_logro(id: String) -> String:
+	for i in LOGROS.size():
+		if LOGROS[i]["id"] == id:
+			var ordinal: String = ORDINALES[i] if i < ORDINALES.size() else "Nuevo"
+			return "%s logro: %s" % [ordinal, LOGROS[i]["titulo"]]
+	return id
 
 ## Debug: si no está vacío, Game arranca cargando esta zona (selector del título).
 var debug_start_zone := ""

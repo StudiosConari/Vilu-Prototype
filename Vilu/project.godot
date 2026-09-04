@@ -25,6 +25,7 @@ Sfx="*res://scenes/Sfx.gd"
 DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 GameManager="*res://scenes/core/GameManager.gd"
 TravelManager="*res://scenes/core/TravelManager.gd"
+Misiones="*res://scenes/core/Misiones.gd"
 
 [display]
 

@@ -293,6 +293,7 @@ func _on_bar_talk(_player: Node) -> void:
 
 
 func _bar_objective_done() -> void:
+	Misiones.hecho("bar")
 	_banner("Los cazadores quieren atrapar al Yastay en la pampa alta.", 6.0)
 	_hint("Tomá el camino del ESTE, hacia la quebrada del Yastay.")
 	_open_exit()

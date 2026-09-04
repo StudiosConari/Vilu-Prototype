@@ -817,6 +817,7 @@ func _activar(id: String) -> void:
 	if n and n.has_method("activate"):
 		n.activate()
 	zone_entered.emit(id)
+	Misiones.llegue_a(id)
 
 
 func _desactivar(id: String) -> void:

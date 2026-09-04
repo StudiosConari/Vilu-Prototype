@@ -329,6 +329,7 @@ func _on_inspect(player: Node, body: Node3D, zone: Area3D) -> void:
 	if player and player.has_method("clear_interactable"):
 		player.clear_interactable(zone)
 
+	Misiones.hecho("cazadores")
 	var total := _hunters.size()
 	if _inspected.size() < total:
 		_banner("Cuerpos revisados: %d/%d" % [_inspected.size(), total], 2.5)
@@ -552,6 +553,7 @@ func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 		return
 
 	_sanados.append(guanaco)
+	Misiones.hecho("guanacos")
 	_levantar(guanaco)
 	if _sanados.size() < _heridos.size():
 		_banner("Guanacos sanados: %d/%d" % [_sanados.size(), _heridos.size()], 2.5)

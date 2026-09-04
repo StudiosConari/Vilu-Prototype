@@ -30,6 +30,8 @@ const GUANACO_COMP_SCR := preload("res://scenes/actors/GuanacoCompanion.gd")
 const ANIMADOR_SCR := preload("res://scenes/actors/AnimadorPersonaje.gd")
 const MODELO_EMILIA := preload("res://models/personaje/emilia.glb")
 const MODELO_BENJAMIN := preload("res://models/personaje/benjamin.glb")
+const ALAS_SCR := preload("res://scenes/actors/AlasEspirituales.gd")
+const ARMA_SCR := preload("res://scenes/actors/ArmaDeBenjamin.gd")
 ## Los modelos miden 1.00 m: la escala son sus metros de alto.
 const ALTO_PERSONAJE := 1.9
 
@@ -120,6 +122,8 @@ var _interactable: Node = null
 ## ella tenía modelo. Ahora lo usan los dos.
 var _emilia: Node3D = null
 @onready var _wings_vis: Node3D = get_node_or_null("Visual/Wings")
+var _alas: Node3D = null
+var _arma: Node3D = null
 @onready var _guanaco_vis: Node3D = get_node_or_null("Visual/Guanaco")
 
 var _jumps_done := 0
@@ -129,6 +133,9 @@ var _q_held_prev := false
 var _combo_step := 0
 var _combo_timer := 0.0
 var _attack_cd := 0.0
+## Si hay un globo de diálogo abierto ahora mismo.
+var _globo_abierto := false
+
 var _charging := false
 var _charge_t := 0.0
 var _carga_usada := false
@@ -147,15 +154,32 @@ func _ready() -> void:
 	health_changed.emit(health, max_health)
 	energy_changed.emit(int(energy), max_energy)
 	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void:
+		_globo_abierto = true
 		input_locked = true
 		if _emilia != null: _emilia.hablar(true))
 	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void:
-		input_locked = false
-		if _emilia != null: _emilia.hablar(false))
+		_globo_abierto = false
+		if _emilia != null: _emilia.hablar(false)
+		_devolver_el_control.call_deferred())
 	can_glide = (not is_archer) and GameManager.has_ability("wings")
 	_montar_emilia()
+	_montar_alas()
+	_montar_arma()
 	GameManager.ability_unlocked.connect(_on_ability_unlocked)
 	TravelManager.region_changed.connect(func(_r: String) -> void: forced_run_dir = Vector3.ZERO)
+
+
+## Devuelve el control al cerrarse un diálogo, pero UN CUADRO DESPUÉS.
+##
+## El globo se cierra mientras se está repartiendo el clic de esa misma
+## pulsación, y `dialogue_ended` llega antes de que el evento acabe de bajar
+## hasta el jugador. Devolviendo el control ahí mismo, ese clic entraba como
+## ataque: Benjamín empezaba a tensar y al soltar salía la flecha. Diferido, el
+## desbloqueo cae al final del cuadro, cuando ese evento ya no existe.
+func _devolver_el_control() -> void:
+	if _globo_abierto:
+		return   # encadenó con otro diálogo: sigue sin control
+	input_locked = false
 
 
 func _on_ability_unlocked(ability: String) -> void:
@@ -310,8 +334,18 @@ func _physics_process(delta: float) -> void:
 	# Las alas del Alicanto sólo se ven cuando se están USANDO: desde el segundo
 	# salto hasta tocar suelo, y mientras planeás. Antes aparecían en cuanto
 	# desbloqueabas la habilidad y ya no se guardaban nunca, ni caminando.
-	if _wings_vis:
-		_wings_vis.visible = can_glide and (_jumps_done >= 2 or _planeando())
+	var planeando := _planeando()
+	var alas_fuera: bool = can_glide and (_jumps_done >= 2 or planeando)
+	if _alas != null:
+		_alas.mostrar(alas_fuera, planeando)
+
+	# El arco cambia de agarre al tensar. El `_attack_cd` mantiene el agarre de
+	# tiro un momento más, mientras dura la animación de soltar: si no, el arco
+	# se recoloca en mitad del disparo.
+	if _arma != null:
+		_arma.apuntar(_charging or _attack_cd > 0.0)
+	elif _wings_vis:
+		_wings_vis.visible = alas_fuera
 	# El cubo café placeholder ya no se usa: la montura es el guanaco compañero real.
 	if _guanaco_vis:
 		_guanaco_vis.visible = false
@@ -462,10 +496,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		# cadena al SOLTAR, y mantener saca sólo el cargado (ver _physics_process).
 	elif event.is_action_released("attack"):
 		if not is_archer:
+			# `_charging` dice que la PULSACIÓN se aceptó. Sin comprobarlo, soltar
+			# el botón sin haberlo pulsado sacaba un golpe de la nada: es lo que
+			# pasaba con el clic que cierra un globo de diálogo, porque para
+			# entonces el control ya estaba devuelto. El arquero ya lo miraba.
+			var hubo_pulsacion := _charging
 			var fue_cargado := _carga_usada
 			_charging = false
 			_carga_usada = false
-			if not fue_cargado:
+			if hubo_pulsacion and not fue_cargado:
 				_melee_attack()   # fue un toque: golpe normal de la cadena
 		elif is_archer and _charging:
 			var charged := _charge_t >= charge_time
@@ -1269,3 +1308,69 @@ func _planeando() -> bool:
 func _pose_de_montado(activo: bool) -> void:
 	if _emilia != null:
 		_emilia.call("montado", activo)
+
+
+## Cuelga las alas del Alicanto de la espalda.
+##
+## Sólo las lleva Emilia: son su habilidad. La malla plana que había en
+## El arco en la mano y el carcaj a la espalda. Sólo Benjamín: Emilia pelea a
+## puñetazos y lo suyo son las alas.
+## El nodo `Arma` viene EN LA ESCENA, no se crea aquí: creándolo por código no
+## había dónde tocarle los ajustes —posición del carcaj, largo del arco, tensión
+## de la cuerda—, porque en el editor no existía. Ahora sale en el inspector.
+func _montar_arma() -> void:
+	_arma = get_node_or_null("Arma")
+	if _arma == null:
+		return
+	if not is_archer:
+		_arma.queue_free()       # Emilia pelea a puñetazos
+		_arma = null
+		return
+	_arma.montar(_esqueleto_de(_emilia), _visual, _animador_de(_emilia))
+
+
+func _animador_de(n: Node) -> AnimationPlayer:
+	if n == null:
+		return null
+	if n is AnimationPlayer:
+		return n
+	for h in n.get_children():
+		var x := _animador_de(h)
+		if x != null:
+			return x
+	return null
+
+
+func _esqueleto_de(n: Node) -> Skeleton3D:
+	if n == null:
+		return null
+	if n is Skeleton3D:
+		return n
+	for h in n.get_children():
+		var x := _esqueleto_de(h)
+		if x != null:
+			return x
+	return null
+
+
+## `Visual/Wings` se apaga —no se borra, por si hay que volver atrás— y el nodo
+## pasa a ser el soporte del modelo de verdad.
+## El nodo `AlasEspirituales` viene EN LA ESCENA, igual que el arma: creándolo
+## por código no había dónde tocarle el `ajuste` del enganche.
+func _montar_alas() -> void:
+	if _wings_vis == null:
+		return
+	_alas = _wings_vis.get_node_or_null("AlasEspirituales")
+	if _alas == null:
+		return
+	if is_archer:
+		_alas.queue_free()       # las alas son de Emilia
+		_alas = null
+		return
+	_alas.montar(ALTO_PERSONAJE)
+	# `Visual/Wings` sólo marca el sitio; de quien cuelgan de verdad es de la
+	# columna de Emilia, para que acompañen al cuerpo cuando se dobla.
+	_alas.enganchar_a(_esqueleto_de(_emilia), _visual)
+	if _wings_vis is MeshInstance3D:
+		(_wings_vis as MeshInstance3D).mesh = null   # fuera el placeholder
+	_wings_vis.visible = true   # ahora quien esconde las alas es la disolución
