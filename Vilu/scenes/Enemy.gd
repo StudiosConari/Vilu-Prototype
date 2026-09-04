@@ -13,12 +13,8 @@ extends CharacterBody3D
 @export var is_boss: bool = false
 @export var boss_name: String = "JEFE"
 @export var boss_kind: int = 0  # 0 = Embestidor (carga), 1 = Aplastador (AoE)
-@export var ranged: bool = false     # dispara proyectiles a distancia
-@export var shoot_range: float = 9.0
-@export var proj_speed: float = 11.0
 @export var burn_dps: float = 9.0
 
-const PROJECTILE := preload("res://scenes/Projectile.gd")
 const ENCAJAR := preload("res://scenes/core/EncajarModelo.gd")
 @export var windup_time: float = 0.6  # aviso antes de golpear (para esquivar)
 
@@ -443,22 +439,6 @@ func _start_charge() -> void:
 	Sfx.play_at("boss", global_position, 2.0)
 
 
-func _shoot() -> void:
-	if not is_instance_valid(_target):
-		return
-	var origin := global_position + Vector3(0, 0.9 * scale_factor, 0)
-	var dir := (_target.global_position + Vector3(0, 0.9, 0)) - origin
-	var host := get_parent()
-	if host == null:
-		return
-	var p := Area3D.new()
-	p.set_script(PROJECTILE)
-	host.add_child(p)
-	p.global_position = origin
-	p.setup(dir, proj_speed, damage)
-	Sfx.play_at("fire", global_position, -5.0)
-
-
 ## ¿Toca el ataque especial —embestida o aplastamiento— en vez del básico?
 func _toca_especial() -> bool:
 	if cooldown_area <= 0.0:
@@ -661,30 +641,14 @@ func _physics_process(delta: float) -> void:
 			_windup = 0.0
 			_telegraph.visible = false
 	elif _windup > 0.0:
-		# Telegrafiando (esquivable). Ranged: pulso emisivo; melee: disco rojo.
+		# Telegrafiando el golpe: disco rojo que crece bajo los pies.
 		_windup -= delta
 		var t: float = clampf(1.0 - _windup / windup_time, 0.0, 1.0)
-		if ranged:
-			_mat.emission_enabled = true
-			_mat.emission = Color(0.6, 0.25, 1.0)
-			_mat.emission_energy_multiplier = lerpf(0.4, 2.6, t)
-		else:
-			_tel_mat.albedo_color = Color(1.0, 0.1, 0.1, lerpf(0.18, 0.6, t))
+		_tel_mat.albedo_color = Color(1.0, 0.1, 0.1, lerpf(0.18, 0.6, t))
 		if _windup <= 0.0:
 			_telegraph.visible = false
 			_cd = attack_cooldown
-			if ranged:
-				_shoot()
-			else:
-				_hit_target(attack_range * 1.05, damage)
-	elif ranged:
-		# A distancia: mantiene rango medio y dispara.
-		if dist < shoot_range * 0.45:
-			desired = -to.normalized() * speed  # alejarse
-		elif dist > shoot_range:
-			desired = to.normalized() * speed   # acercarse
-		elif _cd <= 0.0 and is_instance_valid(_target):
-			_windup = windup_time
+			_hit_target(attack_range * 1.05, damage)
 	elif dist > attack_range * 0.9:
 		desired = to.normalized() * speed
 	elif _cd <= 0.0 and is_instance_valid(_target):
