@@ -54,9 +54,18 @@ Emilia: Estamos persiguiendo a gente.
 => END
 "
 
+## Prefijo del nodo del ocultista que espía en el bar, si lo ponés en la escena.
+const OCULTISTA_HOMBRE := "ocultista_hombre"
+
 var _stage := 1
 var _bar_done := false
 var _ocultista: Node3D = null
+## Verdadero cuando el ocultista viene puesto de la escena.
+##
+## Los modelos miran a +Z; `_persona` les da media vuelta al montarlos para que
+## el frente sea -Z, como el resto del juego. El que ponés a mano no pasa por
+## ahí, así que al girarlo hay que tenerlo en cuenta.
+var _ocultista_mira_a_mas_z := false
 var _exit: Node = null
 
 
@@ -623,15 +632,21 @@ func _clip_de(quien: Node3D, nombre: String, en_bucle: bool) -> float:
 	return a.length
 
 
-## Gira a alguien creado por `_persona`, cuyo frente es -Z: el modelo mira a +Z
-## y ahí adentro ya viene rotado media vuelta.
+## Gira a alguien hacia donde va.
+##
+## El de `_persona` tiene el frente en -Z: el modelo mira a +Z y ahí adentro ya
+## viene rotado media vuelta. El que ponés en la escena no pasa por ahí y mira a
+## +Z, así que el giro es el contrario.
 func _mirar_hacia(quien: Node3D, hacia: Vector3) -> void:
 	if not is_instance_valid(quien):
 		return
 	hacia.y = 0.0
 	if hacia.length() < 0.01:
 		return
-	quien.rotation.y = atan2(-hacia.x, -hacia.z)
+	if quien == _ocultista and _ocultista_mira_a_mas_z:
+		quien.rotation.y = atan2(hacia.x, hacia.z)
+	else:
+		quien.rotation.y = atan2(-hacia.x, -hacia.z)
 
 
 func _clip_ocultista(nombre: String, en_bucle: bool) -> float:
