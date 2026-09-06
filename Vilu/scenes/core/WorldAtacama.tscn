@@ -56,6 +56,9 @@
 [ext_resource type="Script" uid="uid://dv8dcpxhrs3c8" path="res://scenes/actors/Interactable.gd" id="h2_Interactable"]
 [ext_resource type="Script" uid="uid://bwajfkhy14w0t" path="res://scenes/actors/PobladoHub.gd" id="z1_PobladoHub"]
 [ext_resource type="PackedScene" uid="uid://gis6ivvsico3" path="res://models/personaje/ocultista_mujer.glb" id="z1_ocultista_mujer"]
+[ext_resource type="PackedScene" uid="uid://c0ml06u43opv" path="res://models/personaje/ocultista_hombre.glb" id="z1_ocultista_hombre"]
+[ext_resource type="Script" uid="uid://canqli8olg80w" path="res://scenes/actors/VistaPrevia.gd" id="z1_vista"]
+[ext_resource type="PackedScene" uid="uid://1fm847hqco41" path="res://models/personaje/alicanto.glb" id="z1_alicanto"]
 [ext_resource type="Script" uid="uid://duhibb8cvr8oc" path="res://scenes/actors/AlicantoRescate.gd" id="z3_AlicantoRescate"]
 [ext_resource type="Script" uid="uid://b1u1i4x0jaib1" path="res://scenes/actors/YastayEncounter.gd" id="z4_YastayEncounter"]
 
