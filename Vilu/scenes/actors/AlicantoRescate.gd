@@ -435,7 +435,14 @@ func _build_alicanto() -> void:
 		_alicanto = MODELO_ALICANTO.instantiate()
 		_alicanto.name = "AlicantoInvocado"
 		add_child(_alicanto)
-		_alicanto.position = _sitio_del_ave()
+		# Si hay un marcador puesto en la escena manda él, CON SU ESCALA: así el
+		# ave se coloca y se agranda viéndola en el editor (el marcador lleva
+		# VistaPrevia y la dibuja) en vez de a ciegas desde estas cuentas.
+		var marca := get_node_or_null("AveSpawn") as Node3D
+		if marca != null:
+			_alicanto.transform = marca.transform
+		else:
+			_alicanto.position = _sitio_del_ave()
 	_alicanto_y = _alicanto.position.y
 	_cartel_de(_alicanto, "Alicanto")
 

@@ -466,6 +466,10 @@ func _iniciar_duelo() -> void:
 	var marca := get_node_or_null("ChupacabrasSpawnPoint") as Node3D
 	e.global_position = _sitio_libre(
 		marca.global_position if marca else Vector3(0.0, -1.05, -49.0))
+	# El tamaño también sale del marcador: lleva VistaPrevia, así que en el
+	# editor se ve el bicho y se lo escala con el gizmo.
+	if marca != null:
+		e.scale = marca.global_transform.basis.get_scale()
 	e.died.connect(_al_vencer_al_chupacabras)
 	_chupa_jefe = e
 
