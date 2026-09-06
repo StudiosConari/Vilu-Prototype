@@ -287,7 +287,9 @@ func _spawn_bar_folk() -> void:
 	# Primero, el que esté PUESTO en la escena: así se lo coloca y se lo escala
 	# viéndolo en el editor, en vez de a ciegas desde estas coordenadas. Sólo si
 	# no hay ninguno se cae al modelo dibujado por código.
-	_ocultista = _modelo_del_mundo(OCULTISTA_HOMBRE)
+	# Se busca DENTRO del pueblo y no en la escena entera: el ocultista de la
+	# mina se llama igual, y con la mina cargada el pueblo se quedaba con el suyo.
+	_ocultista = _buscar_con_prefijo(self, OCULTISTA_HOMBRE)
 	if _ocultista != null:
 		# Puesto a mano: mira a +Z como todos los modelos, sin la media vuelta
 		# que les da `_persona`.
@@ -741,12 +743,23 @@ func _persona(ruta: String, pos: Vector3, altura: float, etiqueta: String) -> No
 	# Los modelos miran a +Z y el juego toma -Z como frente.
 	modelo.rotation.y = PI
 
-	if etiqueta != "":
-		var lbl := Label3D.new()
-		lbl.name = "Label3D"
-		lbl.text = etiqueta
-		lbl.font_size = 20
-		lbl.position.y = altura + 0.35
-		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		raiz.add_child(lbl)
+	_cartel_de(raiz, etiqueta, altura + 0.35)
 	return raiz
+
+
+## Le cuelga un cartel a alguien, a `alto` metros de su origen.
+##
+## El alto va en las unidades del nodo: si lo escalaste en el editor, el cartel
+## se escala con él y sigue quedando sobre la cabeza.
+func _cartel_de(quien: Node3D, texto: String, alto: float) -> void:
+	if texto == "" or not is_instance_valid(quien):
+		return
+	if quien.has_node("Label3D"):
+		return
+	var lbl := Label3D.new()
+	lbl.name = "Label3D"
+	lbl.text = texto
+	lbl.font_size = 20
+	lbl.position.y = alto
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	quien.add_child(lbl)
