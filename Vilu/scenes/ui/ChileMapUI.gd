@@ -22,6 +22,9 @@ func _ready() -> void:
 	focus_mode   = FOCUS_ALL
 	grab_focus()
 	queue_redraw()
+	# El mapa usa [ESC] para cerrarse. Estando en este grupo, el menú de pausa
+	# sabe que no debe abrirse encima con esa misma tecla.
+	add_to_group("pantalla_modal")
 
 
 func _draw() -> void:

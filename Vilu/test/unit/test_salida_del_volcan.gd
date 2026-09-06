@@ -125,3 +125,54 @@ func test_la_camara_se_planta_en_el_sitio_nuevo() -> void:
 	assert_almost_eq(foco.z, -300.0, 0.01)
 	assert_gt(float(j.get("_cam_dist_actual")), 0.0,
 		"y la distancia queda resuelta, no en su valor de 'sin calcular'")
+
+
+# ─── El marcador de salida, puesto a mano ────────────────────────────────────
+#
+# Saliendo del Isluga después de cruzar por el portal del Guardián aparecías
+# DENTRO del cerro y bajo el agua: la puerta está en una ladera, su origen a
+# y=3, y "el pie de la puerta" se calculaba restándole media altura (−1) cuando
+# el suelo de ahí está a y=15,3. Dieciséis metros de error.
+
+
+
+func _nombres(ruta: String) -> Array:
+	var st := (load(ruta) as PackedScene).get_state()
+	var xs: Array = []
+	for i in st.get_node_count():
+		xs.append(String(st.get_node_name(i)))
+	return xs
+
+
+func test_cada_volcan_tiene_su_marcador_de_salida() -> void:
+	assert_true("SalidaDeIsluga" in _nombres(TARAPACA),
+		"el Isluga sale a un sitio que se puede arrastrar en el editor")
+	assert_true("SalidaDeOjosDelSalado" in _nombres(ATACAMA),
+		"y el Ojos del Salado también")
+
+
+func test_el_marcador_manda_sobre_la_cuenta() -> void:
+	var g := Node3D.new()
+	g.set_script(JUEGO)
+	autofree(g)
+	var mundo := Node3D.new()
+	g.set("world", mundo)
+	add_child_autofree(mundo)
+	var m := Marker3D.new()
+	m.name = "SalidaDeIsluga"
+	mundo.add_child(m)
+	m.global_position = Vector3(4, 15, -7)
+
+	assert_almost_eq(g.call("_salida_puesta_a_mano", "Isluga"),
+		Vector3(4, 15, -7), Vector3.ONE * 0.01, "aparece donde lo pusiste")
+
+
+func test_sin_marcador_no_se_inventa_uno() -> void:
+	var g := Node3D.new()
+	g.set_script(JUEGO)
+	autofree(g)
+	var mundo := Node3D.new()
+	g.set("world", mundo)
+	add_child_autofree(mundo)
+	assert_eq(g.call("_salida_puesta_a_mano", "Isluga"), Vector3.INF,
+		"sin marcador manda el cálculo de siempre")

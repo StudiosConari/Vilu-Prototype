@@ -199,3 +199,71 @@ func test_sin_ocultista_en_la_escena_no_pasa_nada() -> void:
 	var m := _mina()
 	m.call("_montar_al_ocultista")
 	assert_null(m.get("_ocultista"), "no se inventa uno")
+
+
+# ─── El clip de caminar no se mueve solo ─────────────────────────────────────
+#
+# El primero llevaba el desplazamiento DENTRO de la animación: el modelo
+# avanzaba por su cuenta mientras el código además lo movía con un tween, o sea
+# que iba al doble y acababa lejos del tablón. El clip tiene que caminar en el
+# sitio y dejar que lo desplace el juego, que es quien sabe adónde va.
+
+func _esqueleto(n: Node) -> Skeleton3D:
+	if n is Skeleton3D:
+		return n
+	for h in n.get_children():
+		var x := _esqueleto(h)
+		if x != null:
+			return x
+	return null
+
+
+## Cuánto se aleja la raíz del esqueleto de donde empezó, en horizontal.
+func _deriva(clip: String) -> float:
+	var n: Node3D = OCULTISTA.instantiate()
+	add_child_autofree(n)
+	var ap := _animador(n)
+	var esq := _esqueleto(n)
+	if ap == null or esq == null or not ap.has_animation(clip):
+		return -1.0
+	var raiz := 0
+	for i in esq.get_bone_count():
+		if esq.get_bone_parent(i) == -1:
+			raiz = i
+			break
+	var a := ap.get_animation(clip)
+	ap.play(clip)
+	ap.seek(0.0, true)
+	var desde: Vector3 = esq.get_bone_global_pose(raiz).origin
+	ap.seek(a.length, true)
+	var hasta: Vector3 = esq.get_bone_global_pose(raiz).origin
+	var d := hasta - desde
+	d.y = 0.0
+	return d.length()
+
+
+func test_caminar_es_en_el_sitio() -> void:
+	var d := _deriva("caminar")
+	assert_gte(d, 0.0, "el clip existe")
+	assert_lt(d, 0.15, "camina en el sitio: se desvía %.3f m en todo el clip" % d)
+
+
+func test_al_darse_vuelta_no_pega_un_salto_atras() -> void:
+	# `vuelta_y_caminar` no camina en el sitio: se lleva el esqueleto casi un
+	# metro. Al cambiar de clip el esqueleto vuelve a su origen, y sin
+	# compensarlo el personaje aparecía de golpe donde estaba antes.
+	var m := _mina()
+	var o := _montar(m)
+	m.call("_montar_al_ocultista")
+	var avance: Vector3 = m.get("_avance_de_la_vuelta")
+	assert_gt(avance.length(), 0.1, "el clip sí arrastra el cuerpo")
+
+	# El avance está en unidades del ESQUELETO; en metros del mundo hay que
+	# pasarlo por su escala, que es justo lo que hace `_absorber_el_avance`.
+	var esq := _esqueleto(o)
+	var esperado: Vector3 = esq.global_transform.basis * avance
+	var antes := o.global_position
+	m.call("_absorber_el_avance")
+	var movido := o.global_position - antes
+	assert_almost_eq(movido, esperado, Vector3.ONE * 0.02,
+		"el nodo se queda donde acabó el cuerpo")

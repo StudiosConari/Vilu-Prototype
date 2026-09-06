@@ -101,3 +101,41 @@ func test_la_primera_visita_no_cambia() -> void:
 		assert_false(o._activado, "los obeliscos se encienden a mano")
 	assert_eq(_mineros(c).size(), 0,
 		"el pasillo central se puebla en la huida, no al entrar")
+
+
+# ─── Colocar y escalar al Chupacabras desde el editor ────────────────────────
+#
+# El marcador de aparición era una crucecita: en el editor no se veía qué tan
+# grande iba a salir el bicho. Ahora lleva VistaPrevia —lo dibuja— y su tamaño
+# es el que manda.
+
+func test_el_jefe_sale_del_tamano_del_marcador() -> void:
+	_con_todo_hecho()
+	var m := await _mina()
+	var marca := m.get_node_or_null("ChupacabrasSpawnPoint") as Node3D
+	assert_not_null(marca, "el marcador sigue ahí")
+	marca.scale = Vector3.ONE * 1.75
+
+	# Sin la entrada de los ojos: acá se prueba el tamaño del jefe, no su
+	# puesta en escena.
+	m.set("ojos_en_la_sombra", 0.05)
+	m.call("_iniciar_duelo")
+	await wait_seconds(0.3)
+	await wait_frames(2)
+	var jefe: Node3D = m.get("_chupa_jefe")
+	assert_not_null(jefe, "salió el jefe")
+	assert_almost_eq(jefe.scale.y, 1.75, 0.01, "del tamaño que le pusiste")
+
+
+func test_el_marcador_dibuja_al_bicho_en_el_editor() -> void:
+	var st := MINA.get_state()
+	for i in st.get_node_count():
+		if String(st.get_node_name(i)) != "ChupacabrasSpawnPoint":
+			continue
+		var props: Array = []
+		for j in st.get_node_property_count(i):
+			props.append(String(st.get_node_property_name(i, j)))
+		assert_true(props.has("script"), "lleva VistaPrevia")
+		assert_true(props.has("modelo"), "y sabe qué modelo dibujar")
+		return
+	fail_test("no está el marcador del Chupacabras")

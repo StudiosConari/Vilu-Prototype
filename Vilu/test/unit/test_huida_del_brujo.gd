@@ -1,7 +1,7 @@
 extends GutTest
 
-## La huida del brujo: apunta al jugador, cae derrotado y sale corriendo herido
-## hacia la entrada de la quebrada, que es la única salida.
+## La huida del brujo: cae derrotado y se va herido por el puente, siguiendo el
+## camino de marcadores puesto en la escena.
 
 const ENCUENTRO := preload("res://scenes/actors/YastayEncounter.gd")
 const BRUJO := preload("res://models/personaje/brujo.glb")
@@ -135,12 +135,12 @@ func test_lo_que_dura_cada_clip() -> void:
 	var b: Node3D = BRUJO.instantiate()
 	z.add_child(b)
 	z.set("_brujo", b)
-	var t: float = z.call("_clip", b, "apuntando", false)
-	assert_gt(t, 0.5, "apuntando dura algo")
+	var t: float = z.call("_clip", b, "derrotado", false)
+	assert_gt(t, 0.5, "la caída dura algo")
 	var ap := _animador(b)
-	assert_eq(ap.assigned_animation, "apuntando")
-	assert_eq(ap.get_animation("apuntando").loop_mode, Animation.LOOP_NONE,
-		"apuntar se hace una vez")
+	assert_eq(ap.assigned_animation, "derrotado")
+	assert_eq(ap.get_animation("derrotado").loop_mode, Animation.LOOP_NONE,
+		"caerse se hace una vez")
 	z.call("_clip", b, "correr_herido", true)
 	assert_eq(ap.get_animation("correr_herido").loop_mode, Animation.LOOP_LINEAR,
 		"correr se repite mientras huye")
@@ -151,3 +151,103 @@ func test_un_clip_que_no_existe_no_rompe_nada() -> void:
 	var b: Node3D = BRUJO.instantiate()
 	z.add_child(b)
 	assert_eq(float(z.call("_clip", b, "bailar_cueca", false)), 0.0)
+
+
+# ─── Se va por el puente, no por encima de las rocas ─────────────────────────
+#
+# Iba en línea recta hacia la salida: cruzaba la quebrada por encima del vacío y
+# de las piedras, mirando hacia otro lado y a 6,5 m/s con la animación de
+# alguien herido. Ahora sigue un camino puesto en la escena, tramo por tramo.
+
+func test_el_camino_son_los_marcadores_en_orden() -> void:
+	var z := _zona()
+	var camino := Node3D.new()
+	camino.name = "PorAlla"
+	z.add_child(camino)
+	for sitio in [Vector3(3, 0, -19), Vector3(0, 0, -12), Vector3(0, 0, 4)]:
+		var paso := Marker3D.new()
+		camino.add_child(paso)
+		paso.global_position = sitio
+	z.set("salida_del_brujo", NodePath("PorAlla"))
+
+	var pasos: Array = z.call("_camino_del_brujo")
+	assert_eq(pasos.size(), 3, "tres tramos, no uno")
+	assert_almost_eq(pasos[0], Vector3(3, 0, -19), Vector3.ONE * 0.01)
+	assert_almost_eq(pasos[2], Vector3(0, 0, 4), Vector3.ONE * 0.01)
+
+
+func test_sin_camino_sigue_tirando_hacia_la_salida() -> void:
+	var z := _zona()
+	assert_true((z.call("_camino_del_brujo") as Array).is_empty(),
+		"sin marcadores no hay camino, y manda el rumbo de siempre")
+
+
+func test_mira_hacia_donde_va_en_cada_tramo() -> void:
+	var z := _zona()
+	var b: Node3D = BRUJO.instantiate()
+	z.add_child(b)
+	z.set("_brujo", b)
+	b.global_position = Vector3.ZERO
+
+	# Hacia +X: el frente de este modelo es +Z, así que gira 90°.
+	# Tramos cortos y esperados: sin esperar al primero, el segundo arranca a
+	# medio camino y su rumbo ya no es el que se está midiendo.
+	await z.call("_brujo_va_hasta", Vector3(1.5, 0, 0))
+	assert_gt(b.global_transform.basis.z.x, 0.9, "mirando adonde camina")
+
+	# Y hacia -Z: gira el tramo, gira él.
+	await z.call("_brujo_va_hasta", Vector3(1.5, 0, -1.5))
+	assert_lt(b.global_transform.basis.z.z, -0.9, "y al girar el tramo, gira él")
+
+
+func test_va_despacio_porque_va_herido() -> void:
+	var z := _zona()
+	assert_lt(float(z.get("brujo_velocidad")), 3.0,
+		"con la animación de herido, 6,5 m/s eran patines")
+
+
+func test_el_camino_esta_puesto_en_la_quebrada() -> void:
+	var st := (load("res://scenes/core/WorldAtacama.tscn") as PackedScene).get_state()
+	var meta: Variant = null
+	for i in st.get_node_count():
+		if String(st.get_node_name(i)) != "Yastay":
+			continue
+		for j in st.get_node_property_count(i):
+			if String(st.get_node_property_name(i, j)) == "salida_del_brujo":
+				meta = st.get_node_property_value(i, j)
+	assert_not_null(meta, "la quebrada sabe por dónde se va el brujo")
+	var pasos := 0
+	for i in st.get_node_count():
+		if String(st.get_node_path(i, true)).ends_with(String(meta).get_file()):
+			pasos += 1
+	assert_gt(pasos, 2, "y el camino tiene tramos, no un punto suelto")
+
+
+func test_ya_no_apunta_antes_de_caer() -> void:
+	# Eran tres animaciones seguidas para decir una sola cosa —que perdió y se
+	# va— y se hacía largo: el jugador está mirando al Yastay, no a él.
+	var fuente := FileAccess.get_file_as_string(
+		"res://scenes/actors/YastayEncounter.gd")
+	assert_false('_clip(_brujo, "apuntando"' in fuente,
+		"la escena del brujo ya no reproduce 'apuntando'")
+
+
+func test_mira_bien_aunque_la_quebrada_este_girada() -> void:
+	# EL FALLO DE VERDAD: el rumbo se calcula en coordenadas del mundo y
+	# `rotation.y` se mide respecto del padre. La quebrada está girada 90° en la
+	# escena, así que el brujo caminaba de lado, mirando a noventa grados de por
+	# donde iba. Con la zona sin girar —como en los otros tests— no se veía.
+	var z := _zona()
+	z.rotation.y = PI * 0.5
+	var b: Node3D = BRUJO.instantiate()
+	z.add_child(b)
+	z.set("_brujo", b)
+
+	# Hacia +X del MUNDO.
+	z.call("_orientar", b, Vector3(1, 0, 0))
+	assert_gt(b.global_transform.basis.z.x, 0.95,
+		"su frente apunta a donde va, en el mundo, no en la zona")
+
+	# Y hacia -Z del mundo.
+	z.call("_orientar", b, Vector3(0, 0, -1))
+	assert_lt(b.global_transform.basis.z.z, -0.95, "y también aquí")

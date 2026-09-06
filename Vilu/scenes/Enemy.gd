@@ -534,6 +534,12 @@ func _morir() -> void:
 	collision_layer = 0
 	remove_from_group("enemies")
 	velocity = Vector3.ZERO
+	# A velocidad NORMAL. Sin esto la caída no se veía nunca: como no hay clip de
+	# reposo, quieto se pausa el paso poniendo `speed_scale` en cero, y los
+	# bichos mueren casi siempre parados —pegándote de cerca—, así que la
+	# animación de morir arrancaba congelada en su primer fotograma y se les
+	# borraba el cuerpo unos segundos después sin que se moviera nada.
+	_anim.speed_scale = 1.0
 	_anim.play(anim_morir)
 	get_tree().create_timer(_anim.get_animation(anim_morir).length).timeout.connect(
 		func() -> void:

@@ -87,7 +87,7 @@ func test_cada_parada_da_por_hecho_lo_anterior_y_nada_mas() -> void:
 
 
 ## Interiores: no son zonas del mundo, se cargan aparte.
-const INTERIORES := ["Mina", "Final", "Iglesia", "Isluga", "OjosDelSalado"]
+const INTERIORES := ["Mina", "Iglesia", "Isluga", "OjosDelSalado"]
 const TARAPACA := "res://scenes/core/World.tscn"
 
 

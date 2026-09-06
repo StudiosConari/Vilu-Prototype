@@ -8,6 +8,8 @@ extends CanvasLayer
 ## Se construye por código, como el resto de la interfaz del proyecto, y se
 ## cuelga de un CanvasLayer alto para que quede por encima del HUD.
 
+const PLACA := preload("res://scenes/ui/Placa.gd")
+
 const COLOR_FONDO   := Color(0.05, 0.05, 0.09, 1.0)
 const COLOR_TITULO  := Color(1.0, 0.85, 0.4)
 const COLOR_TEXTO   := Color(0.90, 0.90, 0.95)
@@ -38,32 +40,44 @@ func _ready() -> void:
 	fondo.color = COLOR_FONDO
 	fondo.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(fondo)
+	# La misma ilustración y la misma placa que el menú, la pausa y el final:
+	# ésta es la última pantalla del prototipo y era la única que seguía siendo
+	# texto suelto sobre negro.
+	var con_arte := PLACA.fondo(self, 0.6)
 
 	var centro := CenterContainer.new()
 	centro.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(centro)
 
+	var marco := PanelContainer.new()
+	marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.92, 44))
+	centro.add_child(marco)
+	var aire := MarginContainer.new()
+	aire.add_theme_constant_override("margin_top", 30)
+	aire.add_theme_constant_override("margin_bottom", 30)
+	marco.add_child(aire)
+
 	var caja := VBoxContainer.new()
 	caja.alignment = BoxContainer.ALIGNMENT_CENTER
 	caja.add_theme_constant_override("separation", 8)
-	centro.add_child(caja)
+	aire.add_child(caja)
 
-	caja.add_child(_texto("VILU", 64, COLOR_TITULO))
-	caja.add_child(_texto("PROTOTIPO SUPERADO", 26, COLOR_TEXTO))
-	caja.add_child(_espacio(12))
+	# El "VILU" escrito sólo si no está el arte: la ilustración ya lo trae.
+	if not con_arte:
+		caja.add_child(_texto("VILU", 64, COLOR_TITULO))
+	caja.add_child(PLACA.lema("PROTOTIPO SUPERADO", 30))
+	caja.add_child(PLACA.filete())
 
 	for l in GameManager.LOGROS:
 		caja.add_child(_linea_de_logro(l))
 
-	caja.add_child(_espacio(12))
+	caja.add_child(_espacio(8))
 	var hechos := GameManager.logros_obtenidos()
 	caja.add_child(_texto("%d de %d logros" % [hechos, GameManager.LOGROS.size()],
 		20, COLOR_TEXTO))
+	caja.add_child(_espacio(4))
 
-	var boton := Button.new()
-	boton.text = "Volver al título"
-	boton.custom_minimum_size = Vector2(300, 48)
-	boton.add_theme_font_size_override("font_size", 22)
+	var boton := PLACA.boton("Volver al título")
 	boton.pressed.connect(func() -> void:
 		get_tree().change_scene_to_file("res://scenes/TitleScreen.tscn"))
 	caja.add_child(boton)

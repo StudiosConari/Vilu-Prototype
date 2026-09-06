@@ -11,13 +11,13 @@ extends Node3D
 ##       atraparlo en la pampa alta. Al escucharlos se abre el camino al rebaño.
 ##   ETAPA 3 (traés el 2do talismán)
 ##     · La Bruja une las piezas y revela a los ocultistas. Al salir del diálogo
-##       descubrís que uno estaba escuchando junto al bar, y se escapa.
+##       caés en la cuenta de que la mujer sentada en el bar estuvo oyendo todo:
+##       se levanta y se va caminando.
 
 const WITCH_SCR    := preload("res://scenes/actors/WitchNPC.gd")
 const ENCAJAR      := preload("res://scenes/core/EncajarModelo.gd")
 const POSE         := preload("res://scenes/core/PoseAnimada.gd")
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
-const EXIT_SCENE   := preload("res://scenes/actors/ZoneExit.tscn")
 const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 
@@ -45,27 +45,18 @@ Parroquiano: Como si siempre hubiera alguien escuchando de más.
 "
 
 const TALK_OCULTISTA := "~ start
-Benjamín: Emilia. Junto al bar.
-Emilia: Ese estuvo ahí todo el rato. Escuchando cada palabra.
+Benjamín: Emilia. La del bar.
+Emilia: Estuvo ahí sentada todo el rato. Escuchando cada palabra.
 Emilia: ¡Eh! ¡Vos!
-Benjamín: Se fue. Corre como si conociera cada callejón del pueblo.
+Benjamín: Se va. Sin apurarse, como si conociera cada callejón del pueblo.
 Emilia: Entonces la bruja tiene razón. No estamos persiguiendo a un monstruo.
 Emilia: Estamos persiguiendo a gente.
 => END
 "
 
-## Prefijo del nodo del ocultista que espía en el bar, si lo ponés en la escena.
-const OCULTISTA_HOMBRE := "ocultista_hombre"
 
 var _stage := 1
 var _bar_done := false
-var _ocultista: Node3D = null
-## Verdadero cuando el ocultista viene puesto de la escena.
-##
-## Los modelos miran a +Z; `_persona` les da media vuelta al montarlos para que
-## el frente sea -Z, como el resto del juego. El que ponés a mano no pasa por
-## ahí, así que al girarlo hay que tenerlo en cuenta.
-var _ocultista_mira_a_mas_z := false
 var _exit: Node = null
 
 
@@ -144,28 +135,23 @@ func _intro_hint() -> void:
 		3: _hint("Poblado. Llevale la segunda pieza a la Bruja.")
 
 
-# ─── Salida (cambia de destino según la etapa) ───────────────────────────────
+# ─── Salida ──────────────────────────────────────────────────────────────────
 
-## MUNDO ABIERTO: al Isluga y a la quebrada del Yastay se llega CAMINANDO por
-## los caminos, así que esas salidas ya no existen. La única que queda es la del
-## Final, que sí es un interior y sólo se abre cuando el ocultista huye.
+## Ya no hay ninguna.
+##
+## MUNDO ABIERTO: al Isluga y a la quebrada del Yastay se llega caminando. Y la
+## que quedaba —una puerta al "Final", una escena aparte con su propio cartel de
+## FIN— se fue con esa escena: el prototipo termina al vencer al Chupacabras, y
+## lo que sale entonces es la pantalla de logros. Dos finales compitiendo eran
+## uno de más.
 func _setup_exit() -> void:
 	if is_instance_valid(_exit):
 		_exit.queue_free()
 		_exit = null
-	if _stage != 3:
-		return
-	_exit = EXIT_SCENE.instantiate()
-	add_child(_exit)
-	_exit.position = Vector3(0, 2, -21)
-	_exit.target_region = "Final"
-	_exit.prompt = "[E] Seguir al ocultista"
-	_exit.monitoring = false   # se abre en _ocultista_flees()
 
 
 func _open_exit() -> void:
-	if _exit and is_instance_valid(_exit):
-		_exit.set_deferred("monitoring", true)
+	pass
 
 
 # ─── Bruja ───────────────────────────────────────────────────────────────────
@@ -192,51 +178,53 @@ func _on_ocultists_revealed() -> void:
 
 
 func _reveal_ocultista() -> void:
-	if not is_instance_valid(_ocultista):
+	if not is_instance_valid(_ocultista_mujer) or _ocultista_ya_se_fue:
+		_after_flee()
 		return
-	_ocultista.visible = true
-	_banner("Alguien estaba escuchando junto al bar.", 4.0)
+	# No hay nada que "revelar" ya: estuvo sentada en el bar todo el rato, oyendo.
+	# Eso es lo que la delata, y por eso la cámara va a ella.
+	_banner("La que estaba sentada en el bar lo oyó todo.", 4.0)
+	var game := get_tree().get_first_node_in_group("game")
+	if game and game.has_method("focus_camera_on"):
+		game.focus_camera_on(_ocultista_mujer, 4.0)
 	DialogueManager.dialogue_ended.connect(_ocultista_flees.unbind(1), CONNECT_ONE_SHOT)
 	_show(TALK_OCULTISTA)
 
 
 func _ocultista_flees() -> void:
-	if not is_instance_valid(_ocultista):
-		_after_flee()
+	if not is_instance_valid(_ocultista_mujer) or _ocultista_ya_se_fue:
+		_end_flee()
 		return
+	_ocultista_ya_se_fue = true
 
-	var lbl := _ocultista.get_node_or_null("Label3D") as Label3D
+	var lbl := _ocultista_mujer.get_node_or_null("Label3D") as Label3D
 	if lbl:
-		lbl.text = "¡El ocultista huye!"
+		lbl.text = "¡La ocultista se va!"
 
-	# La cámara lo sigue para que se vea la huida
+	# La cámara la sigue para que se vea la huida.
 	var game := get_tree().get_first_node_in_group("game")
 	if game and game.has_method("focus_camera_on"):
-		game.focus_camera_on(_ocultista, 4.0)
+		game.focus_camera_on(_ocultista_mujer, 4.0)
 
-	# Corre en dos tramos: rodea el bar y sale por el portón norte
-	_clip_de(_ocultista, "caminar", true)
-	_mirar_hacia(_ocultista, Vector3(9.0, 0.0, -12.0) - _ocultista.position)
-	var tw := get_tree().create_tween()
-	tw.tween_property(_ocultista, "position", Vector3(9.0, 0.0, -12.0), 1.1)
-	tw.tween_callback(_mirar_hacia.bind(_ocultista,
-		Vector3(1.5, 0.0, -26.0) - Vector3(9.0, 0.0, -12.0)))
-	tw.tween_property(_ocultista, "position", Vector3(1.5, 0.0, -26.0), 1.5)
-	tw.tween_callback(_end_flee)
+	# Con await: llamar a una corrutina desde un manejador de señal y no
+	# esperarla la deja colgada en su primer await y la escena no sigue.
+	await _escena_de_la_ocultista()
+	_end_flee()
 
 
 func _end_flee() -> void:
 	var game := get_tree().get_first_node_in_group("game")
 	if game and game.has_method("clear_camera_focus"):
 		game.clear_camera_focus()
-	if is_instance_valid(_ocultista):
-		_ocultista.queue_free()
+	# NO se la borra: se queda de pie donde acabó el camino. Antes desaparecía a
+	# mitad de la plaza, que es lo que hace un fantasma, no alguien que se va.
 	_after_flee()
 
 
 func _after_flee() -> void:
-	_hint("El ocultista huyó hacia el norte. Seguilo.")
-	_open_exit()
+	# Lo que queda por hacer es el Chupacabras: la bruja ya unió las piezas y la
+	# ocultista se fue, así que el prototipo se cierra bajando a la mina.
+	_hint("La ocultista se fue del bar. En la mina te espera lo que empezó todo.")
 
 
 # ─── Bar ─────────────────────────────────────────────────────────────────────
@@ -281,27 +269,10 @@ func _spawn_bar_folk() -> void:
 	zone.add_child(cs)
 	zone.interacted.connect(_on_bar_talk)
 
-	# El ocultista espía junto al bar. Se crea SIEMPRE (oculto) porque el pueblo
-	# ya no se reconstruye al llegar a la etapa 3: si dependiera de _stage en
-	# _ready(), empezando la partida en la etapa 1 no existiría nunca.
-	# Primero, el que esté PUESTO en la escena: así se lo coloca y se lo escala
-	# viéndolo en el editor, en vez de a ciegas desde estas coordenadas. Sólo si
-	# no hay ninguno se cae al modelo dibujado por código.
-	# Se busca DENTRO del pueblo y no en la escena entera: el ocultista de la
-	# mina se llama igual, y con la mina cargada el pueblo se quedaba con el suyo.
-	_ocultista = _buscar_con_prefijo(self, OCULTISTA_HOMBRE)
-	if _ocultista != null:
-		# Puesto a mano: mira a +Z como todos los modelos, sin la media vuelta
-		# que les da `_persona`.
-		_ocultista_mira_a_mas_z = true
-		_cartel_de(_ocultista, "???", 2.0)
-	else:
-		_ocultista = _persona("res://models/personaje/ocultista_hombre.glb",
-			Vector3(15.0, 0, -1.0), 1.8, "???")
-	_ocultista.visible = false
-	# De espaldas y quieto. Sus clips son darse vuelta, caminar y señalar: no
-	# tiene reposo, y al revelarlo aparecía en T, con los brazos en cruz.
-	_pose_quieta(_ocultista, "vuelta_y_caminar")
+	# El que espía en el bar YA está en el bar: es la ocultista sentada, que
+	# `_montar_a_la_ocultista` monta aparte. Acá había además un ocultista
+	# hombre oculto junto a la puerta que salía corriendo al revelarlos; eran
+	# dos personas para un solo papel y en pantalla se notaba.
 
 
 func _on_bar_talk(_player: Node) -> void:
@@ -506,16 +477,21 @@ func _modelo_del_mundo(prefijo: String) -> Node3D:
 
 # ─── La ocultista del bar ────────────────────────────────────────────────────
 #
-# Está sentada en el taburete libre mientras el segundo talismán siga sin
-# entregarse. Al entregarlo se levanta y se va caminando.
+# Es LA ocultista del pueblo: la que está sentada en el bar escuchando y la que
+# se va cuando la bruja une las dos piezas. Antes eran dos —ella sentada y un
+# ocultista hombre de pie junto a la puerta que salía corriendo—, y en pantalla
+# se veía lo que era: dos personas haciendo el mismo papel.
 
 ## Prefijo del nodo que colocás en la escena.
 const OCULTISTA_MUJER := "ocultista_mujer"
 ## El logro que se concede al entregarle los dos talismanes a la bruja.
 const LOGRO_QUE_LA_LEVANTA := "talisman_2"
 
-## Adónde camina al levantarse. Poné un Marker3D donde quieras y asignalo acá;
-## vacío quiere decir que se levanta y se queda donde está.
+## Por dónde se va al levantarse.
+##
+## Apuntá acá a un nodo con Marker3D adentro y los recorre EN ORDEN, que es lo
+## que hace falta para bordear la plaza en vez de atravesar los puestos. Si el
+## nodo no tiene hijos, camina derecho hasta él. Vacío = se levanta y se queda.
 @export var destino_de_la_ocultista: NodePath
 ## A qué velocidad se va, en metros por segundo.
 @export var paso_de_la_ocultista := 1.6
@@ -543,44 +519,36 @@ func _montar_a_la_ocultista() -> void:
 		# se repite, y como el bar y la bruja pueden estar en regiones distintas,
 		# lo más probable es que pasara con este mundo descargado.
 		_ocultista_ya_se_fue = true
-		var meta := _destino_de_la_ocultista()
+		var meta := _final_del_camino()
 		if meta != Vector3.INF:
 			_ocultista_mujer.global_position = meta
 		_de_pie_quieta()
 		return
 
 	_clip_ocultista("sentada_hablando", true)
-	if not GameManager.logro_obtenido.is_connected(_al_entregar_los_talismanes):
-		GameManager.logro_obtenido.connect(_al_entregar_los_talismanes)
-
-
-func _al_entregar_los_talismanes(id: String) -> void:
-	if id != LOGRO_QUE_LA_LEVANTA or _ocultista_ya_se_fue:
-		return
-	if not is_instance_valid(_ocultista_mujer):
-		return
-	_ocultista_ya_se_fue = true
-	# Con await: llamar a una corrutina desde un manejador de señal y no
-	# esperarla la deja colgada en su primer await y la escena no sigue.
-	await _escena_de_la_ocultista()
 
 
 func _escena_de_la_ocultista() -> void:
-	# 1. Se levanta.
+	# 1. Se levanta del taburete.
 	await get_tree().create_timer(
 		_clip_ocultista("sentada_a_de_pie", false)).timeout
 	if not is_instance_valid(_ocultista_mujer):
 		return
 
-	# 2. Y se va caminando.
-	var meta := _destino_de_la_ocultista()
-	if meta != Vector3.INF:
-		var d := meta - _ocultista_mujer.global_position
-		d.y = 0.0
-		if d.length() > 0.2:
+	# 2. Y se va caminando, tramo por tramo. En cada esquina se gira antes de
+	#    seguir: yendo en línea recta al último punto atravesaría los puestos.
+	var pasos := _camino_de_la_ocultista()
+	if not pasos.is_empty():
+		_clip_ocultista("caminando", true)
+		for meta in pasos:
+			if not is_instance_valid(_ocultista_mujer):
+				return
+			var d: Vector3 = meta - _ocultista_mujer.global_position
+			d.y = 0.0
+			if d.length() < 0.2:
+				continue
 			# El frente de estos modelos es +Z, medido del talón a los dedos.
 			_ocultista_mujer.rotation.y = atan2(d.x, d.z)
-			_clip_ocultista("caminando", true)
 			var tw := get_tree().create_tween()
 			tw.tween_property(_ocultista_mujer, "global_position", meta,
 				d.length() / maxf(paso_de_la_ocultista, 0.1))
@@ -603,52 +571,29 @@ func _de_pie_quieta() -> void:
 	ap.pause()
 
 
-func _destino_de_la_ocultista() -> Vector3:
+## Los puntos por los que pasa, en orden.
+##
+## Si el nodo que asignaste tiene hijos, ésos son el camino; si no, el nodo es
+## el único destino. Así una esquina se pone arrastrando un marcador más, sin
+## tocar nada de esto.
+func _camino_de_la_ocultista() -> Array[Vector3]:
+	var pasos: Array[Vector3] = []
 	var n := get_node_or_null(destino_de_la_ocultista) as Node3D
-	return n.global_position if n != null else Vector3.INF
+	if n == null:
+		return pasos
+	for h in n.get_children():
+		if h is Node3D:
+			pasos.append((h as Node3D).global_position)
+	if pasos.is_empty():
+		pasos.append(n.global_position)
+	return pasos
 
 
-## Deja a alguien quieto en el primer fotograma de un clip.
-##
-## Los modelos de los ocultistas traen sólo los clips que necesita su escena y
-## ninguno de reposo. Sin esto se quedan en T, con los brazos en cruz.
-func _pose_quieta(quien: Node3D, clip: String) -> void:
-	var ap := _animador_de(quien)
-	if ap == null or not ap.has_animation(clip):
-		return
-	var a := ap.get_animation(clip)
-	a.loop_mode = Animation.LOOP_NONE
-	ap.play(clip)
-	ap.seek(0.0, true)
-	ap.pause()
+## Dónde acaba. Es adonde se la teletransporta si volvés con todo hecho.
+func _final_del_camino() -> Vector3:
+	var pasos := _camino_de_la_ocultista()
+	return pasos[pasos.size() - 1] if not pasos.is_empty() else Vector3.INF
 
-
-func _clip_de(quien: Node3D, nombre: String, en_bucle: bool) -> float:
-	var ap := _animador_de(quien)
-	if ap == null or not ap.has_animation(nombre):
-		return 0.0
-	var a := ap.get_animation(nombre)
-	a.loop_mode = Animation.LOOP_LINEAR if en_bucle else Animation.LOOP_NONE
-	if ap.assigned_animation != nombre or not ap.is_playing():
-		ap.play(nombre)
-	return a.length
-
-
-## Gira a alguien hacia donde va.
-##
-## El de `_persona` tiene el frente en -Z: el modelo mira a +Z y ahí adentro ya
-## viene rotado media vuelta. El que ponés en la escena no pasa por ahí y mira a
-## +Z, así que el giro es el contrario.
-func _mirar_hacia(quien: Node3D, hacia: Vector3) -> void:
-	if not is_instance_valid(quien):
-		return
-	hacia.y = 0.0
-	if hacia.length() < 0.01:
-		return
-	if quien == _ocultista and _ocultista_mira_a_mas_z:
-		quien.rotation.y = atan2(hacia.x, hacia.z)
-	else:
-		quien.rotation.y = atan2(-hacia.x, -hacia.z)
 
 
 func _clip_ocultista(nombre: String, en_bucle: bool) -> float:

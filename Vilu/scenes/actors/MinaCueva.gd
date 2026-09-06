@@ -456,6 +456,7 @@ func _iniciar_duelo() -> void:
 	if _duelo_activo:
 		return
 	_duelo_activo = true
+	await _ojos_en_la_oscuridad()
 	_banner("El Chupacabras ya no huye. Esta vez te espera.", 3.5)
 	Sfx.play("boss", 3.0, 0.55)
 
@@ -467,9 +468,11 @@ func _iniciar_duelo() -> void:
 	e.global_position = _sitio_libre(
 		marca.global_position if marca else Vector3(0.0, -1.05, -49.0))
 	# El tamaño también sale del marcador: lleva VistaPrevia, así que en el
-	# editor se ve el bicho y se lo escala con el gizmo.
+	# editor se ve el bicho y se lo escala con el gizmo. Se toma la escala LOCAL
+	# y no la global: los dos cuelgan de la mina, y la global le sumaría encima
+	# el tamaño de la mina entera.
 	if marca != null:
-		e.scale = marca.global_transform.basis.get_scale()
+		e.scale = marca.scale
 	e.died.connect(_al_vencer_al_chupacabras)
 	_chupa_jefe = e
 
@@ -504,6 +507,7 @@ func _start_chase() -> void:
 	if _chase_active:
 		return   # el pestillo vive acá, igual que en _start_combat
 	_chase_active = true
+	await _ojos_en_la_oscuridad()
 	_banner("¡HUYE!")
 	Sfx.play("boss", 3.0, 0.55)
 
@@ -544,6 +548,11 @@ func _start_chase() -> void:
 	var marca := get_node_or_null("ChupacabrasSpawnPoint") as Node3D
 	c.global_position = _sitio_libre(marca.global_position if marca else Vector3(0.0, -1.05, -49.0))
 	_chupacabras = c
+	# Y a correr. El modelo trae siete clips —Idle, Walk, Run, Sneak, Howl, Bite
+	# y Death— y no usaba ninguno: perseguía deslizándose con las patas clavadas,
+	# como una estatua sobre ruedas. Todos caminan en el sitio, así que el que
+	# lo mueve sigue siendo el código.
+	_clip_de(c, "Run", true)
 	_chupa_vel   = Vector3.ZERO
 	_stall_pos   = Vector2(c.global_position.x, c.global_position.z)
 	_stall_frames = 0
@@ -825,6 +834,10 @@ func _move_chupacabras(delta: float) -> void:
 		_chupa_pausa = maxf(0.0, _chupa_pausa - delta)
 		_chupa_vel.x = 0.0
 		_chupa_vel.z = 0.0
+	else:
+		# Parado muerde y quieto no; corriendo, corre. Se pide en cada cuadro
+		# porque `_clip_de` no relanza lo que ya está sonando.
+		_clip_de(c, "Run", true)
 	c.velocity = _chupa_vel
 	c.move_and_slide()
 
@@ -848,6 +861,7 @@ func _check_chupa_hit(delta: float) -> void:
 func _morder() -> void:
 	_chupa_hit_cd = CHUPA_ESPERA_MORDIDA
 	_mordidas += 1
+	_clip_de(_chupacabras, "Bite", false)
 	_banner("¡El Chupacabras te alcanzó!", 2.0)
 	Sfx.play_at("hit", _chupacabras.global_position, -2.0, 0.7)
 	for pp in get_tree().get_nodes_in_group("player"):
@@ -969,6 +983,89 @@ func _dejar_como_tras_la_huida() -> void:
 		% encendidos + " derecho despejado y el pasillo central poblado")
 
 
+# ─── Los ojos en la oscuridad ────────────────────────────────────────────────
+#
+# Antes el Chupacabras aparecía de golpe en su nido y salía corriendo: el bicho
+# más importante de la mina entraba en escena sin entrar en escena. Ahora la
+# cámara se va al fondo del túnel, donde no se ve nada, y ahí se encienden dos
+# ojos rojos. Sólo entonces sale.
+#
+# Es la misma pausa que ya tiene el golpe del Yastay: primero se avisa, después
+# se pega.
+
+## Cuánto se queda la cámara en los ojos antes de que salga, en segundos.
+@export var ojos_en_la_sombra := 2.2
+## A qué altura del suelo están, y cuánto se separan entre sí.
+@export var alto_de_los_ojos := 1.35
+@export var separacion_de_los_ojos := 0.34
+## Desde dónde los mira la cámara.
+@export var camara_de_los_ojos := 5.0
+
+
+## La entrada del Chupacabras. Se espera antes de crearlo.
+func _ojos_en_la_oscuridad() -> void:
+	var donde := _sitio_del_nido()
+	var ojos := _encender_los_ojos(donde)
+	var juego := get_tree().get_first_node_in_group("game")
+	if juego != null and juego.has_method("focus_camera_on"):
+		juego.focus_camera_on(ojos, 0.0, camara_de_los_ojos, alto_de_los_ojos)
+	await get_tree().create_timer(ojos_en_la_sombra).timeout
+	if is_instance_valid(ojos):
+		ojos.queue_free()
+	if juego != null and juego.has_method("clear_camera_focus"):
+		juego.clear_camera_focus()
+
+
+## Dónde está el nido: el mismo marcador por el que sale.
+func _sitio_del_nido() -> Vector3:
+	var marca := get_node_or_null("ChupacabrasSpawnPoint") as Node3D
+	return marca.global_position if marca != null else Vector3(0.0, -1.05, -49.0)
+
+
+## Dos puntos rojos que laten, sin sombreado, para que se vean en lo oscuro.
+##
+## Y una luz roja floja pegada a ellos: sin la luz son dos calcomanías; con
+## ella, algo que está ahí y respira.
+func _encender_los_ojos(donde: Vector3) -> Node3D:
+	var raiz := Node3D.new()
+	raiz.name = "OjosEnLaOscuridad"
+	add_child(raiz)
+	raiz.global_position = donde + Vector3(0.0, alto_de_los_ojos, 0.0)
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.12, 0.08)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.15, 0.1)
+	mat.emission_energy_multiplier = 6.0
+
+	for lado in [-1.0, 1.0]:
+		var ojo := MeshInstance3D.new()
+		var esf := SphereMesh.new()
+		esf.radius = 0.075
+		esf.height = 0.15
+		ojo.mesh = esf
+		ojo.material_override = mat
+		raiz.add_child(ojo)
+		ojo.position = Vector3(separacion_de_los_ojos * 0.5 * lado, 0.0, 0.0)
+
+	var luz := OmniLight3D.new()
+	luz.light_color = Color(1.0, 0.25, 0.18)
+	luz.light_energy = 1.6
+	luz.omni_range = 4.5
+	raiz.add_child(luz)
+
+	# Laten: dos puntos fijos parecen un cartel, y parpadeando parecen vivos.
+	#
+	# `bind_node` es lo que hace que el latido MUERA con los ojos. Sin eso el
+	# bucle sigue vivo después de apagarlos, tocando un nodo liberado, y el
+	# motor se queja en cada vuelta.
+	var tw := get_tree().create_tween().bind_node(raiz).set_loops()
+	tw.tween_property(luz, "light_energy", 0.5, 0.55)
+	tw.tween_property(luz, "light_energy", 1.8, 0.45)
+	return raiz
+
+
 # ─── El ocultista del pasillo ────────────────────────────────────────────────
 #
 # Está en la mina desde que entrás por primera vez. A mitad del pasillo se da
@@ -986,6 +1083,8 @@ const OCULTISTA := "ocultista"
 
 var _ocultista: Node3D = null
 var _ocultista_en_marcha := false
+## Lo que el clip de darse vuelta se lleva al esqueleto por delante.
+var _avance_de_la_vuelta := Vector3.ZERO
 
 
 func _montar_al_ocultista() -> void:
@@ -1057,6 +1156,7 @@ func _escena_del_ocultista() -> void:
 		_clip_de(_ocultista, "vuelta_y_caminar", false)).timeout
 	if not is_instance_valid(_ocultista):
 		return
+	_absorber_el_avance()
 
 	# 2. Camina hasta el tablón.
 	var meta := _sitio_junto_al_tablon()
@@ -1110,9 +1210,60 @@ func _de_espaldas() -> void:
 		return
 	var a := ap.get_animation("vuelta_y_caminar")
 	a.loop_mode = Animation.LOOP_NONE
+	# Se mide ANTES de dejarlo quieto: hace falta recorrer el clip entero, y
+	# esto pasa al montar la mina, cuando todavía no lo está mirando nadie.
+	_avance_de_la_vuelta = _medir_el_avance(ap, "vuelta_y_caminar")
 	ap.play("vuelta_y_caminar")
 	ap.seek(0.0, true)
 	ap.pause()
+
+
+## Cuánto se lleva un clip al esqueleto por delante, en metros del modelo.
+##
+## `caminar` camina en el sitio y da cero. `vuelta_y_caminar` no: mueve el
+## esqueleto casi un metro hacia delante. Eso no se ve mal mientras dura, pero
+## al cambiar de clip el esqueleto vuelve a su origen y el personaje pega un
+## salto atrás.
+func _medir_el_avance(ap: AnimationPlayer, clip: String) -> Vector3:
+	var esq := _esqueleto_de(_ocultista)
+	if esq == null or not ap.has_animation(clip):
+		return Vector3.ZERO
+	var raiz := -1
+	for i in esq.get_bone_count():
+		if esq.get_bone_parent(i) == -1:
+			raiz = i
+			break
+	if raiz < 0:
+		return Vector3.ZERO
+	ap.play(clip)
+	ap.seek(0.0, true)
+	var desde: Vector3 = esq.get_bone_global_pose(raiz).origin
+	ap.seek(ap.get_animation(clip).length, true)
+	var avance: Vector3 = esq.get_bone_global_pose(raiz).origin - desde
+	avance.y = 0.0
+	return avance
+
+
+## Le pasa al NODO el avance que el clip se llevó por dentro, para que al
+## cambiar de clip no dé el salto atrás. Con un clip que camine en el sitio esto
+## no hace nada, que es como tiene que ser.
+func _absorber_el_avance() -> void:
+	if not is_instance_valid(_ocultista) or _avance_de_la_vuelta.length() < 0.01:
+		return
+	var esq := _esqueleto_de(_ocultista)
+	if esq == null:
+		return
+	_ocultista.global_position += esq.global_transform.basis * _avance_de_la_vuelta
+
+
+func _esqueleto_de(n: Node) -> Skeleton3D:
+	if n is Skeleton3D:
+		return n
+	for h in n.get_children():
+		var x := _esqueleto_de(h)
+		if x != null:
+			return x
+	return null
 
 
 ## El frente de estos modelos es +Z: medido del talón a los dedos sobre el rig.

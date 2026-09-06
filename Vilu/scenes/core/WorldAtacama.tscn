@@ -53,12 +53,10 @@
 [ext_resource type="PackedScene" uid="uid://bacourh8xs61k" path="res://models/edificio/bus.glb" id="78_pe8ao"]
 [ext_resource type="PackedScene" uid="uid://b6oq5bb1d6kb5" path="res://models/edificio/estacion.glb" id="79_g83qo"]
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="99_entrada"]
-[ext_resource type="Script" uid="uid://dv8dcpxhrs3c8" path="res://scenes/actors/Interactable.gd" id="h2_Interactable"]
-[ext_resource type="Script" uid="uid://bwajfkhy14w0t" path="res://scenes/actors/PobladoHub.gd" id="z1_PobladoHub"]
-[ext_resource type="PackedScene" uid="uid://gis6ivvsico3" path="res://models/personaje/ocultista_mujer.glb" id="z1_ocultista_mujer"]
-[ext_resource type="PackedScene" uid="uid://c0ml06u43opv" path="res://models/personaje/ocultista_hombre.glb" id="z1_ocultista_hombre"]
-[ext_resource type="Script" uid="uid://canqli8olg80w" path="res://scenes/actors/VistaPrevia.gd" id="z1_vista"]
 [ext_resource type="PackedScene" uid="uid://1fm847hqco41" path="res://models/personaje/alicanto.glb" id="z1_alicanto"]
+[ext_resource type="PackedScene" uid="uid://gis6ivvsico3" path="res://models/personaje/ocultista_mujer.glb" id="z1_ocultista_mujer"]
+[ext_resource type="Script" uid="uid://bwajfkhy14w0t" path="res://scenes/actors/PobladoHub.gd" id="z1_PobladoHub"]
+[ext_resource type="Script" uid="uid://canqli8olg80w" path="res://scenes/actors/VistaPrevia.gd" id="z1_vista"]
 [ext_resource type="Script" uid="uid://duhibb8cvr8oc" path="res://scenes/actors/AlicantoRescate.gd" id="z3_AlicantoRescate"]
 [ext_resource type="Script" uid="uid://b1u1i4x0jaib1" path="res://scenes/actors/YastayEncounter.gd" id="z4_YastayEncounter"]
 
@@ -101,16 +99,6 @@ shader_override = ExtResource("3_toon")
 
 [sub_resource type="BoxShape3D" id="h2_BoxShape3D_pqh0a"]
 size = Vector3(10, 4, 3)
-
-[sub_resource type="CapsuleMesh" id="h2_CapsuleMesh_wxamr"]
-radius = 0.323
-height = 1.4725
-
-[sub_resource type="StandardMaterial3D" id="h2_StandardMaterial3D_hmypw"]
-albedo_color = Color(0.62, 0.5, 0.42, 1)
-
-[sub_resource type="SphereShape3D" id="h2_SphereShape3D_hi7r7"]
-radius = 2.4
 
 [node name="World" type="Node3D" unique_id=100000001]
 script = ExtResource("1_world")
@@ -792,19 +780,27 @@ transform = Transform3D(-3.7540958, 0, 0.008953426, 0, 0.5083229, 0, -0.00895342
 transform = Transform3D(1.0665244, 0, 0.7974879, 0, 1.3317137, 0, -0.7974879, 0, 1.0665244, -7.6054916, 0.22818987, 2.1801834)
 
 [node name="cazadora_joven2" parent="Poblado" unique_id=680495676 instance=ExtResource("55_8atei")]
-transform = Transform3D(-1.6210607, 0, 0.15510355, 0, 1.6284645, 0, -0.15510355, 0, -1.6210607, 15.572078, 0.64182514, 4.4919434)
+transform = Transform3D(-1.6210607, 0, 0.15510355, 0, 1.6284645, 0, -0.15510355, 0, -1.6210607, 15.632362, 0.4859361, 4.6648254)
 
 [node name="cazador_joven2" parent="Poblado" unique_id=1914255799 instance=ExtResource("53_pj81q")]
-transform = Transform3D(-1.3027123, 0, 0.8297382, 0, 1.5445147, 0, -0.8297382, 0, -1.3027123, 12.151491, 0.37332705, 2.1518555)
+transform = Transform3D(-1.3027123, 0, 0.8297382, 0, 1.5445147, 0, -0.8297382, 0, -1.3027123, 11.830516, 0.5074887, 2.6096115)
 
 [node name="cazador_joven3" parent="Poblado" unique_id=1603695501 instance=ExtResource("53_pj81q")]
-transform = Transform3D(-1.5175953, 0, 0.48029986, 0, 1.5917865, 0, -0.48029986, 0, -1.5175953, 14.467449, 0.42381266, 3.6044235)
+transform = Transform3D(-1.5175953, 0, 0.48029986, 0, 1.5917865, 0, -0.48029986, 0, -1.5175953, 14.288293, 0.512372, 4.0356064)
 
 [node name="ocultista_mujer2" parent="Poblado" unique_id=1603695502 instance=ExtResource("z1_ocultista_mujer")]
-transform = Transform3D(0.5570225, 0, 0.8304974, 0, 1, 0, -0.8304974, 0, 0.5570225, 13.3, 0.4, 2.9)
+transform = Transform3D(-1.3373019, 0, 0.67721397, 0, 1.4989978, 0, -0.67721397, 0, -1.3373019, 13.136609, 0.56459904, 3.3900604)
 
 [node name="MetaOcultistaMujer" type="Marker3D" parent="Poblado" unique_id=1603695503]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.4, -6.5)
+
+[node name="Paso1" type="Marker3D" parent="Poblado/MetaOcultistaMujer" unique_id=1603695505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0.4, 12.5)
+
+[node name="Paso2" type="Marker3D" parent="Poblado/MetaOcultistaMujer" unique_id=1603695506]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.4, 12.5)
+
+[node name="Paso3" type="Marker3D" parent="Poblado/MetaOcultistaMujer" unique_id=1603695507]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.4, 12.5)
 
 [node name="Terminal de Buses" type="Node3D" parent="." unique_id=1832802537]
 
@@ -2191,6 +2187,9 @@ target_region = "OjosDelSalado"
 prompt = "[E] Subir a la cima del Ojos del Salado"
 tamano = Vector3(16, 8, 16)
 
+[node name="SalidaDeOjosDelSalado" type="Marker3D" parent="Subida Ojos del Salado" unique_id=990000011]
+transform = Transform3D(1, 0, -5.9604645e-08, 0, 1, 0, 5.9604645e-08, 0, 1, 73.935165, 0.6390208, -2.4270248)
+
 [node name="subida_ojos_del_salado2" parent="Subida Ojos del Salado" unique_id=79561196 instance=ExtResource("41_hud0y")]
 transform = Transform3D(5.1629057, 0, -1.8564453, 0, 4.0075555, 0, 2.3164597, 0, 4.13763, 78.18227, -0.020324366, -12.926956)
 
@@ -2881,6 +2880,12 @@ transform = Transform3D(2.158176, 0, 0.045108445, 0, 2.1586468, 0, -0.045108445,
 transform = Transform3D(-0.99999976, 0, -0.00070481375, 0, 1, 0, 0.00070481375, 0, -0.99999976, -15.696606, 0.3129034, 178.08234)
 script = ExtResource("z3_AlicantoRescate")
 geometria_fijada = true
+persona_herida = NodePath("cazador_joven2")
+
+[node name="AveSpawn" type="Marker3D" parent="Alicanto" unique_id=700000033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.907, 11.96, -26.822)
+script = ExtResource("z1_vista")
+modelo = ExtResource("z1_alicanto")
 
 [node name="PlayerSpawn" type="Marker3D" parent="Alicanto" unique_id=800003001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 19)
@@ -2911,30 +2916,6 @@ font_size = 22
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1.5, -13)
 collision_layer = 0
 collision_mask = 2
-
-[node name="@Node3D@96" type="Node3D" parent="Alicanto" unique_id=549416786]
-transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 11, 0.3, -22)
-
-[node name="@MeshInstance3D@97" type="MeshInstance3D" parent="Alicanto/@Node3D@96" unique_id=1224475040]
-transform = Transform3D(0.6708805, -0.06708159, 0.01742891, 0.044126187, 1.019353, 0.003079595, -0.011898971, -0.0019817525, 0.99408734, 9.283907, 2.929903, 2.1725159)
-mesh = SubResource("h2_CapsuleMesh_wxamr")
-surface_material_override/0 = SubResource("h2_StandardMaterial3D_hmypw")
-
-[node name="Label3D" type="Label3D" parent="Alicanto/@Node3D@96" unique_id=826949513]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.805, 0)
-billboard = 1
-text = "¡Alguien herido!"
-font_size = 20
-
-[node name="@Area3D@98" type="Area3D" parent="Alicanto/@Node3D@96" unique_id=534042466]
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("h2_Interactable")
-prompt = "[E] Ayudar a la herida"
-
-[node name="@CollisionShape3D@99" type="CollisionShape3D" parent="Alicanto/@Node3D@96/@Area3D@98" unique_id=847908233]
-transform = Transform3D(0.6708805, -0.06708159, 0.01742891, 0.044126187, 1.019353, 0.003079595, -0.011898971, -0.0019817525, 0.99408734, 9.295848, 2.6596603, 2.17276)
-shape = SubResource("h2_SphereShape3D_hi7r7")
 
 [node name="puente_alicanto2" parent="Alicanto" unique_id=1842814988 instance=ExtResource("44_ied1p")]
 transform = Transform3D(1.8789433, 0, -0.014374652, 0, 1.8789983, 0, 0.014374652, 0, 1.8789433, -3.8160563, -5.0225534, 9.664124)
@@ -2979,9 +2960,24 @@ transform = Transform3D(-1.7207198, -0.09028573, 0.007900123, -0.11325867, 1.372
 transform = Transform3D(0.0003289953, 0, -0.99999994, 0, 1, 0, 0.99999994, 0, 0.0003289953, 23.849613, 0, 127.94954)
 script = ExtResource("z4_YastayEncounter")
 geometria_fijada = true
+salida_del_brujo = NodePath("SalidaDelBrujo")
 
 [node name="PlayerSpawn" type="Marker3D" parent="Yastay" unique_id=800004001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0011749268, 0.2, 11.430072)
+
+[node name="SalidaDelBrujo" type="Marker3D" parent="Yastay" unique_id=800004010]
+
+[node name="Paso1" type="Marker3D" parent="Yastay/SalidaDelBrujo" unique_id=800004011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.9, -19)
+
+[node name="Paso2" type="Marker3D" parent="Yastay/SalidaDelBrujo" unique_id=800004012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -12)
+
+[node name="Paso3" type="Marker3D" parent="Yastay/SalidaDelBrujo" unique_id=800004013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -2)
+
+[node name="Paso4" type="Marker3D" parent="Yastay/SalidaDelBrujo" unique_id=800004014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 13)
 
 [node name="yastay2" parent="Yastay" unique_id=1581581347 instance=ExtResource("48_y6vb7")]
 transform = Transform3D(2.691747, 0, 0.053457454, 0, 2.6922781, 0, -0.053457454, 0, 2.691747, 0.0014190674, 0.89225006, -25.876184)

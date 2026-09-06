@@ -17,6 +17,10 @@ func _cueva() -> Node:
 	var m := MINA.instantiate()
 	add_child_autofree(m)
 	await wait_physics_frames(2)
+	# Sin la entrada de los ojos: estos tests miran la lógica del duelo, no su
+	# puesta en escena, y sus dos segundos por test alargarían la batería.
+	if "ojos_en_la_sombra" in m:
+		m.set("ojos_en_la_sombra", 0.05)
 	for n in m.get_children():
 		var s: Script = n.get_script()
 		if s != null and String(s.resource_path).ends_with("MinaCueva.gd"):
@@ -43,6 +47,7 @@ func test_sin_los_logros_la_mina_sigue_siendo_una_huida() -> void:
 	assert_false(c._toca_el_duelo(), "recién empezada no toca el duelo")
 	c._combat_cleared = true
 	c._on_nest_enter(_senuelo())
+	await wait_seconds(0.3)
 	assert_true(c._chase_active, "arranca la persecución de siempre")
 	assert_false(c._duelo_activo)
 	c._chase_active = false
@@ -55,6 +60,7 @@ func test_con_todos_los_demas_logros_planta_cara() -> void:
 	# A propósito SIN _combat_cleared: se vuelve a buscarlo y el camino al nido
 	# está abierto, no hay que volver a despejar a los mineros.
 	c._on_nest_enter(_senuelo())
+	await wait_seconds(0.3)
 	assert_true(c._duelo_activo, "se planta")
 	assert_false(c._chase_active, "y ya no se huye")
 	assert_not_null(c._chupa_jefe, "aparece como enemigo, no como perseguidor")
@@ -66,6 +72,7 @@ func test_vencerlo_concede_el_logro_y_cierra_el_prototipo() -> void:
 	_todos_menos_el_chupacabras()
 	var c := await _cueva()
 	c._on_nest_enter(_senuelo())
+	await wait_seconds(0.3)
 	watch_signals(GameManager)
 	c._chupa_jefe.take_damage(99999.0, Vector3.ZERO)
 	await wait_physics_frames(2)

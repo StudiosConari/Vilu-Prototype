@@ -334,8 +334,13 @@ func _trabar_a_los_jugadores(trabado: bool) -> void:
 ## El clip de derrota dura seis segundos y los últimos cuatro es él tendido sin
 ## moverse: se corta en cuanto termina la caída.
 @export var brujo_tiempo_caido := 2.6
-## A qué velocidad huye y cuántos metros corre antes de perderse de vista.
-@export var brujo_velocidad := 6.5
+## A qué velocidad se va, en metros por segundo.
+##
+## Va HERIDO: 6,5 era una carrera de atleta con la animación de alguien que
+## apenas puede andar, y los pies patinaban por el suelo.
+@export var brujo_velocidad := 2.2
+## Cuántos metros se aleja si NO le pusiste un camino. Con camino manda el
+## camino y este número no se usa.
 @export var brujo_distancia := 30.0
 ## Grados que se le suman al orientarlo.
 ##
@@ -346,8 +351,11 @@ func _trabar_a_los_jugadores(trabado: bool) -> void:
 ##
 ## Si algún día se reexporta el modelo del revés, este es el número a cambiar.
 @export var brujo_giro := 0.0
-## Marcador opcional hacia el que huye. Si no está, huye hacia la entrada de la
-## quebrada, que es por donde se llega y la única salida.
+## Por dónde se va.
+##
+## Apuntá acá a un nodo con Marker3D adentro y los recorre EN ORDEN; si el nodo
+## no tiene hijos, va derecho hasta él. Vacío quiere decir que tira hacia la
+## entrada de la quebrada, que es por donde se llega.
 @export var salida_del_brujo: NodePath
 
 
@@ -370,30 +378,93 @@ func _brujo_escapes() -> void:
 		_huir_sin_animacion()
 		return
 
-	# 1. Apunta al jugador, furioso.
+	# 1. Cae, de cara al jugador.
+	#
+	# Antes, antes de caer, apuntaba furioso al jugador durante todo su clip. Eran
+	# tres animaciones seguidas para decir una sola cosa —que perdió y se va— y se
+	# hacía largo: el jugador ya está mirando al Yastay, no a él. Se queda el
+	# giro, que es lo que hace que la caída se lea, pero no la espera.
 	var p := _jugador_mas_cercano(_brujo.global_position)
 	if p != null:
 		_orientar(_brujo, p.global_position - _brujo.global_position)
-	await get_tree().create_timer(_clip(_brujo, "apuntando", false)).timeout
-
-	# 2. Cae.
 	_clip(_brujo, "derrotado", false)
 	await get_tree().create_timer(brujo_tiempo_caido).timeout
 
-	# 3. Se levanta y huye herido.
-	var rumbo := _rumbo_de_huida()
-	_orientar(_brujo, rumbo)
+	# 3. Se levanta y se va herido, tramo por tramo.
 	_clip(_brujo, "correr_herido", true)
-	var tw := get_tree().create_tween()
-	tw.tween_property(_brujo, "global_position",
-		_brujo.global_position + rumbo * brujo_distancia,
-		brujo_distancia / maxf(brujo_velocidad, 0.1))
-	await tw.finished
+	var camino := _camino_del_brujo()
+	if camino.is_empty():
+		# Sin camino puesto: tira en línea recta hacia la salida, como antes.
+		var rumbo := _rumbo_de_huida()
+		_orientar(_brujo, rumbo)
+		camino.append(_brujo.global_position + rumbo * brujo_distancia)
+	for meta in camino:
+		if not is_instance_valid(_brujo):
+			return
+		await _brujo_va_hasta(meta)
 	# Se esconde antes de liberarlo: la cámara todavía lo está mirando y soltarle
 	# el nodo de golpe la haría saltar al jugador.
 	if is_instance_valid(_brujo):
 		_brujo.visible = false
 		_brujo.queue_free()
+
+
+## Los puntos por los que se va, en orden.
+##
+## Si el nodo que asignaste tiene hijos, ésos son el camino; si no, el nodo es
+## el único destino. Vacío quiere decir "no hay camino puesto".
+##
+## Hace falta un camino y no un rumbo porque la salida de la quebrada es un
+## puente: en línea recta el brujo se iba por encima de las rocas y del vacío,
+## que es lo que hacía antes.
+func _camino_del_brujo() -> Array[Vector3]:
+	var pasos: Array[Vector3] = []
+	var n := get_node_or_null(salida_del_brujo) as Node3D
+	if n == null:
+		return pasos
+	for h in n.get_children():
+		if h is Node3D:
+			pasos.append((h as Node3D).global_position)
+	if pasos.is_empty():
+		pasos.append(n.global_position)
+	return pasos
+
+
+## Un tramo: lo gira hacia donde va y lo lleva pisando el suelo.
+##
+## Se mueve con `tween_method` y no con `tween_property` para poder apoyarlo en
+## el terreno en cada paso: yendo en línea recta de un punto a otro se metía por
+## dentro del puente y salía por encima de las piedras.
+func _brujo_va_hasta(meta: Vector3) -> void:
+	var desde: Vector3 = _brujo.global_position
+	var d := meta - desde
+	d.y = 0.0
+	if d.length() < 0.2:
+		return
+	_orientar(_brujo, d)
+	var tw := get_tree().create_tween()
+	tw.tween_method(func(t: float) -> void:
+		if not is_instance_valid(_brujo):
+			return
+		_brujo.global_position = _apoyar(desde.lerp(meta, t)),
+		0.0, 1.0, d.length() / maxf(brujo_velocidad, 0.1))
+	await tw.finished
+
+
+## El mismo punto, pero a ras de suelo.
+##
+## El rayo sale de DOS METROS Y MEDIO por encima y baja seis: desde más arriba
+## engancharía el arco del puente en vez del tablero, y desde más abajo se
+## perdería el escalón al subir a él.
+func _apoyar(p: Vector3) -> Vector3:
+	var esp := get_world_3d().direct_space_state
+	if esp == null:
+		return p
+	var q := PhysicsRayQueryParameters3D.create(
+		p + Vector3.UP * 2.5, p + Vector3.DOWN * 3.5)
+	q.collision_mask = 1
+	var r := esp.intersect_ray(q)
+	return r["position"] if not r.is_empty() else p
 
 
 ## Hacia dónde huye: al marcador si lo pusiste, y si no hacia la entrada de la
@@ -410,11 +481,23 @@ func _rumbo_de_huida() -> Vector3:
 
 
 ## Lo gira para que MIRE hacia ahí, con la media vuelta de los modelos.
+##
+## El rumbo viene en coordenadas del MUNDO y `rotation.y` se mide respecto del
+## PADRE. La quebrada está girada 90° en la escena, así que escribir el ángulo
+## del mundo tal cual dejaba al brujo caminando de lado, mirando a noventa
+## grados de por donde iba. Se pasa el rumbo al sistema del padre antes.
 func _orientar(nodo: Node3D, hacia: Vector3) -> void:
 	hacia.y = 0.0
 	if hacia.length() < 0.01:
 		return
-	nodo.rotation.y = atan2(hacia.x, hacia.z) + deg_to_rad(brujo_giro)
+	var padre := nodo.get_parent() as Node3D
+	var rumbo := hacia
+	if padre != null:
+		rumbo = padre.global_transform.basis.inverse() * hacia
+	rumbo.y = 0.0
+	if rumbo.length() < 0.001:
+		return
+	nodo.rotation.y = atan2(rumbo.x, rumbo.z) + deg_to_rad(brujo_giro)
 
 
 ## Reproduce un clip suyo y devuelve lo que dura. 0 si no lo tiene.
@@ -589,13 +672,88 @@ func _yastay_think(delta: float) -> void:
 	if dist > 0.5:
 		_encarar(to_t.normalized())
 
-	# Golpe al alcanzar al jugador
+	# Golpe al alcanzar al jugador: primero se MARCA dónde va a caer, y recién
+	# después cae.
 	_yastay_stomp_cd = max(0.0, _yastay_stomp_cd - delta)
-	if dist < 2.5 and _yastay_stomp_cd <= 0.0:
-		_yastay_stomp_cd = 2.2
-		if target.has_method("take_damage"):
-			target.take_damage(25.0)
-		_banner("¡Golpe del Yastay! ¡Esquiva!", 1.8)
+	if dist < distancia_del_golpe and _yastay_stomp_cd <= 0.0:
+		_yastay_stomp_cd = aviso_del_golpe + descanso_del_golpe
+		_golpear()
+
+
+# ─── El golpe del Yastay ──────────────────────────────────────────────────────
+#
+# Antes el golpe era instantáneo: en cuanto te ponías a menos de dos metros y
+# medio, 25 de daño, y el cartel decía "¡Esquiva!" cuando ya te había dado. No
+# había nada que esquivar. Ahora marca en el suelo dónde va a pisar, te da un
+# segundo largo para salir, y sólo entonces pega —y sólo a quien siga dentro.
+
+## Cuánto tiempo tenés para salirte, en segundos.
+@export var aviso_del_golpe := 1.2
+## Radio de la zona que machaca, en metros.
+@export var radio_del_golpe := 2.6
+## Cuánto por delante de él cae, medido de su centro al centro de la zona.
+@export var alcance_del_golpe := 2.2
+## A qué distancia se decide a golpear.
+@export var distancia_del_golpe := 4.5
+## Lo que quita si te pilla dentro.
+@export var dano_del_golpe := 25.0
+## Lo que descansa entre un golpe y el siguiente, además del aviso.
+@export var descanso_del_golpe := 1.6
+
+
+## Marca la zona, espera, y pega a quien siga ahí.
+func _golpear() -> void:
+	if not is_instance_valid(_yastay):
+		return
+	# El frente de este modelo es +Z: `_encarar` lo deja mirando así.
+	var frente: Vector3 = _yastay.global_transform.basis.z.normalized()
+	frente.y = 0.0
+	var centro: Vector3 = _yastay.global_position + frente.normalized() * alcance_del_golpe
+	centro.y = _yastay.global_position.y
+
+	_yastay_hace("Head_But", false)
+	_banner("¡El Yastay va a pisar! ¡Salí de ahí!", aviso_del_golpe + 0.4)
+	var marca := _marcar_el_suelo(centro, radio_del_golpe, aviso_del_golpe)
+
+	await get_tree().create_timer(aviso_del_golpe).timeout
+	if is_instance_valid(marca):
+		marca.queue_free()
+	if _phase != Phase.AGGRESSIVE:
+		return
+
+	for p in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(p) or not (p is Node3D):
+			continue
+		var d: Vector3 = (p as Node3D).global_position - centro
+		d.y = 0.0
+		if d.length() > radio_del_golpe:
+			continue
+		if p.has_method("take_damage"):
+			p.take_damage(dano_del_golpe)
+
+
+## El círculo rojo en el suelo. Crece durante el aviso: se ve cuánto queda.
+func _marcar_el_suelo(centro: Vector3, radio: float, dura: float) -> Node3D:
+	var mi := MeshInstance3D.new()
+	var disco := CylinderMesh.new()
+	disco.top_radius = radio
+	disco.bottom_radius = radio
+	disco.height = 0.06
+	mi.mesh = disco
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.95, 0.15, 0.1, 0.45)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = mat
+	add_child(mi)
+	mi.global_position = centro + Vector3(0.0, 0.05, 0.0)
+	# De un punto a todo el círculo en lo que dura el aviso: el borde llegando
+	# al filo ES la cuenta atrás, sin números en pantalla.
+	mi.scale = Vector3(0.05, 1.0, 0.05)
+	var tw := get_tree().create_tween()
+	tw.tween_property(mi, "scale", Vector3.ONE, dura)
+	return mi
 
 
 ## Radio, en metros, del territorio del Yastay: hasta dónde se aleja del sitio
@@ -723,6 +881,11 @@ func _elegir_heridos() -> Array:
 
 
 ## Le cuelga a un guanaco su zona de curación.
+## La zona de sanar: se activa con [E], no con acercarse.
+##
+## Antes bastaba con pasarle por al lado y el guanaco quedaba sanado sin que lo
+## hubieras decidido; con el Yastay persiguiéndote alrededor se sanaban los tres
+## de casualidad mientras corrías. Sanar es un acto, y los actos van con la E.
 func _zona_de_cura(g: Node3D) -> void:
 	if g.has_node("ZonaCura"):
 		return
@@ -731,22 +894,28 @@ func _zona_de_cura(g: Node3D) -> void:
 	area.collision_layer = 0
 	area.collision_mask = 2
 	area.monitoring = true
+	area.set_script(INTERACT_SCR)
+	area.prompt = "[E] Sanar al guanaco"
 	g.add_child(area)
 	var cs := CollisionShape3D.new()
 	var sph := SphereShape3D.new()
-	sph.radius = 2.2
+	# El radio va en las unidades del guanaco: si lo escalaste en el editor, la
+	# zona lo acompaña en vez de quedarse gigante o diminuta.
+	sph.radius = 2.2 / maxf(g.global_transform.basis.get_scale().y, 0.001)
 	cs.shape = sph
 	area.add_child(cs)
-	area.body_entered.connect(_on_heal_entered.bind(g))
+	area.interacted.connect(_on_heal_entered.bind(g))
 
 
 func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 	if _wound_healed or _phase != Phase.AGGRESSIVE:
 		return
-	if not body.is_in_group("player"):
+	if body == null or not body.is_in_group("player"):
 		return
+	# Sanar es lo suyo: Benjamín es el que sabe de animales. Con Emilia el aviso
+	# dice qué falta, en vez de no pasar nada y parecer que la E está rota.
 	if body.get("is_archer") != true:
-		_banner("Sólo Benjamín puede sanar al guanaco.", 2.5)
+		_banner("Sólo Benjamín puede sanar al guanaco. Cambiá con [T].", 2.5)
 		return
 	if guanaco == null:
 		guanaco = _heridos[0] if not _heridos.is_empty() else null
@@ -768,7 +937,13 @@ func _levantar(g: Node3D) -> void:
 		return
 	# Se incorpora de verdad: `lay_to_idle` es literalmente el gesto de pasar de
 	# tumbado a de pie. Al terminarlo se queda respirando como los demás.
+	#
+	# Si algún día el modelo no lo trajera, se levanta desandando su propia
+	# caída: `Death` al revés desde el último fotograma, que es exactamente en el
+	# que lo dejó `_tumbar`.
 	var alzarse := _clip(g, "lay_to_idle", false)
+	if alzarse <= 0.0:
+		alzarse = _desandar_la_caida(g)
 	if alzarse > 0.0:
 		get_tree().create_timer(alzarse).timeout.connect(func() -> void:
 			if is_instance_valid(g):
@@ -818,11 +993,19 @@ const REGRESO := 2.6
 func _volver_a_su_sitio() -> void:
 	if not is_instance_valid(_yastay) or _yastay_origen == Transform3D.IDENTITY:
 		return
+	# Caminando, y al llegar en reposo. Sin esto se quedaba con el último clip
+	# que le tocó en la persecución —el cabezazo, encabritado— y hablaba en esa
+	# pose: alzado sobre el jugador, que es justo la amenaza de la que acaba de
+	# salir.
+	_yastay_hace("Walk", true)
 	var tw := get_tree().create_tween()
 	tw.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_property(_yastay, "position", _yastay_origen.origin, REGRESO)
 	tw.parallel().tween_property(_yastay, "quaternion",
 		_yastay_origen.basis.get_rotation_quaternion(), REGRESO)
+	tw.finished.connect(func() -> void:
+		if is_instance_valid(_yastay):
+			_yastay_hace("Idle", true))
 
 
 ## El Yastay se acerca y habla. La bendición sólo llega al terminar el diálogo.
@@ -1018,6 +1201,22 @@ func _tumbar(g: Node3D) -> void:
 	ap.play("Death")
 	ap.advance(a.length)
 	ap.pause()
+
+
+## Desanda la caída: el gesto de levantarse, sin necesitar un clip para eso.
+##
+## Devuelve lo que tarda, o 0 si el modelo ni siquiera tiene la caída.
+func _desandar_la_caida(g: Node3D) -> float:
+	var ap := _animador_de(g)
+	if ap == null or not ap.has_animation("Death"):
+		return 0.0
+	var a := ap.get_animation("Death")
+	a.loop_mode = Animation.LOOP_NONE
+	# Desde el último fotograma, que es donde lo dejó `_tumbar`.
+	ap.play("Death")
+	ap.seek(a.length, true)
+	ap.play_backwards("Death")
+	return a.length
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────

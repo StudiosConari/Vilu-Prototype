@@ -27,7 +27,6 @@ const REGIONS := {
 	"Iglesia": "res://scenes/regions/Iglesia.tscn",
 	"Isluga": "res://scenes/puzzles/Isluga.tscn",
 	"OjosDelSalado": "res://scenes/puzzles/OjosDelSalado.tscn",
-	"Final": "res://scenes/puzzles/Final.tscn",
 }
 
 var state: State = State.IDLE
@@ -101,7 +100,7 @@ func fade_then(accion: Callable) -> void:
 	state = State.IDLE
 
 
-## Vacía el holder de interiores (al volver de la Mina/Final al mundo abierto).
+## Vacía el holder de interiores (al volver de la Mina al mundo abierto).
 func clear_region(holder: Node) -> void:
 	for child in holder.get_children():
 		child.queue_free()
