@@ -76,6 +76,55 @@ static func poner(nodo: Node3D, clip: String, en_bucle: bool) -> bool:
 	return true
 
 
+## Le cambia el clip a alguien que YA tiene su modelo animado puesto.
+##
+## `poner` se planta si el nodo ya lo tiene, y con razón: dos cuerpos encima uno
+## de otro. Pero un NPC puede cambiar de pose durante la partida —la herida cae
+## derrotada y se incorpora al curarla—, y para eso alcanza con pedirle otro
+## clip al que ya está. Devuelve si pudo.
+static func reproducir(nodo: Node3D, clip: String, en_bucle: bool) -> bool:
+	if nodo == null:
+		return false
+	var modelo := nodo.get_node_or_null(NOMBRE) as Node3D
+	if modelo == null:
+		return false
+	var ap := _buscar_anim(modelo)
+	if ap == null:
+		return false
+	for n in ap.get_animation_list():
+		if not String(n).begins_with(clip):
+			continue
+		var a := ap.get_animation(n)
+		if a != null:
+			a.loop_mode = Animation.LOOP_LINEAR if en_bucle else Animation.LOOP_NONE
+		ap.play(n)
+		return true
+	return false
+
+
+## Le quita el modelo animado y le devuelve el suyo, de pie y quieto.
+##
+## Es el "reposo" de los personajes del pipeline: son cuerpos rígidos y su pose
+## de fábrica es estar de pie. Cuando el `_anim` no trae un clip de reposo —los
+## cazadores tienen dos, caer y sentarse— dejarlo en cualquiera de los dos es
+## peor: la persona herida se quedaba SENTADA EN EL AIRE después de curarla,
+## porque el clip de sentarse está hecho para una silla que ahí no hay.
+##
+## Devuelve si había algo que quitar.
+static func quitar(nodo: Node3D) -> bool:
+	if nodo == null:
+		return false
+	var modelo := nodo.get_node_or_null(NOMBRE) as Node3D
+	if modelo == null:
+		return false
+	nodo.remove_child(modelo)
+	modelo.queue_free()
+	# `poner` sólo los OCULTÓ, no los borró: por esto justamente.
+	for m: MeshInstance3D in _mallas(nodo):
+		m.visible = true
+	return true
+
+
 ## El `.glb` animado que le corresponde a un nodo, por su nombre.
 ##
 ## Los nodos de la escena llevan un número al final —`cazador_joven2`— y el

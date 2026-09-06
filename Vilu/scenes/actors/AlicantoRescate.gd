@@ -15,6 +15,17 @@ extends Node3D
 
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 const MODELO_ALICANTO := preload("res://models/personaje/alicanto.glb")
+const POSE := preload("res://scenes/core/PoseAnimada.gd")
+
+## Cómo queda tendida.
+##
+## Se pide por prefijo: los clips traen el nombre del fichero y cada personaje
+## tiene el suyo ("derrotado_de_costado", "derrotada_de_espalda"…).
+##
+## Para levantarse no hay clip: los cazadores traen dos —caer y sentarse— y
+## ninguno es estar de pie. Se le quita el animado y vuelve su modelo rígido,
+## que de fábrica ya está de pie.
+const CLIP_CAIDA := "derrotad"
 
 ## A qué altura vuela el ave sobre el suelo, y a qué distancia de la persona
 ## rescatada baja si no colocaste un modelo.
@@ -85,6 +96,13 @@ var _t := 0.0
 ## geometría que adoptar.
 @export var geometria_fijada: bool = false
 
+## Quién es la persona herida.
+##
+## Asignale el personaje que pusiste en la escena: se lo tumba con la animación
+## de caída y se le cuelga el "[E] Ayudar". Vacío quiere decir "buscala como
+## antes", por la cápsula gris del greybox.
+@export var persona_herida: NodePath
+
 
 func _ready() -> void:
 	if not geometria_fijada:
@@ -142,6 +160,17 @@ func _reponer_logica() -> void:
 ## Esa zona NUNCA llegó a guardarse: se creaba después del `return` del editor,
 ## así que en el momento del horneado no existía.
 func _reponer_herida() -> void:
+	# Lo primero, el personaje que hayas asignado en el inspector: es la forma
+	# de decir "la herida es ÉSTA", viéndola en el editor. La cápsula gris del
+	# greybox ya no hace falta, y por eso puede no existir.
+	_hurt = get_node_or_null(persona_herida) as Node3D
+	if _hurt != null:
+		_hurt_es_modelo = true
+		_cartel_de(_hurt, "¡Alguien herido!")
+		_tumbar_a_la_herida()
+		_zona_de_ayuda()
+		return
+
 	_hurt = _nodo_con_cartel("¡Alguien herido!")
 	if _hurt == null:
 		push_warning("Alicanto: no encuentro a la persona herida")
@@ -160,19 +189,38 @@ func _reponer_herida() -> void:
 		reemplazo = _personaje_mas_cerca(_hurt.position, 6.0)
 
 	if reemplazo != null:
-		# El modelo puesto a mano manda: se queda donde lo dejaste, sin llevarlo
-		# a la cama ni tumbarlo. Colocarlo ES la decisión.
+		# El modelo puesto a mano manda: se queda donde lo dejaste. Colocarlo ES
+		# la decisión.
 		_cartel_de(reemplazo, "¡Alguien herido!")
 		_hurt.queue_free()
 		_hurt = reemplazo
 		_hurt_es_modelo = true
+		_tumbar_a_la_herida()
 	else:
 		var cama := _hijo_que_empieza_con("cama_aventurero")
 		if cama != null:
 			_hurt.position = cama.position + Vector3(0.0, 0.5, 0.0)
 		_hurt.rotation.z = PI / 2.0   # tirada, no de pie
 
-	if _hurt.has_node("ZonaAyuda"):
+	_zona_de_ayuda()
+
+
+## La deja tendida en el suelo, con la misma caída que los cazadores del Yastay.
+##
+## Los modelos del pipeline no tienen huesos: el clip vive en el `_anim` de al
+## lado y `PoseAnimada` hace el cambio. Sin esto la herida se veía DE PIE, que
+## es la pose en la que viene el modelo, y había que tumbarla girándola —lo que
+## se hacía con la cápsula— con el resultado de siempre: medio cuerpo dentro
+## del suelo.
+func _tumbar_a_la_herida() -> void:
+	if not is_instance_valid(_hurt):
+		return
+	if not POSE.poner(_hurt, CLIP_CAIDA, false):
+		push_warning("Alicanto: la herida no tiene el clip '%s'" % CLIP_CAIDA)
+
+
+func _zona_de_ayuda() -> void:
+	if not is_instance_valid(_hurt) or _hurt.has_node("ZonaAyuda"):
 		return
 	var zone := Area3D.new()
 	zone.name = "ZonaAyuda"
@@ -375,8 +423,15 @@ func _on_hurt_help(_player: Node) -> void:
 	# Se incorpora
 	if is_instance_valid(_hurt):
 		# El "se incorpora" es del greybox: la cápsula estaba tumbada en y=0. A un
-		# modelo puesto a mano llevarlo a y=0 lo hundiría en el suelo.
-		if not _hurt_es_modelo:
+		# modelo puesto a mano llevarlo a y=0 lo hundiría en el suelo; ése se
+		# incorpora con su propia animación, sin tocarle el transform.
+		if _hurt_es_modelo:
+			# De pie y quieto: se le quita el modelo animado y vuelve el suyo,
+			# que es un cuerpo rígido y su pose de fábrica es estar de pie.
+			# Antes se le ponía `sentado_victoria` y quedaba SENTADO EN EL AIRE:
+			# ese clip está hecho para una silla, y ahí no hay ninguna.
+			POSE.quitar(_hurt)
+		else:
 			var tw := get_tree().create_tween()
 			tw.tween_property(_hurt, "rotation:z", 0.0, 0.8)
 			tw.parallel().tween_property(_hurt, "position:y", 0.0, 0.8)

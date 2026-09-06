@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cckj61i658fva" path="res://scenes/core/Game.gd" id="1_game"]
 [ext_resource type="PackedScene" uid="uid://pptg0r0wwul0" path="res://scenes/core/ContornoToon.tscn" id="2_contorno"]
+[ext_resource type="Script" uid="uid://ch1coqqexrrig" path="res://scenes/ui/MenuDePausa.gd" id="3_pausa"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.11, 0.47, 0.93, 1)
@@ -40,6 +41,9 @@ adjustment_saturation = 1.15
 
 [node name="Game" type="Node3D" unique_id=267953500 groups=["game"]]
 script = ExtResource("1_game")
+camara_fija = false
+cam_zoom_max = 4.0
+cam_zoom_step = 4.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2032434743]
 environment = SubResource("env")
@@ -53,6 +57,9 @@ shadow_normal_bias = 1.0
 shadow_blur = 0.4
 directional_shadow_blend_splits = true
 directional_shadow_max_distance = 160.0
+
+[node name="MenuDePausa" type="CanvasLayer" parent="." unique_id=928719258]
+script = ExtResource("3_pausa")
 
 [node name="RegionHolder" type="Node3D" parent="." unique_id=928719257]
 

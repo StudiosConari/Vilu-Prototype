@@ -34,10 +34,28 @@ func _ready() -> void:
 	_sounds["boss"] = _gen_tone(0.40, 85.0, 42.0, 0.5, 1.6)
 	# Musica de fondo (loop).
 	_music = AudioStreamPlayer.new()
-	_music.stream = _gen_music()
+	_music.stream = _musica_de_fondo()
 	add_child(_music)
 	apply_music()
 	_music.play()
+
+
+## La canción del juego.
+##
+## Hasta ahora la música se GENERABA por código —cuatro acordes en bucle, hechos
+## a mano con senos— porque el prototipo no tenía ni un archivo de audio. Ya lo
+## tiene. La generada se queda como respaldo: si el archivo faltara, el juego
+## sigue sonando en vez de quedarse mudo.
+const CANCION := "res://audio/musica/map_of_embers.mp3"
+
+
+func _musica_de_fondo() -> AudioStream:
+	if ResourceLoader.exists(CANCION):
+		var s := load(CANCION) as AudioStream
+		if s != null:
+			return s
+	push_warning("Sfx: falta %s; suena la música generada" % CANCION)
+	return _gen_music()
 
 
 func apply_music() -> void:

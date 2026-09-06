@@ -7,6 +7,14 @@ var _zonas: Control
 var _titulo: Label
 
 const MUNDO_ATACAMA := "res://scenes/core/WorldAtacama.tscn"
+## El aspecto de las pantallas que van sobre la ilustración, compartido con el
+## final: así las dos se ven iguales sin copiar los colores en cada una.
+const PLACA := preload("res://scenes/ui/Placa.gd")
+const OPCIONES := preload("res://scenes/ui/PanelOpciones.gd")
+## Ancho de los paneles que se abren encima del menú, en píxeles de interfaz.
+## Fijo a propósito: es lo que obliga a las descripciones largas a partirse en
+## varias líneas en vez de estirar el bloque hasta salirse de la pantalla.
+const ANCHO_DEL_PANEL := 860.0
 
 ## El recorrido del prototipo, en orden, para el selector de debug.
 ##
@@ -22,11 +30,12 @@ const MUNDO_ATACAMA := "res://scenes/core/WorldAtacama.tscn"
 ##
 ## `mundo` sólo se pone cuando la escena NO está en Tarapacá: los dos mundos son
 ## copias del mismo poblado, así que "Poblado" a secas es ambiguo. De Alicanto
-## al Ojos del Salado se juega en Atacama; desde el Ocultista se vuelve a
-## Tarapacá, que es adonde te lleva el mapa del Guardián al bajar de la cima.
+## al Ojos del Salado se juega en Atacama; después se vuelve a Tarapacá, que es
+## adonde te lleva el mapa del Guardián al bajar de la cima.
 ##
-## `otorga` vacío = esa parada no cierra ningún logro: el Bar y el Ocultista son
-## escenas de paso, y el Final va después del último.
+## `otorga` vacío = esa parada no cierra ningún logro: el Bar es una escena de
+## paso. La última parada es el Chupacabras: vencerlo cierra el noveno logro y
+## con eso salta la pantalla de logros, que es el final del prototipo.
 const DEBUG_ZONES := [
 	{"nombre": "1 La Tirana", "zona": "Tarapaca", "beat": 0,
 	 "otorga": "tirana", "desbloquea": ["bow"], "mundo": ""},
@@ -48,12 +57,16 @@ const DEBUG_ZONES := [
 	# que prueba el viaje entre regiones, así que lo de después ya es Tarapacá.
 	{"nombre": "9 Ojos del Salado", "zona": "OjosDelSalado", "beat": 6,
 	 "otorga": "ojos_salado", "desbloquea": [], "mundo": MUNDO_ATACAMA},
-	{"nombre": "10 Poblado/Ocultista", "zona": "Poblado", "beat": 6,
-	 "otorga": "", "desbloquea": [], "mundo": ""},
-	{"nombre": "11 Chupacabras", "zona": "Mina", "beat": 6,
+	# Acá había una parada "Poblado/Ocultista" aparte. No era ninguna parada: la
+	# ocultista es la que está sentada en el bar del MISMO pueblo de la 8, y su
+	# escena la dispara la bruja al unir las piezas. O sea que entrar por ahí te
+	# dejaba en el mismo sitio que la 8 pero con el talismán ya entregado, con lo
+	# cual ella ya se había ido y no había nada que ver.
+	# La última: vencerlo concede el noveno logro y con eso salta la pantalla de
+	# logros, que ES el final del prototipo. Antes había además una parada "Final"
+	# a una escena aparte con su propio cartel de FIN: dos finales compitiendo.
+	{"nombre": "10 Chupacabras", "zona": "Mina", "beat": 6,
 	 "otorga": "chupacabras", "desbloquea": [], "mundo": ""},
-	{"nombre": "12 Final", "zona": "Final", "beat": 7,
-	 "otorga": "", "desbloquea": [], "mundo": ""},
 ]
 
 
@@ -63,6 +76,7 @@ func _ready() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.color = Color(0.10, 0.12, 0.17)
 	add_child(bg)
+	var con_arte := PLACA.fondo(self, 0.45)
 
 	# Título, subtítulo y botones en UNA columna, no cada cosa por su cuenta.
 	#
@@ -74,13 +88,36 @@ func _ready() -> void:
 	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vb.offset_top = 40.0
 	vb.offset_bottom = -140.0   # el hueco de abajo es para los controles
+	if con_arte:
+		# Con el arte, la columna se va a la izquierda y debajo del título: ahí
+		# el dibujo es cielo y mar, y los dos protagonistas —que están a la
+		# derecha— quedan a la vista en vez de tapados por los botones.
+		#
+		# Todo en anclas y no en píxeles: la ilustración se recorta según la
+		# ventana, y una columna en píxeles se despegaría del cuadro.
+		# Centrada BAJO EL TÍTULO, que en la ilustración no está en el medio de
+		# la imagen sino un poco a la izquierda: puesta en el centro geométrico
+		# la columna quedaba descolgada del logo.
+		vb.anchor_left = 0.32
+		vb.anchor_right = 0.56
+		vb.anchor_top = 0.30
+		vb.anchor_bottom = 0.88
+		vb.offset_left = 0.0
+		vb.offset_right = 0.0
+		vb.offset_top = 0.0
+		vb.offset_bottom = 0.0
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
-	vb.add_theme_constant_override("separation", 14)
+	vb.add_theme_constant_override("separation", 14 if not con_arte else 9)
 	add_child(vb)
 
+	# El título va dibujado EN el arte, así que sólo se escribe cuando el arte no
+	# está: escribirlo encima daba dos "VILU", uno sobre otro.
 	_titulo = _label("VILU", 100, Color(1.0, 0.85, 0.4), 12)
+	_titulo.visible = not con_arte
 	vb.add_child(_titulo)
-	vb.add_child(_label("Prototipo — greybox", 30, Color(0.9, 0.9, 0.95), 6))
+	var sub := _label("Prototipo — greybox", 30, Color(0.9, 0.9, 0.95), 6)
+	sub.visible = not con_arte
+	vb.add_child(sub)
 
 	var aire := Control.new()
 	aire.custom_minimum_size = Vector2(0, 26)
@@ -92,36 +129,35 @@ func _ready() -> void:
 	_ajustar_titulo()
 	get_viewport().size_changed.connect(_ajustar_titulo)
 
-	var play := _boton_menu("JUGAR", 40, 80)
+	var play := _entrada(con_arte, "JUGAR", 40, 80)
 	play.pressed.connect(_on_play)
 	vb.add_child(play)
 
-	var newgame := _boton_menu("Nueva partida", 26, 54)
+	var newgame := _entrada(con_arte, "Nueva partida", 26, 54)
 	newgame.pressed.connect(_on_new_game)
 	vb.add_child(newgame)
 
-	var opts := _boton_menu("Opciones", 26, 54)
+	var opts := _entrada(con_arte, "Opciones", 26, 54)
 	opts.pressed.connect(func() -> void: _options.visible = true)
 	vb.add_child(opts)
 
-	var zonas := _boton_menu("Seleccionar zona", 26, 54)
+	var zonas := _entrada(con_arte, "Seleccionar zona", 26, 54)
 	zonas.pressed.connect(func() -> void: _zonas.visible = true)
 	vb.add_child(zonas)
 
-	var quit := _boton_menu("Salir", 26, 54)
+	var quit := _entrada(con_arte, "Salir", 26, 54)
 	quit.pressed.connect(func() -> void: get_tree().quit())
 	vb.add_child(quit)
 
+	if con_arte:
+		vb.add_child(PLACA.filete())
+		vb.add_child(PLACA.lema("NUESTRAS RAÍCES"))
+		vb.add_child(PLACA.lema("TAMBIÉN SON FUTURO"))
+
 	_build_options()
-
-	var help := _label(
-		"WASD mover · Shift correr · Espacio saltar (doble con alas) · Clic izq atacar (mantener = flecha cargada) · F flecha triple\n"
-		+ "Q montar guanaco · E interactuar · R cambiar (IA) · T cambiar (queda quieto) · Rueda: zoom · Clic der: rotar cámara",
-		20, Color(0.8, 0.85, 0.9), 4)
-	help.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	help.position.y = -110
-	add_child(help)
-
+	# La parrilla de controles ya no va en el título: eran dos líneas de texto
+	# pequeño cruzadas sobre la ilustración, justo por delante del hielo y los
+	# pingüinos. Lo que hay que ver al abrir el juego es el cuadro y el menú.
 	_build_debug_zones()
 
 
@@ -139,47 +175,66 @@ func _build_debug_zones() -> void:
 
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0, 0, 0, 0.80)
+	dim.color = Color(0.02, 0.03, 0.06, 0.86)
 	_zonas.add_child(dim)
 
-	# Con scroll: doce paradas con su descripción no entran en cualquier alto de
-	# ventana, y sin esto las últimas quedarían fuera igual que antes.
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_top = 90
-	scroll.offset_bottom = -90
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_zonas.add_child(scroll)
+	# Una placa de ANCHO FIJO, centrada y alta como la ventana.
+	#
+	# Antes la lista se centraba con un CenterContainer y cada descripción era
+	# una línea suelta: la de "Poblado/Bar" mide más de mil píxeles, así que el
+	# bloque entero crecía con ella y se salía de la pantalla por los dos lados.
+	# Con el ancho fijo aquí, las descripciones no tienen más remedio que partir
+	# en varias líneas.
+	var marco := PanelContainer.new()
+	marco.anchor_left = 0.5
+	marco.anchor_right = 0.5
+	marco.anchor_top = 0.04
+	marco.anchor_bottom = 0.96
+	marco.offset_left = -ANCHO_DEL_PANEL * 0.5
+	marco.offset_right = ANCHO_DEL_PANEL * 0.5
+	marco.offset_top = 0.0
+	marco.offset_bottom = 0.0
+	marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.92, 26))
+	_zonas.add_child(marco)
 
-	var centro := CenterContainer.new()
-	centro.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(centro)
+	var aire := MarginContainer.new()
+	aire.add_theme_constant_override("margin_top", 22)
+	aire.add_theme_constant_override("margin_bottom", 22)
+	marco.add_child(aire)
 
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 6)
-	centro.add_child(vb)
-	vb.add_child(_label("SELECCIONAR ZONA", 40, Color(1.0, 0.85, 0.4), 8))
-	vb.add_child(_label(
+	vb.add_theme_constant_override("separation", 10)
+	aire.add_child(vb)
+	vb.add_child(PLACA.lema("SELECCIONAR ZONA", 30))
+	var sub := _label(
 		"Cada zona te deja el progreso anterior ya hecho: logros y habilidades.",
-		18, Color(0.75, 0.8, 0.88), 3))
+		17, Color(0.78, 0.82, 0.88), 3)
+	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vb.add_child(sub)
+
+	# El scroll se come el alto que sobre: doce paradas con su descripción no
+	# entran en cualquier ventana.
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vb.add_child(scroll)
+
+	var lista := VBoxContainer.new()
+	lista.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lista.add_theme_constant_override("separation", 9)
+	scroll.add_child(lista)
 
 	for i in DEBUG_ZONES.size():
-		var b := Button.new()
-		b.text = _etiqueta(DEBUG_ZONES[i])
-		b.custom_minimum_size = Vector2(560, 44)
-		b.add_theme_font_size_override("font_size", 22)
+		var b := PLACA.boton(_etiqueta(DEBUG_ZONES[i]))
+		# El detalle de lo que te vas a encontrar hecho va en el tooltip y no
+		# debajo del botón: escrito eran dos renglones de letra pequeña por
+		# parada, once veces, y la lista se leía como una parrilla de datos en
+		# vez de como un menú. Quien lo necesite lo tiene pasando el ratón.
 		b.tooltip_text = _resumen(i)
 		b.pressed.connect(_on_debug_zone.bind(i))
-		vb.add_child(b)
-		var det := _label(_resumen(i).replace("\n", " · "), 14,
-			Color(0.62, 0.68, 0.76), 2)
-		det.custom_minimum_size = Vector2(560, 0)
-		vb.add_child(det)
+		lista.add_child(b)
 
-	var volver := Button.new()
-	volver.text = "Volver"
-	volver.custom_minimum_size = Vector2(560, 48)
-	volver.add_theme_font_size_override("font_size", 24)
+	var volver := PLACA.boton("Volver")
 	volver.pressed.connect(func() -> void: _zonas.visible = false)
 	vb.add_child(volver)
 
@@ -258,47 +313,10 @@ func _on_debug_zone(indice: int) -> void:
 
 
 func _build_options() -> void:
-	_options = Control.new()
-	_options.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_options.visible = false
+	# El panel es el MISMO que abre el menú de pausa: vive en PanelOpciones para
+	# que los dos no se separen con el tiempo.
+	_options = OPCIONES.construir()
 	add_child(_options)
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0, 0, 0, 0.75)
-	_options.add_child(dim)
-	var cc := CenterContainer.new()
-	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_options.add_child(cc)
-	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 20)
-	cc.add_child(vb)
-	vb.add_child(_label("OPCIONES", 46, Color(1.0, 0.85, 0.4), 8))
-	vb.add_child(_slider_row("Musica", Save.music_vol, Save.set_music_vol, false))
-	vb.add_child(_slider_row("Efectos", Save.sfx_vol, Save.set_sfx_vol, true))
-	var back := Button.new()
-	back.text = "Volver"
-	back.custom_minimum_size = Vector2(480, 58)
-	back.add_theme_font_size_override("font_size", 30)
-	back.pressed.connect(func(): _options.visible = false)
-	vb.add_child(back)
-
-
-func _slider_row(row_name: String, value: float, cb: Callable, preview: bool) -> Control:
-	var row := VBoxContainer.new()
-	var lbl := _label(row_name, 26, Color.WHITE, 4)
-	row.add_child(lbl)
-	var s := HSlider.new()
-	s.min_value = 0.0
-	s.max_value = 1.0
-	s.step = 0.05
-	s.value = value
-	s.custom_minimum_size = Vector2(480, 34)
-	s.value_changed.connect(func(v):
-		cb.call(v)
-		if preview:
-			Sfx.play("hit", -4.0))
-	row.add_child(s)
-	return row
 
 
 func _label(txt: String, fsize: int, col: Color, outline: int) -> Label:
@@ -321,10 +339,16 @@ func _on_new_game() -> void:
 	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")
 
 
-## Un botón del menú principal.
+## Una entrada del menú: con placa si hay arte detrás, pelada si no.
 ##
-## `SHRINK_CENTER` es lo que impide que se estiren a lo ancho de la pantalla:
-## en un VBoxContainer los hijos ocupan todo el ancho salvo que se diga que no.
+## El menú es el mismo en los dos casos —los mismos botones y en el mismo
+## orden—; lo que cambia es cómo se ven sobre lo que hay debajo.
+func _entrada(con_arte: bool, texto: String, tamano: int, alto: int) -> Button:
+	if con_arte:
+		return PLACA.boton(texto)
+	return _boton_menu(texto, tamano, alto)
+
+
 func _boton_menu(texto: String, tamano_letra: int, alto: int) -> Button:
 	var b := Button.new()
 	b.text = texto

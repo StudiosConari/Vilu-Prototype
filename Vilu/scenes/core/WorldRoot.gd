@@ -4,7 +4,7 @@ extends Node3D
 ## Mundo abierto de VILU. Instancia TODAS las zonas al aire libre a la vez,
 ## cada una desplazada a su lugar en el mapa, y las mantiene vivas.
 ##
-## Los INTERIORES (Mina, Final) NO viven acá: se siguen cargando aparte con
+## Los INTERIORES (la Mina, los volcanes) NO viven acá: se siguen cargando aparte con
 ## TravelManager al entrar por su boca, como hace cualquier RPG de mundo
 ## abierto. Ver Game.gd.
 ##
@@ -488,6 +488,13 @@ func _animar_el_paisaje() -> void:
 			continue
 		var ap := _animador_de(n)
 		if ap == null or not ap.has_animation(clip):
+			continue
+		# Al que ya le dieron un papel NO se le toca. Los guanacos heridos de la
+		# quebrada se tienden con `Death` en el _ready de su zona, y como los
+		# hijos están listos antes que el padre, esto llegaba después y los
+		# volvía a poner de pie: la escena entera pedía sanar a tres animales
+		# que estaban pastando tan tranquilos.
+		if ap.assigned_animation != "":
 			continue
 		var a := ap.get_animation(clip)
 		a.loop_mode = Animation.LOOP_LINEAR

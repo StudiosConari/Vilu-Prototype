@@ -106,12 +106,15 @@ func test_arranca_sentada() -> void:
 	assert_almost_eq(m.global_position.x, 10.0, 0.01, "sin moverse del sitio")
 
 
-func test_al_entregar_los_talismanes_se_levanta_y_se_va() -> void:
+func test_cuando_la_bruja_los_revela_se_levanta_y_se_va() -> void:
+	# Lo dispara la escena de la bruja, no el logro suelto: la bruja concede el
+	# logro EN MITAD de su diálogo, y colgándose de ahí la ocultista se levantaba
+	# y cruzaba la plaza mientras la bruja seguía hablando.
 	var p := _poblado()
 	var m := _montar(p)
 	p.call("_montar_a_la_ocultista")
 
-	GameManager.conceder("talisman_2")
+	p.call("_ocultista_flees")
 	await wait_frames(2)
 	assert_eq(_animador(m).assigned_animation, "sentada_a_de_pie", "se levanta")
 
@@ -207,3 +210,55 @@ func test_sin_ocultista_en_la_escena_no_pasa_nada() -> void:
 	var p := _poblado()
 	p.call("_montar_a_la_ocultista")
 	assert_null(p.get("_ocultista_mujer"), "no se inventa una")
+
+# ─── Una sola ocultista, y el camino por el que se va ────────────────────────
+
+func test_no_queda_ningun_ocultista_hombre_en_el_pueblo() -> void:
+	# Había dos: ella sentada y un ocultista hombre de pie junto a la puerta que
+	# salía corriendo al revelarlos. Dos personas para un solo papel.
+	var hay := _nombres(ATACAMA).any(func(n: String) -> bool:
+		return n.begins_with("ocultista_hombre"))
+	assert_false(hay, "en el pueblo sólo está ella")
+
+
+func test_se_va_pasando_por_cada_esquina() -> void:
+	# En línea recta al último punto atravesaría los puestos de la plaza.
+	var p := _poblado()
+	var m: Node3D = MUJER.instantiate()
+	m.name = "ocultista_mujer2"
+	p.add_child(m)
+	m.global_position = Vector3(10, 0, -4)
+	var camino := Node3D.new()
+	camino.name = "PorAlla"
+	p.add_child(camino)
+	for sitio in [Vector3(10, 0, 6), Vector3(-8, 0, 6)]:
+		var paso := Marker3D.new()
+		camino.add_child(paso)
+		paso.global_position = sitio
+	p.set("destino_de_la_ocultista", NodePath("PorAlla"))
+	p.call("_montar_a_la_ocultista")
+
+	var pasos: Array = p.call("_camino_de_la_ocultista")
+	assert_eq(pasos.size(), 2, "el camino son los marcadores de adentro")
+	assert_almost_eq(pasos[0], Vector3(10, 0, 6), Vector3.ONE * 0.01)
+	assert_almost_eq(pasos[1], Vector3(-8, 0, 6), Vector3.ONE * 0.01)
+
+	p.call("_ocultista_flees")
+	var t := 0.0
+	while t < 30.0 and m.global_position.distance_to(Vector3(-8, 0, 6)) > 0.3:
+		await wait_seconds(0.2)
+		t += 0.2
+	assert_almost_eq(m.global_position, Vector3(-8, 0, 6), Vector3.ONE * 0.3,
+		"llegó al final del camino")
+
+
+func test_el_camino_esta_puesto_en_atacama() -> void:
+	var meta: Variant = _propiedad(ATACAMA, "Poblado", "destino_de_la_ocultista")
+	assert_not_null(meta, "sigue asignado")
+	var st := (load(ATACAMA) as PackedScene).get_state()
+	var nombre := String(meta).get_file()
+	var hijos := 0
+	for i in st.get_node_count():
+		if String(st.get_node_path(i, true)).ends_with(nombre):
+			hijos += 1
+	assert_gt(hijos, 1, "y tiene esquinas, no un punto suelto")

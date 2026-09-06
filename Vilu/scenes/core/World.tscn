@@ -161,7 +161,7 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.886237, 0, 175.24411)
 
 [node name="PlayerSpawn" type="Marker3D" parent="Tarapaca" unique_id=1739188688]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.20457077, 0, -4.6335907)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9144392, 0, 1.070694)
 
 [node name="Carmen" parent="Tarapaca" unique_id=673401798 instance=ExtResource("z2_Carmen")]
 transform = Transform3D(1.2180315, 0, -0.023371648, 0, 1.2182558, 0, 0.023371648, 0, 1.2180315, -3.2167406, 0.19631672, 6.054428)
@@ -2581,7 +2581,7 @@ transform = Transform3D(12.161017, 0, -1.519186, 0, 6.9022036, 0, 3.8410795, 0, 
 transform = Transform3D(9.713448, 0, -2.8483534, 0, 5.1843557, 0, 4.432994, 0, 6.241233, 85.50865, -0.7204803, -29.795103)
 
 [node name="subida_a_isluga2" parent="Subida Isluga" unique_id=128017365 instance=ExtResource("45_808ct")]
-transform = Transform3D(5.6389065, 0, -2.5679402, 0, 6.1349397, 0, 2.5679402, 0, 5.6389065, 79.02588, 0.8867136, -13.7621765)
+transform = Transform3D(5.6389065, 0, -2.5679402, 0, 6.13494, 0, 2.5679402, 0, 5.6389065, 79.02588, -0.118456, -13.762184)
 
 [node name="establo_medieval_para_caballos2" parent="Subida Isluga" unique_id=171937882 instance=ExtResource("37_j36mo")]
 transform = Transform3D(2.5638876, 0, -1.1917901, 0, 2.8273458, 0, 1.1917901, 0, 2.5638876, 45.48529, 0.42626274, -55.81981)
@@ -3842,6 +3842,9 @@ transform = Transform3D(1.5783659, 0, 0.5352934, 0, 1.6666667, 0, -0.5352934, 0,
 target_region = "Isluga"
 prompt = "[E] Subir a la cima del Isluga"
 tamano = Vector3(16, 8, 16)
+
+[node name="SalidaDeIsluga" type="Marker3D" parent="Subida Isluga" unique_id=990000010]
+transform = Transform3D(1, 0, -5.9604645e-08, 0, 1, 0, 5.9604645e-08, 0, 1, 73.49173, 0.91987365, -1.4386673)
 
 [node name="Desierto" type="Node3D" parent="." unique_id=267526383]
 

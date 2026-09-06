@@ -43,7 +43,7 @@ const ESPERA_CIERRE := 3.5
 const ARCHER_MAT := preload("res://art_placeholders/mat_player_b.tres")
 
 ## Zonas que NO son parte del mundo continuo: se cargan aparte al entrar.
-const INTERIORES := ["Mina", "Final", "Iglesia", "Isluga", "OjosDelSalado"]
+const INTERIORES := ["Mina", "Iglesia", "Isluga", "OjosDelSalado"]
 
 ## Interiores a los que se entra por una PUERTA que está dentro de una zona.
 ##
@@ -67,7 +67,21 @@ var _cierre_mostrado := false
 @export var ajustes_toon: Resource = preload("res://scenes/core/toon.tres")
 
 @export_group("Cámara")
-@export var cam_distance := 18.0
+## La cámara NO se mueve con el ratón: ni rueda ni botón derecho.
+##
+## Girarla y alejarla dejaba el encuadre en manos del jugador: con la rueda se
+## llegaba a 70 m —el personaje era un punto— y arrastrando el botón derecho se
+## acababa mirando desde debajo del suelo. Y las escenas guionadas, que colocan
+## la cámara ellas mismas, salían distintas cada vez según dónde la hubieras
+## dejado. Fija, el plano es siempre el mismo y se puede componer para él.
+##
+## Destildala si alguna vez querés volver a mirar el mapa desde arriba.
+@export var camara_fija := true
+## A qué distancia va del personaje, en metros.
+##
+## Estaba en 18: se veía media quebrada y a los protagonistas de lejos, como una
+## partida de estrategia. Con 9 se les ve la ropa y la cara.
+@export var cam_distance := 9.0
 @export var cam_zoom_min := 4.0
 @export var cam_zoom_max := 70.0
 @export var cam_zoom_step := 3.0
@@ -147,7 +161,7 @@ func _ready() -> void:
 		GameManager.prototipo_superado.connect(_al_superar_el_prototipo)
 	_spawn_party_open(start)
 
-	# Arrancar en un interior (Mina/Final) desde el selector de debug.
+	# Arrancar en un interior (la Mina) desde el selector de debug.
 	if not world.has_zone(start):
 		enter_interior(start)
 
@@ -338,6 +352,10 @@ func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Cámara: rueda = zoom, clic derecho (arrastrar) = orbitar alrededor del activo.
+	# Con `camara_fija` no responde a ninguna de las dos: el plano lo pone el
+	# juego, no el ratón.
+	if camara_fija:
+		return
 	if event.is_action_pressed("cam_zoom_in"):
 		cam_distance = clampf(cam_distance - cam_zoom_step, cam_zoom_min, cam_zoom_max)
 	elif event.is_action_pressed("cam_zoom_out"):
@@ -499,7 +517,7 @@ func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 
 
 ## Punto de entrada único para "ir a X". Enruta según el tipo de destino:
-##   · INTERIOR (Mina, Final)  -> carga la escena aparte, con fundido.
+##   · INTERIOR (la Mina)      -> carga la escena aparte, con fundido.
 ##   · zona del mundo abierto  -> si venías de un interior, sale; si ya estabas
 ##     en el mundo, es un teletransporte (viaje rápido del mapa de Chile).
 ## use_travel_spawn elige el marcador TravelSpawn (junto al guardián).
@@ -629,8 +647,11 @@ func exit_interior(zona: String, use_travel_spawn := false) -> void:
 			_cambiar_de_mundo()
 			cambie_de_mundo = true
 
-		var destino := Vector3.INF
-		if world:
+		# Lo primero, el marcador que hayas puesto para esta salida. Manda sobre
+		# todo lo demás: el "pie de la puerta" es una cuenta, y en una ladera la
+		# cuenta se equivoca.
+		var destino := _salida_puesta_a_mano(_volviendo_de)
+		if destino == Vector3.INF and world:
 			if _volviendo_de == "Mina" and world.has_method("mine_mouth"):
 				destino = world.mine_mouth()
 			elif cambie_de_mundo:
@@ -667,16 +688,60 @@ func _buscar_puerta(n: Node, id: String) -> Node3D:
 	return null
 
 
-## El pie de una puerta: su origen está en el CENTRO del disparador, que en las
-## subidas a los volcanes queda cuatro metros en el aire. Se baja media altura
-## para dejar al party en el suelo en vez de caído desde el techo del área.
+## Dónde aparecés al salir de un interior, si lo pusiste vos.
+##
+## Es un Marker3D llamado `SalidaDeIsluga`, `SalidaDeOjosDelSalado`… puesto en el
+## mundo al que salís, donde te dé la gana. Existe porque calcular el sitio no
+## alcanza: la puerta del Isluga está en una ladera y la cuenta la dejaba
+## dieciséis metros por debajo del terreno, o sea dentro del cerro y bajo el
+## agua. Un marcador se ve en el editor y se arrastra.
+func _salida_puesta_a_mano(id: String) -> Vector3:
+	if world == null:
+		return Vector3.INF
+	var n := _buscar_por_nombre(world, "SalidaDe" + id)
+	return n.global_position if n != null else Vector3.INF
+
+
+func _buscar_por_nombre(n: Node, nombre: String) -> Node3D:
+	if n is Node3D and String(n.name) == nombre:
+		return n as Node3D
+	for h in n.get_children():
+		var x := _buscar_por_nombre(h, nombre)
+		if x != null:
+			return x
+	return null
+
+
+## El pie de una puerta.
+##
+## Su origen está en el CENTRO del disparador, que en las subidas a los volcanes
+## queda cuatro metros en el aire. Restar media altura era la cuenta de antes y
+## sólo acierta en terreno plano: en la ladera del Isluga el suelo está a 15 m y
+## la cuenta daba −1, con el party apareciendo dentro del cerro.
+##
+## Así que la altura se BUSCA con un rayo y sólo se cae a la cuenta si no
+## encuentra suelo.
 func _al_pie_de(puerta: Node3D) -> Vector3:
 	if puerta == null:
 		return Vector3.INF
 	var alto := 0.0
 	if "tamano" in puerta:
 		alto = float((puerta.get("tamano") as Vector3).y)
-	return puerta.global_position - Vector3(0.0, alto * 0.5, 0.0)
+	var pie: Vector3 = puerta.global_position - Vector3(0.0, alto * 0.5, 0.0)
+	# El espacio se pide a la PUERTA y no a este nodo: en los tests la puerta
+	# está en el árbol y el Game no, y pedírselo a un nodo suelto es un error de
+	# motor, no un null.
+	if not puerta.is_inside_tree():
+		return pie
+	var esp := puerta.get_world_3d().direct_space_state
+	if esp == null:
+		return pie
+	var q := PhysicsRayQueryParameters3D.create(
+		puerta.global_position + Vector3.UP * 40.0,
+		puerta.global_position + Vector3.DOWN * 60.0)
+	q.collision_mask = 1
+	var r := esp.intersect_ray(q)
+	return r["position"] if not r.is_empty() else pie
 
 
 ## Descarga el mundo actual y monta el otro, dejándolos intercambiados.

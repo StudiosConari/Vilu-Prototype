@@ -134,3 +134,171 @@ func test_tumbar_algo_sin_ese_clip_no_rompe() -> void:
 	z.add_child(y)
 	z.call("_tumbar", y)
 	assert_true(true, "no revienta")
+
+
+# ─── El golpe: marcar, esperar, y recién entonces pegar ──────────────────────
+#
+# Antes pegaba en el mismo cuadro en que te acercabas: 25 de daño y un cartel
+# que decía "¡Esquiva!" cuando ya te había dado. No había nada que esquivar.
+
+## Un jugador de mentira que sólo anota los golpes que recibe.
+class JugadorFalso extends Node3D:
+	var recibido := 0.0
+	var is_archer := false
+
+	func take_damage(x: float) -> void:
+		recibido += x
+
+
+func _en_pelea() -> Node3D:
+	var z := _zona()
+	var y: Node3D = YASTAY.instantiate()
+	z.add_child(y)
+	z.set("_yastay", y)
+	z.set("_phase", 2)          # Phase.AGGRESSIVE
+	y.global_position = Vector3.ZERO
+	# Mirando a +X: el frente de estos modelos es +Z, así que se lo gira.
+	z.call("_encarar", Vector3.RIGHT)
+	return z
+
+
+func test_marca_el_suelo_antes_de_pegar() -> void:
+	var z := _en_pelea()
+	var p := JugadorFalso.new()
+	p.add_to_group("player")
+	z.add_child(p)
+	p.global_position = Vector3(z.get("alcance_del_golpe"), 0, 0)
+
+	z.call("_golpear")
+	await wait_frames(2)
+	var marcas := 0
+	for h in z.get_children():
+		if h is MeshInstance3D and h.mesh is CylinderMesh:
+			marcas += 1
+	assert_eq(marcas, 1, "queda marcado dónde va a caer")
+	assert_eq(p.recibido, 0.0, "y todavía no pegó: hay tiempo de salir")
+
+
+func test_pega_al_que_se_queda_dentro() -> void:
+	var z := _en_pelea()
+	z.set("aviso_del_golpe", 0.3)
+	var p := JugadorFalso.new()
+	p.add_to_group("player")
+	z.add_child(p)
+	p.global_position = Vector3(z.get("alcance_del_golpe"), 0, 0)
+
+	z.call("_golpear")
+	await wait_seconds(0.8)
+	assert_almost_eq(p.recibido, float(z.get("dano_del_golpe")), 0.01,
+		"quedarse dentro cuesta")
+
+
+func test_el_que_se_aparta_no_recibe_nada() -> void:
+	var z := _en_pelea()
+	z.set("aviso_del_golpe", 0.3)
+	var p := JugadorFalso.new()
+	p.add_to_group("player")
+	z.add_child(p)
+	p.global_position = Vector3(z.get("alcance_del_golpe"), 0, 0)
+
+	z.call("_golpear")
+	await wait_frames(2)
+	# Salirse mientras el círculo se cierra: eso es esquivar.
+	p.global_position = Vector3(0, 0, 14)
+	await wait_seconds(0.8)
+	assert_eq(p.recibido, 0.0, "esquivar sirve")
+
+
+func test_el_aviso_da_tiempo_de_verdad() -> void:
+	var z := _zona()
+	assert_gte(float(z.get("aviso_del_golpe")), 1.0,
+		"al menos un segundo para salir")
+
+
+# ─── Los guanacos heridos ────────────────────────────────────────────────────
+
+func _guanaco_herido(z: Node3D) -> Node3D:
+	var g: Node3D = GUANACO.instantiate()
+	g.name = "guanaco2"
+	z.add_child(g)
+	z.set("_heridos", [g])
+	z.set("_phase", 2)          # Phase.AGGRESSIVE
+	z.call("_zona_de_cura", g)
+	z.call("_tumbar", g)
+	return g
+
+
+func test_arrancan_tendidos() -> void:
+	var z := _zona()
+	var g := _guanaco_herido(z)
+	var ap := _animador(g)
+	assert_eq(ap.assigned_animation, "Death", "tendido, no pastando")
+	assert_false(ap.is_playing(), "y quieto en el suelo")
+	assert_almost_eq(ap.current_animation_position,
+		ap.get_animation("Death").length, 0.05, "en el último fotograma")
+
+
+func test_se_sanan_con_la_e_y_no_al_pasar_al_lado() -> void:
+	var z := _zona()
+	var g := _guanaco_herido(z)
+	var zona := g.get_node_or_null("ZonaCura") as Area3D
+	assert_not_null(zona, "tiene su zona")
+	assert_true(zona.has_signal("interacted"), "que se activa con [E]")
+	assert_eq(String(zona.get("prompt")), "[E] Sanar al guanaco")
+
+
+func test_emilia_no_puede_sanarlo() -> void:
+	var z := _zona()
+	var g := _guanaco_herido(z)
+	var emilia := JugadorFalso.new()
+	emilia.add_to_group("player")
+	emilia.is_archer = false
+	add_child_autofree(emilia)
+
+	z.call("_on_heal_entered", emilia, g)
+	await wait_frames(2)
+	assert_eq(_animador(g).assigned_animation, "Death", "sigue en el suelo")
+	assert_eq((z.get("_sanados") as Array).size(), 0, "y sin sanar")
+
+
+func test_benjamin_lo_levanta() -> void:
+	var z := _zona()
+	var g := _guanaco_herido(z)
+	var benja := JugadorFalso.new()
+	benja.add_to_group("player")
+	benja.is_archer = true
+	add_child_autofree(benja)
+
+	z.call("_on_heal_entered", benja, g)
+	await wait_frames(2)
+	var ap := _animador(g)
+	assert_true(ap.is_playing(), "se está incorporando")
+	assert_eq(ap.assigned_animation, "lay_to_idle", "con su gesto de levantarse")
+	var t := 0.0
+	while t < 6.0 and ap.assigned_animation != "Idle":
+		await wait_seconds(0.2)
+		t += 0.2
+	assert_eq(ap.assigned_animation, "Idle", "y acaba de pie, respirando")
+
+
+func test_al_calmarse_vuelve_a_reposo_para_hablar() -> void:
+	# Hablaba con el último clip de la persecución puesto —el cabezazo,
+	# encabritado sobre el jugador—, que es justo la amenaza de la que acababa
+	# de salir.
+	var z := _zona()
+	var y: Node3D = YASTAY.instantiate()
+	z.add_child(y)
+	z.set("_yastay", y)
+	z.set("_yastay_origen", Transform3D(Basis(), Vector3(0, 0, -8)))
+	z.call("_yastay_hace", "Head_But", false)
+	assert_eq(_animador(y).assigned_animation, "Head_But", "venía del cabezazo")
+
+	z.call("_volver_a_su_sitio")
+	await wait_frames(2)
+	assert_eq(_animador(y).assigned_animation, "Walk", "vuelve caminando")
+
+	var t := 0.0
+	while t < 6.0 and _animador(y).assigned_animation != "Idle":
+		await wait_seconds(0.2)
+		t += 0.2
+	assert_eq(_animador(y).assigned_animation, "Idle", "y habla en reposo")
