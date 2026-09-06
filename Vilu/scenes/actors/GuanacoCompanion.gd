@@ -7,18 +7,39 @@ extends Node3D
 ## Este nodo sigue a Benjamín en todo momento.
 ## Al embestir sale disparado y vuelve luego de frenar.
 
-const MODELO := preload("res://models/personaje/guanaco_espiritual.glb")
+## El MISMO guanaco que puebla la quebrada del Yastay, no el espiritual.
+##
+## El espiritual traía un solo clip y un esqueleto de 24 huesos que no admitía
+## los de éste: son rigs distintos. Cambiando de modelo el compañero se lleva
+## los seis —quieto, caminar, correr, coz, desplomarse y levantarse— y pasa a
+## moverse como los de su especie.
+const MODELO := preload("res://models/personaje/guanaco.glb")
 
 ## El modelo mira hacia +Z y el resto del juego toma -Z como frente, así que el
 ## visual entero va girado media vuelta. Es la misma corrección que llevan los
 ## enemigos, y se confirma con el guanaco de cajas al que reemplaza: aquél tenía
 ## la cabeza en -Z.
 const GIRO_MODELO := PI
-## A escala 1 el modelo mide 0.98 m de alto. Al doble queda en 1.96 m, que es lo
-## que pediste y lo que hace que se lea como una montura y no como un perro.
-const ESCALA := 2.0
+## Cuánto mide montado, en metros. Es lo que hace que se lea como una montura y
+## no como un perro; el número lo pediste vos y no ha cambiado.
+const ALTO := 1.96
+## Lo que mide el modelo a escala 1. El espiritual medía 0.98 y por eso llevaba
+## escala 2; éste mide 1.60, así que el factor es otro. Escalar por el número
+## viejo lo dejaría midiendo tres metros y veinte.
+const ALTO_DEL_MODELO := 1.60
+const ESCALA := ALTO / ALTO_DEL_MODELO
+
+## Los clips del modelo. El que falte simplemente no se usa.
+const CLIP_QUIETO := "Idle"
+const CLIP_CAMINAR := "Walk"
+const CLIP_CORRER := "Run"
+## La coz, que hace de salto: montado, Benjamín brinca y el guanaco patea.
+const CLIP_SALTO := "Kick"
+
 ## Por debajo de esta velocidad se considera quieto y no camina.
 const VELOCIDAD_MINIMA := 0.15
+## A partir de esta velocidad corre en vez de caminar.
+const VELOCIDAD_DE_CARRERA := 6.0
 ## Qué tan rápido acompaña el giro de Benjamín. Se suaviza en vez de copiarlo
 ## de golpe: pegado a su ángulo exacto daba tirones al mover la cámara.
 const GIRO_SUAVE := 8.0
@@ -49,7 +70,8 @@ var _mounted     := false
 var _g_prev      := false
 var _label: Label3D = null
 var _anim: AnimationPlayer = null
-var _caminar := ""
+## Lo que le queda de coz al saltar. Mientras corre, manda sobre el paso.
+var _salto_restante := 0.0
 var _pos_previa := Vector3.ZERO
 
 
@@ -237,15 +259,12 @@ func _build_visual() -> void:
 	if _anim == null:
 		push_warning("Guanaco: el modelo vino sin AnimationPlayer; no va a caminar")
 	else:
-		_caminar = _animacion_de_caminar()
-		if _caminar == "":
-			push_warning("Guanaco: no encuentro la animación de caminar")
-		else:
-			# Viene sin bucle: al caminar tiene que repetirse sola o daría un
-			# paso y se quedaría clavada en el último frame.
-			var a := _anim.get_animation(_caminar)
-			if a != null:
-				a.loop_mode = Animation.LOOP_LINEAR
+		# Vienen sin bucle: los de andar tienen que repetirse solos o darían un
+		# paso y se quedarían clavados en el último fotograma.
+		for c in [CLIP_QUIETO, CLIP_CAMINAR, CLIP_CORRER]:
+			if _anim.has_animation(c):
+				_anim.get_animation(c).loop_mode = Animation.LOOP_LINEAR
+		_poner(CLIP_QUIETO, 1.0)
 
 	# Etiqueta: va colgada del guanaco y NO del visual girado, para que el texto
 	# no salga del revés.
@@ -253,7 +272,7 @@ func _build_visual() -> void:
 	_label.text      = "Guanaco\n[G] embestir · [Q] montar"
 	_label.font_size = 18
 	# Por encima de la cabeza: con el modelo al doble, a 1.4 quedaba dentro suyo.
-	_label.position  = Vector3(0, 0.6 + 0.98 * ESCALA, 0)
+	_label.position  = Vector3(0, 0.6 + ALTO, 0)
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(_label)
 
@@ -270,16 +289,6 @@ func _buscar_anim(n: Node) -> AnimationPlayer:
 	return null
 
 
-## Se busca por nombre en vez de dar por hecho que hay una sola: si mañana le
-## sumás correr o saltar, esto sigue eligiendo la de caminar.
-func _animacion_de_caminar() -> String:
-	var lista := _anim.get_animation_list()
-	for n in lista:
-		var b := String(n).to_lower()
-		if b.contains("walk") or b.contains("camin"):
-			return n
-	return lista[0] if lista.size() > 0 else ""
-
 
 ## Camina cuando se está moviendo de verdad, y se queda quieto cuando no.
 ##
@@ -287,17 +296,44 @@ func _animacion_de_caminar() -> String:
 ## interno: así vale igual siguiendo a Benjamín, montado o embistiendo, sin
 ## tener que acordarse de encender la animación en cada sitio.
 func _animar(delta: float) -> void:
-	if _anim == null or _caminar == "":
+	if _anim == null:
+		return
+	# Mientras dura la coz del salto no se decide nada más: si no, al aterrizar
+	# el paso la cortaría por la mitad.
+	if _salto_restante > 0.0:
+		_salto_restante -= delta
 		return
 	var d := global_position - _pos_previa
 	d.y = 0.0
 	_pos_previa = global_position
 	var vel := d.length() / maxf(delta, 0.0001)
 
-	if vel > VELOCIDAD_MINIMA:
+	if vel <= VELOCIDAD_MINIMA:
+		_poner(CLIP_QUIETO, 1.0)
+	elif vel >= VELOCIDAD_DE_CARRERA:
+		_poner(CLIP_CORRER, clampf(vel / VELOCIDAD_DE_CARRERA, 0.8, 1.8))
+	else:
 		# El paso acompaña a la velocidad; si fuera fijo, patinaría.
-		_anim.speed_scale = clamp(vel / 4.0, 0.7, 2.4)
-		if not _anim.is_playing():
-			_anim.play(_caminar)
-	elif _anim.is_playing():
-		_anim.pause()
+		_poner(CLIP_CAMINAR, clampf(vel / 4.0, 0.7, 2.4))
+
+
+## Le pone un clip, sin relanzarlo si ya es el que está sonando.
+func _poner(clip: String, ritmo: float) -> void:
+	if _anim == null or not _anim.has_animation(clip):
+		return
+	_anim.speed_scale = ritmo
+	if _anim.assigned_animation != clip or not _anim.is_playing():
+		_anim.play(clip)
+
+
+## Da la coz del salto. La llama Benjamín al brincar montado: el guanaco no
+## despega de verdad —lo hace el cuerpo del jugador—, pero patear a la vez da
+## la ilusión de que el salto es suyo.
+func saltar() -> void:
+	if _anim == null or not _anim.has_animation(CLIP_SALTO):
+		return
+	var a := _anim.get_animation(CLIP_SALTO)
+	a.loop_mode = Animation.LOOP_NONE
+	_anim.speed_scale = 1.0
+	_anim.play(CLIP_SALTO)
+	_salto_restante = a.length

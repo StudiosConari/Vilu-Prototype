@@ -88,6 +88,7 @@ func _ready() -> void:
 	# haya a quién encender y qué derribar.
 	if _toca_el_duelo():
 		_dejar_como_tras_la_huida.call_deferred()
+	_montar_al_ocultista.call_deferred()
 	_precalentar_shaders()
 
 
@@ -177,6 +178,7 @@ func _spawn_talisman() -> void:
 # chocar. Aquí corre a la frecuencia fija de física y el coste deja de depender
 # de los fps.
 func _physics_process(delta: float) -> void:
+	_vigilar_al_ocultista()
 	if not _chase_active:
 		return
 	for p in get_tree().get_nodes_in_group("player"):
@@ -961,6 +963,219 @@ func _dejar_como_tras_la_huida() -> void:
 	_poblar_pasillo_central(true)
 	print("[mina] vuelta para el duelo: %d obeliscos ya encendidos, sector"
 		% encendidos + " derecho despejado y el pasillo central poblado")
+
+
+# ─── El ocultista del pasillo ────────────────────────────────────────────────
+#
+# Está en la mina desde que entrás por primera vez. A mitad del pasillo se da
+# vuelta, camina hasta el tablón que esconde el talismán y se queda
+# señalándolo. Sigue ahí con el primer obelisco encendido; al segundo, ya no.
+
+## Prefijo del nodo puesto a mano en la escena.
+const OCULTISTA := "ocultista"
+## A cuántos metros de él salta la escena, vengas por donde vengas.
+@export var ocultista_aviso := 12.0
+## A qué distancia del tablón se planta a señalarlo, en metros.
+@export var ocultista_margen := 1.6
+## Lo que tarda en llegar, en metros por segundo.
+@export var ocultista_paso := 1.7
+
+var _ocultista: Node3D = null
+var _ocultista_en_marcha := false
+
+
+func _montar_al_ocultista() -> void:
+	# Una sola vez, por lo mismo que en el bar.
+	if _ocultista != null:
+		return
+	_ocultista = _buscar_con_prefijo(self, OCULTISTA)
+	if _ocultista == null:
+		return
+
+	# Los obeliscos avisan cuándo se encienden: al segundo, desaparece.
+	for n in _todos_los_nodos(self):
+		if n.has_signal("activado") and not n.is_connected("activado", _al_encender_obelisco):
+			n.connect("activado", _al_encender_obelisco)
+
+	var encendidos := _obeliscos_encendidos()
+	if encendidos >= 2:
+		# Ya no pinta nada acá: para cuando volvés, se fue.
+		_ocultista.queue_free()
+		_ocultista = null
+		return
+	if encendidos >= 1:
+		# Volviste con uno encendido: ya hizo su camino, está en el tablón.
+		_ocultista_en_marcha = true
+		_ocultista.global_position = _sitio_junto_al_tablon()
+		_mirar_al_tablon()
+		_clip_de(_ocultista, "marcando", true)
+		return
+
+	# Todavía no señala nada: está de espaldas, parado en el primer fotograma de
+	# darse vuelta, que es exactamente eso. Señalar el tablón es lo que hace al
+	# final, y verlo hacerlo desde la entrada arruinaba el momento.
+	_de_espaldas()
+
+
+## Se enciende a mitad del pasillo, cuando te acercás.
+##
+## Antes había una caja de disparo puesta ocho metros hacia +Z. Dependía de por
+## dónde llegaras: entrando por el otro lado —o bordeándola pegado a la pared—
+## nunca saltaba, y el ocultista se quedaba de espaldas para siempre. Una
+## distancia no tiene lados.
+func _vigilar_al_ocultista() -> void:
+	if _ocultista_en_marcha or not is_instance_valid(_ocultista):
+		return
+	var cerca := false
+	for p in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(p) or not (p is Node3D):
+			continue
+		if (p as Node3D).global_position.distance_to(_ocultista.global_position) \
+				<= ocultista_aviso:
+			cerca = true
+			break
+	if not cerca:
+		return
+	_ocultista_en_marcha = true
+	# Con await, por lo mismo que en el bar: sin esperarla, la corrutina se
+	# queda en su primer await y el ocultista no llega a caminar.
+	await _escena_del_ocultista()
+
+
+func _escena_del_ocultista() -> void:
+	var juego := get_tree().get_first_node_in_group("game")
+	var con_camara: bool = juego != null and juego.has_method("focus_camera_on")
+	if con_camara:
+		juego.focus_camera_on(_ocultista, 0.0, 7.0, 1.6)
+
+	# 1. Se da vuelta: te vio.
+	await get_tree().create_timer(
+		_clip_de(_ocultista, "vuelta_y_caminar", false)).timeout
+	if not is_instance_valid(_ocultista):
+		return
+
+	# 2. Camina hasta el tablón.
+	var meta := _sitio_junto_al_tablon()
+	var d := meta - _ocultista.global_position
+	d.y = 0.0
+	if d.length() > 0.1:
+		_encarar_ocultista(d.normalized())
+		_clip_de(_ocultista, "caminar", true)
+		var tw := get_tree().create_tween()
+		tw.tween_property(_ocultista, "global_position", meta,
+			d.length() / maxf(ocultista_paso, 0.1))
+		await tw.finished
+	if not is_instance_valid(_ocultista):
+		return
+
+	# 3. Y se queda señalándolo.
+	_mirar_al_tablon()
+	_clip_de(_ocultista, "marcando", true)
+	if con_camara:
+		juego.clear_camera_focus()
+
+
+## Dónde se planta: a un paso del tablón, del lado por el que se llega.
+func _sitio_junto_al_tablon() -> Vector3:
+	var t := _tablon_del_talisman()
+	if t == null or not is_instance_valid(_ocultista):
+		return _ocultista.global_position if is_instance_valid(_ocultista) else Vector3.ZERO
+	var desde := _ocultista.global_position
+	var d := t.global_position - desde
+	d.y = 0.0
+	if d.length() < 0.1:
+		return desde
+	var meta := desde + d.normalized() * maxf(d.length() - ocultista_margen, 0.0)
+	meta.y = desde.y
+	return meta
+
+
+func _mirar_al_tablon() -> void:
+	var t := _tablon_del_talisman()
+	if t != null and is_instance_valid(_ocultista):
+		_encarar_ocultista(t.global_position - _ocultista.global_position)
+
+
+## Quieto y de espaldas: el primer fotograma de darse vuelta.
+##
+## Sus tres clips son darse vuelta, caminar y señalar; no tiene uno de reposo, y
+## sin esto se quedaba en T, con los brazos en cruz.
+func _de_espaldas() -> void:
+	var ap := _animador_de(_ocultista)
+	if ap == null or not ap.has_animation("vuelta_y_caminar"):
+		return
+	var a := ap.get_animation("vuelta_y_caminar")
+	a.loop_mode = Animation.LOOP_NONE
+	ap.play("vuelta_y_caminar")
+	ap.seek(0.0, true)
+	ap.pause()
+
+
+## El frente de estos modelos es +Z: medido del talón a los dedos sobre el rig.
+func _encarar_ocultista(hacia: Vector3) -> void:
+	hacia.y = 0.0
+	if hacia.length() < 0.01 or not is_instance_valid(_ocultista):
+		return
+	_ocultista.rotation.y = atan2(hacia.x, hacia.z)
+
+
+## El tablonado que esconde el primer fragmento. Se busca por lo que CONCEDE y
+## no por su nombre: se llama "tablones_de_madera4" y hay cinco más iguales
+## repartidos por la mina.
+func _tablon_del_talisman() -> Node3D:
+	for n in _todos_los_nodos(self):
+		if n is Node3D and "otorga" in n and String(n.get("otorga")) == "talisman_frag_1":
+			return n as Node3D
+	return null
+
+
+func _obeliscos_encendidos() -> int:
+	var n := 0
+	for x in _todos_los_nodos(self):
+		if "_activado" in x and x.get("_activado") == true:
+			n += 1
+	return n
+
+
+func _al_encender_obelisco() -> void:
+	if _obeliscos_encendidos() < 2 or not is_instance_valid(_ocultista):
+		return
+	_ocultista.queue_free()
+	_ocultista = null
+
+
+## Reproduce un clip suyo y devuelve lo que dura. 0 si no lo tiene.
+func _clip_de(nodo: Node3D, nombre: String, en_bucle: bool) -> float:
+	if not is_instance_valid(nodo):
+		return 0.0
+	var ap := _animador_de(nodo)
+	if ap == null or not ap.has_animation(nombre):
+		return 0.0
+	var a := ap.get_animation(nombre)
+	a.loop_mode = Animation.LOOP_LINEAR if en_bucle else Animation.LOOP_NONE
+	if ap.assigned_animation != nombre or not ap.is_playing():
+		ap.play(nombre)
+	return a.length
+
+
+func _animador_de(n: Node) -> AnimationPlayer:
+	for h in n.get_children():
+		if h is AnimationPlayer:
+			return h
+		var x := _animador_de(h)
+		if x != null:
+			return x
+	return null
+
+
+func _buscar_con_prefijo(n: Node, prefijo: String) -> Node3D:
+	for h in n.get_children():
+		if h is Node3D and String(h.name).begins_with(prefijo):
+			return h as Node3D
+		var x := _buscar_con_prefijo(h, prefijo)
+		if x != null:
+			return x
+	return null
 
 
 func _todos_los_nodos(n: Node) -> Array:

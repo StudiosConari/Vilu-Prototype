@@ -426,6 +426,12 @@ func _player_input() -> Vector3:
 			velocity.y = jump_velocity * (1.15 if mounted else 1.0)
 			_jumps_done = 1
 			_animar_salto(dir)
+			# Montado, el que brinca es el jinete: el guanaco no despega solo.
+			# Pateando a la vez, el salto se lee como suyo.
+			if mounted:
+				var g := guanaco_companion()
+				if g != null and g.has_method("saltar"):
+					g.saltar()
 		elif can_glide and _jumps_done < 2:
 			velocity.y = jump_velocity
 			_jumps_done = 2

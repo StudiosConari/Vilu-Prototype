@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cyjuphpqnitwl"
-path.s3tc="res://.godot/imported/brujo_brujo_basecolor.jpg-288e8f8a8650edaeffd2a2bc8ac0cf04.s3tc.ctex"
+uid="uid://do0l3y8uufs52"
+path.s3tc="res://.godot/imported/puma_puma_normal.jpg-36605763e9ba37f89e5e6b85af50a0a2.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "c825ab0b2545851165eba6f34d6e3873"
+"md5": "df7552bd959af9fa78aa1b1e6dad51ee"
 }
 
 [deps]
 
-source_file="res://models/personaje/brujo_brujo_basecolor.jpg"
-dest_files=["res://.godot/imported/brujo_brujo_basecolor.jpg-288e8f8a8650edaeffd2a2bc8ac0cf04.s3tc.ctex"]
+source_file="res://models/personaje/puma_puma_normal.jpg"
+dest_files=["res://.godot/imported/puma_puma_normal.jpg-36605763e9ba37f89e5e6b85af50a0a2.s3tc.ctex"]
 
 [params]
 
@@ -25,12 +25,12 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=0
-roughness/src_normal=""
+roughness/mode=1
+roughness/src_normal="res://models/personaje/puma_puma_normal.jpg"
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2

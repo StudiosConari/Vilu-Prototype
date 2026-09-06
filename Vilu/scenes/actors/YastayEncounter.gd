@@ -211,19 +211,29 @@ func _escena_de_presentacion() -> void:
 	var con_camara: bool = juego != null and juego.has_method("focus_camera_on")
 	_trabar_a_los_jugadores(true)
 
-	# Plano general de la quebrada: se ve al Yastay y a los cazadores alrededor.
+	# Plano general de la quebrada, y el Yastay se alza: es su presentación.
 	if con_camara and is_instance_valid(_yastay):
 		juego.focus_camera_on(_yastay, 0.0, 16.0, 3.0)
-	await get_tree().create_timer(1.2).timeout
+	var sitio_del_yastay := _yastay.global_position if is_instance_valid(_yastay) else Vector3.ZERO
+	await get_tree().create_timer(_yastay_hace("Rear", false, 1.2)).timeout
 
-	# Uno por uno: la cámara se acerca al cazador ANTES de que caiga, para que se
-	# vea la caída entera y no el cuerpo ya en el suelo.
+	# Uno por uno: TROTA hasta el cazador, le da un cabezazo y ése cae. La cámara
+	# se acerca antes del golpe, para que se vea la caída entera y no el cuerpo
+	# ya en el suelo.
 	for i in _hunters.size():
 		var h: Node3D = _hunters[i]
-		if con_camara and is_instance_valid(h):
+		if not is_instance_valid(h):
+			continue
+		if con_camara:
 			juego.focus_camera_on(h, 0.0, 9.0, 1.6)
-		await get_tree().create_timer(0.5).timeout
+		await _yastay_trota_hasta(h.global_position)
+		# El cabezazo primero, y el cazador cae CUANDO le llega: si cayera antes,
+		# el Yastay embestiría a un cuerpo que ya está en el suelo.
+		var golpe := _yastay_hace("Head_But", false, 1.0)
+		await get_tree().create_timer(golpe * MOMENTO_DEL_CABEZAZO).timeout
 		_defeat_hunter(i)
+		await get_tree().create_timer(golpe * (1.0 - MOMENTO_DEL_CABEZAZO)).timeout
+
 		await get_tree().create_timer(0.8).timeout
 
 	# El brujo, que los dirigía desde atrás, arranca.
@@ -231,15 +241,18 @@ func _escena_de_presentacion() -> void:
 		if con_camara:
 			juego.focus_camera_on(_brujo, 0.0, 11.0, 2.0)
 		await get_tree().create_timer(0.6).timeout
-	_brujo_escapes()
-	# Menos de lo que dura su huida a propósito: al terminarla se libera, y una
-	# cámara apuntando a un nodo liberado salta de golpe al jugador.
-	await get_tree().create_timer(1.5).timeout
+	# Se espera la huida ENTERA: son tres momentos —apunta, cae, corre— y
+	# cortando a los segundo y medio sólo se veía el primero. Se esconde solo
+	# antes de liberarse, así que la cámara no salta al soltarlo.
+	await _brujo_escapes()
 
-	# Paneo de vuelta al Yastay, que queda solo en medio de la quebrada.
+	# Vuelve CAMINANDO a su sitio: ya no hay prisa, la quebrada es suya otra vez.
 	if con_camara and is_instance_valid(_yastay):
-		juego.focus_camera_on(_yastay, 0.0, 12.0, 3.0)
-	await get_tree().create_timer(1.8).timeout
+		juego.focus_camera_on(_yastay, 0.0, 13.0, 3.0)
+	await _yastay_camina_hasta(sitio_del_yastay)
+
+	# Y se alza una segunda vez: ahora el intruso sos vos.
+	await get_tree().create_timer(_yastay_hace("Rear", false, 1.2)).timeout
 
 	if con_camara:
 		juego.clear_camera_focus()
@@ -250,6 +263,65 @@ func _escena_de_presentacion() -> void:
 	_trabar_a_los_jugadores(false)
 
 
+## En qué punto del cabezazo cae el cazador. El clip dura un segundo y el
+## impacto está a media embestida: si el cazador cayera al empezar, el Yastay
+## acabaría embistiendo a un cuerpo que ya está en el suelo.
+const MOMENTO_DEL_CABEZAZO := 0.55
+
+## A qué velocidad trota y camina, en metros por segundo.
+@export var yastay_trote := 7.0
+@export var yastay_paso := 2.6
+## Cuántos metros se queda del cazador al llegar: lo justo para cabecearlo sin
+## metérsele dentro.
+@export var yastay_distancia_de_golpe := 2.4
+
+
+## Le pone un clip al Yastay y devuelve lo que dura, o `minimo` si no lo tiene.
+func _yastay_hace(clip: String, en_bucle: bool, minimo := 0.0) -> float:
+	if not is_instance_valid(_yastay):
+		return minimo
+	var t := _clip(_yastay, clip, en_bucle)
+	return t if t > 0.0 else minimo
+
+
+## Lo lleva hasta un punto con el clip que toque, y espera a que llegue.
+##
+## Se queda a `yastay_distancia_de_golpe` del destino y encara hacia allá: es un
+## ave de dos metros, y plantarla EN la coordenada del cazador la deja
+## atravesándolo.
+func _yastay_va_a(destino: Vector3, clip: String, velocidad: float, margen := 0.0) -> void:
+	if not is_instance_valid(_yastay):
+		return
+	var d := destino - _yastay.global_position
+	d.y = 0.0
+	var lejos := d.length()
+	if lejos > 0.05:
+		_encarar(d.normalized())
+	var meta := destino
+	if margen > 0.0 and lejos > margen:
+		meta = _yastay.global_position + d.normalized() * (lejos - margen)
+	meta.y = _yastay.global_position.y
+	var recorrido := (meta - _yastay.global_position).length()
+	if recorrido < 0.05:
+		return
+	_yastay_hace(clip, true)
+	var tw := get_tree().create_tween()
+	tw.tween_property(_yastay, "global_position", meta,
+		recorrido / maxf(velocidad, 0.1))
+	await tw.finished
+	_yastay_hace("Idle", true)
+
+
+func _yastay_trota_hasta(destino: Vector3) -> void:
+	# Se para a un cuerpo de distancia: va a cabecearlo, no a atropellarlo.
+	await _yastay_va_a(destino, "Trot", yastay_trote, yastay_distancia_de_golpe)
+
+
+func _yastay_camina_hasta(destino: Vector3) -> void:
+	# Sin margen: a su sitio vuelve exactamente, que es de donde salió.
+	await _yastay_va_a(destino, "Walk", yastay_paso)
+
+
 ## Quita o devuelve el control a los dos protagonistas.
 func _trabar_a_los_jugadores(trabado: bool) -> void:
 	for p in get_tree().get_nodes_in_group("player"):
@@ -257,8 +329,34 @@ func _trabar_a_los_jugadores(trabado: bool) -> void:
 			p.input_locked = trabado
 
 
+## Cuánto se queda en el suelo antes de levantarse a huir, en segundos.
+##
+## El clip de derrota dura seis segundos y los últimos cuatro es él tendido sin
+## moverse: se corta en cuanto termina la caída.
+@export var brujo_tiempo_caido := 2.6
+## A qué velocidad huye y cuántos metros corre antes de perderse de vista.
+@export var brujo_velocidad := 6.5
+@export var brujo_distancia := 30.0
+## Grados que se le suman al orientarlo.
+##
+## Cero porque su frente es +Z, y eso está MEDIDO sobre el propio esqueleto: del
+## talón a los dedos, el rig apunta a (0.14, 0.99). No es el 180 que llevan
+## Emilia o Carmen: aquél gira el modelo DENTRO de un cuerpo que ya mira a -Z,
+## y aquí se orienta el nodo directamente hacia un rumbo del mundo.
+##
+## Si algún día se reexporta el modelo del revés, este es el número a cambiar.
+@export var brujo_giro := 0.0
+## Marcador opcional hacia el que huye. Si no está, huye hacia la entrada de la
+## quebrada, que es por donde se llega y la única salida.
+@export var salida_del_brujo: NodePath
+
+
 ## El brujo dirigía a los cazadores desde atrás. Al ver que el Yastay los
-## derrota, huye hacia el norte sin pelear.
+## derrota: apunta al jugador furioso, cae derrotado y sale corriendo herido.
+##
+## Antes se deslizaba en diagonal encogiéndose hasta desaparecer, que era el
+## apaño de cuando era una cápsula sin esqueleto. Ahora el modelo trae sus tres
+## clips y la escena son esos tres momentos, en ese orden.
 func _brujo_escapes() -> void:
 	if not is_instance_valid(_brujo):
 		return
@@ -266,6 +364,101 @@ func _brujo_escapes() -> void:
 	var lbl := _brujo.get_node_or_null("Label3D") as Label3D
 	if lbl:
 		lbl.text = "¡El brujo huye!"
+
+	if _animador_de(_brujo) == null:
+		# Cápsula de greybox: sin esqueleto no hay escena que representar.
+		_huir_sin_animacion()
+		return
+
+	# 1. Apunta al jugador, furioso.
+	var p := _jugador_mas_cercano(_brujo.global_position)
+	if p != null:
+		_orientar(_brujo, p.global_position - _brujo.global_position)
+	await get_tree().create_timer(_clip(_brujo, "apuntando", false)).timeout
+
+	# 2. Cae.
+	_clip(_brujo, "derrotado", false)
+	await get_tree().create_timer(brujo_tiempo_caido).timeout
+
+	# 3. Se levanta y huye herido.
+	var rumbo := _rumbo_de_huida()
+	_orientar(_brujo, rumbo)
+	_clip(_brujo, "correr_herido", true)
+	var tw := get_tree().create_tween()
+	tw.tween_property(_brujo, "global_position",
+		_brujo.global_position + rumbo * brujo_distancia,
+		brujo_distancia / maxf(brujo_velocidad, 0.1))
+	await tw.finished
+	# Se esconde antes de liberarlo: la cámara todavía lo está mirando y soltarle
+	# el nodo de golpe la haría saltar al jugador.
+	if is_instance_valid(_brujo):
+		_brujo.visible = false
+		_brujo.queue_free()
+
+
+## Hacia dónde huye: al marcador si lo pusiste, y si no hacia la entrada de la
+## quebrada, que es por donde se llega y la única salida que hay.
+func _rumbo_de_huida() -> Vector3:
+	var meta: Node3D = get_node_or_null(salida_del_brujo) as Node3D
+	if meta == null:
+		meta = get_node_or_null("PlayerSpawn") as Node3D
+	var d := Vector3.ZERO
+	if meta != null and is_instance_valid(_brujo):
+		d = meta.global_position - _brujo.global_position
+	d.y = 0.0
+	return d.normalized() if d.length() > 0.01 else -global_transform.basis.z
+
+
+## Lo gira para que MIRE hacia ahí, con la media vuelta de los modelos.
+func _orientar(nodo: Node3D, hacia: Vector3) -> void:
+	hacia.y = 0.0
+	if hacia.length() < 0.01:
+		return
+	nodo.rotation.y = atan2(hacia.x, hacia.z) + deg_to_rad(brujo_giro)
+
+
+## Reproduce un clip suyo y devuelve lo que dura. 0 si no lo tiene.
+func _clip(nodo: Node3D, nombre: String, en_bucle: bool) -> float:
+	var ap := _animador_de(nodo)
+	if ap == null or not ap.has_animation(nombre):
+		return 0.0
+	var a := ap.get_animation(nombre)
+	a.loop_mode = Animation.LOOP_LINEAR if en_bucle else Animation.LOOP_NONE
+	# Si ya lo está haciendo, no se vuelve a lanzar: la persecución pide "Trot"
+	# en cada cuadro, y relanzarlo lo dejaría congelado en el primer fotograma.
+	if ap.assigned_animation != nombre or not ap.is_playing():
+		ap.play(nombre)
+	return a.length
+
+
+## El héroe que tenga más cerca. Se apunta al que está delante, no al que lleve
+## el mando: si vas con Emilia y Benjamín se quedó atrás, el brujo señala a
+## quien tiene enfrente.
+func _jugador_mas_cercano(desde: Vector3) -> Node3D:
+	var mejor: Node3D = null
+	var mejor_d := INF
+	for p in get_tree().get_nodes_in_group("player"):
+		if not is_instance_valid(p) or not (p is Node3D):
+			continue
+		var d: float = desde.distance_squared_to((p as Node3D).global_position)
+		if d < mejor_d:
+			mejor_d = d
+			mejor = p
+	return mejor
+
+
+func _animador_de(n: Node) -> AnimationPlayer:
+	for h in n.get_children():
+		if h is AnimationPlayer:
+			return h
+		var x := _animador_de(h)
+		if x != null:
+			return x
+	return null
+
+
+## Lo de antes, para cuando el brujo es una cápsula sin esqueleto.
+func _huir_sin_animacion() -> void:
 	var tw := get_tree().create_tween()
 	tw.tween_property(_brujo, "position",
 		_brujo.position + Vector3(-9.0, 0.0, -9.0), 1.8)
@@ -378,9 +571,13 @@ func _yastay_think(delta: float) -> void:
 	to_t.y = 0.0
 	var dist := to_t.length()
 
-	# Persecución lenta pero amenazante
+	# Persecución lenta pero amenazante. Trota mientras avanza y se queda quieto
+	# al alcanzarte: sin esto perseguía deslizándose, con las patas clavadas.
 	if dist > 2.0:
 		_yastay.global_position += to_t.normalized() * 3.8 * delta
+		_yastay_hace("Trot", true)
+	else:
+		_yastay_hace("Idle", true)
 
 	# La correa: es un guardián de SU quebrada, no un perseguidor. Sin esto
 	# bastaba con salir corriendo para arrastrarlo hasta el poblado, porque el
@@ -569,14 +766,27 @@ func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 func _levantar(g: Node3D) -> void:
 	if not is_instance_valid(g):
 		return
-	var tw := get_tree().create_tween()
-	# La altura y el giro sólo se tocan en las cápsulas: los modelos los pusiste
-	# vos de pie y en su sitio, y "incorporarlos" los movería sin motivo.
-	if _es_capsula(g):
-		tw.tween_property(g, "rotation:z", 0.0, 0.9)
+	# Se incorpora de verdad: `lay_to_idle` es literalmente el gesto de pasar de
+	# tumbado a de pie. Al terminarlo se queda respirando como los demás.
+	var alzarse := _clip(g, "lay_to_idle", false)
+	if alzarse > 0.0:
+		get_tree().create_timer(alzarse).timeout.connect(func() -> void:
+			if is_instance_valid(g):
+				_clip(g, "Idle", true))
+	# El tween se crea SÓLO si hay algo que animar: sin cápsula que enderezar ni
+	# cartel que desvanecer se quedaba vacío, y un tween sin órdenes hace que el
+	# motor se queje al procesarlo.
+	var capsula := _es_capsula(g)
 	var lbl := g.get_node_or_null("Label3D")
-	if lbl != null:
-		tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5)
+	if capsula or lbl != null:
+		var tw := get_tree().create_tween()
+		# La altura y el giro sólo se tocan en las cápsulas: los modelos los
+		# pusiste vos de pie y en su sitio, y "incorporarlos" los movería sin
+		# motivo. Ahora además se levantan con su propia animación.
+		if capsula:
+			tw.tween_property(g, "rotation:z", 0.0, 0.9)
+		if lbl != null:
+			tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5)
 	var z := g.get_node_or_null("ZonaCura") as Area3D
 	if z != null:
 		z.set_deferred("monitoring", false)
@@ -790,6 +1000,24 @@ func _spawn_characters() -> void:
 	for h: Node3D in _heridos:
 		_cartel_para(h, "¡Sana al guanaco!", 0.80)
 		_zona_de_cura(h)
+		_tumbar(h)
+
+
+## Deja al guanaco herido TENDIDO desde el principio.
+##
+## Se reproduce su caída y se congela en el último fotograma: así la pose es la
+## del final del desplome, que es como se ve un animal herido. Antes se les
+## giraba el nodo 90° —el apaño de las cápsulas— y sobre un modelo de verdad
+## queda como un juguete volcado, con las patas tiesas en el aire.
+func _tumbar(g: Node3D) -> void:
+	var ap := _animador_de(g)
+	if ap == null or not ap.has_animation("Death"):
+		return
+	var a := ap.get_animation("Death")
+	a.loop_mode = Animation.LOOP_NONE
+	ap.play("Death")
+	ap.advance(a.length)
+	ap.pause()
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────

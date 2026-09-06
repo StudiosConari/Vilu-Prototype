@@ -85,6 +85,7 @@ func _ready() -> void:
 	if not geometria_fijada:
 		_build_town()
 	_spawn_witch()
+	_montar_a_la_ocultista.call_deferred()
 	_spawn_bar_folk()
 	_setup_exit()
 	# MUNDO ABIERTO: el pueblo ya no se recarga en cada visita, así que la etapa
@@ -205,8 +206,12 @@ func _ocultista_flees() -> void:
 		game.focus_camera_on(_ocultista, 4.0)
 
 	# Corre en dos tramos: rodea el bar y sale por el portón norte
+	_clip_de(_ocultista, "caminar", true)
+	_mirar_hacia(_ocultista, Vector3(9.0, 0.0, -12.0) - _ocultista.position)
 	var tw := get_tree().create_tween()
 	tw.tween_property(_ocultista, "position", Vector3(9.0, 0.0, -12.0), 1.1)
+	tw.tween_callback(_mirar_hacia.bind(_ocultista,
+		Vector3(1.5, 0.0, -26.0) - Vector3(9.0, 0.0, -12.0)))
 	tw.tween_property(_ocultista, "position", Vector3(1.5, 0.0, -26.0), 1.5)
 	tw.tween_callback(_end_flee)
 
@@ -270,9 +275,22 @@ func _spawn_bar_folk() -> void:
 	# El ocultista espía junto al bar. Se crea SIEMPRE (oculto) porque el pueblo
 	# ya no se reconstruye al llegar a la etapa 3: si dependiera de _stage en
 	# _ready(), empezando la partida en la etapa 1 no existiría nunca.
-	_ocultista = _persona("res://models/personaje/ocultista_hombre.glb",
-		Vector3(15.0, 0, -1.0), 1.8, "???")
+	# Primero, el que esté PUESTO en la escena: así se lo coloca y se lo escala
+	# viéndolo en el editor, en vez de a ciegas desde estas coordenadas. Sólo si
+	# no hay ninguno se cae al modelo dibujado por código.
+	_ocultista = _modelo_del_mundo(OCULTISTA_HOMBRE)
+	if _ocultista != null:
+		# Puesto a mano: mira a +Z como todos los modelos, sin la media vuelta
+		# que les da `_persona`.
+		_ocultista_mira_a_mas_z = true
+		_cartel_de(_ocultista, "???", 2.0)
+	else:
+		_ocultista = _persona("res://models/personaje/ocultista_hombre.glb",
+			Vector3(15.0, 0, -1.0), 1.8, "???")
 	_ocultista.visible = false
+	# De espaldas y quieto. Sus clips son darse vuelta, caminar y señalar: no
+	# tiene reposo, y al revelarlo aparecía en T, con los brazos en cruz.
+	_pose_quieta(_ocultista, "vuelta_y_caminar")
 
 
 func _on_bar_talk(_player: Node) -> void:
@@ -472,6 +490,180 @@ func _modelo_del_mundo(prefijo: String) -> Node3D:
 	for n in raiz.find_children("%s*" % prefijo, "", true, false):
 		if n is Node3D and (n as Node).scene_file_path != "":
 			return n
+	return null
+
+
+# ─── La ocultista del bar ────────────────────────────────────────────────────
+#
+# Está sentada en el taburete libre mientras el segundo talismán siga sin
+# entregarse. Al entregarlo se levanta y se va caminando.
+
+## Prefijo del nodo que colocás en la escena.
+const OCULTISTA_MUJER := "ocultista_mujer"
+## El logro que se concede al entregarle los dos talismanes a la bruja.
+const LOGRO_QUE_LA_LEVANTA := "talisman_2"
+
+## Adónde camina al levantarse. Poné un Marker3D donde quieras y asignalo acá;
+## vacío quiere decir que se levanta y se queda donde está.
+@export var destino_de_la_ocultista: NodePath
+## A qué velocidad se va, en metros por segundo.
+@export var paso_de_la_ocultista := 1.6
+
+var _ocultista_mujer: Node3D = null
+var _ocultista_ya_se_fue := false
+
+
+func _montar_a_la_ocultista() -> void:
+	# Una sola vez. `_ready` la difiere y la escena puede volver a pedirla; sin
+	# esto la segunda pasada la teletransportaba a su destino en mitad de la
+	# animación de levantarse, y ya no le quedaba camino que hacer.
+	if _ocultista_mujer != null:
+		return
+	_ocultista_mujer = _buscar_con_prefijo(self, OCULTISTA_MUJER)
+	if _ocultista_mujer == null:
+		var raiz := get_tree().current_scene
+		if raiz != null:
+			_ocultista_mujer = _buscar_con_prefijo(raiz, OCULTISTA_MUJER)
+	if _ocultista_mujer == null:
+		return
+
+	if GameManager.tiene_logro(LOGRO_QUE_LA_LEVANTA):
+		# Volviste después de entregarlo: ya se levantó y ya se fue. La escena no
+		# se repite, y como el bar y la bruja pueden estar en regiones distintas,
+		# lo más probable es que pasara con este mundo descargado.
+		_ocultista_ya_se_fue = true
+		var meta := _destino_de_la_ocultista()
+		if meta != Vector3.INF:
+			_ocultista_mujer.global_position = meta
+		_de_pie_quieta()
+		return
+
+	_clip_ocultista("sentada_hablando", true)
+	if not GameManager.logro_obtenido.is_connected(_al_entregar_los_talismanes):
+		GameManager.logro_obtenido.connect(_al_entregar_los_talismanes)
+
+
+func _al_entregar_los_talismanes(id: String) -> void:
+	if id != LOGRO_QUE_LA_LEVANTA or _ocultista_ya_se_fue:
+		return
+	if not is_instance_valid(_ocultista_mujer):
+		return
+	_ocultista_ya_se_fue = true
+	# Con await: llamar a una corrutina desde un manejador de señal y no
+	# esperarla la deja colgada en su primer await y la escena no sigue.
+	await _escena_de_la_ocultista()
+
+
+func _escena_de_la_ocultista() -> void:
+	# 1. Se levanta.
+	await get_tree().create_timer(
+		_clip_ocultista("sentada_a_de_pie", false)).timeout
+	if not is_instance_valid(_ocultista_mujer):
+		return
+
+	# 2. Y se va caminando.
+	var meta := _destino_de_la_ocultista()
+	if meta != Vector3.INF:
+		var d := meta - _ocultista_mujer.global_position
+		d.y = 0.0
+		if d.length() > 0.2:
+			# El frente de estos modelos es +Z, medido del talón a los dedos.
+			_ocultista_mujer.rotation.y = atan2(d.x, d.z)
+			_clip_ocultista("caminando", true)
+			var tw := get_tree().create_tween()
+			tw.tween_property(_ocultista_mujer, "global_position", meta,
+				d.length() / maxf(paso_de_la_ocultista, 0.1))
+			await tw.finished
+	_de_pie_quieta()
+
+
+## De pie y quieta: el último fotograma de levantarse, que es exactamente eso.
+##
+## No tiene clip de reposo de pie —sus cuatro son sentada, levantarse, caminar y
+## correr— y congelarla caminando la dejaría a media zancada.
+func _de_pie_quieta() -> void:
+	var ap := _animador_de(_ocultista_mujer)
+	if ap == null or not ap.has_animation("sentada_a_de_pie"):
+		return
+	var a := ap.get_animation("sentada_a_de_pie")
+	a.loop_mode = Animation.LOOP_NONE
+	ap.play("sentada_a_de_pie")
+	ap.advance(a.length)
+	ap.pause()
+
+
+func _destino_de_la_ocultista() -> Vector3:
+	var n := get_node_or_null(destino_de_la_ocultista) as Node3D
+	return n.global_position if n != null else Vector3.INF
+
+
+## Deja a alguien quieto en el primer fotograma de un clip.
+##
+## Los modelos de los ocultistas traen sólo los clips que necesita su escena y
+## ninguno de reposo. Sin esto se quedan en T, con los brazos en cruz.
+func _pose_quieta(quien: Node3D, clip: String) -> void:
+	var ap := _animador_de(quien)
+	if ap == null or not ap.has_animation(clip):
+		return
+	var a := ap.get_animation(clip)
+	a.loop_mode = Animation.LOOP_NONE
+	ap.play(clip)
+	ap.seek(0.0, true)
+	ap.pause()
+
+
+func _clip_de(quien: Node3D, nombre: String, en_bucle: bool) -> float:
+	var ap := _animador_de(quien)
+	if ap == null or not ap.has_animation(nombre):
+		return 0.0
+	var a := ap.get_animation(nombre)
+	a.loop_mode = Animation.LOOP_LINEAR if en_bucle else Animation.LOOP_NONE
+	if ap.assigned_animation != nombre or not ap.is_playing():
+		ap.play(nombre)
+	return a.length
+
+
+## Gira a alguien creado por `_persona`, cuyo frente es -Z: el modelo mira a +Z
+## y ahí adentro ya viene rotado media vuelta.
+func _mirar_hacia(quien: Node3D, hacia: Vector3) -> void:
+	if not is_instance_valid(quien):
+		return
+	hacia.y = 0.0
+	if hacia.length() < 0.01:
+		return
+	quien.rotation.y = atan2(-hacia.x, -hacia.z)
+
+
+func _clip_ocultista(nombre: String, en_bucle: bool) -> float:
+	var ap := _animador_de(_ocultista_mujer)
+	if ap == null or not ap.has_animation(nombre):
+		return 0.0
+	var a := ap.get_animation(nombre)
+	a.loop_mode = Animation.LOOP_LINEAR if en_bucle else Animation.LOOP_NONE
+	if ap.assigned_animation != nombre or not ap.is_playing():
+		ap.play(nombre)
+	return a.length
+
+
+func _animador_de(n: Node) -> AnimationPlayer:
+	if not is_instance_valid(n):
+		return null
+	for h in n.get_children():
+		if h is AnimationPlayer:
+			return h
+		var x := _animador_de(h)
+		if x != null:
+			return x
+	return null
+
+
+func _buscar_con_prefijo(n: Node, prefijo: String) -> Node3D:
+	for h in n.get_children():
+		if h is Node3D and String(h.name).begins_with(prefijo):
+			return h as Node3D
+		var x := _buscar_con_prefijo(h, prefijo)
+		if x != null:
+			return x
 	return null
 
 

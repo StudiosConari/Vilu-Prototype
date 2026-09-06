@@ -55,6 +55,7 @@
 [ext_resource type="PackedScene" path="res://scenes/actors/ZoneExit.tscn" id="99_entrada"]
 [ext_resource type="Script" uid="uid://dv8dcpxhrs3c8" path="res://scenes/actors/Interactable.gd" id="h2_Interactable"]
 [ext_resource type="Script" uid="uid://bwajfkhy14w0t" path="res://scenes/actors/PobladoHub.gd" id="z1_PobladoHub"]
+[ext_resource type="PackedScene" uid="uid://gis6ivvsico3" path="res://models/personaje/ocultista_mujer.glb" id="z1_ocultista_mujer"]
 [ext_resource type="Script" uid="uid://duhibb8cvr8oc" path="res://scenes/actors/AlicantoRescate.gd" id="z3_AlicantoRescate"]
 [ext_resource type="Script" uid="uid://b1u1i4x0jaib1" path="res://scenes/actors/YastayEncounter.gd" id="z4_YastayEncounter"]
 
@@ -127,6 +128,7 @@ transform = Transform3D(12.987591, 0, -0.08091438, 0, 0.8351757, 0, 0.08006467, 
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.583061, 0, 118.24356)
 script = ExtResource("z1_PobladoHub")
 geometria_fijada = true
+destino_de_la_ocultista = NodePath("MetaOcultistaMujer")
 
 [node name="props" type="Node3D" parent="Poblado" unique_id=478958466]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.4922533, 0, 57.00055)
@@ -789,14 +791,17 @@ transform = Transform3D(1.0665244, 0, 0.7974879, 0, 1.3317137, 0, -0.7974879, 0,
 [node name="cazadora_joven2" parent="Poblado" unique_id=680495676 instance=ExtResource("55_8atei")]
 transform = Transform3D(-1.6210607, 0, 0.15510355, 0, 1.6284645, 0, -0.15510355, 0, -1.6210607, 15.572078, 0.64182514, 4.4919434)
 
-[node name="cazadora_joven3" parent="Poblado" unique_id=1828848677 instance=ExtResource("55_8atei")]
-transform = Transform3D(-1.4841801, 0, 0.6341889, 0, 1.6139972, 0, -0.6341889, 0, -1.4841801, 13.344411, 0.38978451, 3.182396)
-
 [node name="cazador_joven2" parent="Poblado" unique_id=1914255799 instance=ExtResource("53_pj81q")]
 transform = Transform3D(-1.3027123, 0, 0.8297382, 0, 1.5445147, 0, -0.8297382, 0, -1.3027123, 12.151491, 0.37332705, 2.1518555)
 
 [node name="cazador_joven3" parent="Poblado" unique_id=1603695501 instance=ExtResource("53_pj81q")]
 transform = Transform3D(-1.5175953, 0, 0.48029986, 0, 1.5917865, 0, -0.48029986, 0, -1.5175953, 14.467449, 0.42381266, 3.6044235)
+
+[node name="ocultista_mujer2" parent="Poblado" unique_id=1603695502 instance=ExtResource("z1_ocultista_mujer")]
+transform = Transform3D(0.5570225, 0, 0.8304974, 0, 1, 0, -0.8304974, 0, 0.5570225, 13.3, 0.4, 2.9)
+
+[node name="MetaOcultistaMujer" type="Marker3D" parent="Poblado" unique_id=1603695503]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.4, -6.5)
 
 [node name="Terminal de Buses" type="Node3D" parent="." unique_id=1832802537]
 

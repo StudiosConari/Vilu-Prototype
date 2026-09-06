@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ce1b5dyutwyuk"
-path.s3tc="res://.godot/imported/ocultista_hombre_ocultista_hombre_normal.png-bdeb270d881f3f43b024bee28078df5f.s3tc.ctex"
+uid="uid://cy6iqfi1ethg5"
+path.s3tc="res://.godot/imported/puma_puma_metallic-puma_roughness.png-073bbd6df273f8ae7f0dbf792f3f665a.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "eb85cd471bf99786f67a33b722492993"
+"md5": "2fa7505c07813961d03cbc8072894b7a"
 }
 
 [deps]
 
-source_file="res://models/personaje/ocultista_hombre_ocultista_hombre_normal.png"
-dest_files=["res://.godot/imported/ocultista_hombre_ocultista_hombre_normal.png-bdeb270d881f3f43b024bee28078df5f.s3tc.ctex"]
+source_file="res://models/personaje/puma_puma_metallic-puma_roughness.png"
+dest_files=["res://.godot/imported/puma_puma_metallic-puma_roughness.png-073bbd6df273f8ae7f0dbf792f3f665a.s3tc.ctex"]
 
 [params]
 
@@ -25,12 +25,12 @@ compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=1
+compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=1
-roughness/src_normal="res://models/personaje/ocultista_hombre_ocultista_hombre_normal.png"
+roughness/mode=0
+roughness/src_normal=""
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2

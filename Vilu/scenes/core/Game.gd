@@ -213,6 +213,19 @@ func _colocar_en(pos: Vector3) -> void:
 		party[i].global_position = pos + off
 		party[i].velocity = Vector3.ZERO
 	_respawn_pos = pos
+	_pegar_la_camara(pos)
+
+
+## Planta la cámara en el sitio nuevo en vez de dejar que viaje hasta él.
+##
+## `_update_camera` acerca el foco por interpolación, que es lo que se quiere
+## caminando. Pero un teletransporte mueve al party cientos de metros de golpe, y
+## el foco se quedaba atrás: al abrirse el fundido veías a los personajes como
+## dos puntitos en el horizonte mientras la cámara cruzaba el mapa. Aparecías
+## sin saber dónde estabas justo en el momento en que más falta hace.
+func _pegar_la_camara(pos: Vector3) -> void:
+	_cam_focus = pos + Vector3(0.0, _cam_alto, 0.0)
+	_cam_dist_actual = _cam_dist_deseada if _cam_dist_deseada > 0.0 else cam_distance
 
 
 func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
@@ -602,10 +615,28 @@ func exit_interior(zona: String, use_travel_spawn := false) -> void:
 			world.process_mode = Node.PROCESS_MODE_INHERIT
 		# Al salir de la Mina se reaparece frente a su boca (al este del
 		# poblado), no en el centro del pueblo: entrás y salís por el mismo lado.
+		# Se sale por la puerta del interior que se ABANDONA, y si esa puerta es
+		# de la otra región, se cambia de mundo antes de colocar a nadie.
+		#
+		# El portal del guardián te lleva de un volcán al otro, pero sólo cambia
+		# la escena del interior: el mundo de debajo sigue siendo el que había.
+		# Y `_pos_antes_interior` guarda por dónde entraste al PRIMER volcán, que
+		# tras cruzar ya no es el que estás dejando. Saliendo del Isluga —que es
+		# de Tarapacá— aparecías en Atacama, con la misión pidiéndote volver a la
+		# mina, que WorldRoot sólo construye en Tarapacá.
+		var cambie_de_mundo := false
+		if _volviendo_de in INTERIORES_DE_PUERTA and _puerta_hacia(_volviendo_de) == null:
+			_cambiar_de_mundo()
+			cambie_de_mundo = true
+
 		var destino := Vector3.INF
 		if world:
 			if _volviendo_de == "Mina" and world.has_method("mine_mouth"):
 				destino = world.mine_mouth()
+			elif cambie_de_mundo:
+				# Cambiamos de región: `_pos_antes_interior` es una coordenada
+				# del mundo que acabamos de descargar y no vale para nada acá.
+				destino = _al_pie_de(_puerta_hacia(_volviendo_de))
 			elif _volviendo_de in INTERIORES_DE_PUERTA:
 				# Salís exactamente por donde entraste. Sin esto, cruzar la
 				# puerta de la iglesia te escupiría en el PlayerSpawn de la
@@ -615,6 +646,58 @@ func exit_interior(zona: String, use_travel_spawn := false) -> void:
 				var marcador := "TravelSpawn" if use_travel_spawn else "PlayerSpawn"
 				destino = world.spawn_point(zona, marcador)
 		_colocar_en(destino if destino != Vector3.INF else _pos_antes_interior))
+
+
+## La puerta que lleva a ese interior en el mundo CARGADO, o null si no está.
+##
+## Null quiere decir "esa puerta es de la otra región": el catálogo de zonas es
+## de todo el juego, pero el mapa está partido en dos mundos y cada puerta vive
+## en el suyo —el Isluga en Tarapacá, el Ojos del Salado en Atacama—.
+func _puerta_hacia(id: String) -> Node3D:
+	return _buscar_puerta(world, id) if world != null else null
+
+
+func _buscar_puerta(n: Node, id: String) -> Node3D:
+	if n is Node3D and "target_region" in n and String(n.get("target_region")) == id:
+		return n as Node3D
+	for h in n.get_children():
+		var x := _buscar_puerta(h, id)
+		if x != null:
+			return x
+	return null
+
+
+## El pie de una puerta: su origen está en el CENTRO del disparador, que en las
+## subidas a los volcanes queda cuatro metros en el aire. Se baja media altura
+## para dejar al party en el suelo en vez de caído desde el techo del área.
+func _al_pie_de(puerta: Node3D) -> Vector3:
+	if puerta == null:
+		return Vector3.INF
+	var alto := 0.0
+	if "tamano" in puerta:
+		alto = float((puerta.get("tamano") as Vector3).y)
+	return puerta.global_position - Vector3(0.0, alto * 0.5, 0.0)
+
+
+## Descarga el mundo actual y monta el otro, dejándolos intercambiados.
+##
+## Lo usan el bus y la salida de un volcán que pertenece a la otra región. No
+## coloca a nadie: de eso se encarga quien llama, que es el único que sabe dónde
+## corresponde aparecer.
+func _cambiar_de_mundo() -> void:
+	if mundo_alterno == null:
+		return
+	var destino: PackedScene = mundo_alterno
+	mundo_alterno = escena_del_mundo
+	escena_del_mundo = destino
+	if is_instance_valid(world):
+		# remove_child antes de liberar: queue_free es diferido, y si no se saca
+		# del árbol quedan DOS mundos en el grupo "world" durante un cuadro. Todo
+		# lo que busca el mundo por grupo elegiría cualquiera.
+		remove_child(world)
+		world.queue_free()
+	world = escena_del_mundo.instantiate()
+	add_child(world)
 
 
 ## Nombre de la región a la que lleva el bus. Lo usa WorldRoot para el cartel.
@@ -647,17 +730,7 @@ func viajar_en_bus(bus: String) -> void:
 		# Intercambio: al que voy pasa a ser el actual, y el que dejo queda de
 		# alterno. Con eso el viaje de vuelta funciona sin nada más.
 		var destino: PackedScene = mundo_alterno
-		mundo_alterno = escena_del_mundo
-		escena_del_mundo = destino
-
-		if is_instance_valid(world):
-			# remove_child antes de liberar: queue_free es diferido, y si no se
-			# saca del árbol quedan DOS mundos en el grupo "world" durante un
-			# cuadro. Todo lo que busca el mundo por grupo elegiría cualquiera.
-			remove_child(world)
-			world.queue_free()
-		world = escena_del_mundo.instantiate()
-		add_child(world)
+		_cambiar_de_mundo()
 
 		# El bus cambia el MUNDO entero, no una región: no pasa por
 		# TravelManager y su señal `region_changed` nunca se emite, así que la

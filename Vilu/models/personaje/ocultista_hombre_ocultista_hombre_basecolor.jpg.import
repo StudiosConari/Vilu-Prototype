@@ -2,14 +2,14 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://uwrv2vjcenlk"
+uid="uid://clgcvai637ojh"
 path.s3tc="res://.godot/imported/ocultista_hombre_ocultista_hombre_basecolor.jpg-0c23a8691ef012381bcbbd20ccdcab16.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "9d9b08899b0fd301a8926ae35c8fba75"
+"md5": "a5df9b2ffeea20d3f5079c6537947787"
 }
 
 [deps]

@@ -26,6 +26,7 @@ const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
 const PARADA_DE_BUS := preload("res://scenes/actors/ParadaDeBus.gd")
 const TRAMPA_DEL_ORO := preload("res://scenes/actors/TrampaDelOro.gd")
+const FAUNA := preload("res://scenes/actors/FaunaSalvaje.gd")
 
 ## Layout del mapa, con el POBLADO (bar + bruja) como centro y punto de partida:
 ##
@@ -160,6 +161,8 @@ func _ready() -> void:
 	_construir_boca_mina()
 	_construir_paradas_de_bus()
 	_construir_trampa_del_oro()
+	_soltar_la_fauna()
+	_animar_el_paisaje()
 	if sombreado_toon:
 		# Al final de todo: hay que vestir lo que ya está construido.
 		var n: int = TOON_SKIN.new().aplicar(self)
@@ -430,6 +433,88 @@ func _construir_trampa_del_oro() -> void:
 	trampa.camino = camino
 	add_child(trampa)
 	print("[mundo] trampa del oro: %s arma, %s se derrumba" % [puente.name, camino.name])
+
+
+## Pumas y guanacos sueltos por el descampado.
+##
+## Se les pasa el listado de zonas con su radio para que no se metan en ninguna:
+## el mapa entre zonas estaba vacío y es ese hueco el que llenan. Un puma
+## paseándose por el poblado estorbaría a escenas que ya están contadas.
+@export var fauna_salvaje := true
+
+
+func _soltar_la_fauna() -> void:
+	if not fauna_salvaje:
+		return
+	var f := Node3D.new()
+	f.name = "FaunaSalvaje"
+	f.set_script(FAUNA)
+	# Sólo las zonas que ESTE mundo tiene. El catálogo es de todo el juego pero el
+	# mapa está partido en dos: pasarlo entero dejaba en Tarapacá dos círculos
+	# prohibidos sobre las coordenadas del Yastay y del Alicanto, que ahí son
+	# campo abierto y justo donde debería haber animales.
+	var prohibidas: Array = []
+	for z in ZONAS:
+		if not has_zone(String(z["id"])):
+			continue
+		prohibidas.append([to_global(z["pos"]), float(z["radio"])])
+	f.zonas = prohibidas
+	add_child(f)
+
+
+## Modelos del paisaje que ya traen esqueleto y clips: qué bucle les toca.
+##
+## Los que salen del pipeline son cuerpos rígidos y se quedan de estatuas. El
+## Yastay y los guanacos ahora vienen rigueados desde el .glb, así que sólo hay
+## que darles al play: sin esto la quebrada entera —el ave y sus ocho
+## guanacos— sigue congelada aunque el modelo ya sepa moverse.
+##
+## Se hace acá, y no colgándole un script a cada nodo, porque son nueve nodos
+## puestos a mano y mañana serán más. Los que no tengan el clip se saltan solos.
+const EN_REPOSO := {
+	"yastay": "Idle",
+	"guanaco": "Idle",
+}
+
+
+func _animar_el_paisaje() -> void:
+	var puestos := 0
+	for n in _todos_los_nodos(self):
+		var clip := ""
+		for prefijo in EN_REPOSO:
+			if String(n.name).begins_with(String(prefijo)):
+				clip = String(EN_REPOSO[prefijo])
+		if clip == "":
+			continue
+		var ap := _animador_de(n)
+		if ap == null or not ap.has_animation(clip):
+			continue
+		var a := ap.get_animation(clip)
+		a.loop_mode = Animation.LOOP_LINEAR
+		ap.play(clip)
+		# Cada uno arranca por un punto distinto del bucle: ocho guanacos
+		# respirando al unísono se leen como un ballet, no como un rebaño.
+		ap.seek(randf() * a.length, true)
+		puestos += 1
+	if puestos > 0:
+		print("[mundo] %d modelos del paisaje animados" % puestos)
+
+
+func _todos_los_nodos(n: Node) -> Array:
+	var r: Array = [n]
+	for h in n.get_children():
+		r.append_array(_todos_los_nodos(h))
+	return r
+
+
+func _animador_de(n: Node) -> AnimationPlayer:
+	for h in n.get_children():
+		if h is AnimationPlayer:
+			return h
+		var x := _animador_de(h)
+		if x != null:
+			return x
+	return null
 
 
 func _buscar_por_prefijo(n: Node, prefijo: String) -> Node3D:

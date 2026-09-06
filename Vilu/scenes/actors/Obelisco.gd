@@ -37,6 +37,10 @@ const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 ## Color del brillo que queda cuando está activo.
 @export var color_activo := Color(0.45, 0.85, 1.0)
 
+## Se enciende. Lo escucha la mina para saber cuántos van: el ocultista del
+## pasillo desaparece al segundo.
+signal activado
+
 var _activado := false
 var _zona: Area3D = null
 
@@ -83,6 +87,7 @@ func activar(avisar := true) -> void:
 	if _activado:
 		return
 	_activado = true
+	activado.emit()
 	Misiones.hecho("obeliscos")
 	_encender()
 	_derribar()
