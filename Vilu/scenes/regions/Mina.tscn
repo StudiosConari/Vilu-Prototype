@@ -38,6 +38,8 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/Lola.tscn" id="36_lola"]
 [ext_resource type="PackedScene" uid="uid://c100dbbdve34x" path="res://models/mina/letrero_de_madera_2.glb" id="37_h471q"]
 [ext_resource type="PackedScene" uid="uid://c0ml06u43opv" path="res://models/personaje/ocultista_hombre.glb" id="38_xrsi8"]
+[ext_resource type="Script" uid="uid://canqli8olg80w" path="res://scenes/actors/VistaPrevia.gd" id="39_vista"]
+[ext_resource type="PackedScene" uid="uid://bkmglsylvxqb6" path="res://models/personaje/chupacabras.glb" id="40_chupa"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(9, 4, 5)
@@ -55,7 +57,10 @@ script = ExtResource("1_script")
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.28024268, 2.8)
 
 [node name="ChupacabrasSpawnPoint" type="Marker3D" parent="." unique_id=100000003]
-transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.31533766, -50.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31533766, -50.5)
+script = ExtResource("39_vista")
+modelo = ExtResource("40_chupa")
+altura = 2.4
 
 [node name="ExitToPoblado" parent="." unique_id=100000004 instance=ExtResource("2_exit")]
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0.35, 7)
