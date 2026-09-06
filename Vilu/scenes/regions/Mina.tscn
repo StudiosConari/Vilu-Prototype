@@ -37,6 +37,7 @@
 [ext_resource type="Script" uid="uid://dor5uvl0x8q5t" path="res://scenes/actors/Antorcha.gd" id="35_antor"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/Lola.tscn" id="36_lola"]
 [ext_resource type="PackedScene" uid="uid://c100dbbdve34x" path="res://models/mina/letrero_de_madera_2.glb" id="37_h471q"]
+[ext_resource type="PackedScene" uid="uid://c0ml06u43opv" path="res://models/personaje/ocultista_hombre.glb" id="38_xrsi8"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_1"]
 size = Vector3(9, 4, 5)
@@ -1068,3 +1069,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.286797, 1, -15.307963)
 
 [node name="letrero_de_madera_22" parent="." unique_id=594294620 instance=ExtResource("37_h471q")]
 transform = Transform3D(-0.037652418, 0, -1.2632036, 0, 1.2637649, 0, 1.2632036, 0, -0.037652418, 23.964188, 0.18227872, 1.7238102)
+
+[node name="ocultista_hombre2" parent="." unique_id=940589772 instance=ExtResource("38_xrsi8")]
+transform = Transform3D(1.4090058, 0, 0, 0, 1.4090058, 0, 0, 0, 1.4090058, 0.11162767, 0.18231681, -24.983824)

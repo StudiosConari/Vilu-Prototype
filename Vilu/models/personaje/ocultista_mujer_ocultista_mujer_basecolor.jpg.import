@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d2yw2db6e4xnl"
-path.s3tc="res://.godot/imported/ocultista_hombre_ocultista_hombre_ao.jpg-03f350f4f406aeb33c0c4d5201fc3f54.s3tc.ctex"
+uid="uid://k4jd68fr4lo0"
+path.s3tc="res://.godot/imported/ocultista_mujer_ocultista_mujer_basecolor.jpg-8e93a5d0003ae1435d3499ad257f88b0.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "5d8cc3901adc8f0391c92da517971b1b"
+"md5": "ee3e148c8a3fdda757403eb9009cb833"
 }
 
 [deps]
 
-source_file="res://models/personaje/ocultista_hombre_ocultista_hombre_ao.jpg"
-dest_files=["res://.godot/imported/ocultista_hombre_ocultista_hombre_ao.jpg-03f350f4f406aeb33c0c4d5201fc3f54.s3tc.ctex"]
+source_file="res://models/personaje/ocultista_mujer_ocultista_mujer_basecolor.jpg"
+dest_files=["res://.godot/imported/ocultista_mujer_ocultista_mujer_basecolor.jpg-8e93a5d0003ae1435d3499ad257f88b0.s3tc.ctex"]
 
 [params]
 
@@ -29,8 +29,8 @@ compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
-roughness/mode=8
-roughness/src_normal="res://models/personaje/ocultista_hombre_ocultista_hombre_normal.png"
+roughness/mode=0
+roughness/src_normal=""
 process/channel_remap/red=0
 process/channel_remap/green=1
 process/channel_remap/blue=2
