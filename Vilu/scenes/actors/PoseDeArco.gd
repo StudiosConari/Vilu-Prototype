@@ -47,11 +47,6 @@ var activo := false
 var _peso := 0.0
 
 
-func _process(delta: float) -> void:
-	var meta := 1.0 if (activo and not poses.is_empty()) else 0.0
-	_peso = move_toward(_peso, meta, delta / MEZCLA)
-
-
 ## Guarda la pose que tenga el esqueleto AHORA como la de apuntar.
 ##
 ## Se llama con el clip de tensar congelado en su máxima extensión: lo que hay
@@ -76,16 +71,25 @@ func capturar() -> void:
 ##
 ## Los tests lo cazaban sólo si comprueban que la llama EL MOTOR; llamándola a
 ## mano pasaban igual, que es lo que me despistó.
-func _process_modification_with_delta(_delta: float) -> void:
-	_aplicar()
+func _process_modification_with_delta(delta: float) -> void:
+	_aplicar(delta)
 
 
 ## Se deja también la sin delta, por si alguna versión llama a ésta.
 func _process_modification() -> void:
-	_aplicar()
+	_aplicar(get_process_delta_time())
 
 
-func _aplicar() -> void:
+## La mezcla se avanza AQUÍ, no en un `_process`.
+##
+## Ya me pasó una vez con `_process_modification`: un método que parece que el
+## motor llama y no llama deja el modificador mudo sin un solo error. `_peso`
+## vivía en un `_process` que nunca comprobé, y con el peso clavado en cero este
+## método sale por la puerta de abajo y no escribe NADA. Avanzándolo en el mismo
+## sitio donde se aplica, si esto corre la mezcla corre, y si no corre da igual.
+func _aplicar(delta: float) -> void:
+	var meta := 1.0 if (activo and not poses.is_empty()) else 0.0
+	_peso = move_toward(_peso, meta, delta / MEZCLA)
 	# Contador para los tests: la única forma de comprobar que el MOTOR entra acá
 	# y no sólo un test llamando a mano, que es lo que dejó pasar el fallo.
 	if has_meta("llamadas"):

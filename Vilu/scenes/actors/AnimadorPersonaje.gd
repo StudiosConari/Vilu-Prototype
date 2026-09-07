@@ -93,6 +93,7 @@ func montar(jugador: CharacterBody3D, escena: PackedScene, escala: float) -> voi
 			_impacto[n] = _cuando_impacta(n)
 	if _anim.has_animation(FLECHA_CARGADA):
 		_tension = _cuando_abre_la_mano(FLECHA_CARGADA)
+	_injertar_clips_de_arco()
 	_anim.play(REPOSO)   # medir dejó la pose donde fuera; se la devuelve
 
 	# El muñeco de cajas se apaga, pero NO se borra: sigue sirviendo de
@@ -476,7 +477,92 @@ func _poner_pose_de_montado() -> void:
 
 # ─── Caminar apuntando ────────────────────────────────────────────────────────
 
+## Los cuatro clips de caminar CON EL ARCO SOSTENIDO, uno por dirección.
+##
+## Vienen animados enteros —brazo atrás, cuerda tensa, piernas andando— así que
+## donde estén no hace falta reescribir huesos: manda el clip y ya está. El
+## modificador de esqueleto se queda de respaldo para cuando falten.
+##
+## Son cuatro y no uno porque apuntando se camina de lado y de espaldas: el
+## personaje encara a donde apunta, no a donde va.
+const ARCO_SOSTENIDO := preload("res://models/personaje/benjamin_arco_sostenido.glb")
+const MANTENER_ADELANTE := "mantener_adelante"
+const MANTENER_ATRAS := "mantener_atras"
+const MANTENER_DERECHA := "mantener_derecha"
+const MANTENER_IZQUIERDA := "mantener_izquierda"
+const CLIPS_DE_ARCO := [
+	MANTENER_ADELANTE, MANTENER_ATRAS, MANTENER_DERECHA, MANTENER_IZQUIERDA,
+]
+
 const POSE_DE_ARCO := preload("res://scenes/actors/PoseDeArco.gd")
+
+## Mete los cuatro clips de arco sostenido en la librería del personaje.
+##
+## Vienen en su propio .glb —sin malla, sólo el esqueleto de Mixamo y las cuatro
+## acciones— para no tener que rehacer `benjamin.glb` entero cada vez que llega
+## una animación nueva: rehacerlo arrastra malla, materiales y texturas, y eso
+## es mucho que romper para añadir cuatro clips.
+##
+## Se pueden injertar tal cual porque las pistas apuntan a las MISMAS rutas
+## —`Armature/Skeleton3D:mixamorig_*`— y el rig es el mismo. Si algún día
+## dejaran de coincidir, esto no fallaría en silencio: los clips no se verían y
+## el respaldo del modificador entraría solo.
+func _injertar_clips_de_arco() -> void:
+	if not _anim.has_animation(FLECHA_CARGADA):
+		return                      # no es el arquero: no tiene arco que sostener
+	var origen := ARCO_SOSTENIDO.instantiate() as Node3D
+	var ap := _buscar_anim(origen)
+	if ap == null:
+		origen.free()
+		push_warning("El .glb de arco sostenido vino sin AnimationPlayer")
+		return
+	var lib := _anim.get_animation_library("")
+	if lib == null:
+		lib = AnimationLibrary.new()
+		_anim.add_animation_library("", lib)
+	for n: String in ap.get_animation_list():
+		var a := ap.get_animation(n)
+		if a == null:
+			continue
+		# Copia propia: la del .glb la comparten todas las instancias, y
+		# cambiarle el bucle allí se lo cambiaría a todo el mundo.
+		var copia := a.duplicate(true) as Animation
+		copia.loop_mode = Animation.LOOP_LINEAR
+		if lib.has_animation(n):
+			lib.remove_animation(n)
+		lib.add_animation(n, copia)
+	origen.free()
+
+
+## Cuál de los cuatro toca, según hacia dónde se mueve RESPECTO A DONDE MIRA.
+##
+## Apuntando, el personaje encara a donde apunta y no a donde va: se camina de
+## lado y de espaldas todo el rato. Por eso son cuatro clips y no uno.
+##
+## Se mide contra el padre y no contra este nodo: acá cuelga el `GIRO` que
+## endereza el modelo, y contarlo dos veces rotaría la lectura.
+##
+## Devuelve "" si no hay clip que valga —no se mueve, o el .glb no llegó—, y
+## entonces manda el modificador de esqueleto, que es el respaldo.
+func _clip_de_arco_sostenido() -> String:
+	if _jugador == null or _anim == null:
+		return ""
+	var v := _jugador.velocity
+	var plano := Vector3(v.x, 0.0, v.z)
+	if plano.length() <= QUIETO:
+		return ""
+	var vis := get_parent() as Node3D
+	if vis == null:
+		return ""
+	var local := vis.global_transform.basis.inverse() * plano
+	# El personaje mira a -Z, y +X es su derecha.
+	var quiere := ""
+	if absf(local.z) >= absf(local.x):
+		quiere = MANTENER_ADELANTE if local.z < 0.0 else MANTENER_ATRAS
+	else:
+		quiere = MANTENER_DERECHA if local.x > 0.0 else MANTENER_IZQUIERDA
+	return quiere if _anim.has_animation(quiere) else ""
+
 
 ## El modificador que sujeta el arco mientras las piernas caminan.
 var _pose_de_arco: SkeletonModifier3D = null
@@ -494,15 +580,54 @@ func _quiere_moverse() -> bool:
 	return Vector2(v.x, v.z).length() > QUIETO
 
 
-## Deja el caminar en las piernas y la pose de apuntar de la cintura para arriba.
+## Camina con el arco sostenido.
+##
+## Dos caminos, y el bueno es el primero:
+##
+##   1. **El clip entero.** Hay cuatro animaciones hechas —adelante, atrás,
+##      derecha, izquierda— con el brazo atrás, la cuerda tensa y las piernas
+##      andando. Donde haya una que valga, manda ella: es arte, no un apaño.
+##   2. **El modificador de esqueleto**, de respaldo. Reproduce el caminar de
+##      siempre y le reescribe encima la rotación de los huesos del pecho para
+##      arriba. Sirve, pero es una pose congelada pegada sobre otra animación y
+##      se nota.
 func _caminar_apuntando() -> void:
+	var propio := _clip_de_arco_sostenido()
+	if propio != "":
+		_apuntando_caminando = true
+		# El modificador estorba acá: el clip ya trae el arco sostenido, y
+		# reescribirle el tren superior sería pisar la animación buena con una
+		# pose congelada.
+		_apartar_el_modificador()
+		_unica = ""
+		_anim.speed_scale = 1.0
+		if _anim.current_animation != propio:
+			_anim.play(propio)
+		return
+	_caminar_apuntando_con_pose()
+
+
+## El respaldo: caminar normal con la pose de apuntar encima.
+func _caminar_apuntando_con_pose() -> void:
 	var modificador := _modificador_de_arco()
 	if modificador == null:
 		return          # sin esqueleto reconocible: se queda como antes, quieto
-	# La pose se copia del propio clip de tensar, congelado en su extensión
-	# máxima. Se hace una sola vez, y AQUÍ: es el único momento en que el
-	# esqueleto tiene puesta la pose que hay que guardar.
+	# La pose se copia del propio clip de tensar. Se hace una sola vez.
+	#
+	# EL CLIP SE FUERZA A SU MÁXIMA EXTENSIÓN ANTES DE LEERLO, y esto no es un
+	# adorno: quien echa a andar en el mismo instante en que empieza a tensar
+	# tiene el clip a medio recorrer —el arco todavía subiendo—, y ésa era la
+	# pose que se guardaba. Peor: en cuanto se empieza a caminar,
+	# `_vigilar_tension` deja de avanzar el clip, así que nunca llegaba a la
+	# extensión buena y Benjamín caminaba el resto del rato con el arco a medio
+	# levantar.
+	#
+	# `seek(..., true)` con `update` escribe la pose EN EL ESQUELETO ahí mismo,
+	# que es lo que hace que leerla a continuación devuelva la buena.
 	if modificador.poses.is_empty():
+		if _anim.has_animation(FLECHA_CARGADA):
+			_anim.play(FLECHA_CARGADA)
+			_anim.seek(maxf(_tension, 0.0), true)
 		modificador.capturar()
 		if modificador.poses.is_empty():
 			return      # no se pudo: mejor quieto que con los brazos sueltos
@@ -534,6 +659,16 @@ func _apuntar_quieto() -> void:
 
 func _soltar_la_pose_de_arco() -> void:
 	_apuntando_caminando = false
+	_apartar_el_modificador()
+
+
+## Aparta el modificador SIN tocar la bandera de estar caminando apuntando.
+##
+## Hace falta suelto porque con los clips direccionales se sigue caminando
+## apuntando —la bandera tiene que quedarse puesta— pero el modificador estorba:
+## esos clips ya traen el arco sostenido, y encima reescribirles el tren
+## superior es pisar la animación buena con una pose congelada.
+func _apartar_el_modificador() -> void:
 	if _pose_de_arco != null and is_instance_valid(_pose_de_arco):
 		_pose_de_arco.activo = false
 

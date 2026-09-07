@@ -19,12 +19,37 @@ func test_los_dos_archivos_estan_en_el_proyecto() -> void:
 		assert_gt(s.get_length(), 0.0, "%s tiene duración" % id)
 
 
+## Sonidos que suenan UNA VEZ y no se encadenan, así que pueden durar.
+##
+## El grito de Lola es el despertar del jefe de la mina: lo dispara la caída de
+## los tablones y la guarda de `dormido` impide que suene dos veces en toda la
+## partida. La regla de abajo no le aplica porque no hay con qué solaparlo.
+const DE_UNA_SOLA_VEZ := ["grito_lola"]
+
+
 func test_son_cortos_como_un_efecto() -> void:
-	# Si alguno viniera de varios segundos sería música, no un efecto, y se
-	# solaparía consigo mismo al disparar seguido.
+	# Los que se disparan seguidos —el arco, los cuatro golpes de la cadena— se
+	# solapan consigo mismos si duran de más, y eso deja de sonar a golpes para
+	# sonar a una sola papilla.
 	for id: String in SFX.GRABADOS:
+		if DE_UNA_SOLA_VEZ.has(id):
+			continue
 		var s := load(String(SFX.GRABADOS[id])) as AudioStream
 		assert_lt(s.get_length(), 3.0, "%s dura lo que un efecto" % id)
+
+
+func test_el_grito_del_jefe_no_se_encadena() -> void:
+	# La excepción se gana: Lola despierta una sola vez porque `despertar()` sale
+	# por arriba si ya está despierta. Si eso dejara de ser cierto, el grito de
+	# 6,6 s se solaparía consigo mismo y habría que recortarlo.
+	var l: CharacterBody3D = (load("res://scenes/enemies/Lola.tscn") as PackedScene).instantiate()
+	add_child_autofree(l)
+	assert_true(l.dormido, "arranca encerrada")
+	l.call("despertar")
+	assert_false(l.dormido, "el primer aviso la despierta")
+	# El segundo tablón vuelve a avisar: no tiene que sonar otra vez.
+	l.call("despertar")
+	assert_false(l.dormido, "y el segundo aviso no hace nada")
 
 
 func test_el_banco_los_carga() -> void:

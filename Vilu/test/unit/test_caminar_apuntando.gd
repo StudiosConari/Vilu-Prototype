@@ -46,7 +46,7 @@ func test_la_pose_manda_sobre_la_caminata() -> void:
 	m._peso = 1.0
 	# Y ahora el clip de caminar mueve el brazo a otro lado.
 	esq.set_bone_pose_rotation(brazo, Quaternion.IDENTITY)
-	m.call("_process_modification")
+	m.call("_process_modification_with_delta", 1.0)
 	assert_almost_eq(esq.get_bone_pose_rotation(brazo).angle_to(apuntando), 0.0, 0.01,
 		"el brazo vuelve a la pose de apuntar")
 
@@ -62,7 +62,7 @@ func test_las_piernas_no_se_tocan() -> void:
 	var cadera := esq.find_bone("mixamorig_Hips")
 	var paso := Quaternion(Vector3.RIGHT, 0.5)
 	esq.set_bone_pose_rotation(cadera, paso)
-	m.call("_process_modification")
+	m.call("_process_modification_with_delta", 1.0)
 	assert_almost_eq(esq.get_bone_pose_rotation(cadera).angle_to(paso), 0.0, 0.001,
 		"la cadera sigue siendo la del paso")
 
@@ -77,7 +77,7 @@ func test_apagado_no_toca_nada() -> void:
 	m._peso = 0.0
 	var caminando := Quaternion(Vector3.RIGHT, 0.3)
 	esq.set_bone_pose_rotation(brazo, caminando)
-	m.call("_process_modification")
+	m.call("_process_modification_with_delta", 1.0)
 	assert_almost_eq(esq.get_bone_pose_rotation(brazo).angle_to(caminando), 0.0, 0.001,
 		"sin apuntar, el brazo es el del caminar")
 
@@ -90,9 +90,26 @@ func test_entra_y_sale_con_mezcla() -> void:
 	m.call("capturar")
 	m.activo = true
 	m._peso = 0.0
-	m.call("_process", 0.05)
+	m.call("_process_modification_with_delta", 0.05)
 	assert_gt(m._peso, 0.0, "entra progresivamente")
 	assert_lt(m._peso, 1.0, "y no de golpe")
+
+
+func test_la_mezcla_avanza_sola_con_el_motor() -> void:
+	# EL SEGUNDO FALLO DEL MISMO TIPO. `_peso` se interpolaba en un `_process`
+	# que nunca comprobé que el motor llamara. Con el peso clavado en cero el
+	# modificador sale por la puerta de abajo y no escribe NADA: Benjamín baja el
+	# arco al andar, sin un solo error en consola.
+	#
+	# Ahora la mezcla se avanza en el mismo sitio donde se aplica, así que basta
+	# con que el motor entre. Esto lo comprueba sin llamar a nadie a mano.
+	var esq := _esqueleto()
+	var m := _modificador(esq)
+	m.call("capturar")
+	m.activo = true
+	assert_almost_eq(m._peso, 0.0, 0.001, "arranca sin pose")
+	await wait_frames(8)
+	assert_gt(m._peso, 0.0, "el motor la hace subir sin que nadie empuje")
 
 
 func test_el_tren_superior_arranca_en_la_segunda_vertebra() -> void:
