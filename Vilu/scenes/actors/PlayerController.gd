@@ -440,12 +440,17 @@ func esta_dormido() -> bool:
 
 # --- Control del jugador (WASD/salto/mount/interact) ---
 func _player_input() -> Vector3:
-	var iz := 0.0   # adelante/atrás (relativo a la cámara)
-	var ix := 0.0   # derecha/izquierda
-	if Input.is_action_pressed("move_forward"): iz += 1.0
-	if Input.is_action_pressed("move_back"): iz -= 1.0
-	if Input.is_action_pressed("move_right"): ix += 1.0
-	if Input.is_action_pressed("move_left"): ix -= 1.0
+	# Por FUERZA y no por pulsado, para que el stick module.
+	#
+	# Una tecla vale 0 o 1, así que con teclado esto es exactamente lo de antes.
+	# Un stick vale lo que esté inclinado, y así medio empujado se camina y al
+	# tope se corre — que es lo que espera cualquiera que agarre un mando; con
+	# `is_action_pressed` el stick era un teclado con forma rara.
+	#
+	# `_camera_relative` sólo normaliza lo que pase de 1, así que el valor
+	# intermedio sobrevive hasta la velocidad.
+	var iz: float = Input.get_action_strength("move_forward") - Input.get_action_strength("move_back")
+	var ix: float = Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
 	var dir := _camera_relative(ix, iz)
 
 	# Salto (doble con alas)

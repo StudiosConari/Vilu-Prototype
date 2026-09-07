@@ -13,7 +13,7 @@ extends GutTest
 
 const ANIMADOR := preload("res://scenes/actors/AnimadorPersonaje.gd")
 const BENJAMIN := preload("res://models/personaje/benjamin.glb")
-const SOSTENIDO := preload("res://models/personaje/benjamin_arco_sostenido.glb")
+const SOSTENIDO := preload("res://models/personaje/benjamin_animaciones.glb")
 
 
 func test_el_glb_trae_las_cuatro_direcciones() -> void:
@@ -143,3 +143,33 @@ func test_al_caminar_apuntando_manda_el_clip_y_no_el_modificador() -> void:
 	var m = an.get("_pose_de_arco")
 	if m != null:
 		assert_false(m.activo, "el modificador se aparta")
+
+
+# ─── reemplazar animaciones del modelo ────────────────────────────────────────
+
+func test_el_reposo_nuevo_pisa_al_del_modelo() -> void:
+	# El .glb aparte no sólo AÑADE: lo que trae reemplaza a lo que venga en
+	# `benjamin.glb`. Así entra un reposo nuevo sin rehacer el modelo, que
+	# arrastra malla, materiales y texturas extraídas.
+	var suyo := _duracion(BENJAMIN, "reposo")
+	var aparte := _duracion(SOSTENIDO, "reposo")
+	assert_gt(aparte, 0.0, "el .glb aparte trae reposo")
+	var an := _montado(0.0)
+	var puesto: float = (an.get("_anim") as AnimationPlayer).get_animation("reposo").length
+	assert_almost_eq(puesto, aparte, 0.001,
+		"el que queda montado es el nuevo, no el del modelo (%.2f s)" % suyo)
+
+
+func test_el_reposo_montado_se_repite() -> void:
+	# Sin bucle, Benjamín se queda clavado al terminar el ciclo de respirar.
+	var an := _montado(0.0)
+	assert_eq((an.get("_anim") as AnimationPlayer).get_animation("reposo").loop_mode,
+		Animation.LOOP_LINEAR, "el reposo se repite")
+
+
+func _duracion(escena: PackedScene, clip: String) -> float:
+	var e := escena.instantiate()
+	var ap: AnimationPlayer = e.find_children("*", "AnimationPlayer", true, false)[0]
+	var d := ap.get_animation(clip).length if ap.has_animation(clip) else 0.0
+	e.free()
+	return d
