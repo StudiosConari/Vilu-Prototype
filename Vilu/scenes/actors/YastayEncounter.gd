@@ -241,15 +241,24 @@ func _escena_de_presentacion() -> void:
 		if con_camara:
 			juego.focus_camera_on(_brujo, 0.0, 11.0, 2.0)
 		await get_tree().create_timer(0.6).timeout
-	# Se espera la huida ENTERA: son tres momentos —apunta, cae, corre— y
-	# cortando a los segundo y medio sólo se veía el primero. Se esconde solo
-	# antes de liberarse, así que la cámara no salta al soltarlo.
-	await _brujo_escapes()
+	# La cámara lo acompaña hasta el PUENTE, no hasta el final.
+	#
+	# El camino del brujo tiene varios tramos y el último es un tirón largo por
+	# el otro lado de la quebrada, con él ya de espaldas y cada vez más chico:
+	# ahí la escena ya contó lo que tenía que contar y se hacía eterna. Se le
+	# suelta la cámara al llegar al puente y el resto lo hace por su cuenta,
+	# fuera de plano.
+	_brujo_escapes()
+	await _esperar_al_puente()
 
 	# Vuelve CAMINANDO a su sitio: ya no hay prisa, la quebrada es suya otra vez.
 	if con_camara and is_instance_valid(_yastay):
 		juego.focus_camera_on(_yastay, 0.0, 13.0, 3.0)
 	await _yastay_camina_hasta(sitio_del_yastay)
+	# Y mirando al puente, que es por donde se fue el brujo y por donde se
+	# entra a la quebrada. Caminar hasta un punto lo deja mirando el rumbo que
+	# traía, que no tiene por qué ser ése.
+	_mirar_al_puente()
 
 	# Y se alza una segunda vez: ahora el intruso sos vos.
 	await get_tree().create_timer(_yastay_hace("Rear", false, 1.2)).timeout
@@ -261,6 +270,42 @@ func _escena_de_presentacion() -> void:
 	# con la imagen todavía en camino.
 	await get_tree().create_timer(1.2).timeout
 	_trabar_a_los_jugadores(false)
+
+
+## Cuánto se le sigue al brujo antes de soltarle la cámara, como fracción de su
+## camino. 0.5 = hasta la mitad, que es donde está el puente.
+@export_range(0.1, 1.0, 0.05) var brujo_seguido_hasta := 0.5
+
+## Lo más que se le espera aunque no llegue, en segundos. Es una red: sin esto,
+## un camino mal puesto dejaría la escena colgada para siempre.
+const ESPERA_MAXIMA_DEL_BRUJO := 9.0
+
+
+## Espera a que el brujo llegue al puente —la mitad de su camino— y devuelve.
+##
+## Él sigue huyendo por su cuenta después: la escena continúa sin esperarlo.
+func _esperar_al_puente() -> void:
+	var camino := _camino_del_brujo()
+	if camino.is_empty() or not is_instance_valid(_brujo):
+		await get_tree().create_timer(2.0).timeout
+		return
+	var puente: Vector3 = camino[mini(int(camino.size() * brujo_seguido_hasta), camino.size() - 1)]
+	var reloj := 0.0
+	while is_instance_valid(_brujo) and reloj < ESPERA_MAXIMA_DEL_BRUJO:
+		if _brujo.global_position.distance_to(puente) < 1.5:
+			return
+		await get_tree().process_frame
+		reloj += get_process_delta_time()
+
+
+## Lo deja mirando hacia el puente por el que se entra a la quebrada.
+func _mirar_al_puente() -> void:
+	if not is_instance_valid(_yastay):
+		return
+	var camino := _camino_del_brujo()
+	if camino.is_empty():
+		return
+	_orientar(_yastay, camino[0] - _yastay.global_position)
 
 
 ## En qué punto del cabezazo cae el cazador. El clip dura un segundo y el
@@ -578,6 +623,7 @@ func _defeat_hunter(idx: int) -> void:
 	zone.collision_mask  = 2
 	zone.set_script(INTERACT_SCR)
 	zone.prompt          = "[E] Revisar cuerpo"
+	h.add_to_group("objetivo_cazadores")
 	h.add_child(zone)
 
 	var cs  := CollisionShape3D.new()
@@ -594,6 +640,7 @@ func _on_inspect(player: Node, body: Node3D, zone: Area3D) -> void:
 	if body in _inspected:
 		return
 	_inspected.append(body)
+	body.remove_from_group("objetivo_cazadores")
 
 	var lbl := body.get_node_or_null("Label3D") as Label3D
 	if lbl:
@@ -923,6 +970,7 @@ func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 		return
 
 	_sanados.append(guanaco)
+	guanaco.remove_from_group("objetivo_guanacos")
 	Misiones.contar("guanacos", _sanados.size())
 	_levantar(guanaco)
 	if _sanados.size() < _heridos.size():
@@ -1016,8 +1064,19 @@ func _yastay_speaks() -> void:
 			var to_p := target.global_position - _yastay.global_position
 			to_p.y = 0.0
 			var stop := _yastay.global_position + to_p.normalized() * maxf(0.0, to_p.length() - 4.0)
+			# MIRANDO al jugador, y andando.
+			#
+			# Antes sólo se le movía la posición: llegaba de espaldas o de lado,
+			# con la orientación que le hubiera quedado al volver a su sitio, y
+			# encima deslizándose sin animación. Viene a hablarte: tiene que
+			# venir de frente y caminando.
+			_orientar(_yastay, to_p)
+			_yastay_hace("Walk", true)
 			var tw := get_tree().create_tween()
 			tw.tween_property(_yastay, "global_position", stop, 1.2)
+			tw.finished.connect(func() -> void:
+				if is_instance_valid(_yastay):
+					_yastay_hace("Idle", true))
 
 	DialogueManager.dialogue_ended.connect(
 		_give_blessing.unbind(1), CONNECT_ONE_SHOT)
@@ -1034,12 +1093,18 @@ func _give_blessing() -> void:
 	_banner("Bendición del Guanaco obtenida. El paso al volcán está abierto.", 7.0)
 	_hint("[Q] invocar/montar/guardar guanaco · [G] embestir · [E] revisar los cuerpos · portal al norte")
 
-	# El Yastay se queda: se aparta a un costado para no tapar el portal.
+	# El Yastay vuelve con su rebaño.
+	#
+	# Acá había un `global_position` a (-11, 0, -15) escrito a mano. Ese número
+	# es de cuando la arena se generaba por código y la zona estaba en el origen;
+	# la quebrada de ahora está desplazada Y GIRADA, así que como coordenada de
+	# MUNDO apunta a cualquier parte: el Yastay salía disparado lejísimos y se
+	# quedaba ahí. Se le manda a su sitio de siempre —el que se guardó al
+	# empezar—, que además es donde están los guanacos.
 	if is_instance_valid(_yastay):
 		if is_instance_valid(_yastay_label):
 			_yastay_label.text = "Yastay\nguardián de los guanacos"
-		var tw := get_tree().create_tween()
-		tw.tween_property(_yastay, "global_position", Vector3(-11, 0, -15), 2.5)
+		_volver_a_su_sitio()
 
 
 # ─── Construcción ─────────────────────────────────────────────────────────────
@@ -1180,8 +1245,10 @@ func _spawn_characters() -> void:
 		_heridos.append(g)
 	_wounded = _heridos[0]   # el guion viejo mira esta variable en algún sitio
 
+	# Marcador de misión sobre cada uno mientras siga herido.
 	for h: Node3D in _heridos:
 		_cartel_para(h, "¡Sana al guanaco!", 0.80)
+		h.add_to_group("objetivo_guanacos")
 		_zona_de_cura(h)
 		_tumbar(h)
 

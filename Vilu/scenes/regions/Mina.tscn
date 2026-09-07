@@ -23,6 +23,7 @@
 [ext_resource type="PackedScene" uid="uid://dxoc0kbo6iwwq" path="res://models/mina/letrero_de_madera.glb" id="16_7eyjp"]
 [ext_resource type="PackedScene" uid="uid://bnreiro12fyqw" path="res://models/mina/palanca_industrial.glb" id="17_lnyhv"]
 [ext_resource type="PackedScene" uid="uid://bf5ar4pl23nph" path="res://models/focal/obelisko.glb" id="19_mw60a"]
+[ext_resource type="PackedScene" uid="uid://dpkcpigd0t41h" path="res://models/focal/obelisko_verde.glb" id="92_obelverde"]
 [ext_resource type="PackedScene" uid="uid://xbkbnp853anx" path="res://models/prop_mediano/afloramiento_rocoso.glb" id="20_6jiwt"]
 [ext_resource type="PackedScene" uid="uid://bj5163hdeh7gj" path="res://models/prop_pequeno/picota.glb" id="21_fiygc"]
 [ext_resource type="PackedScene" uid="uid://bn3er6oykq4vx" path="res://models/prop_mediano/tablones_de_madera.glb" id="22_2jc5j"]
@@ -486,19 +487,23 @@ recompensa = NodePath("../../Props/talisman_de_ojo_negro2")
 transform = Transform3D(-0.016687836, 0, -1.8232949, 0, 1.704763, 0, 2.4523866, 0, -0.012407036, -17.375526, 1.1035784, -18.180447)
 script = ExtResource("33_destr")
 despierta = NodePath("../../Lola")
+arrastra = [NodePath("../tablones_de_madera3")]
 
 [node name="tablones_de_madera3" parent="DecoMurallas" unique_id=607467723 instance=ExtResource("22_2jc5j")]
 transform = Transform3D(-0.016687836, 0, -1.8232949, 0, 1.704763, 0, 2.4523866, 0, -0.012407036, -17.375526, 4.5072937, -18.180447)
 script = ExtResource("33_destr")
 despierta = NodePath("../../Lola")
+arrastra = [NodePath("../tablones_de_madera2")]
 
 [node name="tablones_de_madera5" parent="DecoMurallas" unique_id=661204044 instance=ExtResource("22_2jc5j")]
 transform = Transform3D(1.4610698, 0, 0, 0, 1.9770489, 0, 0, 0, 1, 41.873356, 0.23477674, -15.038412)
 script = ExtResource("33_destr")
+arrastra = [NodePath("../tablones_de_madera6")]
 
 [node name="tablones_de_madera6" parent="DecoMurallas" unique_id=1636894238 instance=ExtResource("22_2jc5j")]
 transform = Transform3D(1.4610698, 0, 0, 0, 1.9770489, 0, 0, 0, 1, 41.873356, 3.9879131, -15.038412)
 script = ExtResource("33_destr")
+arrastra = [NodePath("../tablones_de_madera5")]
 
 [node name="DecoPiso" type="Node3D" parent="." unique_id=1376392937]
 transform = Transform3D(0.7, 0, 0, 0, 0.7, 0, 0, 0, 0.7, 0, 0, 0)
@@ -782,7 +787,9 @@ transform = Transform3D(1.3664426, 0, 1.6555511, 0, 2.1466286, 0, -1.6555511, 0,
 [node name="obelisko1" parent="Props" unique_id=1358502024 instance=ExtResource("19_mw60a")]
 transform = Transform3D(2.052623, 0, 0, 0, 2.052623, 0, 0, 0, 2.052623, 40.905884, 2.6184635, -17.104233)
 script = ExtResource("34_obel")
+modelo_activo = ExtResource("92_obelverde")
 barrera = NodePath("../barrera_de_cuerda_de_madera1")
+requiere = [NodePath("../../DecoMurallas/tablones_de_madera5"), NodePath("../../DecoMurallas/tablones_de_madera6")]
 
 [node name="afloramiento_rocoso2" parent="Props" unique_id=1644225604 instance=ExtResource("20_6jiwt")]
 transform = Transform3D(0.29058278, 0, 0.94877535, 0, 1.4870589, 0, -1.3444031, 0, 0.20507076, -7.4148765, 2.7472649, -11.178841)
@@ -850,6 +857,7 @@ transform = Transform3D(1.9051431, 0, 1.4017189, 0, 2.3652453, 0, -1.4017189, 0,
 [node name="obelisko2" parent="Props" unique_id=1170758928 instance=ExtResource("19_mw60a")]
 transform = Transform3D(-0.015298764, 0, -1.8242663, 0, 1.8243304, 0, 1.8242663, 0, -0.015298764, -10.496037, 2.618463, -24.976965)
 script = ExtResource("34_obel")
+modelo_activo = ExtResource("92_obelverde")
 barrera = NodePath("../barrera_de_cuerda_de_madera2")
 
 [node name="letrero_de_madera3" parent="Props" unique_id=1123667717 instance=ExtResource("16_7eyjp")]

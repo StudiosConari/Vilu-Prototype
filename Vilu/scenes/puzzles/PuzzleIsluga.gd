@@ -97,6 +97,8 @@ func _spawn_guardian() -> void:
 	g.set_script(GUARDIAN_SCR)
 	add_child(g)
 	g.global_transform = marca.global_transform
+	# «Activa el volcán»: el guardián es a quien hay que llegar.
+	g.add_to_group("objetivo_isluga_volcan")
 
 
 func _hint(text: String) -> void:

@@ -118,8 +118,20 @@ func _process(_delta: float) -> void:
 		if _anim.assigned_animation != MONTADO:
 			_poner_pose_de_montado()
 		return
+	# Tensando: camina si te movés, y quieto vuelve al clip de apuntar entero.
+	#
+	# Es la única excepción a «un clip de una pasada manda sobre todo». Vale la
+	# pena porque apuntar es un estado que dura, no un gesto: quedarse clavado
+	# mientras se apunta obliga a soltar la cuerda para dar un paso.
+	if _tensando:
+		if _quiere_moverse():
+			_caminar_apuntando()
+		else:
+			_apuntar_quieto()
+		return
+	_soltar_la_pose_de_arco()
 	if _unica != "":
-		return          # tensando o en pleno golpe: nada que decidir
+		return          # en pleno golpe: nada que decidir
 	var quiere := _clip_de_movimiento()
 	if quiere != "" and _anim.current_animation != quiere:
 		_anim.play(quiere)
@@ -389,6 +401,7 @@ var _tensando := false
 ## Disparo rápido. Se acelera con `ritmo` porque el clip dura 2.47 s y a esa
 ## cadencia Benjamín tiraría una flecha cada dos segundos y medio.
 func flecha(ritmo: float = 1.0) -> float:
+	_tensando = false      # el disparo rápido también suelta la cuerda
 	var largo := _una_pasada(FLECHA)
 	if largo <= 0.0:
 		return 0.0
@@ -461,9 +474,92 @@ func _poner_pose_de_montado() -> void:
 	_anim.seek(0.0, true)
 
 
+# ─── Caminar apuntando ────────────────────────────────────────────────────────
+
+const POSE_DE_ARCO := preload("res://scenes/actors/PoseDeArco.gd")
+
+## El modificador que sujeta el arco mientras las piernas caminan.
+var _pose_de_arco: SkeletonModifier3D = null
+
+## Está caminando CON el arco tensado. Mientras dure, el clip que suena es el
+## de caminar a propósito, y eso no significa que se haya soltado la cuerda.
+var _apuntando_caminando := false
+
+
+## ¿Se está moviendo por su pie? En el aire no: ahí manda el salto.
+func _quiere_moverse() -> bool:
+	if _jugador == null or not _jugador.is_on_floor():
+		return false
+	var v := _jugador.velocity
+	return Vector2(v.x, v.z).length() > QUIETO
+
+
+## Deja el caminar en las piernas y la pose de apuntar de la cintura para arriba.
+func _caminar_apuntando() -> void:
+	var modificador := _modificador_de_arco()
+	if modificador == null:
+		return          # sin esqueleto reconocible: se queda como antes, quieto
+	# La pose se copia del propio clip de tensar, congelado en su extensión
+	# máxima. Se hace una sola vez, y AQUÍ: es el único momento en que el
+	# esqueleto tiene puesta la pose que hay que guardar.
+	if modificador.poses.is_empty():
+		modificador.capturar()
+		if modificador.poses.is_empty():
+			return      # no se pudo: mejor quieto que con los brazos sueltos
+	_apuntando_caminando = true
+	modificador.activo = true
+	# El clip de una pasada se da por terminado a mano: nadie va a avisar de que
+	# acabó, porque está pausado en mitad de sí mismo.
+	_unica = ""
+	_anim.speed_scale = 1.0
+	var quiere := _clip_de_movimiento()
+	if quiere != "" and _anim.current_animation != quiere:
+		_anim.play(quiere)
+
+
+## Parado y apuntando: manda el clip de tensar, congelado como siempre.
+##
+## Hay que volver a ponerlo porque al echar a andar se lo dio por terminado. Sin
+## esto, frenar mientras se apunta elegía «reposo» y el arco se caía solo.
+func _apuntar_quieto() -> void:
+	_apuntando_caminando = false
+	_soltar_la_pose_de_arco()
+	if _anim.assigned_animation == FLECHA_CARGADA:
+		return                      # ya está puesto y congelado
+	_una_pasada(FLECHA_CARGADA)
+	if _tension > 0.0:
+		_anim.seek(_tension, true)
+		_anim.pause()
+
+
+func _soltar_la_pose_de_arco() -> void:
+	_apuntando_caminando = false
+	if _pose_de_arco != null and is_instance_valid(_pose_de_arco):
+		_pose_de_arco.activo = false
+
+
+## Lo cuelga del esqueleto la primera vez que hace falta.
+func _modificador_de_arco() -> SkeletonModifier3D:
+	if _pose_de_arco != null and is_instance_valid(_pose_de_arco):
+		return _pose_de_arco
+	var esq := _buscar_esqueleto(get_parent())
+	if esq == null:
+		esq = _buscar_esqueleto(self)
+	if esq == null:
+		return null
+	_pose_de_arco = POSE_DE_ARCO.new()
+	_pose_de_arco.name = "PoseDeArco"
+	esq.add_child(_pose_de_arco)
+	return _pose_de_arco
+
+
 ## Mientras tensa, el clip se detiene al llegar a la máxima extensión.
 func _vigilar_tension() -> void:
 	if not _tensando or _anim == null:
+		return
+	# Caminando apuntando, el clip que suena es el de andar: mirarlo acá daría
+	# el tensado por cancelado en el mismo cuadro en que empieza el paso.
+	if _apuntando_caminando:
 		return
 	# `assigned_animation` y no `current_animation`: al pausar, la segunda queda
 	# VACIA, y mirarla habria cancelado el tensado en el mismo frame en que se

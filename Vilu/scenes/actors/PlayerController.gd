@@ -32,8 +32,17 @@ const MODELO_EMILIA := preload("res://models/personaje/emilia.glb")
 const MODELO_BENJAMIN := preload("res://models/personaje/benjamin.glb")
 const ALAS_SCR := preload("res://scenes/actors/AlasEspirituales.gd")
 const ARMA_SCR := preload("res://scenes/actors/ArmaDeBenjamin.gd")
-## Los modelos miden 1.00 m: la escala son sus metros de alto.
-const ALTO_PERSONAJE := 1.9
+## Cuánto miden Emilia y Benjamín, en metros.
+##
+## Los modelos vienen de fábrica midiendo 1,00 m, así que este número es a la vez
+## su escala y su estatura.
+##
+## Es SÓLO lo que se ve. El cuerpo con el que chocan sigue siendo la cápsula de
+## `Player.tscn` —1,6 m de alto y 0,35 de radio—, y eso es a propósito: de esa
+## cápsula dependen los saltos medidos de las plataformas del Isluga y la viga
+## baja de la entrada de la mina, que hay que pasar agachándose. Agrandar el
+## cuerpo cambiaría el plataformeo entero; agrandar el modelo, no.
+const ALTO_PERSONAJE := 2.2
 
 ## SIGUIENDO: acompaña al activo, un paso atrás y al costado. QUIETO: se queda
 ## en su sitio. En ninguno de los dos pelea ni recibe daño: las batallas son del
@@ -321,7 +330,9 @@ func _physics_process(delta: float) -> void:
 
 	velocity.x = move_toward(velocity.x, dir.x * speed, acceleration * speed * delta)
 	velocity.z = move_toward(velocity.z, dir.z * speed, acceleration * speed * delta)
+	var antes := global_position
 	move_and_slide()
+	_vigilar_encajado(antes, dir, delta)
 
 	# El rescate SÓLO mientras sigue al líder.
 	#
@@ -504,6 +515,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_charging = true
 		_charge_t = 0.0
 		_carga_usada = false
+		if is_archer:
+			Sfx.play("tensar_arco", -5.0)
 		if is_archer and _emilia != null:
 			# Empieza a tensar y se queda en la máxima extensión hasta que sueltes.
 			_emilia.call("tensar")
@@ -664,7 +677,8 @@ func _shoot_arrow(charged: bool) -> void:
 		return
 	_attack_cd = 0.4 if charged else 0.22
 	_spawn_arrow(_face_aim(), charged)   # apunta hacia el mouse
-	Sfx.play("fire", -3.0, 0.8 if charged else 1.0)
+	# La cargada suena un punto más grave, que es lo que la distingue de oído.
+	Sfx.play("flecha", -3.0, 0.92 if charged else 1.0)
 	arrow_fired.emit()
 
 
@@ -687,7 +701,7 @@ func _triple_arrow() -> void:
 	var fwd := _face_aim()      # apunta el abanico hacia el mouse
 	for ang in [-0.22, 0.0, 0.22]:
 		_spawn_arrow(fwd.rotated(Vector3.UP, ang), false)
-	Sfx.play("fire", -2.0)
+	Sfx.play("flecha", -2.0, 1.06)   # las tres a la vez, un poco más agudo
 	arrow_fired.emit()
 
 
@@ -912,6 +926,108 @@ func _estorbo_bajo(dir: Vector3) -> bool:
 		if not espacio.intersect_ray(q).is_empty():
 			return true
 	return false
+
+
+## ¿Choca, contando también estar YA metido dentro de algo?
+##
+## `test_move` a secas ignora el solape inicial: preguntado desde dentro de una
+## pared responde que el camino está libre. Eso abrió un agujero grave en la
+## subida de escalón —la comprobación «a la altura del escalón hay hueco» daba
+## que sí estando la cápsula dentro del muro—, y el personaje se alzaba y quedaba
+## empotrado en la puerta de la iglesia: `test_move` seguía diciendo que las ocho
+## direcciones estaban libres y `move_and_slide` no lo movía ni un centímetro,
+## porque todo el desplazamiento se lo comía la despenetración.
+##
+## Medido: con esta comprobación floja, caminar contra esa puerta dejaba al
+## jugador clavado en 4 de 16 acercamientos.
+## Se pregunta con margen MÍNIMO, no con el del cuerpo.
+##
+## El del cuerpo son 4 cm, y contando el solape inicial eso hace que estar de
+## pie sobre el suelo ya cuente como choque: el margen es una piel, y apoyarse
+## en algo la toca siempre. Con un milímetro sólo salta lo que de verdad está
+## metido dentro de la geometría, que es lo único que se quiere detectar.
+const MARGEN_DE_SOLAPE := 0.001
+
+
+func _estorbado(desde: Transform3D, movimiento: Vector3) -> bool:
+	return test_move(desde, movimiento, null, MARGEN_DE_SOLAPE, true)
+
+
+# ─── Quedarse encajado ────────────────────────────────────────────────────────
+#
+# Pasa de verdad y no tiene salida: metido en el hueco de la puerta de la
+# iglesia, la cápsula queda dentro del trimesh del edificio y `move_and_slide`
+# recibe normales que se contradicen, así que anula TODO el movimiento. Medido
+# con una sonda que camina contra esa puerta desde dieciséis sitios: en tres se
+# quedaba a cero metros, empujando en cualquier dirección, para siempre.
+#
+# No se arregla con el margen de colisión —se probó con el de fábrica y con el
+# holgado, y se atasca con los dos— porque el problema no es rozar una costura,
+# es haber entrado donde no se cabe.
+
+## Cuánto tiene que llevar sin moverse para darlo por encajado.
+const PACIENCIA_ENCAJADO := 0.4
+
+## Lo que hay que desplazarse en un cuadro para contar como que se avanza.
+const AVANCE_MINIMO := 0.004
+
+## Cada cuánto se anota por dónde se pasó estando libre.
+const MIGA_CADA := 0.35
+
+var _encajado := 0.0
+var _miga := Vector3.ZERO
+var _reloj_de_miga := 0.0
+
+
+## Comprueba si el personaje se quedó clavado y, si es así, lo saca.
+func _vigilar_encajado(antes: Vector3, dir: Vector3, delta: float) -> void:
+	var avanzo := antes.distance_to(global_position) > AVANCE_MINIMO
+	# La miga de pan: el último sitio por el que se pasó pudiendo moverse. Es
+	# adonde se vuelve, y por eso sólo se anota estando suelto.
+	if avanzo and is_on_floor():
+		_reloj_de_miga += delta
+		if _reloj_de_miga >= MIGA_CADA:
+			_reloj_de_miga = 0.0
+			_miga = global_position
+	if avanzo or dir == Vector3.ZERO:
+		_encajado = 0.0
+		return
+	_encajado += delta
+	if _encajado < PACIENCIA_ENCAJADO or not _sin_salida():
+		return
+	_encajado = 0.0
+	if _miga != Vector3.ZERO:
+		global_position = _miga
+		velocity = Vector3.ZERO
+
+
+## ¿Está encajado de verdad, o sólo empujando contra una pared?
+##
+## La diferencia importa: contra una pared no se avanza de frente, pero de
+## costado sí, y ahí no hay nada que rescatar —devolver a alguien un metro atrás
+## cada vez que se apoya en un muro sería mucho peor que el fallo—.
+##
+## Hay DOS formas de estar sin salida, y las dos hacen falta:
+##
+##   - **Encajado en un hueco**: ninguna dirección libre. Es el caso obvio.
+##   - **Metido DENTRO de la geometría**: y éste es el traicionero, porque se
+##     ve al revés. `test_move` ignora el solape inicial, así que desde dentro
+##     de una pared informa las ocho direcciones libres mientras
+##     `move_and_slide` no mueve nada —el desplazamiento se lo come la
+##     despenetración—. Preguntando con el solape contado, se distingue.
+func _sin_salida() -> bool:
+	# HACIA ARRIBA, no hacia abajo: de pie sobre el suelo, un movimiento hacia
+	# abajo choca siempre con el propio suelo, y entonces cualquiera apoyado en
+	# una pared se daría por encajado. Hacia arriba sólo choca lo que de verdad
+	# esté solapando.
+	if _estorbado(global_transform, Vector3.UP * 0.001):
+		return true          # está dentro de algo: eso no se arregla caminando
+	for i in 8:
+		var a := TAU * float(i) / 8.0
+		var salida := Vector3(cos(a), 0.0, sin(a)) * 0.25
+		if not test_move(global_transform, salida):
+			return false
+	return true
 
 
 ## Cuenta el tiempo que lleva sin acercarse al líder.

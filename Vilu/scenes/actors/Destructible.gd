@@ -33,6 +33,18 @@ const CAPA_GOLPEABLE := 4
 ## mueve del sitio. Mismo trato que el `despierta` del obelisco.
 @export var despierta: NodePath
 
+## Otros destructibles que se rompen JUNTO con éste.
+##
+## Una barricada puede estar hecha de varias piezas apiladas —la de la mina son
+## dos tablones, uno sobre otro— y romperlas de a una no es un reto, es tener
+## que golpear dos veces lo mismo: el jugador ya entendió qué hay que hacer con
+## el primer golpe. Peor todavía si sólo cae el de abajo, porque el de arriba
+## queda flotando en el aire.
+##
+## Vale poner la lista en las dos piezas: la guarda de `_roto` corta la ida y
+## vuelta, así que se rompan por donde se rompan caen las dos.
+@export var arrastra: Array[NodePath] = []
+
 ## Si ya se tenía la habilidad de una partida anterior, el prop arranca roto.
 @export var recordar_si_ya_se_obtuvo := true
 
@@ -82,6 +94,38 @@ func golpear(_dmg: float, _desde: Vector3) -> void:
 		_sacudir()
 
 
+## Tira abajo el resto de la barricada.
+##
+## Va ANTES de los efectos y con `_roto` ya puesto: así, si dos piezas se
+## apuntan la una a la otra, la vuelta se corta sola en la guarda de `_romper` y
+## no hay recursión infinita.
+##
+## Los escombros y el cartel salen sólo en la pieza que recibió el golpe. Dos
+## carteles iguales seguidos se leen como un error, y el sonido de romper por
+## duplicado suena a eco.
+func _arrastrar_a_los_demas(_con_efecto: bool) -> void:
+	for ruta in arrastra:
+		var n := get_node_or_null(ruta)
+		if n == null or n == self:
+			continue
+		if n.has_method("romper_sin_efecto"):
+			n.call("romper_sin_efecto")
+
+
+## La rompe en silencio: sin escombros, sin cartel y sin conceder nada.
+##
+## Es la puerta por la que una pieza de la barricada tira de las demás.
+func romper_sin_efecto() -> void:
+	_romper(false)
+
+
+## true una vez roto. Lo consulta lo que exija romperlo antes de dejarse usar:
+## el obelisco de la mina, que estaba detrás de una barricada de tablones y se
+## podía encender igual desde el otro lado.
+func esta_roto() -> bool:
+	return _roto
+
+
 func _sacudir() -> void:
 	if _malla == null:
 		return
@@ -97,6 +141,7 @@ func _romper(con_efecto: bool) -> void:
 	if _roto:
 		return
 	_roto = true
+	_arrastrar_a_los_demas(con_efecto)
 	if con_efecto:
 		_escombros()
 		if otorga != "" and not GameManager.has_ability(otorga):

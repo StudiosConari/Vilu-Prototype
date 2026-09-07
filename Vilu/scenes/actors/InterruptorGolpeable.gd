@@ -19,6 +19,7 @@ extends Node3D
 const CAPA_ENTORNO   := 1
 const CAPA_GOLPEABLE := 4
 const REENVIADOR := preload("res://scenes/actors/DestructibleCuerpo.gd")
+const MUDA := preload("res://scenes/core/MudaDeAsset.gd")
 
 ## Nodo al que avisa.
 @export var objetivo: NodePath
@@ -37,7 +38,28 @@ const REENVIADOR := preload("res://scenes/actors/DestructibleCuerpo.gd")
 
 ## Color al que se enciende cuando ya está accionado, para que se vea de lejos
 ## que ese interruptor ya está usado.
-@export var color_activo := Color(1.0, 0.65, 0.2)
+##
+## Antes de accionarlo el cubo se ve tal cual es, sin nada encima. Se probó a
+## envolverlo en un halo para que se distinguiera de lejos y quedó peor: seis
+## globos celestes opacos flotando en mitad del cráter, tapando el nivel.
+@export var color_activo := Color(0.45, 0.85, 1.0)
+
+## Fuerza de la luz al accionarlo.
+@export var brillo := 3.4
+
+## Hasta dónde llega esa luz, en metros.
+@export var alcance := 7.0
+
+## Versión del modelo a la que se cambia al accionarlo.
+##
+## Los cubos del Isluga tienen una gemela con la energía verde. Vacío = no se
+## cambia de modelo y sólo se enciende la luz, que es lo que hace cualquier otro
+## interruptor del juego.
+@export var modelo_activo: PackedScene
+
+## Cuánto dura el destello que tapa el cambio, en segundos. El modelo cambia
+## de golpe; esto sólo es el fogonazo que hace que no se vea el corte.
+@export var muda_segundos := 0.35
 
 var _golpes := 0
 var _usado := false
@@ -114,17 +136,25 @@ func _sacudir() -> void:
 	t.tween_property(self, "scale", base, 0.14)
 
 
+## Ya accionado: enciende una luz azul, para que se vea de lejos que ese
+## interruptor ya está usado.
+##
+## El azul es a propósito: el cráter del Isluga es naranja de lado a lado, y el
+## naranja que tenía antes se perdía dentro de la lava. En esa paleta el azul es
+## el color más lejano que hay, y por eso se nota.
 func _encender() -> void:
 	if _luz != null:
 		return
+	var f := global_transform.basis.get_scale()
 	_luz = OmniLight3D.new()
 	_luz.light_color = color_activo
-	_luz.omni_range = 4.5
+	_luz.omni_range = alcance / maxf(f.y, 0.001)
 	_luz.light_energy = 0.0
+	_luz.shadow_enabled = false
 	add_child(_luz)
-	var f := global_transform.basis.get_scale()
 	_luz.position.y = 0.8 / maxf(f.y, 0.001)
-	create_tween().tween_property(_luz, "light_energy", 2.2, 0.35)
+	create_tween().bind_node(self).tween_property(_luz, "light_energy", brillo, 0.35)
+	MUDA.mudar(self, modelo_activo, muda_segundos)
 
 
 func _cartel(texto: String) -> void:

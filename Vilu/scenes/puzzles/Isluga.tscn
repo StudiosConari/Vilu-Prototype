@@ -21,6 +21,8 @@
 [ext_resource type="Script" uid="uid://0h7dta48ifid" path="res://scenes/actors/PlataformaMovil.gd" id="11_hemig"]
 [ext_resource type="PackedScene" uid="uid://dxg4vf6ccq6gu" path="res://models/volcanes/grupo_de_cristales_naranjas.glb" id="11_qkxls"]
 [ext_resource type="PackedScene" uid="uid://shye3cc2cxhe" path="res://models/prop_mediano/cubo_de_piedra_oscura.glb" id="13_l23ka"]
+[ext_resource type="PackedScene" uid="uid://b4yd2hraowchj" path="res://models/prop_mediano/cubo_de_piedra_oscuro_verde.glb" id="90_cuboverde"]
+[ext_resource type="PackedScene" uid="uid://c5v4le4llyblw" path="res://models/focal/obelisko_oscuro_verde.glb" id="91_obelverde"]
 [ext_resource type="Script" uid="uid://bq0mblbemd1e4" path="res://scenes/actors/InterruptorGolpeable.gd" id="14_mw708"]
 [ext_resource type="Script" uid="uid://chf1bghotg52e" path="res://scenes/actors/BloqueCondicionado.gd" id="15_j0fqw"]
 [ext_resource type="Script" uid="uid://7yd12l1fn45f" path="res://scenes/actors/CaminoDeSalida.gd" id="17_6ngw3"]
@@ -61,7 +63,7 @@ transform = Transform3D(14.088906, 0, 0.89371276, 0, 12.2954445, 0, -0.91603166,
 transform = Transform3D(-14.178952, 0, -0.96198994, 0, 12.2954445, 0, 1.1040958, 0, -12.3540125, 141.2107, -30.62535, -125.88233)
 
 [node name="baldosa_de_piedra_de_lava_purpura2" parent="Crater" unique_id=810677777 instance=ExtResource("3_rri60")]
-transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.6481, -2.4354706, -80.637985)
+transform = Transform3D(4.993843, 0, 0, 0, 4.4670134, 0, 0, 0, 4.4670134, 140.6481, -2.4354858, -80.637985)
 
 [node name="baldosa_de_piedra_de_lava_purpura3" parent="Crater" unique_id=1874894023 instance=ExtResource("3_rri60")]
 transform = Transform3D(3.1820097, 0, 0, 0, 2.8463209, 0, 0, 0, 2.8463209, 140.6481, -2.4354706, -86.70652)
@@ -159,66 +161,82 @@ transform = Transform3D(-4.3710375, 0, 2.3510566, 0, 4.7003136, 0, -2.759234, 0,
 [node name="bloques_de_espuma_morada6" parent="Crater" unique_id=623805301 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.9217, -2.2762299, -100.67808)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada27" parent="Crater" unique_id=1165181907 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 147.20137, -2.2762299, -100.67808)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada28" parent="Crater" unique_id=1464925234 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 152.09926, -2.2762299, -100.67808)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada29" parent="Crater" unique_id=311039369 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 157.79863, -2.2762299, -100.67808)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada30" parent="Crater" unique_id=1847565422 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -100.67808)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada31" parent="Crater" unique_id=535283088 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -104.89323)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada32" parent="Crater" unique_id=153381895 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -109.17537)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada33" parent="Crater" unique_id=349154407 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -113.10777)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada34" parent="Crater" unique_id=1867029075 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 163.14024, -2.2762299, -116.942856)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada35" parent="Crater" unique_id=1517225454 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 157.3122, -2.2762299, -116.942856)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada36" parent="Crater" unique_id=85850109 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 152.0843, -2.2762299, -116.942856)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada37" parent="Crater" unique_id=886070830 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 147.04724, -2.2762299, -116.942856)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada38" parent="Crater" unique_id=362045605 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -116.942856)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada39" parent="Crater" unique_id=213162072 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -112.90771)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada40" parent="Crater" unique_id=1073038750 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -108.87424)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloques_de_espuma_morada41" parent="Crater" unique_id=1085992868 instance=ExtResource("8_qn5yr")]
 transform = Transform3D(0.5193562, 0, 0, 0, 0.27679273, 0, 4.440892e-16, 0, 0.40630835, 141.98643, -2.2762299, -104.86236)
 script = ExtResource("9_0ei5h")
+aviso = 3.0
 
 [node name="bloque_de_arcilla_purpura4" parent="Crater" unique_id=1573356554 instance=ExtResource("10_5jbcx")]
 transform = Transform3D(1.0032976, 0, 0.44345653, 0, 1, 0, -0.4675682, 0, 0.95155925, 120.5461, -2.3418121, -104.42684)
@@ -310,36 +328,42 @@ transform = Transform3D(-1.2198933, 0, -0.05538687, 0, 2.1043613, 0, 0.06154504,
 [node name="cubo_de_piedra_oscura2" parent="Crater" unique_id=1585180597 instance=ExtResource("13_l23ka")]
 transform = Transform3D(1.1179378, 0, 0, 0, 0.021286845, 0.9997735, 0, -0.9997735, 0.021286845, 152.17508, -1.3987732, -108.41851)
 script = ExtResource("14_mw708")
+modelo_activo = ExtResource("90_cuboverde")
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
 [node name="cubo_de_piedra_oscura3" parent="Crater" unique_id=1810637644 instance=ExtResource("13_l23ka")]
 transform = Transform3D(1.1179378, 0, 0, 0, 0.028091367, 0.9996055, 0, -0.9996055, 0.028091367, 163.17368, -1.3170319, -97.322975)
 script = ExtResource("14_mw708")
+modelo_activo = ExtResource("90_cuboverde")
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
 [node name="cubo_de_piedra_oscura4" parent="Crater" unique_id=1702797672 instance=ExtResource("13_l23ka")]
 transform = Transform3D(-0.009272822, -1.1173972, 0.0279971, -5.825013e-11, 0.031402957, 0.996294, -1.0010496, 0.010350563, -0.00025933995, 168.72289, -1.3170319, -116.7189)
 script = ExtResource("14_mw708")
+modelo_activo = ExtResource("90_cuboverde")
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
 [node name="cubo_de_piedra_oscura5" parent="Crater" unique_id=881954678 instance=ExtResource("13_l23ka")]
 transform = Transform3D(-1.117931, 0.003337031, -9.381667e-05, -1.7449578e-12, 0.028080316, 0.9996169, 0.0037335344, 0.9992066, -0.028091524, 141.91832, -1.3170319, -120.25809)
 script = ExtResource("14_mw708")
+modelo_activo = ExtResource("90_cuboverde")
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
 [node name="cubo_de_piedra_oscura6" parent="Crater" unique_id=821645777 instance=ExtResource("13_l23ka")]
 transform = Transform3D(-0.012240436, 1.1173576, -0.027996207, 4.6529993e-12, 0.03140286, 0.9962945, 0.9984795, 0.013697778, -0.00034320782, 137.83357, -1.3170319, -100.73966)
 script = ExtResource("14_mw708")
+modelo_activo = ExtResource("90_cuboverde")
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
 [node name="cubo_de_piedra_oscura7" parent="Crater" unique_id=1764829015 instance=ExtResource("13_l23ka")]
 transform = Transform3D(0.034037285, 0.70981747, 0, -0.6390131, 0.03780871, 0, 0, 0, 0.6359297, 111.32537, 1.9030151, -128.36449)
 script = ExtResource("14_mw708")
+modelo_activo = ExtResource("90_cuboverde")
 objetivo = NodePath("../bloque_de_arcilla_purpura10")
 mensaje = "La plataforma cambia de rumbo"
 
@@ -619,6 +643,8 @@ transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 129.15977, 7, -146)
 script = ExtResource("6_cube")
 activacion = 1
 prompt = "[E] Activar el obelisco"
+modelo_activo = ExtResource("91_obelverde")
+nodo_a_mudar = NodePath("obelisko_oscuro1")
 
 [node name="baldosa_de_piedra_de_lava_purpura2" parent="Crater/EmiliaCube" unique_id=1949423962 instance=ExtResource("3_rri60")]
 transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.3835835, -0.117708206, -1.8872695, -0.19831467)
@@ -675,6 +701,8 @@ transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 153.7544, 7, -146)
 script = ExtResource("6_cube")
 activacion = 1
 prompt = "[E] Activar el obelisco"
+modelo_activo = ExtResource("91_obelverde")
+nodo_a_mudar = NodePath("obelisko_oscuro2")
 
 [node name="baldosa_de_piedra_de_lava_purpura3" parent="Crater/BenjaminCube" unique_id=1077435592 instance=ExtResource("3_rri60")]
 transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.4358597, 0.12043953, -1.8872695, -0.19831467)

@@ -160,8 +160,14 @@ func _colgar_interaccion(npc: Node3D, clue: String) -> void:
 	area.collision_mask = 2
 	area.prompt = "[E] Hablar"
 	area.clue = clue
+	# La guía de objetivos le pone un marcador a cada vecino que falte por
+	# hablar, y se lo quita en cuanto habló. Sin esto, «habla con las 4 personas
+	# del pueblo» obliga a recorrer la fiesta preguntando a todo el mundo dos
+	# veces para saber a quién ya le hablaste.
+	npc.add_to_group("objetivo_pistas")
 	area.clue_triggered.connect(func() -> void:
 		clues_given += 1
+		npc.remove_from_group("objetivo_pistas")
 		Misiones.hecho("pistas"))
 	npc.add_child(area)
 	var sshape := CollisionShape3D.new()

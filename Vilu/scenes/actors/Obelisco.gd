@@ -14,6 +14,7 @@ extends Node3D
 ## verdad en los dos.
 
 const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
+const MUDA := preload("res://scenes/core/MudaDeAsset.gd")
 
 ## Prop que cae al activarlo. Vacío = no derriba nada (sólo se enciende).
 @export var barrera: NodePath
@@ -37,6 +38,30 @@ const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 ## Color del brillo que queda cuando está activo.
 @export var color_activo := Color(0.45, 0.85, 1.0)
 
+## Lo que hay que romper ANTES de poder encenderlo.
+##
+## El primero de la mina está detrás de una barricada de tablones, y se podía
+## encender igual: la zona de interacción mide 2,5 m de radio y no sabe nada de
+## lo que haya en medio, así que bastaba con arrimarse por el otro lado y pulsar
+## [E]. La barricada quedaba de adorno y el tramo se saltaba entero.
+##
+## Se listan los `Destructible` que lo tapan. Mientras alguno siga en pie, el
+## obelisco no responde y dice por qué.
+@export var requiere: Array[NodePath] = []
+
+## Qué se lee al intentar encenderlo con el camino todavía tapado.
+@export var aviso_bloqueado := "Los tablones tapan el obelisco. Rompelos primero."
+
+## Versión del modelo a la que se cambia al encenderlo.
+##
+## Los del Isluga tienen una gemela con la energía verde. Vacío = no se cambia
+## de modelo y sólo se enciende la luz, como el resto de los obeliscos.
+@export var modelo_activo: PackedScene
+
+## Cuánto dura el destello que tapa el cambio, en segundos. El modelo cambia
+## de golpe; esto sólo es el fogonazo que hace que no se vea el corte.
+@export var muda_segundos := 0.35
+
 ## Se enciende. Lo escucha la mina para saber cuántos van: el ocultista del
 ## pasillo desaparece al segundo.
 signal activado
@@ -46,6 +71,8 @@ var _zona: Area3D = null
 
 
 func _ready() -> void:
+	# La guía de misión le pone un marcador mientras siga apagado.
+	add_to_group("objetivo_obeliscos")
 	_zona = Area3D.new()
 	_zona.collision_layer = 0
 	_zona.collision_mask  = 2      # capa de los jugadores
@@ -70,6 +97,10 @@ func _ready() -> void:
 func _on_interacted(jugador: Node) -> void:
 	if _activado:
 		return
+	if esta_bloqueado():
+		if aviso_bloqueado != "":
+			_cartel(aviso_bloqueado)
+		return
 	activar(true)
 	# Retirar la zona: sin esto el cartel del HUD se queda puesto mientras el
 	# jugador siga al lado de un obelisco que ya no hace nada.
@@ -77,7 +108,28 @@ func _on_interacted(jugador: Node) -> void:
 		jugador.clear_interactable(_zona)
 
 
+## ¿Queda algo por romper de lo que lo tapa?
+##
+## Lo que ya no está —porque se rompió y se liberó el nodo— no bloquea: cuenta
+## como hecho. Lo que sigue en pie y sabe decir si está roto, se le pregunta; lo
+## que ni siquiera es un destructible, si existe, bloquea.
+func esta_bloqueado() -> bool:
+	for ruta in requiere:
+		var n := get_node_or_null(ruta)
+		if n == null:
+			continue
+		if n.has_method("esta_roto") and bool(n.call("esta_roto")):
+			continue
+		return true
+	return false
+
+
 ## Lo enciende. Con `avisar` a false, en silencio y sin efectos de sonido.
+##
+## OJO: `activar()` NO comprueba la barricada. Es a propósito: la mina la llama
+## para dejar los obeliscos encendidos al volver para el duelo, y ahí no hay que
+## volver a romper nada. El requisito se comprueba donde se decide, que es al
+## pulsar [E].
 ##
 ## Se puede llamar sin jugador delante: la mina lo usa para dejar los obeliscos
 ## ya activados cuando volvés al duelo con el Chupacabras: encontrarte las
@@ -88,6 +140,7 @@ func activar(avisar := true) -> void:
 		return
 	_activado = true
 	activado.emit()
+	remove_from_group("objetivo_obeliscos")
 	Misiones.hecho("obeliscos")
 	_encender()
 	_derribar()
@@ -113,6 +166,7 @@ func _encender() -> void:
 	var f := global_transform.basis.get_scale()
 	luz.position.y = 1.2 / maxf(f.y, 0.001)
 	create_tween().tween_property(luz, "light_energy", 2.4, 0.5)
+	MUDA.mudar(self, modelo_activo, muda_segundos)
 
 
 func _despertar_a_lo_de_detras() -> void:

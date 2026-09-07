@@ -40,6 +40,25 @@ const CLIP_SALTO := "Kick"
 const VELOCIDAD_MINIMA := 0.15
 ## A partir de esta velocidad corre en vez de caminar.
 const VELOCIDAD_DE_CARRERA := 6.0
+## La velocidad a la que el clip de caminar va a su ritmo natural.
+const VELOCIDAD_DE_PASO := 3.0
+
+## Margen de histéresis: hay que pasarse de estos factores para salir del clip
+## en el que se está. Sin margen, una velocidad que ronda el umbral cambia el
+## clip ida y vuelta cada pocos cuadros, y cada cambio reinicia el ciclo.
+const SALIR_DE_QUIETO := 1.6
+const SALIR_DE_CARRERA := 0.85
+
+## Lo más que se acelera un clip. Por encima de esto deja de leerse como andar
+## rápido y se lee como una animación apurada.
+const RITMO_MAXIMO := 1.3
+
+## Con qué prisa la velocidad medida alcanza a la real, por segundo.
+const SUAVIZADO := 8.0
+
+## A qué ritmo va la coz del salto. Por debajo de 1 se ve entera y con peso; a
+## su velocidad de fábrica pasa tan rápido que apenas se registra.
+const RITMO_DEL_SALTO := 0.85
 ## Qué tan rápido acompaña el giro de Benjamín. Se suaviza en vez de copiarlo
 ## de golpe: pegado a su ángulo exacto daba tirones al mover la cámara.
 const GIRO_SUAVE := 8.0
@@ -72,6 +91,8 @@ var _label: Label3D = null
 var _anim: AnimationPlayer = null
 ## Lo que le queda de coz al saltar. Mientras corre, manda sobre el paso.
 var _salto_restante := 0.0
+## Velocidad medida, ya suavizada. La cruda tiembla demasiado para decidir clip.
+var _vel_suave := 0.0
 var _pos_previa := Vector3.ZERO
 
 
@@ -302,19 +323,66 @@ func _animar(delta: float) -> void:
 	# el paso la cortaría por la mitad.
 	if _salto_restante > 0.0:
 		_salto_restante -= delta
+		# El sitio se sigue anotando aunque no se decida clip. Sin esto, al
+		# acabar la coz se medía el desplazamiento de TODO el salto contra un
+		# cuadro, salía una velocidad enorme y el guanaco arrancaba corriendo a
+		# tope durante un instante.
+		_pos_previa = global_position
 		return
 	var d := global_position - _pos_previa
 	d.y = 0.0
 	_pos_previa = global_position
-	var vel := d.length() / maxf(delta, 0.0001)
+	_suavizar_la_velocidad(d.length() / maxf(delta, 0.0001), delta)
 
-	if vel <= VELOCIDAD_MINIMA:
-		_poner(CLIP_QUIETO, 1.0)
-	elif vel >= VELOCIDAD_DE_CARRERA:
-		_poner(CLIP_CORRER, clampf(vel / VELOCIDAD_DE_CARRERA, 0.8, 1.8))
-	else:
-		# El paso acompaña a la velocidad; si fuera fijo, patinaría.
-		_poner(CLIP_CAMINAR, clampf(vel / 4.0, 0.7, 2.4))
+	# Con histéresis: los umbrales de subir y bajar no son el mismo.
+	#
+	# Sin esto, una velocidad que ronda el umbral hace que el clip cambie ida y
+	# vuelta cada pocos cuadros, y cada cambio reinicia el ciclo desde el
+	# principio: es lo que se veía como una caminata cortada.
+	var quiere := _clip_actual()
+	if _vel_suave <= VELOCIDAD_MINIMA:
+		quiere = CLIP_QUIETO
+	elif _vel_suave >= VELOCIDAD_DE_CARRERA:
+		quiere = CLIP_CORRER
+	elif _vel_suave >= VELOCIDAD_MINIMA * SALIR_DE_QUIETO \
+			and _vel_suave <= VELOCIDAD_DE_CARRERA * SALIR_DE_CARRERA:
+		quiere = CLIP_CAMINAR
+
+	_poner(quiere, _ritmo_de(quiere))
+
+
+## Cuál está sonando, para poder dejarlo puesto si la velocidad quedó en tierra
+## de nadie entre dos umbrales.
+func _clip_actual() -> String:
+	if _anim == null:
+		return CLIP_QUIETO
+	var a := String(_anim.assigned_animation)
+	return a if a in [CLIP_QUIETO, CLIP_CAMINAR, CLIP_CORRER] else CLIP_QUIETO
+
+
+## A qué ritmo va cada clip.
+##
+## El margen es estrecho a propósito. Estaba en 0.7–2.4 para el paso, y un ciclo
+## de caminar a más del doble de velocidad no se lee como «va rápido»: se lee
+## como una animación acelerada, que es justo lo que se sentía apurado. Ahora se
+## acompaña la velocidad lo justo para que no patine.
+func _ritmo_de(clip: String) -> float:
+	match clip:
+		CLIP_CORRER:
+			return clampf(_vel_suave / VELOCIDAD_DE_CARRERA, 0.9, RITMO_MAXIMO)
+		CLIP_CAMINAR:
+			return clampf(_vel_suave / VELOCIDAD_DE_PASO, 0.85, RITMO_MAXIMO)
+		_:
+			return 1.0
+
+
+## La velocidad, pero sin los saltos de un cuadro para otro.
+##
+## Se mide restando posiciones, y eso da una cifra que tiembla: un tirón de la
+## física o un cuadro largo bastaban para cruzar un umbral y cambiar de clip.
+func _suavizar_la_velocidad(cruda: float, delta: float) -> void:
+	var t := clampf(delta * SUAVIZADO, 0.0, 1.0)
+	_vel_suave = lerpf(_vel_suave, cruda, t)
 
 
 ## Le pone un clip, sin relanzarlo si ya es el que está sonando.
@@ -332,8 +400,13 @@ func _poner(clip: String, ritmo: float) -> void:
 func saltar() -> void:
 	if _anim == null or not _anim.has_animation(CLIP_SALTO):
 		return
+	# Saltando otra vez a media coz NO se relanza. Encadenando brincos —que es lo
+	# normal cruzando el cráter— la coz volvía a empezar cada vez y no llegaba a
+	# verse nunca entera: sólo el arranque, una y otra vez.
+	if _salto_restante > 0.0:
+		return
 	var a := _anim.get_animation(CLIP_SALTO)
 	a.loop_mode = Animation.LOOP_NONE
-	_anim.speed_scale = 1.0
+	_anim.speed_scale = RITMO_DEL_SALTO
 	_anim.play(CLIP_SALTO)
-	_salto_restante = a.length
+	_salto_restante = a.length / RITMO_DEL_SALTO

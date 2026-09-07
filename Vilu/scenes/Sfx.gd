@@ -32,12 +32,36 @@ func _ready() -> void:
 	_sounds["jump"] = _gen_tone(0.20, 280.0, 640.0, 0.28, 2.2)
 	_sounds["fire"] = _gen_tone(0.28, 520.0, 180.0, 0.7, 1.2)
 	_sounds["boss"] = _gen_tone(0.40, 85.0, 42.0, 0.5, 1.6)
+	# Los del arco son grabados, no generados. Si falta el archivo se quedan con
+	# el tono sintético de siempre: mejor un sonido feo que un juego mudo.
+	for id: String in GRABADOS:
+		var s := _grabado(GRABADOS[id])
+		if s != null:
+			_sounds[id] = s
 	# Musica de fondo (loop).
 	_music = AudioStreamPlayer.new()
 	_music.stream = _musica_de_fondo()
 	add_child(_music)
 	apply_music()
 	_music.play()
+
+
+## Efectos que vienen de un archivo en vez de generarse.
+##
+## Los `.m4a` que llegaron no los lee Godot —admite wav, ogg y mp3—, así que se
+## convirtieron a wav mono de 44,1 kHz con el audaspace que trae Blender. Son
+## cortos (0,7 s y 0,3 s): en wav no hay que descomprimir nada al dispararlos.
+const GRABADOS := {
+	"tensar_arco": "res://audio/sfx/tensar_arco.wav",
+	"flecha": "res://audio/sfx/flecha.wav",
+}
+
+
+func _grabado(ruta: String) -> AudioStream:
+	if not ResourceLoader.exists(ruta):
+		push_warning("Sfx: falta %s; se usa el sonido generado" % ruta)
+		return null
+	return load(ruta) as AudioStream
 
 
 ## La canción del juego.

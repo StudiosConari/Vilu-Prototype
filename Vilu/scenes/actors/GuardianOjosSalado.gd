@@ -22,6 +22,7 @@ var _met := false
 
 
 func _ready() -> void:
+	add_to_group("objetivo_ojos_volcan")
 	_build()
 
 

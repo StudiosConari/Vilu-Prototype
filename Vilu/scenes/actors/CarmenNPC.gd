@@ -105,6 +105,8 @@ func _ready() -> void:
 		# DialogueManager no existe fuera del juego— ni apoyarla en el suelo:
 		# eso le movería el transform de verdad, y ése SÍ se guarda en la escena.
 		return
+	# Objetivo de la primera misión: la guía le pone el marcador encima.
+	add_to_group("objetivo_carmen")
 	$Interact.interacted.connect(_on_interacted)
 	DialogueManager.dialogue_ended.connect(_on_dialogue_ended)
 	# Diferido: en _ready() el espacio físico todavía no acepta consultas.
@@ -530,6 +532,7 @@ func _on_dialogue_ended(_res: Resource) -> void:
 	_hablando = false
 	if _pending_walk:
 		_pending_walk = false
+		remove_from_group("objetivo_carmen")
 		_has_walked = true
 		Misiones.hecho("carmen")
 		_entrar_a_la_iglesia()
@@ -538,6 +541,7 @@ func _on_dialogue_ended(_res: Resource) -> void:
 		GameManager.unlock("bow")
 		if GameManager.get_beat() < 2:
 			GameManager.set_beat(2)
+		remove_from_group("objetivo_tirana")
 		GameManager.conceder("tirana")
 
 
@@ -598,6 +602,10 @@ func _ponerse_a_bailar() -> void:
 		var vis := get_node_or_null("Visual") as Node3D
 		if vis != null:
 			vis.rotation.y = 0.0
+	# «Busca a la verdadera Tirana»: ES ella, bailando entre los danzantes. El
+	# marcador se le cuelga recién ahora, no antes: mientras camina hacia la
+	# iglesia todavía es Carmen, y señalarla ahí contaba el giro por adelantado.
+	add_to_group("objetivo_tirana")
 	_montar(modelo_tirana, "tirana")
 	_bailando = true
 	_apoyar_en_el_suelo()
