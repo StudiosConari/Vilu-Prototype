@@ -123,6 +123,9 @@ script = ExtResource("1_cima")
 [node name="PlayerSpawn" type="Marker3D" parent="." unique_id=941184287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.086365, 28.884237)
 
+[node name="TravelSpawn" type="Marker3D" parent="." unique_id=941184289]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 118.5, -38.5)
+
 [node name="CheckpointBifurcacion" type="Marker3D" parent="." unique_id=941184288]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14078581, 110.18517, -7.549353)
 

@@ -290,7 +290,7 @@ func _build_visual() -> void:
 	# Etiqueta: va colgada del guanaco y NO del visual girado, para que el texto
 	# no salga del revés.
 	_label           = Label3D.new()
-	_label.text      = "Guanaco\n[G] embestir · [Q] montar"
+	_label.text      = Botones.traducir("Guanaco\n[G] embestir · [Q] montar")
 	_label.font_size = 18
 	# Por encima de la cabeza: con el modelo al doble, a 1.4 quedaba dentro suyo.
 	_label.position  = Vector3(0, 0.6 + ALTO, 0)
