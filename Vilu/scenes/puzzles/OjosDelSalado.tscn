@@ -15,6 +15,7 @@
 [ext_resource type="Script" uid="uid://dlppkkid1ly4f" path="res://scenes/actors/MovingWall.gd" id="10_wall"]
 [ext_resource type="PackedScene" path="res://scenes/core/LavaToon.tscn" id="11_7hfeh"]
 [ext_resource type="Script" uid="uid://d202l2l3g8ore" path="res://scenes/actors/LavaQuema.gd" id="12_7xror"]
+[ext_resource type="Material" path="res://art_placeholders/mat_viento_descendente.tres" id="13_khlu8"]
 [ext_resource type="PackedScene" path="res://scenes/core/NieblaToon.tscn" id="13_x2ft7"]
 [ext_resource type="PackedScene" path="res://scenes/core/MarToon.tscn" id="14_iktpd"]
 [ext_resource type="PackedScene" uid="uid://coo4tfla83e51" path="res://models/volcanes/formacion_rocosa_volcanica.glb" id="16_r8ewl"]
@@ -69,7 +70,7 @@ size = Vector3(5, 8.030762, 4)
 size = Vector3(36.12329, 3, 10.148315)
 
 [sub_resource type="BoxShape3D" id="shape_up1"]
-size = Vector3(5, 7, 4)
+size = Vector3(5, 7, 3.8706055)
 
 [sub_resource type="BoxMesh" id="mesh_up1"]
 size = Vector3(5, 7, 4)
@@ -81,7 +82,7 @@ script = ExtResource("1_cima")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.086365, 28.884237)
 
 [node name="CheckpointBifurcacion" type="Marker3D" parent="." unique_id=941184288]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 109.5, -22.2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14078581, 110.18517, -7.549353)
 
 [node name="MountPlate" type="Area3D" parent="." unique_id=1600259397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.17746, 20.888905)
@@ -207,6 +208,7 @@ shape = SubResource("shape_wall")
 transform = Transform3D(-0.99994934, 0, -0.010065397, 0, 1, 0, 0.010065397, 0, -0.99994934, 17.342886, 110.17746, 3.9452045)
 collision_layer = 0
 script = ExtResource("9_switch")
+mision = "ojos_volcan"
 
 [node name="Shape" type="CollisionShape3D" parent="ArrowSwitch" unique_id=1778879065]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1054306, 0.7716446, 3.4365225)
@@ -218,13 +220,89 @@ collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 active = false
+ajustar_disparador = null
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft2" unique_id=1230605528]
 shape = SubResource("shape_up2")
 
 [node name="Mesh" type="MeshInstance3D" parent="Updraft2" unique_id=1992685540]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015380859, 0)
+transform = Transform3D(0.59852, 0, -9.313226e-10, 0, 1.0000001, 0, -9.313226e-10, 0, 1.0060902, 0.11109775, 0.015365601, -0.0016326904)
+visible = false
 material_override = ExtResource("24_ktn8s")
+instance_shader_parameters/altura = 8.030762
+mesh = SubResource("mesh_up2")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft3" type="Area3D" parent="." unique_id=1306848924]
+transform = Transform3D(2.875667, 0, -0.014283946, 0, 1.4454538, 0, 0.04224451, 0, 0.97233635, -10.445465, 115.58064, -34.544193)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+ajustar_disparador = null
+hacia_abajo = true
+
+[node name="Shape" type="CollisionShape3D" parent="Updraft3" unique_id=1193060298]
+transform = Transform3D(1, 0, 0, 0, 0.76888424, 0, 0, 0, 1, 0, 1.5924835, 0)
+shape = SubResource("shape_up2")
+
+[node name="Mesh" type="MeshInstance3D" parent="Updraft3" unique_id=1487555010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5179214, 0)
+material_override = ExtResource("13_khlu8")
+instance_shader_parameters/altura = 8.030762
+mesh = SubResource("mesh_up2")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft5" type="Area3D" parent="." unique_id=293338980]
+transform = Transform3D(-0.0066058203, 0, 0.80630034, 0, 1.4454538, 0, -2.877098, 0, -0.0018512673, -3.1075077, 115.58064, -30.960314)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+ajustar_disparador = null
+hacia_abajo = true
+
+[node name="Shape" type="CollisionShape3D" parent="Updraft5" unique_id=433693029]
+transform = Transform3D(0.5832035, 0, 5.820766e-10, 0, 0.7944935, 0, 0, 0, 0.99904317, 0.22379875, 1.9279251, 8.404977)
+shape = SubResource("shape_up2")
+
+[node name="Mesh2" type="MeshInstance3D" parent="Updraft5" unique_id=1045663011]
+transform = Transform3D(0.6977563, 0, 2.3283064e-10, 0, 1, 0, -1.8626451e-09, 0, 0.99925, 0.27067184, 1.5179214, 8.421385)
+material_override = ExtResource("13_khlu8")
+instance_shader_parameters/altura = 8.030762
+mesh = SubResource("mesh_up2")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft6" type="Area3D" parent="." unique_id=1409599966]
+transform = Transform3D(-0.0066058203, 0, 0.80630034, 0, 1.4454538, 0, -2.877098, 0, -0.0018512673, -9.303577, 115.58064, -30.960314)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+ajustar_disparador = null
+hacia_abajo = true
+
+[node name="Shape" type="CollisionShape3D" parent="Updraft6" unique_id=1599880677]
+transform = Transform3D(0.72526306, 0, 5.820766e-11, 0, 1, 0, -1.3969839e-09, 0, 0.9993692, 0.38182545, 0.9224396, 8.467718)
+shape = SubResource("shape_up2")
+
+[node name="Mesh2" type="MeshInstance3D" parent="Updraft6" unique_id=108069303]
+transform = Transform3D(0.6977563, 0, 2.3283064e-10, 0, 1, 0, -1.8626451e-09, 0, 0.99925, 0.27067184, 1.5179214, 8.421385)
+material_override = ExtResource("13_khlu8")
+instance_shader_parameters/altura = 8.030762
+mesh = SubResource("mesh_up2")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft4" type="Area3D" parent="." unique_id=2098222137]
+transform = Transform3D(2.875667, 0, -0.014283946, 0, 1.4454538, 0, 0.04224451, 0, 0.97233635, -0.7726402, 107.362854, -13.062969)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+hacia_abajo = true
+
+[node name="Shape" type="CollisionShape3D" parent="Updraft4" unique_id=2047130681]
+shape = SubResource("shape_up2")
+
+[node name="Mesh" type="MeshInstance3D" parent="Updraft4" unique_id=480632264]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5179214, 0)
+material_override = ExtResource("13_khlu8")
 instance_shader_parameters/altura = 8.030762
 mesh = SubResource("mesh_up2")
 surface_material_override/0 = ExtResource("4_trigger")
@@ -415,19 +493,19 @@ transform = Transform3D(2.2228262, 0, 0, 0, 1.6764925, 0, 0, 0, 1.9009634, -0.00
 transform = Transform3D(2.2228262, 0, 0, 0, 1.6764925, 0, 0, 0, 1.9009634, 17.091797, 6.1865463, -7.2308283)
 
 [node name="camino_de_ladrillos_de_piedra3" parent="Plataforma" unique_id=1055187894 instance=ExtResource("3_2f63k")]
-transform = Transform3D(3.1611645, 0, 0, 0, 3.1611645, 0, 0, 0, 3.071456, -23.45038, -0.71952057, -15.561633)
+transform = Transform3D(3.1611645, 0, 0, 0, 3.1611645, 0, 0, 0, 3.071456, -23.45038, 4.8998947, -15.561633)
 
 [node name="camino_de_ladrillos_de_piedra4" parent="Plataforma" unique_id=880351364 instance=ExtResource("3_2f63k")]
-transform = Transform3D(3.1611645, 0, 0, 0, 3.1611645, 0, 0, 0, 3.071456, -23.45038, 7.567581, -15.561633)
+transform = Transform3D(3.1611645, 0, 0, 0, 3.1611645, 0, 0, 0, 3.071456, -23.45038, 16.142624, -15.561633)
 
 [node name="plataforma_cubica_26" parent="Plataforma" unique_id=372932262 instance=ExtResource("21_7lo23")]
-transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -17.83794, 5.041191, -28.800371)
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -17.83794, 12.787178, -28.800371)
 
 [node name="plataforma_cubica_27" parent="Plataforma" unique_id=1084082435 instance=ExtResource("21_7lo23")]
-transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -13.310589, 7.084175, -28.800371)
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -13.310589, 14.830162, -28.800371)
 
 [node name="plataforma_cubica_28" parent="Plataforma" unique_id=502175865 instance=ExtResource("21_7lo23")]
-transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -6.341948, 7.084175, -28.800371)
+transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -6.341948, 14.830162, -28.800371)
 
 [node name="plataforma_cubica_29" parent="Plataforma" unique_id=83090782 instance=ExtResource("21_7lo23")]
 transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.00026287138, 0, 0.62383074, -6.341948, -0.05242157, -23.97547)
@@ -437,21 +515,6 @@ transform = Transform3D(0.62383074, 0, 0.00026287138, 0, 0.6238308, 0, -0.000262
 
 [node name="camino_de_ladrillos_de_piedra5" parent="Plataforma" unique_id=359548896 instance=ExtResource("3_2f63k")]
 transform = Transform3D(2.3936193, 0, 0, 0, 2.3936193, 0, 0, 0, 2.5664861, 0.5749148, 9.914993, -31.62067)
-
-[node name="camino_de_ladrillos_de_piedra10" parent="Plataforma" unique_id=1535940538 instance=ExtResource("3_2f63k")]
-transform = Transform3D(2.5739353, 0, 0, 0, -0.03324482, -1.2718458, 0, 2.377704, -0.017782822, -2.3069787, 9.498253, -27.13742)
-
-[node name="camino_de_ladrillos_de_piedra11" parent="Plataforma" unique_id=466171601 instance=ExtResource("3_2f63k")]
-transform = Transform3D(2.5739353, 0, 0, 0, -0.03324482, -1.2718458, 0, 2.377704, -0.017782822, -2.3069787, 9.498253, -21.97188)
-
-[node name="camino_de_ladrillos_de_piedra7" parent="Plataforma" unique_id=1306682897 instance=ExtResource("3_2f63k")]
-transform = Transform3D(1.6870073, 0, 0, 0, -0.03324482, -1.2718458, 0, 2.377704, -0.017782822, -2.8526635, 4.984314, -22.06256)
-
-[node name="camino_de_ladrillos_de_piedra8" parent="Plataforma" unique_id=1135982265 instance=ExtResource("3_2f63k")]
-transform = Transform3D(-0.015539017, -2.374382, 0.017708378, 4.3522096, -0.008850216, -0.014198949, 0.04901257, 0.03310101, 1.2664499, -2.763013, 9.5242, -24.477728)
-
-[node name="camino_de_ladrillos_de_piedra9" parent="Plataforma" unique_id=186984236 instance=ExtResource("3_2f63k")]
-transform = Transform3D(-0.015539017, -2.374382, 0.017708378, 4.3522096, -0.008850216, -0.014198949, 0.04901257, 0.03310101, 1.2664499, -2.763013, 4.7634735, -24.540077)
 
 [node name="corrientes de viento" type="Node3D" parent="." unique_id=175493314]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.17746, 0)
@@ -488,12 +551,13 @@ mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft4" type="Area3D" parent="corrientes de viento" unique_id=1402414908]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.766629, 3.5, 0.9475455)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.766629, 5.061783, 0.9475455)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft4" unique_id=635202933]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66684914, 0, 0.5898988)
 shape = SubResource("shape_up1")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft4" unique_id=1769692706]
@@ -504,7 +568,7 @@ mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft5" type="Area3D" parent="corrientes de viento" unique_id=1843022612]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.847832, 3.5, -4.521416)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.847832, 7.604286, -4.521416)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
@@ -519,7 +583,7 @@ mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft6" type="Area3D" parent="corrientes de viento" unique_id=1472735544]
-transform = Transform3D(1.0408889, 0, 0, 0, 1.3555839, 0, 0, 0, 3.0277512, -23.68987, 4.24382, -15.5199585)
+transform = Transform3D(1.0408889, 0, 0, 0, 1.3555839, 0, 0, 0, 3.0277512, -23.68987, 11.303619, -15.5199585)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
@@ -534,7 +598,7 @@ mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft7" type="Area3D" parent="corrientes de viento" unique_id=116461592]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.847832, 3.5, -28.787169)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.847832, 10.559799, -28.787169)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
@@ -549,88 +613,115 @@ mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft8" type="Area3D" parent="corrientes de viento" unique_id=592343307]
-transform = Transform3D(1, 0, 0, 0, 1.3261883, 0, 0, 0, 1, -6.5414696, 4.8944855, -19.043442)
+transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -6.5414696, 1.0718155, -20.877666)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft8" unique_id=606117827]
+transform = Transform3D(0.3229641, 0, 0, 0, 0.2275932, 0, 0, 0, 0.47370368, 0, 0, 0)
 shape = SubResource("shape_up1")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft8" unique_id=2026389585]
+transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
+material_override = ExtResource("24_ktn8s")
+instance_shader_parameters/altura = 7.0
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft12" type="Area3D" parent="corrientes de viento" unique_id=1630743222]
+transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -6.5414696, 3.3069077, -18.634802)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft12" unique_id=1678222311]
+transform = Transform3D(0.4862671, 0, 0, 0, 0.29487914, 0, 0, 0, 0.51672494, 0, 0, 0.120479584)
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft12" unique_id=1301256421]
+transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
+material_override = ExtResource("24_ktn8s")
+instance_shader_parameters/altura = 7.0
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft17" type="Area3D" parent="corrientes de viento" unique_id=1120227617]
+transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -6.5414696, 5.506096, -16.542015)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft17" unique_id=2140353859]
+transform = Transform3D(0.34955573, 0, 0, 0, 0.18691003, 0, 0, 0, 0.5813149, 0, 0, 0)
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft17" unique_id=1633557899]
+transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
+material_override = ExtResource("24_ktn8s")
+instance_shader_parameters/altura = 7.0
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft15" type="Area3D" parent="corrientes de viento" unique_id=1971659890]
+transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -4.0846014, 10.903458, -18.634802)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft15" unique_id=571481531]
+transform = Transform3D(0.36732852, 0, 0, 0, 0.22500521, 0, 0, 0, 0.54779446, 1.037014, 0, -0.35627365)
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft15" unique_id=538902666]
+transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0.95908666, 0, -0.45962715)
+material_override = ExtResource("24_ktn8s")
+instance_shader_parameters/altura = 7.0
+mesh = SubResource("mesh_up1")
+surface_material_override/0 = ExtResource("4_trigger")
+
+[node name="Updraft16" type="Area3D" parent="corrientes de viento" unique_id=1443526941]
+transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -8.80201, 8.189293, -18.634802)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("5_up")
+
+[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft16" unique_id=1922720854]
+transform = Transform3D(0.41679382, 0, 0, 0, 0.28264177, 0, 0, 0, 0.5040447, 0, 0, 0)
+shape = SubResource("shape_up1")
+
+[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft16" unique_id=206045434]
+transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
 material_override = ExtResource("24_ktn8s")
 instance_shader_parameters/altura = 7.0
 mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft9" type="Area3D" parent="corrientes de viento" unique_id=667541834]
-transform = Transform3D(0.3363176, 0, 0, 0, 0.8528358, 0, 0, 0, 0.44676912, -0.7645006, 6.6639633, -19.08202)
+transform = Transform3D(0.3363176, 0, 0, 0, 0.8528358, 0, 0, 0, 0.44676912, -0.7645006, 13.7237625, -19.08202)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft9" unique_id=905611452]
+transform = Transform3D(0.849634, 0, 0, 0, 1, 0, 0, 0, 1, 2.6918824, 0, 0)
 shape = SubResource("shape_up1")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft9" unique_id=1919837966]
+transform = Transform3D(1, 0, 0, 0, 1.5094471, 0, 0, 0, 1, 2.9606142, 0, 0)
 material_override = ExtResource("24_ktn8s")
 instance_shader_parameters/altura = 7.0
 mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft10" type="Area3D" parent="corrientes de viento" unique_id=2051967145]
-transform = Transform3D(0.3363176, 0, 0, 0, 0.19227214, 0, 0, 0, 0.44676912, -0.7645006, 9.326874, -22.052025)
+transform = Transform3D(0.3363176, 0, 0, 0, 0.19227214, 0, 0, 0, 0.44676912, -0.7645006, 16.386673, -22.052025)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft10" unique_id=393215960]
 shape = SubResource("shape_up1")
-
-[node name="Updraft11" type="Area3D" parent="corrientes de viento" unique_id=546829695]
-transform = Transform3D(0.3363176, 0, 0, 0, 0.38250136, 0, 0, 0, 0.44676912, -0.7645006, 5.019562, -23.177782)
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("5_up")
-
-[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft11" unique_id=1602978594]
-shape = SubResource("shape_up1")
-
-[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft11" unique_id=862976629]
-material_override = ExtResource("24_ktn8s")
-instance_shader_parameters/altura = 7.0
-mesh = SubResource("mesh_up1")
-surface_material_override/0 = ExtResource("4_trigger")
-
-[node name="Updraft13" type="Area3D" parent="corrientes de viento" unique_id=2077926217]
-transform = Transform3D(0.3363176, 0, 0, 0, 0.38250136, 0, 0, 0, 0.44676912, -0.7645006, 7.803566, -25.834753)
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("5_up")
-
-[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft13" unique_id=938955117]
-shape = SubResource("shape_up1")
-
-[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft13" unique_id=858342763]
-material_override = ExtResource("24_ktn8s")
-instance_shader_parameters/altura = 7.0
-mesh = SubResource("mesh_up1")
-surface_material_override/0 = ExtResource("4_trigger")
-
-[node name="Updraft14" type="Area3D" parent="corrientes de viento" unique_id=303221662]
-transform = Transform3D(0.3363176, 0, 0, 0, 0.38250136, 0, 0, 0, 0.44676912, -0.7645006, 10.511513, -23.41205)
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("5_up")
-
-[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft14" unique_id=67518905]
-shape = SubResource("shape_up1")
-
-[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft14" unique_id=706482079]
-material_override = ExtResource("24_ktn8s")
-instance_shader_parameters/altura = 7.0
-mesh = SubResource("mesh_up1")
-surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Interruptores" type="Node3D" parent="." unique_id=296354901]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.17746, 0)

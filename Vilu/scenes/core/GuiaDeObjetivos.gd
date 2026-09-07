@@ -90,7 +90,7 @@ func _objetivos() -> Array[Node3D]:
 		if n is Node3D and (n as Node3D).is_inside_tree():
 			r.append(n as Node3D)
 	if not r.is_empty():
-		return r
+		return _los_mas_cercanos(r)
 	# Sin objetos marcados: será una misión de ir a un sitio.
 	var zona := String(DESTINOS.get(_mision, ""))
 	if zona != "" and _game != null and _game.has_method("puerta_hacia"):
@@ -98,6 +98,31 @@ func _objetivos() -> Array[Node3D]:
 		if puerta != null:
 			r.append(puerta)
 	return r
+
+
+## Cuántos marcadores se muestran a la vez, como mucho.
+##
+## Cuatro es lo que piden las misiones que ya los llevaban —cuatro guanacos,
+## cuatro cazadores—, así que ésas se ven enteras. El tope existe por el cráter
+## del Isluga: entre los seis cubos-interruptor, los dos del ascensor y el
+## guardián son nueve, y nueve esferas flotando a la vez dejan de ser una guía
+## y pasan a ser un adorno de navidad.
+const MARCAS_A_LA_VEZ := 4
+
+
+## Los `MARCAS_A_LA_VEZ` más cercanos al jugador. Son los que le sirven ahora;
+## los del otro extremo del cráter ya aparecerán al acercarse.
+func _los_mas_cercanos(todos: Array[Node3D]) -> Array[Node3D]:
+	if todos.size() <= MARCAS_A_LA_VEZ:
+		return todos
+	var quien := _jugador()
+	if quien == null:
+		return todos.slice(0, MARCAS_A_LA_VEZ)
+	var desde := quien.global_position
+	todos.sort_custom(func(a: Node3D, b: Node3D) -> bool:
+		return a.global_position.distance_squared_to(desde) \
+			< b.global_position.distance_squared_to(desde))
+	return todos.slice(0, MARCAS_A_LA_VEZ)
 
 
 func _limpiar() -> void:

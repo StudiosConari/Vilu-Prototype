@@ -53,6 +53,10 @@ enum Activacion { GOLPE, INTERACTUAR }
 ## de golpe; esto sólo es el fogonazo que hace que no se vea el corte.
 @export var muda_segundos := 0.35
 
+## A qué misión pertenece, para que la guía le ponga marcador mientras siga sin
+## accionar. Vacío = sin marcador.
+@export var mision := ""
+
 @export var hits_needed := 1
 @export var reset_on_overhit := false
 
@@ -69,6 +73,8 @@ func _ready() -> void:
 	if _mesh:
 		_mesh.material_override = _mat
 	_refresh_color()
+	if mision != "":
+		add_to_group("objetivo_" + mision)
 	if activacion == Activacion.INTERACTUAR:
 		_montar_zona()
 		return
@@ -136,6 +142,8 @@ func _apply_state() -> void:
 		_satisfied = (_hits >= hits_needed)
 	_refresh_color()
 	if _satisfied and not was:
+		if mision != "":
+			remove_from_group("objetivo_" + mision)
 		if activacion == Activacion.INTERACTUAR:
 			_encender()
 		activated.emit()
