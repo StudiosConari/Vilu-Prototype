@@ -15,6 +15,7 @@ extends RefCounted
 ##   ...   panel.visible = true
 
 const PLACA := preload("res://scenes/ui/Placa.gd")
+const CONTROLES := preload("res://scenes/ui/PanelDeControles.gd")
 
 ## Ancho del panel, en píxeles de interfaz.
 const ANCHO := 620.0
@@ -53,11 +54,46 @@ static func construir() -> Control:
 	vb.add_child(_fila("Música", Save.music_vol, Save.set_music_vol, false))
 	vb.add_child(_fila("Efectos", Save.sfx_vol, Save.set_sfx_vol, true))
 	vb.add_child(PLACA.filete())
+	vb.add_child(_pantalla())
+	vb.add_child(PLACA.filete())
+
+	# Los controles no se cambian acá, se MIRAN: es una chuleta. Van en dos
+	# pantallas porque enseñar las dos a la vez es el doble de texto para leer,
+	# y quien agarra un mando no quiere saber qué tecla hace qué.
+	var ver_teclado := PLACA.boton("Controles: teclado y ratón")
+	var ver_mando := PLACA.boton("Controles: gamepad")
+	vb.add_child(ver_teclado)
+	vb.add_child(ver_mando)
+	vb.add_child(PLACA.filete())
 
 	var volver := PLACA.boton("Volver")
 	volver.pressed.connect(func() -> void: raiz.visible = false)
 	vb.add_child(volver)
+
+	# Las dos chuletas se cuelgan de la raíz del panel, ENCIMA de todo lo demás:
+	# se abren desde acá y tapan las opciones mientras se leen.
+	for par in [[ver_teclado, false], [ver_mando, true]]:
+		var hoja: Control = CONTROLES.construir(par[1])
+		raiz.add_child(hoja)
+		(par[0] as Button).pressed.connect(func() -> void: hoja.visible = true)
 	return raiz
+
+
+## Pantalla completa o ventana.
+##
+## Un botón que alterna y no dos, porque son dos estados y sólo uno puede estar
+## puesto: dos botones obligan a pintar cuál está activo, y eso es más pantalla
+## para decir lo mismo. El texto dice EN QUÉ ESTÁ, no a dónde te lleva.
+static func _pantalla() -> Control:
+	var b := PLACA.boton(_texto_de_pantalla())
+	b.pressed.connect(func() -> void:
+		Save.set_pantalla_completa(not Save.pantalla_completa)
+		b.text = _texto_de_pantalla())
+	return b
+
+
+static func _texto_de_pantalla() -> String:
+	return "Pantalla: completa" if Save.pantalla_completa else "Pantalla: ventana"
 
 
 ## Un deslizador con su nombre encima.
