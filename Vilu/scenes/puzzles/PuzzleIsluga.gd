@@ -36,6 +36,7 @@ func _ready() -> void:
 	_wire_elevator("BenjaminCube", "EmiliaVert")
 	_hint("Isluga (cooperativo): subí por TU plataforma. Activá tu obelisco con [E] para poner en marcha el ascensor del OTRO. Arriba los espera el guardián.")
 	_spawn_guardian()
+	_abrir_si_ya_estaba_resuelto()
 
 
 func _wire_elevator(cube_name: String, vert_name: String) -> void:
@@ -105,3 +106,27 @@ func _hint(text: String) -> void:
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud and hud.has_method("show_hint"):
 		hud.show_hint(text)
+
+
+## Si el cráter ya se superó en esta partida, el camino de salida está puesto
+## desde el primer cuadro.
+##
+## Al volver al Isluga por el portal del Ojos del Salado la escena se monta de
+## cero: el camino nace escondido y sólo lo abre el guardián, que ya no tiene
+## nada que decir. Sin esto se vuelve a un cráter sin salida.
+##
+## Se mira el LOGRO y no `_solved`, que es de esta instancia y siempre nace en
+## false; el logro lo concede `_solve()` y sobrevive al cambio de región.
+func _abrir_si_ya_estaba_resuelto() -> void:
+	if not GameManager.tiene_logro("isluga"):
+		return
+	_solved = true
+	# Diferido: el camino guarda las alturas y las capas de sus bloques en su
+	# propio _ready, y este nodo puede correr antes que él.
+	_abrir_el_camino.call_deferred()
+
+
+func _abrir_el_camino() -> void:
+	var camino := get_tree().get_first_node_in_group("camino_salida")
+	if camino != null and camino.has_method("dejar_abierto"):
+		camino.call("dejar_abierto")

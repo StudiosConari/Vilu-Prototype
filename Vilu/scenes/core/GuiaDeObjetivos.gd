@@ -27,6 +27,9 @@ const MARCADOR := preload("res://scenes/actors/MarcadorDeObjetivo.gd")
 const DESTINOS := {
 	"mina": "Mina",
 	"volver_mina": "Mina",
+	# El Chupacabras vive en el fondo de la mina: hasta entrar, lo que hay que
+	# señalar es la puerta.
+	"chupacabras": "Mina",
 	"alicanto": "Alicanto",
 	"yastay": "Yastay",
 	"isluga_cima": "Isluga",
@@ -67,9 +70,16 @@ func _process(delta: float) -> void:
 ## Cuelga marcadores de lo que falte y quita los de lo que ya no está.
 func _repasar() -> void:
 	var quiero := _objetivos()
-	for n: Node3D in _marcas.keys():
+	# SIN tipar la variable del bucle.
+	#
+	# `for n: Node3D in ...` ASIGNA antes de que el cuerpo pueda comprobar nada,
+	# y asignar una instancia ya liberada revienta ahí mismo: "Trying to assign
+	# invalid previously freed instance". Y objetivos liberados los hay a montones
+	# —un guanaco curado, un cazador revisado, la región entera al cambiar de
+	# zona—. Sin tipo, la comprobación llega a tiempo.
+	for n in _marcas.keys():
 		if not is_instance_valid(n) or not quiero.has(n):
-			var vieja: Node = _marcas[n]
+			var vieja = _marcas[n]
 			if is_instance_valid(vieja):
 				vieja.queue_free()
 			_marcas.erase(n)
@@ -87,17 +97,62 @@ func _objetivos() -> Array[Node3D]:
 	if _mision == "":
 		return r
 	for n in get_tree().get_nodes_in_group("objetivo_" + _mision):
-		if n is Node3D and (n as Node3D).is_inside_tree():
+		if n is Node3D and (n as Node3D).is_inside_tree() and not _ya_esta_hecho(n):
 			r.append(n as Node3D)
 	if not r.is_empty():
 		return _los_mas_cercanos(r)
+
 	# Sin objetos marcados: será una misión de ir a un sitio.
 	var zona := String(DESTINOS.get(_mision, ""))
-	if zona != "" and _game != null and _game.has_method("puerta_hacia"):
+	if zona == "" or _game == null:
+		return r
+	if _game.has_method("puerta_hacia"):
 		var puerta: Node3D = _game.call("puerta_hacia", zona)
 		if puerta != null:
 			r.append(puerta)
+			return r
+	# Sin puerta: es una zona del MUNDO ABIERTO, a la que se llega caminando.
+	#
+	# Faltaba, y se notaba: «Busca al Alicanto» y «Busca al Yastay» no marcaban
+	# nada. Yo sólo sabía señalar puertas, y esas dos zonas no tienen ninguna.
+	# Como no hay nodo al que colgarle el marcador, se planta uno propio en el
+	# sitio de la zona.
+	if _game.has_method("sitio_de_zona"):
+		var donde: Vector3 = _game.call("sitio_de_zona", zona)
+		if donde != Vector3.INF:
+			r.append(_poste_en(donde))
 	return r
+
+
+## Si el objetivo ya se cumplió, aunque siga en su grupo.
+##
+## A PRUEBA DE OLVIDOS. Lo normal es que cada cosa se salga de `objetivo_<id>`
+## al cumplirse, pero eso lo hace cada tipo por su cuenta —el cubo, el
+## interruptor de flecha, el botón del guanaco, el obelisco— y basta que a uno se
+## le olvide para que su marcador se quede colgado ahí para siempre. Pasó: un
+## cubo ya golpeado seguía marcado. Así que además de mirar el grupo se le
+## pregunta al objeto si ya está hecho; el que no sepa responder, no estorba.
+func _ya_esta_hecho(n: Node) -> bool:
+	for pregunta: String in ["esta_usado", "esta_roto", "is_done"]:
+		if n.has_method(pregunta) and bool(n.call(pregunta)):
+			return true
+	return false
+
+
+## Un nodo de mentira donde plantar el marcador de una zona sin puerta.
+##
+## Se reutiliza el mismo entre repasos: creando uno nuevo cada medio segundo, el
+## marcador se destruiría y volvería a nacer sin parar, y se vería parpadear.
+var _poste: Node3D = null
+
+
+func _poste_en(donde: Vector3) -> Node3D:
+	if _poste == null or not is_instance_valid(_poste):
+		_poste = Node3D.new()
+		_poste.name = "SitioDeLaZona"
+		add_child(_poste)
+	_poste.global_position = donde
+	return _poste
 
 
 ## Cuántos marcadores se muestran a la vez, como mucho.
@@ -126,8 +181,8 @@ func _los_mas_cercanos(todos: Array[Node3D]) -> Array[Node3D]:
 
 
 func _limpiar() -> void:
-	for n: Node3D in _marcas.keys():
-		var m: Node = _marcas[n]
+	for n in _marcas.keys():
+		var m = _marcas[n]
 		if is_instance_valid(m):
 			m.queue_free()
 	_marcas.clear()
@@ -171,10 +226,10 @@ func _mira() -> Array:
 	var jugador := _jugador()
 	var mejor: Node3D = null
 	var mejor_d := INF
-	for n: Node3D in _marcas.keys():
+	for n in _marcas.keys():
 		if not is_instance_valid(n):
 			continue
-		var d: float = n.global_position.distance_to(
+		var d: float = (n as Node3D).global_position.distance_to(
 			jugador.global_position if jugador != null else cam.global_position)
 		if d < mejor_d:
 			mejor_d = d

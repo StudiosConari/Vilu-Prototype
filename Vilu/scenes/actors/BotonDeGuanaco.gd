@@ -22,12 +22,18 @@ signal activado
 @export var una_sola_vez := true
 @export var color_activo := Color(1.0, 0.65, 0.2)
 
+## A qué misión pertenece, para que la guía le ponga marcador mientras siga sin
+## accionar. Vacío = sin marcador.
+@export var mision := ""
+
 var _usado := false
 var _luz: OmniLight3D = null
 
 
 func _ready() -> void:
 	add_to_group("boton_guanaco")
+	if mision != "":
+		add_to_group("objetivo_" + mision)
 
 
 func _process(_delta: float) -> void:
@@ -46,6 +52,8 @@ func _process(_delta: float) -> void:
 func _accionar() -> void:
 	if _usado and una_sola_vez:
 		return
+	if mision != "":
+		remove_from_group("objetivo_" + mision)
 	_usado = true
 	_encender()
 	if mensaje != "":

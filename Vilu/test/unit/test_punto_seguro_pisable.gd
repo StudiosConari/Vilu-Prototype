@@ -21,14 +21,14 @@ func test_el_margen_es_una_caida_que_se_aguanta() -> void:
 
 
 func test_el_checkpoint_del_ojos_del_salado_pisa_suelo() -> void:
-	# OJO CON CÓMO SE MIDE ESTO. Medido con un script suelto (`-s`) daba 23 m de
-	# vacío bajo el marcador, y era mentira: en ese contexto los autoloads no se
-	# resuelven, `CumbreCima.gd` no compila y el nivel NUNCA CONSTRUYE sus
-	# plataformas. Sin plataformas, claro que no hay suelo.
+	# Este marcador dio una caída infinita: reaparecías ahí y no había dónde
+	# apoyarse. Se movió a mano a suelo firme, sobre `plataforma_cubica_23`, que
+	# NO es la plataforma móvil —ésa es "plataforma movil principal"—, así que el
+	# suelo no se le va de debajo al reiniciarse el intento.
 	#
-	# Cargado de verdad —como acá— el marcador está a 10 cm del piso. Este test
-	# existe para que ese error no se repita: si alguien vuelve a "descubrir" que
-	# el checkpoint flota, que sea porque de verdad flota.
+	# OJO CON CÓMO SE MIDE. Con un script suelto (`-s`) daba 23 m de vacío, y era
+	# mentira: ahí los autoloads no se resuelven, `CumbreCima.gd` no compila y el
+	# nivel nunca construye sus plataformas. Hay que cargarlo como acá.
 	var esc := load("res://scenes/puzzles/OjosDelSalado.tscn") as PackedScene
 	var raiz := esc.instantiate()
 	add_child_autofree(raiz)

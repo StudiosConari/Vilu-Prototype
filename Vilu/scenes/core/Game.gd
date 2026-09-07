@@ -439,12 +439,33 @@ func _con_suelo_debajo(pos: Vector3) -> Vector3:
 	return respaldo
 
 
+## Dónde reaparecer al morir en la región cargada, si la escena lo declara.
+##
+## Es un `Marker3D` llamado `PuntoDeRescate`, puesto donde se quiera dentro de
+## la escena del interior. Se busca en profundidad, así que da igual de qué nodo
+## cuelgue: se puede arrastrar a donde haga falta.
+##
+## Devuelve INF si esa escena no lo tiene, y entonces manda el punto de siempre.
+const MARCADOR_DE_RESCATE := "PuntoDeRescate"
+
+
+func _punto_de_rescate() -> Vector3:
+	if _region_holder == null:
+		return Vector3.INF
+	for r in _region_holder.get_children():
+		var m := r.find_child(MARCADOR_DE_RESCATE, true, false) as Node3D
+		if m != null:
+			return m.global_position
+	return Vector3.INF
+
+
 ## El PlayerSpawn de la región cargada, o INF si no hay.
 func _principio_de_la_zona() -> Vector3:
-	for r in _region_holder.get_children():
-		var sp := r.find_child("PlayerSpawn", true, false) as Node3D
-		if sp != null:
-			return sp.global_position
+	if _region_holder != null:
+		for r in _region_holder.get_children():
+			var sp := r.find_child("PlayerSpawn", true, false) as Node3D
+			if sp != null:
+				return sp.global_position
 	if world != null and _interior == "":
 		var z: String = world.current_zone()
 		if z != "":
@@ -477,7 +498,17 @@ func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 		hud.show_banner(motivo)
 
 	var destino := _respawn_pos
-	if _interior == "":
+	# Un interior puede declarar DÓNDE se reaparece al morir, aparte de por
+	# dónde se entra.
+	#
+	# No son lo mismo: al Isluga se llega por la boca del cráter, pero caerse a
+	# la lava y volver a la entrada obliga a rehacer la subida entera. Con el
+	# marcador se reaparece donde tenga sentido —al pie del tramo en el que
+	# estabas—, y se coloca arrastrándolo en el editor, sin tocar código.
+	var rescate := _punto_de_rescate()
+	if rescate != Vector3.INF:
+		destino = rescate
+	elif _interior == "":
 		# Preferir el spawn de la zona en la que estaba parado
 		var z: String = world.current_zone() if world else ""
 		if z != "":
@@ -576,8 +607,22 @@ func _exit_tree() -> void:
 
 
 func _hay_pantalla_encima() -> bool:
-	for n in get_tree().get_nodes_in_group("pantalla_modal"):
-		if n is CanvasItem and (n as CanvasItem).visible:
+	return alguna_visible(get_tree().get_nodes_in_group("pantalla_modal"))
+
+
+## Si alguna de esas pantallas está a la vista.
+##
+## Se mira la PROPIEDAD `visible`, no la clase. Una pantalla puede ser un
+## Control o un CanvasLayer, y CanvasLayer tiene `visible` pero NO es un
+## CanvasItem: con `is CanvasItem` la de logros no contaba y el cierre del
+## prototipo salía con el ratón capturado, sin puntero para pulsar «Volver al
+## título».
+##
+## Estática y con la lista por parámetro para poder probarla: montar un Game
+## entero en un test arrastra el mundo, el HUD y el party.
+static func alguna_visible(nodos: Array) -> bool:
+	for n in nodos:
+		if "visible" in n and bool(n.get("visible")):
 			return true
 	return false
 
@@ -920,6 +965,17 @@ func _puerta_hacia(id: String) -> Node3D:
 ## qué puerta ponerle el marcador cuando la misión es «ve a tal zona».
 func puerta_hacia(id: String) -> Node3D:
 	return _puerta_hacia(id)
+
+
+## Dónde queda una zona del MUNDO ABIERTO, o INF si no existe.
+##
+## Las zonas al aire libre no tienen puerta: se llega caminando. Para señalarlas
+## no hay un nodo al que colgarle el marcador, así que se devuelve el sitio y la
+## guía se encarga de plantar algo ahí.
+func sitio_de_zona(id: String) -> Vector3:
+	if world == null or not world.has_zone(id):
+		return Vector3.INF
+	return world.spawn_point(id)
 
 
 func _buscar_puerta(n: Node, id: String) -> Node3D:

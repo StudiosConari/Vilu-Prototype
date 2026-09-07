@@ -261,7 +261,7 @@ ajustar_disparador = null
 hacia_abajo = true
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft5" unique_id=433693029]
-transform = Transform3D(0.5832035, 0, 5.820766e-10, 0, 0.7944935, 0, 0, 0, 0.99904317, 0.22379875, 1.9279251, 8.404977)
+transform = Transform3D(0.5832035, 0, 6.4028427e-10, 0, 0.7944935, 0, 0, 0, 0.99904317, 0.2237997, 1.3888245, 8.404977)
 shape = SubResource("shape_up2")
 
 [node name="Mesh2" type="MeshInstance3D" parent="Updraft5" unique_id=1045663011]
@@ -280,7 +280,7 @@ ajustar_disparador = null
 hacia_abajo = true
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft6" unique_id=1599880677]
-transform = Transform3D(0.72526306, 0, 5.820766e-11, 0, 1, 0, -1.3969839e-09, 0, 0.9993692, 0.38182545, 0.9224396, 8.467718)
+transform = Transform3D(0.72526306, 0, 5.820766e-11, 0, 0.86256003, 0, -1.3969839e-09, 0, 0.9993692, 0.38182545, 1.7291946, 8.467718)
 shape = SubResource("shape_up2")
 
 [node name="Mesh2" type="MeshInstance3D" parent="Updraft6" unique_id=108069303]
@@ -647,7 +647,7 @@ mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
 [node name="Updraft17" type="Area3D" parent="corrientes de viento" unique_id=1120227617]
-transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -6.5414696, 5.506096, -16.542015)
+transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -9.036713, 5.506096, -18.577269)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
@@ -663,25 +663,8 @@ instance_shader_parameters/altura = 7.0
 mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
 
-[node name="Updraft15" type="Area3D" parent="corrientes de viento" unique_id=1971659890]
-transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -4.0846014, 10.903458, -18.634802)
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("5_up")
-
-[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft15" unique_id=571481531]
-transform = Transform3D(0.36732852, 0, 0, 0, 0.22500521, 0, 0, 0, 0.54779446, 1.037014, 0, -0.35627365)
-shape = SubResource("shape_up1")
-
-[node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft15" unique_id=538902666]
-transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0.95908666, 0, -0.45962715)
-material_override = ExtResource("24_ktn8s")
-instance_shader_parameters/altura = 7.0
-mesh = SubResource("mesh_up1")
-surface_material_override/0 = ExtResource("4_trigger")
-
 [node name="Updraft16" type="Area3D" parent="corrientes de viento" unique_id=1443526941]
-transform = Transform3D(1, 0, 0, 0, 1.0396751, 0, 0, 0, 1, -8.80201, 8.189293, -18.634802)
+transform = Transform3D(1, 0, 0, 0, 2.0267074, 0, 0, 0, 1, -11.504471, 9.485657, -18.634802)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")

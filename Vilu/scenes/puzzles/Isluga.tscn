@@ -614,6 +614,9 @@ script = ExtResource("97_lava")
 [node name="PlayerSpawn" type="Marker3D" parent="Crater" unique_id=872008874]
 transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 140.6481, -0.612854, -80.63799)
 
+[node name="PuntoDeRescate" type="Marker3D" parent="Crater" unique_id=100200300]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140.6481, -0.612854, -80.63799)
+
 [node name="TravelSpawn" type="Marker3D" parent="Crater" unique_id=331770546]
 transform = Transform3D(1.1179378, 0, 0, 0, 1, 0, 0, 0, 1, 143.13399, 12.5, -156)
 

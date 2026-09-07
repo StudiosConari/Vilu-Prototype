@@ -105,3 +105,22 @@ func test_el_tren_superior_arranca_en_la_segunda_vertebra() -> void:
 	for lado: String in ["Left", "Right"]:
 		assert_true(POSE_DE_ARCO.TREN_SUPERIOR.has("mixamorig_%sHand" % lado),
 			"las dos manos sujetan el arco")
+
+
+func test_el_motor_llama_al_modificador() -> void:
+	# EL FALLO QUE NINGÚN TEST VEÍA. Godot 4.7 invoca cada cuadro
+	# `_process_modification_with_delta(delta)`, no `_process_modification()`.
+	# Implementando sólo la segunda, el modificador no corría NUNCA: sin error,
+	# sin aviso, simplemente no pasaba nada. En pantalla, Benjamín bajaba el arco
+	# al empezar a andar.
+	#
+	# Los demás tests pasaban porque llamaban al método A MANO. Éste comprueba lo
+	# único que importa: que la pose llegue al esqueleto sin que nadie empuje.
+	var esq := _esqueleto()
+	var m := _modificador(esq)
+	m.set_meta("llamadas", 0)
+	# Se cuenta cuántas veces entra por sí solo, sin que nadie la llame.
+	var antes: int = m.get_meta("llamadas")
+	await wait_frames(6)
+	assert_gt(int(m.get_meta("llamadas")), antes,
+		"el motor entra en el modificador cada cuadro")

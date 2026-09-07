@@ -136,15 +136,15 @@ func _reponer_logica() -> void:
 	else:
 		if not fork.body_entered.is_connected(_on_fork_entered):
 			fork.body_entered.connect(_on_fork_entered)
-		# «Elige tu camino»: se marca la bifurcación, no el ramal bueno —decir
-		# cuál es el correcto sería contar el acertijo entero.
-		fork.add_to_group("objetivo_camino")
+		# La bifurcación en sí ya no se marca: se marcan LOS DOS RAMALES, cada
+		# uno en su pasillo. Ver `_marcar_los_dos_caminos`.
 
 	var trap := _area_en(Vector3(-11.0, 1.5, -13.0))
 	if trap == null:
 		push_warning("Alicanto: no encuentro el disparador del camino del oro")
 	elif not trap.body_entered.is_connected(_on_gold_path_entered):
 		trap.body_entered.connect(_on_gold_path_entered)
+		_marcar_los_dos_caminos(trap)
 
 	# Las ocho losas de CSG del camino del oro ya no se buscan: la trampa dejó de
 	# ser greybox y ahora la llevan tus modelos, con TrampaDelOro.gd. Buscarlas
@@ -391,9 +391,33 @@ func _on_fork_entered(body: Node3D) -> void:
 
 # ─── Camino del oro (la trampa) ──────────────────────────────────────────────
 
+## Marca los DOS ramales de la bifurcación, cada uno en su pasillo.
+##
+## Antes se marcaba la bifurcación misma, y eso no ayudaba: el jugador ya está
+## parado ahí, lo que no sabe es por dónde se va a cada lado. Se marcan los dos
+## porque la gracia es ELEGIR: señalar sólo el bueno contaría el acertijo.
+##
+## El ramal del oro pierde su marca en cuanto lo probás. Volver a ofrecértelo
+## después de que el suelo se te cayó encima sería tomarte el pelo: a partir de
+## ahí sólo queda el camino de la persona herida.
+func _marcar_los_dos_caminos(trampa: Node3D) -> void:
+	if trampa != null:
+		trampa.add_to_group("objetivo_camino")
+		_marca_del_oro = trampa
+	if _hurt != null and is_instance_valid(_hurt):
+		_hurt.add_to_group("objetivo_camino")
+
+
+## El disparador del camino del oro, para poder quitarle la marca al usarlo.
+var _marca_del_oro: Node3D = null
+
+
 func _on_gold_path_entered(body: Node3D) -> void:
 	if _phase == Phase.DONE or not body.is_in_group("player"):
 		return
+	# Probado el oro, deja de ser una opción: la marca se queda sólo en el otro.
+	if _marca_del_oro != null and is_instance_valid(_marca_del_oro):
+		_marca_del_oro.remove_from_group("objetivo_camino")
 	_banner("El oro brilla... y el suelo empieza a ceder.", 3.0)
 	# La misión se vuelve a pedir AL REAPARECER, no acá: mientras caes no estás
 	# mirando el recuadro. Lo hace TrampaDelOro al devolverte al poblado.

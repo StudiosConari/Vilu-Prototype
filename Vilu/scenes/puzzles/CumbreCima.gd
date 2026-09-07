@@ -307,6 +307,10 @@ func _hint(text: String) -> void:
 const INTERRUPTOR := preload("res://scenes/actors/InterruptorGolpeable.gd")
 const BOTON_GUANACO := preload("res://scenes/actors/BotonDeGuanaco.gd")
 
+## La misión que cierran los interruptores de esta cumbre. La usa la guía para
+## saber a cuáles ponerles marcador.
+const MISION_DE_LA_CUMBRE := "ojos_volcan"
+
 ## Contenedores cuyos hijos van y vienen en bucle.
 const CONTENEDORES_EN_BUCLE := ["Bloques moviles", "plataformas moviles"]
 
@@ -477,6 +481,11 @@ func _montar(guion: GDScript, ruta: String, metodo: String, mensaje: String) -> 
 	n.set("metodo", metodo)
 	n.set("mensaje", mensaje)
 	n.set("una_sola_vez", true)
+	# Todos los interruptores de la cumbre son parte de «Activa el volcán», así
+	# que la guía les pone marcador hasta que se accionan. Se hace acá y no en la
+	# escena porque estos nodos reciben su guion POR CÓDIGO: en el editor son
+	# bloques de piedra sin más, y el campo `mision` ni aparece.
+	n.set("mision", MISION_DE_LA_CUMBRE)
 	# Sólo si el guion trae `_ready` propia: no todos los interruptores necesitan
 	# preparación, y llamarla a ciegas revienta en los que no la definen.
 	var s := n.get_script() as Script
@@ -701,9 +710,18 @@ const MAT_VIENTO := preload("res://art_placeholders/mat_viento_ascendente.tres")
 ## cuelga de la raíz y no de "corrientes de viento", y buscando por sitio se
 ## quedaba fuera. Así entran todas, estén donde estén, y también las que sumes
 ## después.
+## Las corrientes DESCENDENTES se visten solas, y no se las toca.
+##
+## Este bucle corría después de que cada corriente se pintara a sí misma —el
+## `_ready` del padre va DESPUÉS que el de los hijos— y les ponía el azul a
+## todas por igual, incluidas las cuatro que arrastran hacia abajo. Se veían
+## azules y te tiraban al vacío: exactamente la trampa invisible que el color
+## rojo venía a evitar.
 func _vestir_corrientes() -> void:
 	var n := 0
 	for c in _corrientes(self):
+		if c.get("hacia_abajo") == true:
+			continue
 		for m in _mallas_de(c):
 			m.material_override = MAT_VIENTO
 			# El alto va por malla: el shader lo necesita para desvanecer las
