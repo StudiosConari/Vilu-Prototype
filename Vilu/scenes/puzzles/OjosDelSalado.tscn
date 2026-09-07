@@ -60,20 +60,62 @@ size = Vector3(3, 4, 0.6)
 [sub_resource type="BoxShape3D" id="shape_switch"]
 size = Vector3(1.6, 1.6, 1.6)
 
-[sub_resource type="BoxShape3D" id="shape_up2"]
-size = Vector3(5, 8, 4)
+[sub_resource type="BoxShape3D" id="BoxShape3D_khlu8"]
+size = Vector3(2.9926, 8.030763, 4.0243607)
 
 [sub_resource type="BoxMesh" id="mesh_up2"]
+size = Vector3(5, 8.030762, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h7ahv"]
+size = Vector3(5, 8.030762, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_s1s33"]
+size = Vector3(3.4887815, 8.030762, 3.9969997)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g2ixd"]
+size = Vector3(3.4887815, 8.030762, 3.9969997)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qqas3"]
 size = Vector3(5, 8.030762, 4)
 
 [sub_resource type="BoxShape3D" id="shape_finaltrig"]
 size = Vector3(36.12329, 3, 10.148315)
 
-[sub_resource type="BoxShape3D" id="shape_up1"]
-size = Vector3(5, 7, 3.8706055)
+[sub_resource type="BoxShape3D" id="BoxShape3D_rpy0e"]
+size = Vector3(5, 7, 4)
 
 [sub_resource type="BoxMesh" id="mesh_up1"]
 size = Vector3(5, 7, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pw6hj"]
+size = Vector3(5, 7, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_yv6ht"]
+size = Vector3(5, 7, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h7et8"]
+size = Vector3(5, 7, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_up4jn"]
+size = Vector3(5, 7, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8kpl0"]
+size = Vector3(5, 7, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gcgcr"]
+size = Vector3(2.4035583, 2.4838147, 1.8715317)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2xode"]
+size = Vector3(2.4035583, 2.4838147, 1.8715317)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_m08vk"]
+size = Vector3(2.4035583, 2.4838147, 1.8715317)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fa3k3"]
+size = Vector3(2.4035583, 2.4838147, 1.8715317)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_brniy"]
+size = Vector3(5, 10.56613, 4)
 
 [node name="Cumbre" type="Node3D" unique_id=2072542553]
 script = ExtResource("1_cima")
@@ -220,10 +262,10 @@ collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
 active = false
-ajustar_disparador = null
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft2" unique_id=1230605528]
-shape = SubResource("shape_up2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.11109781, 0.015365601, -0.0016326904)
+shape = SubResource("BoxShape3D_khlu8")
 
 [node name="Mesh" type="MeshInstance3D" parent="Updraft2" unique_id=1992685540]
 transform = Transform3D(0.59852, 0, -9.313226e-10, 0, 1.0000001, 0, -9.313226e-10, 0, 1.0060902, 0.11109775, 0.015365601, -0.0016326904)
@@ -238,12 +280,11 @@ transform = Transform3D(2.875667, 0, -0.014283946, 0, 1.4454538, 0, 0.04224451, 
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
-ajustar_disparador = null
 hacia_abajo = true
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft3" unique_id=1193060298]
-transform = Transform3D(1, 0, 0, 0, 0.76888424, 0, 0, 0, 1, 0, 1.5924835, 0)
-shape = SubResource("shape_up2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5179214, 0)
+shape = SubResource("BoxShape3D_h7ahv")
 
 [node name="Mesh" type="MeshInstance3D" parent="Updraft3" unique_id=1487555010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5179214, 0)
@@ -257,12 +298,11 @@ transform = Transform3D(-0.0066058203, 0, 0.80630034, 0, 1.4454538, 0, -2.877098
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
-ajustar_disparador = null
 hacia_abajo = true
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft5" unique_id=433693029]
-transform = Transform3D(0.5832035, 0, 6.4028427e-10, 0, 0.7944935, 0, 0, 0, 0.99904317, 0.2237997, 1.3888245, 8.404977)
-shape = SubResource("shape_up2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.27067184, 1.5179214, 8.421385)
+shape = SubResource("BoxShape3D_s1s33")
 
 [node name="Mesh2" type="MeshInstance3D" parent="Updraft5" unique_id=1045663011]
 transform = Transform3D(0.6977563, 0, 2.3283064e-10, 0, 1, 0, -1.8626451e-09, 0, 0.99925, 0.27067184, 1.5179214, 8.421385)
@@ -276,12 +316,11 @@ transform = Transform3D(-0.0066058203, 0, 0.80630034, 0, 1.4454538, 0, -2.877098
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("5_up")
-ajustar_disparador = null
 hacia_abajo = true
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft6" unique_id=1599880677]
-transform = Transform3D(0.72526306, 0, 5.820766e-11, 0, 0.86256003, 0, -1.3969839e-09, 0, 0.9993692, 0.38182545, 1.7291946, 8.467718)
-shape = SubResource("shape_up2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.27067184, 1.5179214, 8.421385)
+shape = SubResource("BoxShape3D_g2ixd")
 
 [node name="Mesh2" type="MeshInstance3D" parent="Updraft6" unique_id=108069303]
 transform = Transform3D(0.6977563, 0, 2.3283064e-10, 0, 1, 0, -1.8626451e-09, 0, 0.99925, 0.27067184, 1.5179214, 8.421385)
@@ -298,7 +337,8 @@ script = ExtResource("5_up")
 hacia_abajo = true
 
 [node name="Shape" type="CollisionShape3D" parent="Updraft4" unique_id=2047130681]
-shape = SubResource("shape_up2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5179214, 0)
+shape = SubResource("BoxShape3D_qqas3")
 
 [node name="Mesh" type="MeshInstance3D" parent="Updraft4" unique_id=480632264]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5179214, 0)
@@ -526,7 +566,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft1" unique_id=1117710040]
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_rpy0e")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft1" unique_id=443559505]
 material_override = ExtResource("24_ktn8s")
@@ -541,7 +581,8 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft3" unique_id=1543749123]
-shape = SubResource("shape_up1")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15372276, 0, 0)
+shape = SubResource("BoxShape3D_pw6hj")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft3" unique_id=601878468]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15372276, 0, 0)
@@ -557,8 +598,8 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft4" unique_id=635202933]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66684914, 0, 0.5898988)
-shape = SubResource("shape_up1")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.617404, 0, 0.64564943)
+shape = SubResource("BoxShape3D_yv6ht")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft4" unique_id=1769692706]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.617404, 0, 0.64564943)
@@ -574,7 +615,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft5" unique_id=1257952389]
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_h7et8")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft5" unique_id=594260833]
 material_override = ExtResource("24_ktn8s")
@@ -589,7 +630,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft6" unique_id=475293958]
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_up4jn")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft6" unique_id=1962671101]
 material_override = ExtResource("24_ktn8s")
@@ -604,7 +645,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft7" unique_id=1773507508]
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_8kpl0")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft7" unique_id=732014873]
 material_override = ExtResource("24_ktn8s")
@@ -619,8 +660,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft8" unique_id=606117827]
-transform = Transform3D(0.3229641, 0, 0, 0, 0.2275932, 0, 0, 0, 0.47370368, 0, 0, 0)
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_gcgcr")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft8" unique_id=2026389585]
 transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
@@ -636,8 +676,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft12" unique_id=1678222311]
-transform = Transform3D(0.4862671, 0, 0, 0, 0.29487914, 0, 0, 0, 0.51672494, 0, 0, 0.120479584)
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_2xode")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft12" unique_id=1301256421]
 transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
@@ -653,8 +692,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft17" unique_id=2140353859]
-transform = Transform3D(0.34955573, 0, 0, 0, 0.18691003, 0, 0, 0, 0.5813149, 0, 0, 0)
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_m08vk")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft17" unique_id=1633557899]
 transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
@@ -670,8 +708,7 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft16" unique_id=1922720854]
-transform = Transform3D(0.41679382, 0, 0, 0, 0.28264177, 0, 0, 0, 0.5040447, 0, 0, 0)
-shape = SubResource("shape_up1")
+shape = SubResource("BoxShape3D_fa3k3")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft16" unique_id=206045434]
 transform = Transform3D(0.48071164, 0, 0, 0, 0.35483068, 0, 0, 0, 0.46788293, 0, 0, 0)
@@ -687,8 +724,8 @@ collision_mask = 2
 script = ExtResource("5_up")
 
 [node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft9" unique_id=905611452]
-transform = Transform3D(0.849634, 0, 0, 0, 1, 0, 0, 0, 1, 2.6918824, 0, 0)
-shape = SubResource("shape_up1")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9606142, 0, 0)
+shape = SubResource("BoxShape3D_brniy")
 
 [node name="Mesh" type="MeshInstance3D" parent="corrientes de viento/Updraft9" unique_id=1919837966]
 transform = Transform3D(1, 0, 0, 0, 1.5094471, 0, 0, 0, 1, 2.9606142, 0, 0)
@@ -696,15 +733,6 @@ material_override = ExtResource("24_ktn8s")
 instance_shader_parameters/altura = 7.0
 mesh = SubResource("mesh_up1")
 surface_material_override/0 = ExtResource("4_trigger")
-
-[node name="Updraft10" type="Area3D" parent="corrientes de viento" unique_id=2051967145]
-transform = Transform3D(0.3363176, 0, 0, 0, 0.19227214, 0, 0, 0, 0.44676912, -0.7645006, 16.386673, -22.052025)
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("5_up")
-
-[node name="Shape" type="CollisionShape3D" parent="corrientes de viento/Updraft10" unique_id=393215960]
-shape = SubResource("shape_up1")
 
 [node name="Interruptores" type="Node3D" parent="." unique_id=296354901]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 103.17746, 0)

@@ -631,6 +631,20 @@ func _face_aim() -> Vector3:
 	return d
 
 
+## Un sonido por eslabón de la cadena, en el orden en que salen.
+##
+## Antes eran dos sonidos generados —"punch" para los dos primeros y "kick" para
+## los dos últimos— con el tono subiendo a cada paso para disimular. Ahora son
+## cuatro grabados distintos: el combo se OYE avanzar, y el cuarto suena a
+## remate en vez de a la misma patada un poco más aguda.
+##
+## El tono ya no se toca: estos vienen grabados con su propio carácter y
+## acelerarlos les quitaba el golpe.
+const SONIDO_DEL_GOLPE := [
+	"golpe_puno", "golpe_cruzado", "golpe_patada", "golpe_patada_final",
+]
+
+
 # --- Melee (Emilia): combo de 4 golpes tras la Tirana; 1 golpe antes ---
 func _melee_attack() -> void:
 	if _attack_cd > 0.0:
@@ -644,7 +658,7 @@ func _melee_attack() -> void:
 	_attack_cd = attack_cooldown
 
 	var dmg: float = melee_damage[_combo_step]
-	Sfx.play("punch" if _combo_step < 2 else "kick", -3.0, 1.0 + _combo_step * 0.1)
+	Sfx.play(SONIDO_DEL_GOLPE[_combo_step], -3.0)
 	_face_aim()                # encara hacia el mouse antes de golpear
 	_squash()
 	_spawn_melee_hit(dmg)

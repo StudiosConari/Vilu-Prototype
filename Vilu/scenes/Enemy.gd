@@ -84,6 +84,17 @@ var _muriendo := false
 ## Para enemigos encerrados que un mecanismo libera después —Lola detrás de la
 ## barrera de cuerda—. Se despierta llamando a `despertar()`.
 @export var dormido := false
+
+## Qué se oye al despertar. Vacío = nada.
+##
+## Es un campo y no un valor fijo porque el rugido genérico no dice quién sale:
+## a Lola, que está encerrada detrás de los tablones y no se ve hasta que caen,
+## le corresponde su propio grito. Lo que la anuncia es el sonido, no el modelo.
+@export var sonido_al_despertar := "boss"
+
+## Tono de ese sonido. El rugido genérico se diseñó grave (0,7); un grito
+## grabado se deja como está.
+@export_range(0.3, 2.0, 0.05) var tono_al_despertar := 0.7
 @export var charge_windup: float = 0.9
 @export var charge_speed: float = 15.0
 @export var charge_dur: float = 0.5
@@ -380,7 +391,8 @@ func despertar() -> void:
 	dormido = false
 	collision_layer = 4
 	add_to_group("enemies")
-	Sfx.play_at("boss", global_position, 2.0, 0.7)
+	if sonido_al_despertar != "":
+		Sfx.play_at(sonido_al_despertar, global_position, 2.0, tono_al_despertar)
 
 
 func set_slowed(t: float, factor: float) -> void:

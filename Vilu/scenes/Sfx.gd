@@ -54,6 +54,15 @@ func _ready() -> void:
 const GRABADOS := {
 	"tensar_arco": "res://audio/sfx/tensar_arco.wav",
 	"flecha": "res://audio/sfx/flecha.wav",
+	# La cadena de Emilia, un sonido por golpe. Son cuatro distintos a propósito:
+	# con uno solo repetido cuatro veces el combo suena a tartamudeo, y lo que hay
+	# que oír es que la cadena AVANZA — puño, cruzado, patada y el remate.
+	"golpe_puno": "res://audio/sfx/golpe_puno.mp3",
+	"golpe_cruzado": "res://audio/sfx/golpe_cruzado.mp3",
+	"golpe_patada": "res://audio/sfx/golpe_patada.mp3",
+	"golpe_patada_final": "res://audio/sfx/golpe_patada_final.mp3",
+	# El grito de Lola al despertar detrás de los tablones.
+	"grito_lola": "res://audio/sfx/grito_lola.mp3",
 }
 
 

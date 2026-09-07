@@ -24,10 +24,23 @@ func test_el_minero_mide_lo_que_los_protagonistas() -> void:
 		"el minero mide lo mismo que Emilia y Benjamín")
 
 
-func test_los_otros_enemigos_conservan_su_tamano() -> void:
-	# Sólo se igualó al minero. El Chupacabras es más grande a propósito y Lola
-	# más chica: son criaturas, no gente.
+func test_los_jefes_son_mas_grandes_que_los_protagonistas() -> void:
+	# Sólo se igualó al minero, que es gente. Los jefes se leen como jefes desde
+	# que aparecen, y eso empieza por el tamaño.
+	#
+	# Lola estaba en 1,7 —más chica que Emilia y Benjamín, que miden 2,2— y sale
+	# de detrás de los tablones sin imponer nada. Ahora es la más grande de las
+	# tres criaturas.
 	assert_gt(_altura_de("res://scenes/enemies/Chupacabras.tscn"), JUGADOR.ALTO_PERSONAJE,
-		"el Chupacabras sigue siendo más grande")
-	assert_lt(_altura_de("res://scenes/enemies/Lola.tscn"), JUGADOR.ALTO_PERSONAJE,
-		"Lola sigue siendo más chica")
+		"el Chupacabras es más grande")
+	assert_gt(_altura_de("res://scenes/enemies/Lola.tscn"), JUGADOR.ALTO_PERSONAJE,
+		"Lola también, que es la jefa de la mina")
+
+
+func test_al_crecer_lola_su_alcance_la_acompana() -> void:
+	# Creció medio metro largo: con el alcance de antes, sus brazos llegaban más
+	# lejos de lo que ella podía pegar y el golpe se veía atravesar al jugador
+	# sin hacer nada.
+	var l: CharacterBody3D = (load("res://scenes/enemies/Lola.tscn") as PackedScene).instantiate()
+	assert_gt(l.attack_range, 2.2, "el alcance sube con el tamaño")
+	l.free()

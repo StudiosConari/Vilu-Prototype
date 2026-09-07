@@ -172,6 +172,9 @@ func _ready() -> void:
 	guia.name = "GuiaDeObjetivos"
 	guia.set_script(GUIA_DE_OBJETIVOS)
 	add_child(guia)
+	# El único nodo que sigue vivo con el juego en pausa: es el que suelta el
+	# puntero para que se pueda pulsar el menú.
+	add_child(MandoDelRaton.new())
 	# El cierre se engancha una sola vez y vive lo que viva la partida: el último
 	# logro puede caer en cualquier zona, no sólo en la mina.
 	if not GameManager.prototipo_superado.is_connected(_al_superar_el_prototipo):
@@ -311,7 +314,6 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 func _process(delta: float) -> void:
 	_gracia = maxf(0.0, _gracia - delta)
 	_espera_de_rescate = maxf(0.0, _espera_de_rescate - delta)
-	_mandar_el_raton()
 	# R = cambiar dejando al otro en IA de combate; T = dejándolo QUIETO (puzzles).
 	var r := Input.is_action_pressed("swap_ai")
 	if r and not _r_prev:
@@ -576,6 +578,29 @@ func _mirar_con_el_raton(rel: Vector2) -> void:
 		return
 	_cam_yaw -= rel.x * cam_rotate_speed
 	_cam_pitch = clampf(_cam_pitch - rel.y * cam_rotate_speed, PICADO_MIN, PICADO_MAX)
+
+
+## Nodo hoja que vigila el puntero TAMBIÉN con el juego en pausa.
+##
+## EL FALLO. `_mandar_el_raton()` colgaba del `_process` de Game, que es
+## pausable: al abrir el menú de pausa Game deja de procesar y la línea que
+## suelta el puntero no se ejecuta nunca. La condición `get_tree().paused` estaba
+## escrita ahí y era inalcanzable — el ratón se quedaba capturado justo en el
+## único momento en que hay algo que pulsar.
+##
+## POR QUÉ UN HIJO Y NO PROCESS_MODE_ALWAYS EN GAME. El modo de proceso LO
+## HEREDAN LOS HIJOS: poniéndoselo a Game seguirían corriendo el mundo, los
+## enemigos y el party, o sea que la pausa dejaría de pausar. Un nodo suelto sin
+## hijos es lo único que puede correr siempre sin arrastrar a nadie.
+class MandoDelRaton extends Node:
+	func _init() -> void:
+		name = "MandoDelRaton"
+		process_mode = Node.PROCESS_MODE_ALWAYS
+
+	func _process(_delta: float) -> void:
+		var juego := get_parent()
+		if juego != null and juego.has_method("_mandar_el_raton"):
+			juego.call("_mandar_el_raton")
 
 
 ## Capturar o soltar el puntero, según haya algo con lo que haga falta apuntar.
