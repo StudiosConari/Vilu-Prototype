@@ -82,3 +82,76 @@ func test_no_depende_de_los_cubos_de_altura_que_ya_no_estan() -> void:
 	assert_null(c.get_node_or_null("BenjaminTopCubes"))
 	c.superar()
 	assert_true(c.is_solved(), "y aun así se supera")
+
+
+# ─── El anillo del cráter aguanta más ────────────────────────────────────────
+#
+# Los 16 bloques que rodean el anillo de rocas del cráter forman un cuadrado
+# cerrado, y son por los que hay que dar la vuelta entera. Con el aviso de 1,5 s
+# de los demás no daba el tiempo: se cruzaban corriendo o no se cruzaban.
+
+## Los del anillo, por nombre. El resto de los 55 bloques del volcán siguen con
+## su tiempo de siempre.
+const ANILLO := ["bloques_de_espuma_morada6", "bloques_de_espuma_morada27",
+	"bloques_de_espuma_morada28", "bloques_de_espuma_morada29",
+	"bloques_de_espuma_morada30", "bloques_de_espuma_morada31",
+	"bloques_de_espuma_morada32", "bloques_de_espuma_morada33",
+	"bloques_de_espuma_morada34", "bloques_de_espuma_morada35",
+	"bloques_de_espuma_morada36", "bloques_de_espuma_morada37",
+	"bloques_de_espuma_morada38", "bloques_de_espuma_morada39",
+	"bloques_de_espuma_morada40", "bloques_de_espuma_morada41"]
+
+const HUNDE := preload("res://scenes/actors/BloqueQueSeHunde.gd")
+
+
+func _avisos_del_isluga() -> Dictionary:
+	var st := (load("res://scenes/puzzles/Isluga.tscn") as PackedScene).get_state()
+	var r := {}
+	for i in st.get_node_count():
+		var nombre := String(st.get_node_name(i))
+		var es_bloque := false
+		var aviso := -1.0
+		for j in st.get_node_property_count(i):
+			var prop := String(st.get_node_property_name(i, j))
+			if prop == "script":
+				var s: Script = st.get_node_property_value(i, j)
+				es_bloque = s != null \
+					and String(s.resource_path).ends_with("BloqueQueSeHunde.gd")
+			elif prop == "aviso":
+				aviso = float(st.get_node_property_value(i, j))
+		if es_bloque:
+			r[nombre] = aviso
+	return r
+
+
+func test_los_del_anillo_aguantan_el_doble() -> void:
+	var avisos := _avisos_del_isluga()
+	var porDefecto: float = HUNDE.new().aviso
+	for n in ANILLO:
+		assert_true(avisos.has(n), "el bloque '%s' sigue en la escena" % n)
+		if not avisos.has(n):
+			continue
+		assert_gt(float(avisos[n]), porDefecto,
+			"'%s' aguanta más que los demás" % n)
+
+
+func test_los_demas_siguen_igual() -> void:
+	# El cambio es SÓLO del anillo: si se le sube el tiempo a todo el volcán, el
+	# puzzle de las plataformas deja de ser un puzzle.
+	var avisos := _avisos_del_isluga()
+	var tocados := 0
+	for n in avisos:
+		if n in ANILLO:
+			continue
+		if float(avisos[n]) >= 0.0:
+			tocados += 1
+	assert_eq(tocados, 0, "ningún otro bloque lleva tiempo propio")
+
+
+func test_son_dieciseis_y_estan_todos() -> void:
+	var avisos := _avisos_del_isluga()
+	var con_tiempo := 0
+	for n in avisos:
+		if float(avisos[n]) >= 0.0:
+			con_tiempo += 1
+	assert_eq(con_tiempo, ANILLO.size(), "los 16 del anillo, ni uno más")

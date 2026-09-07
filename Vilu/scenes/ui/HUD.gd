@@ -140,6 +140,48 @@ func _al_conseguir_logro(id: String) -> void:
 	t.tween_callback(func() -> void: _aviso.visible = false)
 
 
+# --- Consejos de zona ------------------------------------------------------
+
+const PLACA := preload("res://scenes/ui/Placa.gd")
+
+var _consejo: PanelContainer = null
+var _consejo_texto: Label = null
+
+
+## Una explicación que aparece un rato y se va sola, abajo en el centro.
+##
+## No es el cartel de `show_banner` —ése lo pone y lo quita quien lo llama, y se
+## usa para el estado de un puzzle—: esto es para enseñar algo UNA vez, al
+## llegar a un sitio. La primera es la [T] en los volcanes, que es donde hace
+## falta separar a los dos personajes y no hay nada que lo diga.
+func consejo(texto: String, segundos := 7.0) -> void:
+	if _consejo == null:
+		_consejo = PanelContainer.new()
+		_consejo.name = "Consejo"
+		_consejo.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.86, 20))
+		_consejo.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+		_consejo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_consejo_texto = Label.new()
+		_consejo_texto.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_consejo_texto.add_theme_font_size_override("font_size", 22)
+		_consejo_texto.add_theme_color_override("font_color", PLACA.LETRA)
+		_consejo.add_child(_consejo_texto)
+		add_child(_consejo)
+	_consejo_texto.text = texto
+	# Anclado abajo al centro, hay que descontar la mitad de lo que mide para
+	# que quede centrado de verdad, y su alto para que no se salga por abajo.
+	await get_tree().process_frame
+	_consejo.position = Vector2(-_consejo.size.x * 0.5, -_consejo.size.y - 110.0)
+	_consejo.visible = true
+	_consejo.modulate.a = 1.0
+	var t := create_tween()
+	t.tween_interval(segundos)
+	t.tween_property(_consejo, "modulate:a", 0.0, 0.8)
+	t.tween_callback(func() -> void:
+		if is_instance_valid(_consejo):
+			_consejo.visible = false)
+
+
 var _bound: Node = null
 
 

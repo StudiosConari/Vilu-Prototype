@@ -11,6 +11,8 @@ extends StaticBody3D
 ##    pasás (un golpe de más), se reinicia a cero y hay que empezar de nuevo. Así
 ##    el jugador debe acertar la cantidad justa en cada cubo.
 
+const MUDA := preload("res://scenes/core/MudaDeAsset.gd")
+
 signal activated      # pasó a estado "satisfecho" (justo hits_needed)
 signal deactivated    # estaba satisfecho y se reinició (solo en reset_on_overhit)
 
@@ -36,6 +38,20 @@ enum Activacion { GOLPE, INTERACTUAR }
 
 ## Color al que se enciende al accionarse. Sólo en modo INTERACTUAR.
 @export var color_activo := Color(0.55, 0.85, 1.0)
+
+## Versión del modelo a la que se cambia al activarlo.
+##
+## El obelisco que llevan encima estos cubos tiene una gemela con la energía
+## verde. Vacío = no se cambia de modelo y sólo se enciende la luz.
+@export var modelo_activo: PackedScene
+
+## Qué nodo se cambia. Vacío = este mismo. Acá se apunta al obelisko que cuelga
+## del cubo: lo que muda es el obelisco, no la baldosa que se pisa.
+@export var nodo_a_mudar: NodePath
+
+## Cuánto dura el destello que tapa el cambio, en segundos. El modelo cambia
+## de golpe; esto sólo es el fogonazo que hace que no se vea el corte.
+@export var muda_segundos := 0.35
 
 @export var hits_needed := 1
 @export var reset_on_overhit := false
@@ -145,6 +161,10 @@ func _encender() -> void:
 	add_child(_luz)
 	_luz.position.y = 1.4
 	create_tween().tween_property(_luz, "light_energy", 2.6, 0.4)
+	var quien: Node3D = self
+	if not nodo_a_mudar.is_empty():
+		quien = get_node_or_null(nodo_a_mudar) as Node3D
+	MUDA.mudar(quien, modelo_activo, muda_segundos)
 
 
 func _refresh_color() -> void:

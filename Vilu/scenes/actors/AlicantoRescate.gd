@@ -133,8 +133,12 @@ func _reponer_logica() -> void:
 	var fork := _area_en(Vector3(0.0, 1.5, -3.5))
 	if fork == null:
 		push_warning("Alicanto: no encuentro el disparador de la bifurcación")
-	elif not fork.body_entered.is_connected(_on_fork_entered):
-		fork.body_entered.connect(_on_fork_entered)
+	else:
+		if not fork.body_entered.is_connected(_on_fork_entered):
+			fork.body_entered.connect(_on_fork_entered)
+		# «Elige tu camino»: se marca la bifurcación, no el ramal bueno —decir
+		# cuál es el correcto sería contar el acertijo entero.
+		fork.add_to_group("objetivo_camino")
 
 	var trap := _area_en(Vector3(-11.0, 1.5, -13.0))
 	if trap == null:
@@ -602,6 +606,7 @@ func _build_canyon() -> void:
 	fcs.shape = fbox
 	fork.add_child(fcs)
 	fork.body_entered.connect(_on_fork_entered)
+	fork.add_to_group("objetivo_camino")
 
 
 ## Ramal IZQUIERDO: losas sueltas cubiertas de oro. Es la trampa.

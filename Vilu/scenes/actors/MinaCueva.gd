@@ -170,6 +170,8 @@ func _spawn_talisman() -> void:
 	t.set_script(TALISMAN_SCR)
 	add_child(t)
 	t.global_position = marca.global_position
+	# «Investiga el final de la mina»: el talismán es el motivo del viaje.
+	t.add_to_group("objetivo_fondo_mina")
 
 
 # La persecución lanza rayos, así que va en _physics_process y no en _process.
@@ -548,6 +550,7 @@ func _start_chase() -> void:
 	var marca := get_node_or_null("ChupacabrasSpawnPoint") as Node3D
 	c.global_position = _sitio_libre(marca.global_position if marca else Vector3(0.0, -1.05, -49.0))
 	_chupacabras = c
+	c.add_to_group("objetivo_chupacabras")
 	# Y a correr. El modelo trae siete clips —Idle, Walk, Run, Sneak, Howl, Bite
 	# y Death— y no usaba ninguno: perseguía deslizándose con las patas clavadas,
 	# como una estatua sobre ruedas. Todos caminan en el sitio, así que el que

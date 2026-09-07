@@ -29,6 +29,9 @@ func _ready() -> void:
 	# que vive en la capa 2.
 	collision_layer = 0
 	collision_mask = 2
+	# «Ve al terminal de buses» y «viaja a Atacama» apuntan aquí.
+	add_to_group("objetivo_terminal")
+	add_to_group("objetivo_viajar")
 	body_entered.connect(_al_entrar)
 	body_exited.connect(_al_salir)
 

@@ -166,6 +166,9 @@ func _spawn_witch() -> void:
 		w.position = Vector3(-10.0, 0.0, -3.0)
 		add_child(w)
 		push_warning("Poblado: no hay modelo de bruja; se usa la cápsula")
+	# Las dos entregas de talismán la tienen a ella como destino.
+	w.add_to_group("objetivo_talisman_1")
+	w.add_to_group("objetivo_talisman_2")
 	w.set_script(WITCH_SCR)
 	w.call("_ready")   # el nodo ya está en el árbol: no se dispara sola
 	if w.has_signal("revealed_ocultists"):
@@ -258,6 +261,8 @@ func _spawn_bar_folk() -> void:
 	zone.collision_mask  = 2
 	zone.set_script(INTERACT_SCR)
 	zone.prompt          = "[E] Escuchar la conversación"
+	# «Escucha los rumores en el bar»: el marcador va sobre quien habla.
+	talker.add_to_group("objetivo_bar")
 	talker.add_child(zone)
 
 	var cs  := CollisionShape3D.new()
@@ -293,6 +298,7 @@ func _on_bar_talk(_player: Node) -> void:
 
 
 func _bar_objective_done() -> void:
+	get_tree().call_group("objetivo_bar", "remove_from_group", "objetivo_bar")
 	Misiones.hecho("bar")
 	_banner("Los cazadores quieren atrapar al Yastay en la pampa alta.", 6.0)
 	_hint("Tomá el camino del ESTE, hacia la quebrada del Yastay.")

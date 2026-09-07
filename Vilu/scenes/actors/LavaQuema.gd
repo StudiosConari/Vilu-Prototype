@@ -43,9 +43,32 @@ func _ready() -> void:
 		caja.get_center().y - hondura * 0.5, caja.get_center().z)
 	zona.add_child(cs)
 
-	zona.body_entered.connect(func(cuerpo: Node3D) -> void:
+	_zona = zona
+
+
+## El área, para poder preguntarle cada cuadro quién está dentro.
+var _zona: Area3D = null
+
+
+## Se pregunta MIENTRAS se está dentro, no sólo al entrar.
+##
+## `body_entered` avisa una vez, y esa vez se puede perder: si llega dentro de
+## la ventana de gracia que sigue a un rescate, el aviso se descarta y no hay
+## un segundo. El jugador seguía hundiéndose sin que nada lo sacara y acababa
+## bajo el cráter, de pie sobre la cáscara del volcán, sin lava que lo alcanzara
+## ni altura suficiente para contar como caída: atascado para siempre.
+##
+## Preguntando cada cuadro el rescate llega igual aunque el primer aviso se
+## pierda, y de paso atrapa al que cruza la caja tan rápido que el motor no le
+## registra la entrada. Que no se dispare en ráfaga es cosa de Game, que espera
+## un mínimo entre rescates.
+func _physics_process(_delta: float) -> void:
+	if _zona == null:
+		return
+	for cuerpo in _zona.get_overlapping_bodies():
 		if not cuerpo.is_in_group("player"):
-			return
+			continue
 		var juego := get_tree().get_first_node_in_group("game")
 		if juego and juego.has_method("volver_al_punto_seguro"):
-			juego.volver_al_punto_seguro("¡La lava quema! Volvés al punto seguro", dano))
+			juego.volver_al_punto_seguro("¡La lava quema! Volvés al punto seguro", dano)
+		return

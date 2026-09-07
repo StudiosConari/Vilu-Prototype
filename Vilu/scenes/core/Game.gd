@@ -7,6 +7,7 @@ extends Node3D
 
 const PLAYER_SCENE := preload("res://scenes/actors/Player.tscn")
 const HUD_SCENE := preload("res://scenes/ui/HUD.tscn")
+const GUIA_DE_OBJETIVOS := preload("res://scenes/core/GuiaDeObjetivos.gd")
 ## Mundo que se monta al empezar.
 ##
 ## Es @export y no const para poder cambiar de región desde el inspector del
@@ -67,15 +68,22 @@ var _cierre_mostrado := false
 @export var ajustes_toon: Resource = preload("res://scenes/core/toon.tres")
 
 @export_group("Cámara")
-## La cámara NO se mueve con el ratón: ni rueda ni botón derecho.
+## La cámara sigue al ratón: moverlo gira el plano, sin pulsar nada.
 ##
-## Girarla y alejarla dejaba el encuadre en manos del jugador: con la rueda se
-## llegaba a 70 m —el personaje era un punto— y arrastrando el botón derecho se
-## acababa mirando desde debajo del suelo. Y las escenas guionadas, que colocan
-## la cámara ellas mismas, salían distintas cada vez según dónde la hubieras
-## dejado. Fija, el plano es siempre el mismo y se puede componer para él.
+## Antes había que arrastrar con el botón derecho, que para mirar alrededor
+## mientras se juega es un botón de más. Con esto el puntero se captura mientras
+## se juega y se suelta solo en cuanto hay un menú o alguien habla.
+@export var camara_sigue_al_raton := true
+
+## La DISTANCIA no se toca: ni la rueda ni el arrastre la cambian.
 ##
-## Destildala si alguna vez querés volver a mirar el mapa desde arriba.
+## Alejarla dejaba el encuadre en manos del jugador: con la rueda se llegaba a
+## 70 m y el personaje era un punto. Y las escenas guionadas, que colocan la
+## cámara ellas mismas, salían distintas cada vez según dónde la hubieras
+## dejado. Con la distancia fija el plano se puede componer.
+##
+## Girar sí se puede, con el ratón; lo que esta casilla apaga es el zoom y el
+## orbitar con el botón derecho.
 @export var camara_fija := true
 ## A qué distancia va del personaje, en metros.
 ##
@@ -127,6 +135,10 @@ var active_index := 0
 var _r_prev := false
 var _t_prev := false
 
+## Alguien está hablando: el globo se traga las teclas y el ratón vuelve a ser
+## un puntero para poder pulsar en él.
+var _hablando := false
+
 
 func _ready() -> void:
 	# La historia abre en la fiesta de La Tirana, con Carmen: es la secuencia 1
@@ -155,10 +167,21 @@ func _ready() -> void:
 
 	hud = HUD_SCENE.instantiate()
 	add_child(hud)
+	# La guía de objetivos va DESPUÉS del HUD: es donde cuelga su flecha de borde.
+	var guia := Node.new()
+	guia.name = "GuiaDeObjetivos"
+	guia.set_script(GUIA_DE_OBJETIVOS)
+	add_child(guia)
 	# El cierre se engancha una sola vez y vive lo que viva la partida: el último
 	# logro puede caer en cualquier zona, no sólo en la mina.
 	if not GameManager.prototipo_superado.is_connected(_al_superar_el_prototipo):
 		GameManager.prototipo_superado.connect(_al_superar_el_prototipo)
+	# El ratón vuelve a ser puntero mientras alguien habla: el globo tiene texto
+	# que se pulsa.
+	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void:
+		_hablando = true)
+	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void:
+		_hablando = false)
 	_spawn_party_open(start)
 
 	# Arrancar en un interior (la Mina) desde el selector de debug.
@@ -224,10 +247,39 @@ func _colocar_en(pos: Vector3) -> void:
 	var offsets := [Vector3.ZERO, Vector3(2.5, 0, 0), Vector3(-2.5, 0, 0)]
 	for i in party.size():
 		var off: Vector3 = offsets[i] if i < offsets.size() else Vector3(0, 0, i * 2.0)
-		party[i].global_position = pos + off
+		party[i].global_position = pos + _si_hay_suelo(pos, off, party[i])
 		party[i].velocity = Vector3.ZERO
 	_respawn_pos = pos
 	_pegar_la_camara(pos)
+
+
+## Cuánto se puede apartar del punto sin quedarse en el aire.
+##
+## El party no aparece amontonado: al segundo y al tercero se los corre dos
+## metros y medio a cada lado. Eso da por sentado que hay cinco metros de suelo,
+## y en el cráter del Isluga no los hay: la plataforma del punto de aparición es
+## más angosta, así que al reaparecer los de los lados salían sobre el vacío y
+## caían a la lava — SIEMPRE, cada vez que reaparecías.
+##
+## Se comprueba con un rayo si bajo el sitio apartado hay algo donde pisar. Si
+## no lo hay, ese personaje aparece en el punto sin apartar; se empujan solos al
+## primer cuadro, que es mucho mejor que caerse.
+const SUELO_BAJO_EL_PARTY := 6.0
+
+
+## `quien` es el personaje que se va a colocar: el espacio de física se le pide
+## a él y no a este nodo porque él siempre está en el árbol.
+func _si_hay_suelo(pos: Vector3, off: Vector3, quien: Node3D) -> Vector3:
+	if off == Vector3.ZERO or quien == null or not quien.is_inside_tree():
+		return off
+	var esp := quien.get_world_3d().direct_space_state
+	if esp == null:
+		return off
+	var desde: Vector3 = pos + off + Vector3.UP * 2.0
+	var q := PhysicsRayQueryParameters3D.create(
+		desde, desde + Vector3.DOWN * (SUELO_BAJO_EL_PARTY + 2.0))
+	q.collision_mask = 1
+	return off if not esp.intersect_ray(q).is_empty() else Vector3.ZERO
 
 
 ## Planta la cámara en el sitio nuevo en vez de dejar que viaje hasta él.
@@ -256,7 +308,10 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 	return c
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_gracia = maxf(0.0, _gracia - delta)
+	_espera_de_rescate = maxf(0.0, _espera_de_rescate - delta)
+	_mandar_el_raton()
 	# R = cambiar dejando al otro en IA de combate; T = dejándolo QUIETO (puzzles).
 	var r := Input.is_action_pressed("swap_ai")
 	if r and not _r_prev:
@@ -307,18 +362,63 @@ func _limite_de_caida() -> float:
 ## ahora. El daño se aplica DESPUÉS de reubicar porque el rescate cura al party
 ## entero; sin esto tocar la lava no costaría nada.
 func volver_al_punto_seguro(motivo: String, dano := 0.0) -> void:
-	if _resetting:
+	var que_hacer := decidir_rescate()
+	if not que_hacer[0]:
 		return
+	_espera_de_rescate = RESCATE_MINIMO
 	_respawn(motivo)
-	if dano <= 0.0:
+	if dano <= 0.0 or not que_hacer[1]:
 		return
 	for c in party:
 		if is_instance_valid(c) and c.has_method("take_damage"):
 			c.take_damage(dano)
 
 
+## Qué hacer con un rescate que se acaba de pedir: `[rescatar, cobrar_el_daño]`.
+##
+## La gracia quita el DAÑO, no el rescate. Es una distinción que costó cara:
+## saltándose el rescate entero, quien tocaba la lava dentro de la ventana de
+## gracia no volvía a ningún sitio —seguía hundiéndose— y terminaba de pie sobre
+## la cáscara del volcán, bajo el cráter, sin lava que lo alcanzara ni altura
+## suficiente para contar como caída. De ahí no se sale salvo cerrando el juego,
+## que es peor que el bucle de muertes que la gracia venía a evitar. Un rescate
+## nunca puede dejarte tirado; el daño repetido sí.
+##
+## Vive aparte del rescate en sí para poder probar la regla sin montar el mundo,
+## la cámara y el HUD, que es lo que hace falta para ejecutar `_respawn`.
+func decidir_rescate() -> Array:
+	if _resetting or _espera_de_rescate > 0.0:
+		return [false, false]
+	return [true, _gracia <= 0.0]
+
+
+## Lo mínimo entre dos rescates seguidos.
+##
+## Sin esto, algo que comprueba cada cuadro —la lava— dispararía un rescate por
+## cuadro mientras dure el contacto. Es corto a propósito: sólo evita la ráfaga,
+## no deja a nadie sin rescatar.
+const RESCATE_MINIMO := 0.4
+var _espera_de_rescate := 0.0
+
+
+## Segundos de invulnerabilidad justo después de reaparecer.
+##
+## Es el corta-bucles. Reaparecer y volver a morir en el acto encadenaba muertes
+## sin fin: pasó en el cráter del Isluga, donde a los personajes de los lados se
+## los colocaba sobre el vacío y caían a la lava, que los devolvía al mismo
+## punto, que los volvía a tirar. Aquello ya está arreglado en `_si_hay_suelo`,
+## pero una muerte en bucle es lo peor que le puede pasar a quien está probando
+## el juego —no hay forma de salir salvo cerrar la ventana—, así que además hay
+## una red: durante este rato, nada te vuelve a matar.
+const GRACIA_TRAS_REAPARECER := 1.5
+
+## Lo que queda de esa gracia.
+var _gracia := 0.0
+
+
 func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 	_resetting = true
+	_gracia = GRACIA_TRAS_REAPARECER
 	jugador_reaparecio.emit()
 	if hud and hud.has_method("show_banner"):
 		hud.show_banner(motivo)
@@ -351,9 +451,18 @@ func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Cámara: rueda = zoom, clic derecho (arrastrar) = orbitar alrededor del activo.
-	# Con `camara_fija` no responde a ninguna de las dos: el plano lo pone el
-	# juego, no el ratón.
+	# Mirar con el ratón: sin botones, moverlo gira la cámara.
+	#
+	# Sólo cuando el puntero está capturado. Ésa es la comprobación que hace
+	# falta: con la pausa abierta o alguien hablando el puntero vuelve a ser un
+	# puntero, y entonces mover el ratón para pulsar «Reanudar» no puede estar
+	# girando la cámara por detrás.
+	if camara_sigue_al_raton and event is InputEventMouseMotion \
+			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		_mirar_con_el_raton((event as InputEventMouseMotion).relative)
+		return
+	# Rueda = zoom, clic derecho (arrastrar) = orbitar. Con `camara_fija` no
+	# responde a ninguna de las dos: la distancia la pone el juego.
 	if camara_fija:
 		return
 	if event.is_action_pressed("cam_zoom_in"):
@@ -365,8 +474,59 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_released("cam_orbit"):
 		_cam_rotating = false
 	elif event is InputEventMouseMotion and _cam_rotating:
-		_cam_yaw -= event.relative.x * cam_rotate_speed
-		_cam_pitch = clampf(_cam_pitch - event.relative.y * cam_rotate_speed, -1.4, -0.15)
+		_mirar_con_el_raton((event as InputEventMouseMotion).relative)
+
+
+## Hasta dónde se puede subir y bajar el plano.
+##
+## Nunca por encima de la horizontal: pasado ese punto la cámara se mete por
+## debajo del personaje y se ve el interior del suelo.
+const PICADO_MAX := -0.05
+const PICADO_MIN := -1.40
+
+
+func _mirar_con_el_raton(rel: Vector2) -> void:
+	# Durante una escena guionada manda el guion. Girar acá dejaría el giro
+	# guardado y la cámara daría un salto al devolverte el control.
+	if _cam_override != null:
+		return
+	_cam_yaw -= rel.x * cam_rotate_speed
+	_cam_pitch = clampf(_cam_pitch - rel.y * cam_rotate_speed, PICADO_MIN, PICADO_MAX)
+
+
+## Capturar o soltar el puntero, según haya algo con lo que haga falta apuntar.
+##
+## Se decide cada cuadro en vez de al abrir y cerrar cada pantalla. Es más
+## barato de razonar y se corrige solo: cualquier menú que alguien añada mañana
+## y olvide avisar queda cubierto igual, y quedarse con el ratón capturado
+## delante de un menú es de las cosas más molestas que le pueden pasar a quien
+## está jugando —no hay forma de pulsar nada—.
+func _mandar_el_raton() -> void:
+	if not camara_sigue_al_raton:
+		return
+	var quiero := Input.MOUSE_MODE_CAPTURED
+	if get_tree().paused or _hablando or _hay_pantalla_encima():
+		quiero = Input.MOUSE_MODE_VISIBLE
+	if Input.mouse_mode != quiero:
+		Input.mouse_mode = quiero
+
+
+## Al salir de la partida el puntero vuelve, siempre.
+##
+## `Input.mouse_mode` es global y sobrevive al cambio de escena: sin esto, volver
+## al menú desde la pausa dejaba el título con el ratón capturado y no había
+## forma de pulsar «JUGAR». Va en `_exit_tree` y no en el botón de volver porque
+## de la partida se sale por más de una puerta —el menú, el cierre del
+## prototipo, reiniciar— y todas pasan por acá.
+func _exit_tree() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _hay_pantalla_encima() -> bool:
+	for n in get_tree().get_nodes_in_group("pantalla_modal"):
+		if n is CanvasItem and (n as CanvasItem).visible:
+			return true
+	return false
 
 
 ## Hace que la cámara siga a otro nodo (un NPC en una escena guionada) en vez
@@ -578,7 +738,32 @@ func enter_interior(id: String, use_travel_spawn := false) -> void:
 		# argumento se perdÃ­a por el camino y el mapa te dejaba en el PlayerSpawn,
 		# o sea al principio del puzle: habÃ­a que rehacerlo entero para volver a
 		# hablar con Ã©l.
-		_move_to_spawn(r, use_travel_spawn))
+		_move_to_spawn(r, use_travel_spawn)
+		_consejo_de_la_zona(id))
+
+
+## Volcanes: se explica la [T] al llegar.
+##
+## Los dos volcanes son los únicos sitios donde hace falta SEPARAR al party —una
+## palanca de un lado y la plataforma del otro—, y el juego no lo dice en ningún
+## lado: la [T] aparece en los controles del menú y nadie se acuerda a los veinte
+## minutos. Se cuenta donde se necesita, la primera vez que se pisa cada volcán.
+const CONSEJOS_DE_ZONA := {
+	"Isluga": "Pulsá [T] para dejar al otro quieto y que cada uno siga su camino. Volvé a pulsarla para que te siga.",
+	"OjosDelSalado": "Pulsá [T] para dejar al otro quieto y que cada uno siga su camino. Volvé a pulsarla para que te siga.",
+}
+
+var _consejos_dados := {}
+
+
+func _consejo_de_la_zona(id: String) -> void:
+	if _consejos_dados.has(id) or not CONSEJOS_DE_ZONA.has(id):
+		return
+	if party.size() < 2:
+		return                     # sin compañero la [T] no hace nada
+	_consejos_dados[id] = true
+	if hud != null and hud.has_method("consejo"):
+		hud.consejo(String(CONSEJOS_DE_ZONA[id]), 9.0)
 
 
 ## Ambiente de afuera, guardado para devolverlo al salir de un interior.
@@ -676,6 +861,12 @@ func exit_interior(zona: String, use_travel_spawn := false) -> void:
 ## en el suyo —el Isluga en Tarapacá, el Ojos del Salado en Atacama—.
 func _puerta_hacia(id: String) -> Node3D:
 	return _buscar_puerta(world, id) if world != null else null
+
+
+## Lo mismo, para quien no sea Game. Lo usa la guía de objetivos para saber a
+## qué puerta ponerle el marcador cuando la misión es «ve a tal zona».
+func puerta_hacia(id: String) -> Node3D:
+	return _puerta_hacia(id)
 
 
 func _buscar_puerta(n: Node, id: String) -> Node3D:

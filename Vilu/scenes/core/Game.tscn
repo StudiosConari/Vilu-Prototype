@@ -42,8 +42,10 @@ adjustment_saturation = 1.15
 [node name="Game" type="Node3D" unique_id=267953500 groups=["game"]]
 script = ExtResource("1_game")
 camara_fija = false
-cam_zoom_max = 4.0
-cam_zoom_step = 4.0
+cam_distance = 3.5
+cam_zoom_min = 3.5
+cam_zoom_max = 3.5
+cam_zoom_step = 3.5
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2032434743]
 environment = SubResource("env")

@@ -206,3 +206,22 @@ func _buscar(n: Node, clase: String) -> Node:
 		if x != null:
 			return x
 	return null
+
+
+func test_la_estatura_no_toca_el_cuerpo_de_colision() -> void:
+	# Emilia y Benjamín se agrandaron de 1,9 a 2,2 m. Es sólo lo que se ve: la
+	# cápsula sigue midiendo 1,6, y de ella dependen los saltos medidos del
+	# Isluga y la viga baja de la mina. Si algún día alguien la escala con el
+	# modelo, esto avisa.
+	var esc := load("res://scenes/actors/Player.tscn") as PackedScene
+	var st := esc.get_state()
+	var alto := -1.0
+	for i in st.get_node_count():
+		if String(st.get_node_name(i)) != "Collision":
+			continue
+		for j in st.get_node_property_count(i):
+			if String(st.get_node_property_name(i, j)) == "shape":
+				var f := st.get_node_property_value(i, j) as CapsuleShape3D
+				if f != null:
+					alto = f.height
+	assert_almost_eq(alto, 1.6, 0.01, "la cápsula del jugador sigue siendo la de siempre")
