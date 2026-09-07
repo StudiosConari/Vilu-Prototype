@@ -61,6 +61,13 @@ enum AiMode { SIGUIENDO, FROZEN }
 @export var turn_speed := 14.0
 @export var updraft_speed := 6.0    # velocidad de ascenso en una corriente (Emilia planeando)
 
+## A qué velocidad te arrastra hacia abajo una corriente DESCENDENTE.
+##
+## Muy por encima de la de subida a propósito: la ascendente es una ayuda que se
+## usa a voluntad, ésta es una trampa que hay que esquivar. A 6 m/s se salía
+## caminando y no daba miedo ninguno.
+@export var downdraft_speed := 24.0
+
 @export_group("Vida y energía")
 @export var max_health := 100
 @export var max_energy := 100
@@ -130,6 +137,8 @@ var mounted := false
 ## el cuello. En 0 quedan en el mismo punto, que es como iba antes.
 @export var avance_de_montura := 0.20
 var in_updraft := false             # dentro de una corriente ascendente (lo setea Updraft.gd)
+## Dentro de una corriente DESCENDENTE. Lo pone el mismo Updraft.gd.
+var in_downdraft := false
 
 # Interacción
 var hud: CanvasLayer
@@ -228,7 +237,16 @@ func _physics_process(delta: float) -> void:
 		energy_changed.emit(_energy_shown, max_energy)
 
 	# --- Gravedad / planeo / corriente ascendente + reset de saltos ---
-	if active and in_updraft and can_glide and Input.is_action_pressed("jump"):
+	# La corriente que EMPUJA HACIA ABAJO manda sobre todo lo demás.
+	#
+	# Va primero a propósito: dentro de una de éstas no valen ni las alas ni el
+	# planeo. Es lo contrario de la ascendente —que es una ayuda y por eso pide
+	# alas y mantener el salto—: ésta es una trampa, y una trampa de la que se
+	# puede salir planeando no es una trampa.
+	if in_downdraft:
+		velocity.y = move_toward(velocity.y, -downdraft_speed, 60.0 * delta)
+		_jumps_done = 2          # ni salto ni doble salto mientras te arrastra
+	elif active and in_updraft and can_glide and Input.is_action_pressed("jump"):
 		velocity.y = move_toward(velocity.y, updraft_speed, 40.0 * delta)   # Emilia sube en la corriente
 		_jumps_done = 0
 	elif is_on_floor():
@@ -1430,7 +1448,7 @@ func _planeando() -> bool:
 		return false
 	if not Input.is_action_pressed("jump"):
 		return false
-	return in_updraft or velocity.y < 0.0
+	return (in_updraft or velocity.y < 0.0) and not in_downdraft
 
 
 ## Pone o quita la pose de ir a caballo del guanaco.

@@ -61,6 +61,13 @@ const MUDA := preload("res://scenes/core/MudaDeAsset.gd")
 ## de golpe; esto sólo es el fogonazo que hace que no se vea el corte.
 @export var muda_segundos := 0.35
 
+## A qué misión pertenece, para que la guía le ponga marcador.
+##
+## Vacío = sin marcador, que es lo normal en un interruptor suelto. Puesto, se
+## señala MIENTRAS siga sin accionar y se apaga en cuanto se usa: la gracia es
+## no tener que adivinar cuáles faltan en un cráter lleno de piedras iguales.
+@export var mision := ""
+
 var _golpes := 0
 var _usado := false
 var _cuerpo: StaticBody3D = null
@@ -78,6 +85,8 @@ func _ready() -> void:
 	# cuelga un reenviador mínimo en vez de duplicar la lógica.
 	_cuerpo.set_script(REENVIADOR)
 	_cuerpo.set("dueno", self)
+	if mision != "":
+		add_to_group("objetivo_" + mision)
 
 
 func _buscar(n: Node, clase: String) -> Node:
@@ -100,6 +109,8 @@ func golpear(_dmg: float, _desde: Vector3) -> void:
 		return
 	_golpes = 0
 	_usado = true
+	if mision != "":
+		remove_from_group("objetivo_" + mision)
 	_accionar()
 
 

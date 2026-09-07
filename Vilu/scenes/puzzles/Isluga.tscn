@@ -329,6 +329,7 @@ transform = Transform3D(-1.2198933, 0, -0.05538687, 0, 2.1043613, 0, 0.06154504,
 transform = Transform3D(1.1179378, 0, 0, 0, 0.021286845, 0.9997735, 0, -0.9997735, 0.021286845, 152.17508, -1.3987732, -108.41851)
 script = ExtResource("14_mw708")
 modelo_activo = ExtResource("90_cuboverde")
+mision = "isluga_volcan"
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
@@ -336,6 +337,7 @@ metodo = "revisar"
 transform = Transform3D(1.1179378, 0, 0, 0, 0.028091367, 0.9996055, 0, -0.9996055, 0.028091367, 163.17368, -1.3170319, -97.322975)
 script = ExtResource("14_mw708")
 modelo_activo = ExtResource("90_cuboverde")
+mision = "isluga_volcan"
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
@@ -343,6 +345,7 @@ metodo = "revisar"
 transform = Transform3D(-0.009272822, -1.1173972, 0.0279971, -5.825013e-11, 0.031402957, 0.996294, -1.0010496, 0.010350563, -0.00025933995, 168.72289, -1.3170319, -116.7189)
 script = ExtResource("14_mw708")
 modelo_activo = ExtResource("90_cuboverde")
+mision = "isluga_volcan"
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
@@ -350,6 +353,7 @@ metodo = "revisar"
 transform = Transform3D(-1.117931, 0.003337031, -9.381667e-05, -1.7449578e-12, 0.028080316, 0.9996169, 0.0037335344, 0.9992066, -0.028091524, 141.91832, -1.3170319, -120.25809)
 script = ExtResource("14_mw708")
 modelo_activo = ExtResource("90_cuboverde")
+mision = "isluga_volcan"
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
@@ -357,6 +361,7 @@ metodo = "revisar"
 transform = Transform3D(-0.012240436, 1.1173576, -0.027996207, 4.6529993e-12, 0.03140286, 0.9962945, 0.9984795, 0.013697778, -0.00034320782, 137.83357, -1.3170319, -100.73966)
 script = ExtResource("14_mw708")
 modelo_activo = ExtResource("90_cuboverde")
+mision = "isluga_volcan"
 objetivo = NodePath("../bloque_de_espuma_morada5")
 metodo = "revisar"
 
@@ -364,6 +369,7 @@ metodo = "revisar"
 transform = Transform3D(0.034037285, 0.70981747, 0, -0.6390131, 0.03780871, 0, 0, 0, 0.6359297, 111.32537, 1.9030151, -128.36449)
 script = ExtResource("14_mw708")
 modelo_activo = ExtResource("90_cuboverde")
+mision = "isluga_volcan"
 objetivo = NodePath("../bloque_de_arcilla_purpura10")
 mensaje = "La plataforma cambia de rumbo"
 
@@ -645,6 +651,7 @@ activacion = 1
 prompt = "[E] Activar el obelisco"
 modelo_activo = ExtResource("91_obelverde")
 nodo_a_mudar = NodePath("obelisko_oscuro1")
+mision = "isluga_volcan"
 
 [node name="baldosa_de_piedra_de_lava_purpura2" parent="Crater/EmiliaCube" unique_id=1949423962 instance=ExtResource("3_rri60")]
 transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.3835835, -0.117708206, -1.8872695, -0.19831467)
@@ -703,6 +710,7 @@ activacion = 1
 prompt = "[E] Activar el obelisco"
 modelo_activo = ExtResource("91_obelverde")
 nodo_a_mudar = NodePath("obelisko_oscuro2")
+mision = "isluga_volcan"
 
 [node name="baldosa_de_piedra_de_lava_purpura3" parent="Crater/BenjaminCube" unique_id=1077435592 instance=ExtResource("3_rri60")]
 transform = Transform3D(7.1495094, 0, 0, 0, 4.3869815, 0, 0, 0, 6.4358597, 0.12043953, -1.8872695, -0.19831467)

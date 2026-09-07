@@ -1,0 +1,23 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+; Corriente de aire que ARRASTRA HACIA ABAJO.
+;
+; Mismo shader que la ascendente, con tres cosas cambiadas: rojo en vez de azul,
+; las ráfagas corriendo hacia abajo (`sentido` en -1) y el desvanecido dado
+; vuelta, porque ésta nace arriba. Es la señal de que hay que esquivarla: en un
+; volcán, azul es aire que ayuda y rojo es lo que quema.
+
+[ext_resource type="Shader" path="res://art_placeholders/viento_ascendente.gdshader" id="1_viento"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_viento")
+shader_parameter/color_abajo = Color(1, 0.32, 0.16, 1)
+shader_parameter/color_arriba = Color(0.86, 0.13, 0.08, 1)
+shader_parameter/velocidad = 2.6
+shader_parameter/vetas = 7.0
+shader_parameter/intensidad = 1.35
+shader_parameter/opacidad = 0.95
+shader_parameter/velo_base = 0.2
+shader_parameter/sentido = -1.0
+shader_parameter/grosor_borde = 1.7

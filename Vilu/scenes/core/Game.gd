@@ -401,6 +401,59 @@ const RESCATE_MINIMO := 0.4
 var _espera_de_rescate := 0.0
 
 
+## Lo más que puede haber entre un punto seguro y el suelo, en metros.
+##
+## Cuatro metros es una caída que se aguanta. Más que eso no es un sitio donde
+## reaparecer, es un sitio desde donde caerse.
+const SUELO_BAJO_EL_PUNTO_SEGURO := 4.0
+
+
+## Comprueba que se pueda reaparecer ahí, y si no, devuelve el principio de la
+## zona.
+##
+## PASA DE VERDAD: el `CheckpointBifurcacion` del Ojos del Salado está a 110 m y
+## el suelo más cercano queda 23 m por debajo. Reaparecías ahí, caías a la lava,
+## la lava te devolvía al mismo punto y vuelta a empezar: una caída infinita de
+## la que no se sale.
+##
+## Se comprueba acá y no moviendo el marcador porque el fallo es de una clase
+## que se repite —un punto de reaparición mal colocado— y en un nivel que se
+## sigue editando a mano va a volver a pasar. Un marcador en el aire ahora sólo
+## cuesta reaparecer más atrás, no la partida.
+func _con_suelo_debajo(pos: Vector3) -> Vector3:
+	var quien := active_character()
+	if quien == null or not quien.is_inside_tree():
+		return pos
+	var esp: PhysicsDirectSpaceState3D = quien.get_world_3d().direct_space_state
+	if esp == null:
+		return pos
+	var q := PhysicsRayQueryParameters3D.create(
+		pos + Vector3.UP, pos + Vector3.DOWN * SUELO_BAJO_EL_PUNTO_SEGURO)
+	q.collision_mask = 1
+	if not esp.intersect_ray(q).is_empty():
+		return pos
+	var respaldo := _principio_de_la_zona()
+	if respaldo == Vector3.INF:
+		return pos                # sin alternativa, mejor eso que nada
+	push_warning("Game: el punto seguro %s está en el aire; se usa el principio de la zona" % str(pos))
+	return respaldo
+
+
+## El PlayerSpawn de la región cargada, o INF si no hay.
+func _principio_de_la_zona() -> Vector3:
+	for r in _region_holder.get_children():
+		var sp := r.find_child("PlayerSpawn", true, false) as Node3D
+		if sp != null:
+			return sp.global_position
+	if world != null and _interior == "":
+		var z: String = world.current_zone()
+		if z != "":
+			var p: Vector3 = world.spawn_point(z)
+			if p != Vector3.INF:
+				return p
+	return Vector3.INF
+
+
 ## Segundos de invulnerabilidad justo después de reaparecer.
 ##
 ## Es el corta-bucles. Reaparecer y volver a morir en el acto encadenaba muertes
@@ -431,7 +484,7 @@ func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 			var sp: Vector3 = world.spawn_point(z)
 			if sp != Vector3.INF:
 				destino = sp
-	_colocar_en(destino)
+	_colocar_en(_con_suelo_debajo(destino))
 
 	for c in party:
 		if c.has_method("set_ai_mode"):

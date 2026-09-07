@@ -7,6 +7,14 @@ extends Area3D
 
 signal activated
 
+## A qué misión pertenece, para que la guía le ponga marcador.
+##
+## Vacío = sin marcador. Puesto, se señala MIENTRAS siga sin activar y se apaga
+## al recibir la flecha. Acá importa más que en ningún otro sitio: el cubo está
+## TAPADO por una muralla móvil a propósito, así que sin marcador hay que
+## adivinar además dónde está.
+@export var mision := ""
+
 var _done := false
 var _mat: StandardMaterial3D
 
@@ -17,6 +25,8 @@ func _ready() -> void:
 	collision_mask = 1
 	monitoring = true
 	area_entered.connect(_on_area_entered)
+	if mision != "":
+		add_to_group("objetivo_" + mision)
 	_mat = StandardMaterial3D.new()
 	_mat.albedo_color = Color(0.9, 0.3, 0.2)   # rojo = sin activar
 	if _mesh:
@@ -28,6 +38,8 @@ func _on_area_entered(area: Area3D) -> void:
 		return
 	if area.is_in_group("arrow"):
 		_done = true
+		if mision != "":
+			remove_from_group("objetivo_" + mision)
 		if _mat:
 			_mat.albedo_color = Color(0.2, 0.9, 0.3)
 			_mat.emission_enabled = true
