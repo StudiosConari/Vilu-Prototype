@@ -1,6 +1,6 @@
 extends Control
 
-# Menu de inicio: titulo + JUGAR + opciones (volumen) + record + controles.
+# Menu de inicio: titulo + nueva partida + opciones + seleccion de zona + salir.
 
 var _options: Control
 var _zonas: Control
@@ -82,7 +82,7 @@ func _ready() -> void:
 	#
 	# Antes el título y el subtítulo iban a una altura fija y los botones se
 	# centraban en toda la pantalla: al añadir un botón la columna creció, subió,
-	# y "JUGAR" se montó encima del subtítulo. En una sola columna eso no puede
+	# y el primer botón se montó encima del subtítulo. En una sola columna eso no puede
 	# pasar por mucho que se añadan o quiten botones, ni en una ventana pequeña.
 	var vb := VBoxContainer.new()
 	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -129,11 +129,13 @@ func _ready() -> void:
 	_ajustar_titulo()
 	get_viewport().size_changed.connect(_ajustar_titulo)
 
-	var play := _entrada(con_arte, "JUGAR", 40, 80)
-	play.pressed.connect(_on_play)
-	vb.add_child(play)
-
-	var newgame := _entrada(con_arte, "Nueva partida", 26, 54)
+	# Sin «JUGAR»: la única entrada al juego es «Nueva partida».
+	#
+	# Los dos hacían casi lo mismo —cargar Game— y la diferencia no se veía por
+	# ningún lado: «JUGAR» continuaba con el progreso que hubiera y «Nueva
+	# partida» lo borraba. Con dos botones seguidos que llevan al mismo sitio,
+	# quien llega al menú por primera vez no tiene forma de saber cuál le toca.
+	var newgame := _entrada(con_arte, "Nueva partida", 40, 80)
 	newgame.pressed.connect(_on_new_game)
 	vb.add_child(newgame)
 
@@ -328,10 +330,6 @@ func _label(txt: String, fsize: int, col: Color, outline: int) -> Label:
 	l.add_theme_color_override("font_outline_color", Color.BLACK)
 	l.add_theme_constant_override("outline_size", outline)
 	return l
-
-
-func _on_play() -> void:
-	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")
 
 
 func _on_new_game() -> void:

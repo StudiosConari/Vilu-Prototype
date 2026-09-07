@@ -27,6 +27,10 @@ static func mostrar(padre: Node) -> CanvasLayer:
 
 
 func _ready() -> void:
+	# Al grupo de pantallas modales: es lo que hace que Game suelte el ratón.
+	# Sin esto el cierre salía con el puntero capturado y no se podía pulsar
+	# «Volver al título» — no había cursor con el que apuntar.
+	add_to_group("pantalla_modal")
 	# El HUD se esconde: si no, la vida y la energía se transparentan detrás del
 	# cierre y le quitan el aire.
 	var hud := get_tree().get_first_node_in_group("hud")

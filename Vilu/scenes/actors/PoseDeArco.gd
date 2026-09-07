@@ -67,7 +67,29 @@ func capturar() -> void:
 			poses[idx] = esq.get_bone_pose_rotation(idx)
 
 
+## El motor llama a ESTA, no a `_process_modification()`.
+##
+## Godot 4.7 declara las dos, pero la que invoca en cada cuadro es la del delta.
+## Implementando sólo la otra el modificador no corre NUNCA, y falla del peor
+## modo posible: sin error, sin aviso, simplemente no pasa nada. Aquí se notaba
+## en que Benjamín bajaba el arco al empezar a andar.
+##
+## Los tests lo cazaban sólo si comprueban que la llama EL MOTOR; llamándola a
+## mano pasaban igual, que es lo que me despistó.
+func _process_modification_with_delta(_delta: float) -> void:
+	_aplicar()
+
+
+## Se deja también la sin delta, por si alguna versión llama a ésta.
 func _process_modification() -> void:
+	_aplicar()
+
+
+func _aplicar() -> void:
+	# Contador para los tests: la única forma de comprobar que el MOTOR entra acá
+	# y no sólo un test llamando a mano, que es lo que dejó pasar el fallo.
+	if has_meta("llamadas"):
+		set_meta("llamadas", int(get_meta("llamadas")) + 1)
 	if _peso <= 0.001 or poses.is_empty():
 		return
 	var esq := get_skeleton()

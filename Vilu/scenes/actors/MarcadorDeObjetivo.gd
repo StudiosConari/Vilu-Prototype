@@ -29,8 +29,11 @@ const VAIVEN_SEG := 1.6
 const DISTANCIA_BASE := 14.0
 const ESCALA_MAX := 3.5
 
-## El tamaño de la bolita, en metros.
-const RADIO := 0.28
+## El radio de la bolita, en metros.
+##
+## Estaba en 0,28 —56 cm de bola— y a la distancia de juego tapaba media cara
+## del objetivo. Un marcador tiene que señalar lo que hay debajo, no esconderlo.
+const RADIO := 0.14
 
 ## Lo que se separa de la coronilla de aquello que marca.
 const HOLGURA := 0.6
@@ -78,8 +81,8 @@ func _ready() -> void:
 
 	var luz := OmniLight3D.new()
 	luz.light_color = ORO
-	luz.light_energy = 1.0
-	luz.omni_range = 3.0
+	luz.light_energy = 0.8
+	luz.omni_range = 2.0
 	luz.shadow_enabled = false
 
 	add_child(luz)

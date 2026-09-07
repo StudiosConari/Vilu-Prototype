@@ -103,3 +103,40 @@ func test_las_rafagas_de_la_roja_bajan() -> void:
 	assert_lt(float(ROJO.get_shader_parameter("sentido")), 0.0, "las vetas van hacia abajo")
 	var c: Color = ROJO.get_shader_parameter("color_abajo")
 	assert_gt(c.r, c.b, "y el color tira a rojo, no a azul")
+
+
+func test_nadie_repinta_de_azul_a_las_descendentes() -> void:
+	# El fallo que costó más caro de encontrar: `CumbreCima._ready()` vestía de
+	# azul TODAS las corrientes del nivel, y el `_ready` del padre corre DESPUÉS
+	# que el de los hijos, así que pisaba el rojo que cada corriente acababa de
+	# ponerse. Se veían azules y te tiraban al vacío: la trampa invisible que el
+	# color venía a evitar.
+	#
+	# No se detectó antes porque las sondas cargaban la escena con un script
+	# suelto, donde `CumbreCima.gd` ni siquiera compila —no resuelve autoloads—
+	# y por lo tanto nunca repintaba nada. Cargada de verdad, como acá, sí.
+	var raiz = load("res://scenes/puzzles/OjosDelSalado.tscn").instantiate()
+	add_child_autofree(raiz)
+	await wait_physics_frames(5)
+	var rojo := load("res://art_placeholders/mat_viento_descendente.tres")
+	var descendentes := 0
+	for n in _todo(raiz):
+		if n.get_script() == null:
+			continue
+		if not String(n.get_script().resource_path).ends_with("Updraft.gd"):
+			continue
+		if not bool(n.get("hacia_abajo")):
+			continue
+		descendentes += 1
+		for h in n.get_children():
+			if h is MeshInstance3D:
+				assert_eq((h as MeshInstance3D).material_override, rojo,
+					"%s sigue roja después de que la cumbre vista las corrientes" % n.name)
+	assert_gt(descendentes, 0, "el nivel tiene corrientes descendentes que comprobar")
+
+
+func _todo(n: Node) -> Array:
+	var r := [n]
+	for h in n.get_children():
+		r.append_array(_todo(h))
+	return r

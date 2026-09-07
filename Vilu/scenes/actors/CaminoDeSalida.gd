@@ -270,3 +270,27 @@ func _desvanecer() -> void:
 			_altura[i] - brota_desde, duracion_subida) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		t.tween_callback(func() -> void: _esconder(i))
+
+
+## Deja el camino puesto y para siempre, sin ciclo de aparecer ni de derrumbe.
+##
+## Es para VOLVER. El camino nace escondido, lo abre el guardián y se derrumba
+## detrás tuyo: eso está bien la primera vez, pero al regresar al cráter por el
+## portal del Ojos del Salado la escena se monta de cero y el guardián ya no
+## tiene nada que decir. Quedabas encerrado en el cráter, mirando la lava, sin
+## puente por el que irte.
+##
+## Aquí no se montan las zonas de borde a propósito: son las que disparan el
+## derrumbe, y en una segunda visita derrumbarlo otra vez sería volver a dejar
+## al jugador atrapado.
+func dejar_abierto() -> void:
+	if _arrancado or _desvaneciendo:
+		return
+	_arrancado = true
+	_hasta = _bloques.size() - 1
+	for i in _bloques.size():
+		_bloques[i].position.y = _altura[i]
+		_bloques[i].visible = true
+		if _cuerpos[i]:
+			_cuerpos[i].collision_layer = _capas[i]
+	_encender_acompanantes()

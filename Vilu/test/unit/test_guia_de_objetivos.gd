@@ -150,3 +150,24 @@ func _gd_de(carpeta: String) -> Array[String]:
 		n = d.get_next()
 	d.list_dir_end()
 	return r
+
+
+func test_un_objetivo_liberado_no_rompe_la_guia() -> void:
+	# Pasó en el juego: "Trying to assign invalid previously freed instance".
+	#
+	# El bucle era `for n: Node3D in _marcas.keys()`, y una variable de bucle
+	# TIPADA se asigna antes de que el cuerpo pueda comprobar nada: con una
+	# instancia ya liberada revienta ahí mismo, sin llegar al is_instance_valid.
+	#
+	# Y objetivos liberados los hay a montones: un guanaco curado, un cazador
+	# revisado, o la región entera al cambiar de zona.
+	var o := _objetivo("objetivo_guanacos")
+	var g := _guia("guanacos")
+	g.call("_repasar")
+	assert_not_null(_marcador_de(o), "primero lleva marcador")
+	# Se libera de golpe, como al descargarse una región.
+	o.free()
+	g.call("_repasar")          # no debe reventar
+	g.call("_mira")             # la flecha del borde recorre lo mismo
+	g.call("_limpiar")
+	assert_eq((g.get("_marcas") as Dictionary).size(), 0, "la guía se limpia sola")
