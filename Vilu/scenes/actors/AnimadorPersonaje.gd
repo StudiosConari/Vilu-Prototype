@@ -93,7 +93,7 @@ func montar(jugador: CharacterBody3D, escena: PackedScene, escala: float) -> voi
 			_impacto[n] = _cuando_impacta(n)
 	if _anim.has_animation(FLECHA_CARGADA):
 		_tension = _cuando_abre_la_mano(FLECHA_CARGADA)
-	_injertar_clips_de_arco()
+	_injertar_animaciones_aparte()
 	_anim.play(REPOSO)   # medir dejó la pose donde fuera; se la devuelve
 
 	# El muñeco de cajas se apaga, pero NO se borra: sigue sirviendo de
@@ -415,6 +415,7 @@ func flecha(ritmo: float = 1.0) -> float:
 ##
 ## El punto donde congelar se mide, no se escribe: es el fotograma en que la mano
 ## que tira de la cuerda llega a su mayor recorrido.
+##
 func tensar() -> void:
 	if _anim == null or not _anim.has_animation(FLECHA_CARGADA):
 		return
@@ -433,6 +434,10 @@ func soltar(ritmo: float = 1.0) -> float:
 	_anim.play(FLECHA_CARGADA)
 	if _anim.current_animation_position < _tension:
 		_anim.seek(_tension, true)
+	# Se vuelve a marcar como clip de una pasada: caminar apuntando lo había
+	# borrado para poder pisarlo con los clips de andar, y sin esto el tramo de
+	# soltar se cortaba en cuanto se daba un paso.
+	_unica = FLECHA_CARGADA
 	var r: float = maxf(ritmo, 0.1)
 	_anim.speed_scale = r
 	return (_anim.get_animation(FLECHA_CARGADA).length - _tension) / r
@@ -477,15 +482,19 @@ func _poner_pose_de_montado() -> void:
 
 # ─── Caminar apuntando ────────────────────────────────────────────────────────
 
-## Los cuatro clips de caminar CON EL ARCO SOSTENIDO, uno por dirección.
+## Animaciones de Benjamín que NO viven en `benjamin.glb`.
 ##
-## Vienen animados enteros —brazo atrás, cuerda tensa, piernas andando— así que
-## donde estén no hace falta reescribir huesos: manda el clip y ya está. El
-## modificador de esqueleto se queda de respaldo para cuando falten.
+## Aquí van las que llegan nuevas o cambiadas. Rehacer `benjamin.glb` cada vez
+## arrastra malla, materiales y texturas extraídas —mucho que romper para tocar
+## un clip—, así que se exporta aparte un .glb de sólo esqueleto y acciones y se
+## injertan al montar. Lo que traiga PISA a lo que venga en el modelo, y por eso
+## sirve tanto para añadir —los cuatro de caminar apuntando— como para
+## reemplazar —el reposo—.
 ##
-## Son cuatro y no uno porque apuntando se camina de lado y de espaldas: el
-## personaje encara a donde apunta, no a donde va.
-const ARCO_SOSTENIDO := preload("res://models/personaje/benjamin_arco_sostenido.glb")
+## Para meter una animación nueva: se añade al .fbx de la carpeta de Benjamín,
+## se vuelve a exportar el .glb y ya está; acá no hay nada que tocar salvo que
+## el código necesite llamarla por su nombre.
+const ANIMACIONES_APARTE := preload("res://models/personaje/benjamin_animaciones.glb")
 const MANTENER_ADELANTE := "mantener_adelante"
 const MANTENER_ATRAS := "mantener_atras"
 const MANTENER_DERECHA := "mantener_derecha"
@@ -496,21 +505,18 @@ const CLIPS_DE_ARCO := [
 
 const POSE_DE_ARCO := preload("res://scenes/actors/PoseDeArco.gd")
 
-## Mete los cuatro clips de arco sostenido en la librería del personaje.
-##
-## Vienen en su propio .glb —sin malla, sólo el esqueleto de Mixamo y las cuatro
-## acciones— para no tener que rehacer `benjamin.glb` entero cada vez que llega
-## una animación nueva: rehacerlo arrastra malla, materiales y texturas, y eso
-## es mucho que romper para añadir cuatro clips.
+## Mete las animaciones del .glb aparte en la librería del personaje.
 ##
 ## Se pueden injertar tal cual porque las pistas apuntan a las MISMAS rutas
-## —`Armature/Skeleton3D:mixamorig_*`— y el rig es el mismo. Si algún día
-## dejaran de coincidir, esto no fallaría en silencio: los clips no se verían y
-## el respaldo del modificador entraría solo.
-func _injertar_clips_de_arco() -> void:
+## —`Armature/Skeleton3D:mixamorig_*`— sobre el mismo rig. Hay un test que lo
+## comprueba, así que si el rig cambiara lo diría la suite y no el juego.
+##
+## Las que ya existan en el modelo se REEMPLAZAN: así es como el reposo nuevo
+## sustituye al que viene dentro de `benjamin.glb`.
+func _injertar_animaciones_aparte() -> void:
 	if not _anim.has_animation(FLECHA_CARGADA):
-		return                      # no es el arquero: no tiene arco que sostener
-	var origen := ARCO_SOSTENIDO.instantiate() as Node3D
+		return                      # no es Benjamín: estas animaciones son suyas
+	var origen := ANIMACIONES_APARTE.instantiate() as Node3D
 	var ap := _buscar_anim(origen)
 	if ap == null:
 		origen.free()
@@ -686,6 +692,8 @@ func _modificador_de_arco() -> SkeletonModifier3D:
 	_pose_de_arco.name = "PoseDeArco"
 	esq.add_child(_pose_de_arco)
 	return _pose_de_arco
+
+
 
 
 ## Mientras tensa, el clip se detiene al llegar a la máxima extensión.

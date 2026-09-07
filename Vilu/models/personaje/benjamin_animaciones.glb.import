@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bpud7y2jsxvmw"
-path="res://.godot/imported/benjamin_arco_sostenido.glb-987416065e18d6d161971f347ab422f5.scn"
+uid="uid://crugde2j840h7"
+path="res://.godot/imported/benjamin_animaciones.glb-28b1512ef28643934ac5c3011cc130da.scn"
 
 [deps]
 
-source_file="res://models/personaje/benjamin_arco_sostenido.glb"
-dest_files=["res://.godot/imported/benjamin_arco_sostenido.glb-987416065e18d6d161971f347ab422f5.scn"]
+source_file="res://models/personaje/benjamin_animaciones.glb"
+dest_files=["res://.godot/imported/benjamin_animaciones.glb-28b1512ef28643934ac5c3011cc130da.scn"]
 
 [params]
 

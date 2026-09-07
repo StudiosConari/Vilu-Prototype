@@ -314,6 +314,7 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 func _process(delta: float) -> void:
 	_gracia = maxf(0.0, _gracia - delta)
 	_espera_de_rescate = maxf(0.0, _espera_de_rescate - delta)
+	_mirar_con_el_mando(delta)
 	# R = cambiar dejando al otro en IA de combate; T = dejándolo QUIETO (puzzles).
 	var r := Input.is_action_pressed("swap_ai")
 	if r and not _r_prev:
@@ -578,6 +579,33 @@ func _mirar_con_el_raton(rel: Vector2) -> void:
 		return
 	_cam_yaw -= rel.x * cam_rotate_speed
 	_cam_pitch = clampf(_cam_pitch - rel.y * cam_rotate_speed, PICADO_MIN, PICADO_MAX)
+
+
+## Velocidad de giro del stick derecho, en radianes por segundo.
+##
+## No comparte número con el ratón: el ratón manda un DESPLAZAMIENTO —cuántos
+## píxeles se movió— y el stick manda una POSICIÓN sostenida entre -1 y 1. Con el
+## mismo factor, mantener el stick al tope giraría a la velocidad de un ratón
+## movido un píxel por cuadro, o sea nada.
+@export var cam_stick_speed := 2.6
+
+
+## Gira la cámara con el stick derecho del mando.
+##
+## Se lee cada cuadro en vez de por evento porque un stick sostenido no genera
+## eventos nuevos mientras se mantiene quieto en su sitio: preguntándole al
+## evento, la cámara giraría un pelín y se pararía.
+##
+## `get_vector` aplica la zona muerta de las cuatro acciones, así que un stick
+## gastado que no vuelve del todo al centro no deja la cámara girando sola.
+func _mirar_con_el_mando(delta: float) -> void:
+	var v := Input.get_vector("cam_izquierda", "cam_derecha", "cam_arriba", "cam_abajo")
+	if v == Vector2.ZERO:
+		return
+	if _cam_override != null:
+		return              # en una escena guionada manda el guion, igual que el ratón
+	_cam_yaw -= v.x * cam_stick_speed * delta
+	_cam_pitch = clampf(_cam_pitch - v.y * cam_stick_speed * delta, PICADO_MIN, PICADO_MAX)
 
 
 ## Nodo hoja que vigila el puntero TAMBIÉN con el juego en pausa.

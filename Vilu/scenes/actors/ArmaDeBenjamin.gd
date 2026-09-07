@@ -85,11 +85,19 @@ const MODELO := preload("res://models/personaje/benjamin_arma.glb")
 @export var arco_rotacion := Vector3.ZERO
 ## El carcaj va en diagonal por la espalda: el fondo junto a la cadera IZQUIERDA
 ## y la boca asomando por el hombro DERECHO, que es con el que tira de la cuerda
-## y por tanto con el que saca las flechas. Ese ladeo es un giro sobre el eje X
-## de la pieza: el Z es su eje LARGO, y girar sobre él sólo lo hace rodar sobre
-## sí mismo, que es lo que parecía tenerlo puesto del revés.
-@export var carcaj_posicion := Vector3(-0.08, -0.07, 0.15)
-@export var carcaj_rotacion := Vector3(-32.0, 0.0, 0.0)
+## y por tanto con el que saca las flechas.
+##
+## El ladeo es un giro sobre el eje X de la pieza; el Z es su eje LARGO. Estaba
+## en -32 y salía JUSTO AL REVÉS —el fondo asomando por el hombro y la boca
+## apuntando a la cadera— porque la boca del modelo está en el -Z, no en el +Z:
+## orientando el +Z hacia arriba se ponía arriba el culo del carcaj. Los 180
+## grados de más son eso, y el 32 de siempre es la diagonal.
+##
+## Medido, no supuesto: se marcaron los dos extremos de la malla con una bola de
+## color y se miró al personaje por detrás. La boca resultó ser la del extremo
+## que este código estaba mandando hacia abajo.
+@export var carcaj_posicion := Vector3(0.06, -0.07, 0.15)
+@export var carcaj_rotacion := Vector3(148.0, 0.0, 0.0)
 
 var _arco: Node3D = null
 var _carcaj: Node3D = null

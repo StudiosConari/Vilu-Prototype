@@ -94,6 +94,10 @@ func test_el_arco_cuelga_de_la_mano_izquierda() -> void:
 ## sólo la hace rodar sobre sí misma, que es como la tuve un rato: parecía
 ## puesta del revés y en realidad no estaba ladeada en absoluto.
 ##
+## Y después SÍ estaba del revés, por otro motivo: se daba por hecho que la boca
+## era el +Z. Es el -Z, y este test lo daba por bueno porque miraba el mismo
+## extremo equivocado que el código.
+##
 ## Ojo al leer las capturas de espaldas: mirando a alguien por detrás su derecha
 ## es TU derecha, no tu izquierda. Por ahí me equivoqué al nombrar los lados.
 func test_el_carcaj_va_en_diagonal_por_la_espalda() -> void:
@@ -102,8 +106,14 @@ func test_el_carcaj_va_en_diagonal_por_la_espalda() -> void:
 	var carcaj: Node3D = esq.get_node_or_null("Enganche_carcaj/carcaj") if esq != null else null
 	if carcaj == null:
 		return
-	# El +Z de la pieza es su boca: se midió renderizándola sola.
-	var boca: Vector3 = carcaj.global_transform.basis.z.normalized()
+	# La boca es el -Z de la pieza, NO el +Z.
+	#
+	# Acá decía lo contrario, y por eso este test daba por bueno el carcaj
+	# puesto del revés: el código orientaba el +Z hacia arriba y lo que asomaba
+	# por el hombro era el fondo, con las flechas cabeza abajo. Se volvió a medir
+	# poniéndole una bola de color a cada extremo de la malla y renderizándola: la
+	# marca del extremo de z MÍNIMO es la que cae en el borde abierto.
+	var boca: Vector3 = (-carcaj.global_transform.basis.z).normalized()
 	var vis: Node3D = b.get_node("Visual")
 	var arriba: Vector3 = vis.global_transform.basis.y.normalized()
 	# Su derecha es el +X del Visual: medido en el esqueleto, el hueso
