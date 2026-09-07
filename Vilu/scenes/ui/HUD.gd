@@ -233,8 +233,11 @@ func _refresh_debug() -> void:
 	]
 
 
+## Los carteles pasan por Botones: "[E] Hablar" se convierte en "[X] Hablar"
+## cuando lo último que se tocó fue un mando. Se traduce ACÁ y no en los
+## cincuenta y tantos sitios que escriben el texto.
 func show_prompt(text: String) -> void:
-	_prompt.text = text
+	_prompt.text = Botones.traducir(text)
 	_prompt.visible = true
 
 
@@ -243,7 +246,7 @@ func hide_prompt() -> void:
 
 
 func show_banner(text: String) -> void:
-	_banner.text = text
+	_banner.text = Botones.traducir(text)
 	_banner.visible = true
 
 
@@ -266,7 +269,7 @@ func show_swap_hint(on: bool) -> void:
 ## tapa la pantalla.
 func show_hint(text: String) -> void:
 	if _hint_label:
-		_hint_label.text = text
+		_hint_label.text = Botones.traducir(text)
 	if _hint:
 		_hint.visible = false
 
