@@ -34,6 +34,7 @@ const NOMBRES_DE_MUNDO := {
 const BAJADA_DEL_BUS := 8.0
 const TOON_SKIN := preload("res://scenes/core/ToonSkin.gd")
 const PANTALLA_LOGROS := preload("res://scenes/ui/PantallaLogros.gd")
+const PANTALLA_MARCOS := preload("res://scenes/ui/PantallaMarcos.gd")
 
 ## Segundos entre que cae el último logro y que aparece el cierre.
 ##
@@ -301,6 +302,7 @@ func _make_character(is_archer: bool, mat: Material) -> CharacterBody3D:
 	var c := PLAYER_SCENE.instantiate()
 	c.is_archer = is_archer
 	add_child(c)
+	c.died.connect(func() -> void: _al_caer_derrotado(c))
 	if mat != null:
 		var ph := c.get_node_or_null("Visual/Placeholder")
 		if ph and ph.has_method("set_surface_override_material"):
@@ -324,6 +326,11 @@ func _process(delta: float) -> void:
 	if t and not _t_prev:
 		_swap(false)
 	_t_prev = t
+	# [P]: los marcos y los logros. No mientras alguien habla ni con otra
+	# pantalla encima; con la pausa puesta este _process no corre.
+	if InputMap.has_action("marcos") and Input.is_action_just_pressed("marcos") \
+			and not _hablando and not _hay_pantalla_encima():
+		PANTALLA_MARCOS.mostrar(self)
 	_update_camera()
 	_check_fall()
 
@@ -523,7 +530,45 @@ const GRACIA_TRAS_REAPARECER := 1.5
 var _gracia := 0.0
 
 
-func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
+## Derrota: con la vida a cero el personaje cae y, pasado un momento, el
+## party entero vuelve al INICIO de la zona, curado. Al inicio de verdad: no
+## al punto de rescate de la lava, que es un atajo para el que se cae, sino a
+## donde se entró.
+const DERROTA_ESPERA := 2.0
+const AVISO_DE_DERROTA := "Derrotado: vuelves al inicio de la zona"
+const AVISO_DE_DERROTA_ELLA := "Derrotada: vuelves al inicio de la zona"
+var _derrotando := false
+var _aviso_de_derrota := AVISO_DE_DERROTA
+## Dónde se entró al interior en el que se está, para volver ahí al perder.
+var _inicio_de_zona := Vector3.INF
+
+
+func _al_caer_derrotado(quien: Node) -> void:
+	if _derrotando or _resetting:
+		return
+	_derrotando = true
+	# En femenino si la que cae es Emilia.
+	_aviso_de_derrota = AVISO_DE_DERROTA if quien == null or bool(quien.get("is_archer")) 		else AVISO_DE_DERROTA_ELLA
+	if quien != null and quien.has_method("derrotar"):
+		quien.derrotar()
+	if hud and hud.has_method("show_banner"):
+		hud.show_banner(_aviso_de_derrota, 0.0)
+	if not is_inside_tree():
+		_levantarse()
+		return
+	get_tree().create_timer(DERROTA_ESPERA).timeout.connect(_levantarse)
+
+
+func _levantarse() -> void:
+	for c in party:
+		if is_instance_valid(c) and c.has_method("revivir"):
+			c.revivir()
+	_respawn(_aviso_de_derrota, true)
+	_derrotando = false
+
+
+## `al_inicio`: al principio de la zona, saltándose el punto de rescate.
+func _respawn(motivo := "Caíste — volvés al último punto seguro", al_inicio := false) -> void:
 	_resetting = true
 	_gracia = GRACIA_TRAS_REAPARECER
 	jugador_reaparecio.emit()
@@ -538,9 +583,11 @@ func _respawn(motivo := "Caíste — volvés al último punto seguro") -> void:
 	# la lava y volver a la entrada obliga a rehacer la subida entera. Con el
 	# marcador se reaparece donde tenga sentido —al pie del tramo en el que
 	# estabas—, y se coloca arrastrándolo en el editor, sin tocar código.
-	var rescate := _punto_de_rescate()
+	var rescate := _punto_de_rescate() if not al_inicio else Vector3.INF
 	if rescate != Vector3.INF:
 		destino = rescate
+	elif al_inicio and _interior != "" and _inicio_de_zona != Vector3.INF:
+		destino = _inicio_de_zona
 	elif _interior == "":
 		# Preferir el spawn de la zona en la que estaba parado
 		var z: String = world.current_zone() if world else ""
@@ -817,6 +864,16 @@ func _apply_active() -> void:
 	var act := active_character()
 	if act != null and hud != null:
 		hud.bind_player(act)
+		if hud.has_method("bind_companero"):
+			hud.bind_companero(companero_de(act))
+
+
+## El otro del par: el primero del party que no sea `quien`.
+func companero_de(quien: Node) -> Node:
+	for c in party:
+		if c != quien:
+			return c
+	return null
 
 
 ## Reubica a todo el party cerca del spawn de la región.
@@ -869,6 +926,7 @@ func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 	# con el valor del mundo abierto, así que caerse dentro del cráter del
 	# Isluga te escupía al otro lado del mapa en vez de devolverte arriba.
 	_respawn_pos = spawn.global_position
+	_inicio_de_zona = spawn.global_position
 
 
 ## Punto de entrada único para "ir a X". Enruta según el tipo de destino:

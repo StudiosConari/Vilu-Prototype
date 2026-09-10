@@ -155,13 +155,23 @@ func test_las_hojas_de_movimientos_flanquean_el_menu() -> void:
 	assert_not_null(emilia, "la hoja de Emilia")
 	assert_not_null(benja, "y la de Benjamín")
 	assert_not_null(comun, "y la de lo que comparten")
-	var fila := emilia.get_parent()
-	assert_eq(fila, benja.get_parent(), "en la misma fila")
-	assert_lt(emilia.get_index(), benja.get_index(), "Emilia a la izquierda, Benjamín a la derecha")
-	# La común va debajo del menú: en la columna del medio, después del marco.
-	var columna := comun.get_parent()
-	assert_eq(columna.get_parent(), fila, "la común cuelga de la columna del medio")
-	assert_eq(comun.get_index(), columna.get_child_count() - 1, "y es lo último, debajo del menú")
+	# Cada una en su franja: Emilia pegada a la izquierda, Benjamín a la
+	# derecha, y encima de cada hoja el marco del HUD de ese personaje.
+	var lado_e: Control = panel.find_child("LadoEmilia", true, false)
+	var lado_b: Control = panel.find_child("LadoBenjamin", true, false)
+	assert_true(lado_e.is_ancestor_of(emilia), "Emilia en su lado")
+	assert_true(lado_b.is_ancestor_of(benja), "Benjamín en el suyo")
+	assert_almost_eq(lado_e.anchor_left, 0.0, 0.01, "Emilia a la izquierda")
+	assert_almost_eq(lado_b.anchor_right, 1.0, 0.01, "Benjamín a la derecha")
+	assert_lt(lado_e.anchor_right, lado_b.anchor_left, "sin pisarse")
+	assert_not_null(lado_e.find_child("MuestraEmilia", true, false), "el marco de Emilia sobre su hoja")
+	assert_not_null(lado_b.find_child("MuestraBenjamin", true, false), "el de Benjamín sobre la suya")
+	# La común va dentro del marco dibujado, debajo del menú.
+	var marco: Control = panel.find_child("Marco", true, false)
+	assert_not_null(marco, "el menú va en el marco dibujado del selector de zonas")
+	assert_true(marco.is_ancestor_of(comun), "la común dentro del marco")
+	var menu := comun.get_parent()
+	assert_eq(comun.get_index(), menu.get_child_count() - 1, "y es lo último, debajo del menú")
 
 	m.call("_pausar")
 	var te := _textos(emilia)

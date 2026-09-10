@@ -255,7 +255,9 @@ static func filete() -> Control:
 ##
 ## Devuelve si pudo ponerla; si el archivo no estuviera, quien la pide se queda
 ## como estaba en vez de quedarse en blanco.
-const ARTE := "res://textures/ui/menu.png"
+## Es la portada de Opciones: el `menu.png` de antes se fue al llegar las
+## portadas, y el cierre de logros se quedó sobre negro sin que nadie avisara.
+const ARTE := "res://textures/ui/portada_opciones.png"
 
 
 static func fondo(padre: Node, opacidad_del_velo := 0.45) -> bool:

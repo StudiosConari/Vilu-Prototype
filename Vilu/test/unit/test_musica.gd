@@ -92,8 +92,9 @@ func test_los_volcanes_recuerdan_el_cambio_de_personaje() -> void:
 
 
 ## Los avisos —«¡La lava quema!», los logros— salen en el centro y con placa,
-## como el recuadro de misiones, y no sueltos arriba del todo.
-func test_los_avisos_van_en_placa_en_el_centro() -> void:
+## como el recuadro de misiones. Arriba, chica y centrada como el aviso de
+## logro: en el centro tapaban lo que pasaba.
+func test_los_avisos_van_en_placa_chica_arriba() -> void:
 	var hud: CanvasLayer = (load("res://scenes/ui/HUD.tscn") as PackedScene).instantiate()
 	add_child_autofree(hud)
 	await wait_frames(2)
@@ -106,14 +107,24 @@ func test_los_avisos_van_en_placa_en_el_centro() -> void:
 	hud.call("_process", 0.016)
 	assert_true(cartel.visible, "y se ve al avisar")
 	assert_almost_eq(cartel.anchor_left, 0.5, 0.01, "centrada")
-	assert_almost_eq(cartel.anchor_top, 0.5, 0.01, "centrada")
+	assert_almost_eq(cartel.anchor_top, 0.0, 0.01, "arriba")
 	await wait_frames(1)
 	assert_gt(cartel.global_position.x, 0.0, "y dentro de la pantalla, no a la izquierda de todo")
-	assert_gt(cartel.global_position.y, 0.0, "ni por encima")
 	var pantalla := cartel.get_viewport().get_visible_rect().size
 	var centro := cartel.global_position + cartel.size * 0.5
-	assert_almost_eq(centro, pantalla * 0.5, Vector2.ONE * 2.0,
-		"en medio de la pantalla, no un poco hacia arriba")
+	assert_almost_eq(centro.x, pantalla.x * 0.5, 2.0, "centrado de lado a lado")
+	assert_lt(centro.y, pantalla.y * 0.2, "arriba, como el aviso de logro")
+	var logro: Label = hud.get("_aviso")
+	assert_eq(logro.get_theme_font_size("font_size"), banner.get_theme_font_size("font_size"),
+		"con la misma letra que el logro")
+	# Con un logro sonando, el aviso baja para no taparlo.
+	var placa_logro: PanelContainer = hud.get("_placa_de_logro")
+	placa_logro.visible = true
+	hud.call("_process", 0.016)
+	assert_gt(cartel.offset_top, placa_logro.offset_top, "debajo del logro")
+	placa_logro.visible = false
+	hud.call("_process", 0.016)
+	assert_almost_eq(cartel.offset_top, placa_logro.offset_top, 0.01, "y en su sitio sin logro")
 	hud.clear_banner()
 	hud.call("_process", 0.016)
 	assert_false(cartel.visible, "y se esconde al quitarlo")

@@ -141,6 +141,23 @@ func unlock(ability: String) -> void:
 	ability_unlocked.emit(ability)
 
 
+## El logro que abre los marcos alternativos del HUD: la cima del segundo
+## volcán.
+const LOGRO_DE_LOS_MARCOS := "ojos_salado"
+
+
+func marco_alterno_disponible() -> bool:
+	return tiene_logro(LOGRO_DE_LOS_MARCOS)
+
+
+## El marco que se ve en el HUD para `quien` ("emilia" o "benjamin"): el que
+## eligió, salvo que haya elegido el alterno y todavía no lo tenga.
+func marco_de(quien: String) -> String:
+	if Save.marco_elegido(quien) == "alterno" and marco_alterno_disponible():
+		return "alterno"
+	return "clasico"
+
+
 func tiene_logro(id: String) -> bool:
 	return Save.logros.has(id)
 

@@ -23,7 +23,9 @@ const ANCHO := 520.0
 ## el botón se leen del mapa de entrada al abrir la pausa, así que respetan lo
 ## que se haya cambiado en opciones y salen en botones si se juega con mando.
 const CONTROLES := preload("res://scenes/ui/PanelDeControles.gd")
-const ANCHO_HOJA := 340.0
+const HUD := preload("res://scenes/ui/HUD.gd")
+## Las hojas de los lados miden lo que su franja (ver LADO); esto es el mínimo.
+const ANCHO_HOJA := 200.0
 const MOVIMIENTOS := {
 	"Emilia": [
 		{"que": "Combo de 4 golpes",          "acciones": ["attack"]},
@@ -47,9 +49,11 @@ const MOVIMIENTOS := {
 		{"que": "Hablar / usar",     "acciones": ["interact"]},
 		{"que": "Cambiar (te sigue)", "acciones": ["swap_ai"]},
 		{"que": "Cambiar (anclado)", "acciones": ["swap_hold"]},
+		{"que": "Marcos y logros",   "acciones": ["marcos"]},
 	],
 }
 var _hojas := {}
+var _muestras := {}
 
 var _panel: Control = null
 var _opciones: Control = null
@@ -119,7 +123,10 @@ func _capturando_un_control() -> bool:
 func _pausar() -> void:
 	_refrescar_hojas()
 	_panel.visible = true
+	call_deferred("_acomodar_lados")
 	get_tree().paused = true
+	# El HUD se esconde: sus marcos se montaban encima de la hoja de Emilia.
+	_mostrar_hud(false)
 	# El foco al primer botón: sin él, el mando no tiene por dónde empezar.
 	if _seguir != null:
 		_seguir.call_deferred("grab_focus")
@@ -129,6 +136,13 @@ func _reanudar() -> void:
 	_opciones.visible = false
 	_panel.visible = false
 	get_tree().paused = false
+	_mostrar_hud(true)
+
+
+func _mostrar_hud(si: bool) -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud != null and "visible" in hud:
+		hud.set("visible", si)
 
 
 ## Reinicia la partida: al principio del todo y con la cadena en su primera
@@ -159,21 +173,29 @@ func _al_titulo() -> void:
 
 
 ## Una hoja de movimientos, vacía: las filas se escriben al abrir la pausa.
-func _hoja(quien: String) -> Control:
-	var placa := PanelContainer.new()
+## La hoja de movimientos de `quien`. Con placa y título a los lados; sin
+## ellos —`con_placa` en falso— dentro del marco dibujado, que ya es la placa.
+func _hoja(quien: String, con_placa := true) -> Control:
+	var placa: Container
+	if con_placa:
+		placa = PanelContainer.new()
+		placa.custom_minimum_size = Vector2(ANCHO_HOJA, 0)
+		placa.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.88, 10))
+	else:
+		placa = MarginContainer.new()
 	placa.name = "Hoja" + quien.replace(" ", "")
-	placa.custom_minimum_size = Vector2(ANCHO_HOJA, 0)
 	placa.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	placa.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.88, 18))
 	var aire := MarginContainer.new()
-	aire.add_theme_constant_override("margin_top", 18)
-	aire.add_theme_constant_override("margin_bottom", 18)
+	aire.add_theme_constant_override("margin_top", 16 if con_placa else 0)
+	aire.add_theme_constant_override("margin_bottom", 16 if con_placa else 0)
 	placa.add_child(aire)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
 	aire.add_child(vb)
-	vb.add_child(PLACA.lema(quien.to_upper(), 22))
-	vb.add_child(PLACA.filete())
+	# Dentro del marco no lleva título ni raya: son los controles y ya.
+	if con_placa:
+		vb.add_child(PLACA.lema(quien.to_upper(), 22))
+		vb.add_child(PLACA.filete())
 	var filas := VBoxContainer.new()
 	filas.name = "Filas"
 	filas.add_theme_constant_override("separation", 6)
@@ -182,33 +204,101 @@ func _hoja(quien: String) -> Control:
 	return placa
 
 
-## Escribe las filas con las teclas de AHORA.
+## Escribe las filas con las teclas de AHORA, y pone en cada lado el marco que
+## tenga elegido cada uno: se puede haber cambiado en la pantalla de la [P].
 func _refrescar_hojas() -> void:
+	for quien: String in _muestras:
+		(_muestras[quien] as TextureRect).texture = load(HUD.ruta_del_retrato(quien))
 	var con_mando := Botones.usando_mando()
 	for quien: String in _hojas:
 		var filas: VBoxContainer = _hojas[quien]
 		for h in filas.get_children():
 			h.free()
+		var tam := LETRA_DEL_MEDIO if quien == "Los dos" else LETRA_DE_LOS_LADOS
 		for mov: Dictionary in MOVIMIENTOS[quien]:
-			filas.add_child(_fila(String(mov["que"]), CONTROLES.describir(mov, con_mando)))
+			filas.add_child(_fila(String(mov["que"]), CONTROLES.describir(mov, con_mando), tam))
 
 
-func _fila(que: String, con: String) -> Control:
+func _fila(que: String, con: String, tam := 13) -> Control:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 10)
 	var a := Label.new()
 	a.text = que
-	a.add_theme_font_size_override("font_size", 15)
+	a.add_theme_font_size_override("font_size", tam)
 	a.add_theme_color_override("font_color", PLACA.LETRA)
 	a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(a)
 	var b := Label.new()
 	b.text = con
-	b.add_theme_font_size_override("font_size", 15)
+	b.add_theme_font_size_override("font_size", tam)
 	b.add_theme_color_override("font_color", PLACA.ORO_VIVO)
 	b.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	h.add_child(b)
 	return h
+
+
+## Cuánto de la pantalla, a cada lado, es para la hoja de cada personaje. Es
+## el valor de arranque: en cuanto el marco del medio se dispone, las franjas
+## se ajustan a lo que él deja libre (`_acomodar_lados`), que cambia con la
+## proporción de la ventana.
+const LADO := 0.245
+const AIRE_JUNTO_AL_MARCO := 10.0
+const VELO := 0.55
+const LETRA_DEL_MEDIO := 14
+const LETRA_DE_LOS_LADOS := 12
+
+var _raiz: Control = null
+var _lienzo: Control = null
+var _lados: Array = []
+
+
+## Las franjas de los lados terminan donde empieza el dibujo del marco: así
+## las hojas no se le montan encima sea cual sea la proporción de la ventana.
+func _acomodar_lados() -> void:
+	if _raiz == null or _lienzo == null or _lados.size() < 2:
+		return
+	var libre := (_lienzo.position.x - AIRE_JUNTO_AL_MARCO) / maxf(_raiz.size.x, 1.0)
+	libre = clampf(libre, 0.12, 0.40)
+	(_lados[0] as Control).anchor_right = libre
+	(_lados[1] as Control).anchor_left = 1.0 - libre
+## El retrato chico —sólo el círculo, sin el panel— que corona cada hoja.
+const ALTO_DEL_RETRATO := 130.0
+
+
+## La columna de un lado: el retrato chico de `quien` y su hoja de movimientos,
+## centrados en la franja que va de `desde` a `hasta` del ancho de la pantalla.
+func _lado(titulo: String, quien: String, desde: float, hasta: float) -> Control:
+	var franja := MarginContainer.new()
+	franja.name = "Lado" + quien.capitalize()
+	franja.anchor_left = desde
+	franja.anchor_right = hasta
+	franja.anchor_top = 0.0
+	franja.anchor_bottom = 1.0
+	franja.add_theme_constant_override("margin_left", 8)
+	franja.add_theme_constant_override("margin_right", 8)
+	var col := VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 10)
+	col.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	franja.add_child(col)
+	var muestra := TextureRect.new()
+	muestra.name = "Muestra" + quien.capitalize()
+	muestra.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	muestra.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	muestra.custom_minimum_size = Vector2(ALTO_DEL_RETRATO * HUD.PROPORCION_DEL_RETRATO, ALTO_DEL_RETRATO)
+	muestra.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(muestra)
+	_muestras[quien] = muestra
+	var hoja := _hoja(titulo)
+	hoja.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_child(hoja)
+	return franja
+
+
+static func _espacio(alto: int) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(0, alto)
+	return c
 
 
 func _construir() -> void:
@@ -220,40 +310,31 @@ func _construir() -> void:
 
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.03, 0.06, 0.78)
+	dim.color = Color(0.02, 0.03, 0.06, VELO)
 	_panel.add_child(dim)
 
-	var cc := CenterContainer.new()
-	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_panel.add_child(cc)
-
-	# Tres placas en fila: Emilia, el menú, Benjamín.
-	var fila := HBoxContainer.new()
-	fila.add_theme_constant_override("separation", 22)
-	fila.alignment = BoxContainer.ALIGNMENT_CENTER
-	cc.add_child(fila)
-	fila.add_child(_hoja("Emilia"))
-
-	# En el medio, el menú y debajo lo que comparten los dos.
-	var columna := VBoxContainer.new()
-	columna.add_theme_constant_override("separation", 22)
-	columna.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	fila.add_child(columna)
-
-	var marco := PanelContainer.new()
-	marco.custom_minimum_size = Vector2(ANCHO, 0)
-	marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.92, 26))
-	columna.add_child(marco)
-
-	var aire := MarginContainer.new()
-	aire.add_theme_constant_override("margin_top", 26)
-	aire.add_theme_constant_override("margin_bottom", 26)
-	marco.add_child(aire)
+	# En el medio, el marco dibujado —el mismo del selector de zonas— con el
+	# menú y, debajo, lo que comparten los dos. A cada lado, la hoja de cada
+	# uno con su retrato chico encima: Emilia a la izquierda, Benjamín a la
+	# derecha, como en el juego.
+	var raiz := Control.new()
+	raiz.name = "Raiz"
+	raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_panel.add_child(raiz)
+	_raiz = raiz
+	var hueco := PLACA.marco_dibujado(raiz)
+	_lienzo = hueco.get_parent()
+	_lienzo.resized.connect(func() -> void: call_deferred("_acomodar_lados"))
+	hueco.add_theme_constant_override("margin_left", 34)
+	hueco.add_theme_constant_override("margin_right", 34)
 
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 12)
-	aire.add_child(vb)
-	vb.add_child(PLACA.lema("PAUSA", 34))
+	vb.name = "Menu"
+	vb.add_theme_constant_override("separation", 8)
+	# Centrado en el hueco, y con aire entre los botones y los controles.
+	vb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hueco.add_child(vb)
+	vb.add_child(PLACA.lema("PAUSA", 30))
 	vb.add_child(PLACA.filete())
 
 	var seguir := PLACA.boton("Continuar")
@@ -274,8 +355,12 @@ func _construir() -> void:
 	salir.pressed.connect(_al_titulo)
 	vb.add_child(salir)
 
-	columna.add_child(_hoja("Los dos"))
-	fila.add_child(_hoja("Benjamín"))
+	vb.add_child(_espacio(14))
+	vb.add_child(_hoja("Los dos", false))
+
+	_lados = [_lado("Emilia", "emilia", 0.0, LADO), _lado("Benjamín", "benjamin", 1.0 - LADO, 1.0)]
+	for l in _lados:
+		raiz.add_child(l)
 	_refrescar_hojas()
 
 	# Las opciones van ENCIMA de la pausa y cuelgan de la capa, no del panel:
