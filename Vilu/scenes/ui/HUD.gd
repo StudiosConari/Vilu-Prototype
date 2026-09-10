@@ -99,7 +99,7 @@ func _al_avanzar_mision(hechos: int, _total: int) -> void:
 
 func _pintar_mision(m: Dictionary, hechos: int) -> void:
 	var total: int = int(m.get("total", 1))
-	_mis_texto.text = "%s   %d/%d" % [m.get("texto", ""), hechos, total]
+	_mis_texto.text = "%s   %d/%d" % [tr(String(m.get("texto", ""))), hechos, total]
 	# Cumplida se pone en verde el rato que se queda en pantalla, para que se
 	# vea que se hizo y no sólo que el número llegó al tope.
 	var hecha := hechos >= total
@@ -149,7 +149,7 @@ func _montar_cartel() -> void:
 	var caja := VBoxContainer.new()
 	caja.add_theme_constant_override("separation", 6)
 	_cartel.add_child(caja)
-	for l: Label in [_aviso, _banner]:
+	for l: Label in [_banner]:
 		if l.get_parent() != null:
 			l.get_parent().remove_child(l)
 		caja.add_child(l)
@@ -170,7 +170,7 @@ func _process(_delta: float) -> void:
 
 func _refrescar_cartel() -> void:
 	if _cartel != null:
-		_cartel.visible = _aviso.visible or _banner.visible
+		_cartel.visible = _banner.visible
 
 
 ## Un recuadro bajo el de misiones, para un recordatorio que dura un rato.
@@ -204,7 +204,7 @@ func _montar_nota() -> void:
 func mostrar_nota(texto: String, segundos := 10.0) -> void:
 	if _nota_panel == null:
 		return
-	_nota_texto.text = Botones.traducir(texto)
+	_nota_texto.text = Botones.traducir(tr(texto))
 	_nota_panel.visible = true
 	_colocar_nota.call_deferred()
 	_nota_vence += 1
@@ -232,19 +232,37 @@ func _colocar_nota() -> void:
 	_nota_panel.position = Vector2(_mis_panel.position.x, y)
 
 
+## El aviso de logro: una placa chica arriba, centrada, que no tapa la
+## escena. Antes iba en la placa grande del centro con letra de 34 y se comía
+## la pantalla en pleno diálogo.
+var _placa_de_logro: PanelContainer = null
+const AVISO_ALTO := 44.0
+
+
 func _montar_aviso_de_logro() -> void:
+	_placa_de_logro = PanelContainer.new()
+	_placa_de_logro.name = "PlacaDeLogro"
+	_placa_de_logro.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_placa_de_logro.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_placa_de_logro.offset_top = AVISO_ALTO
+	_placa_de_logro.offset_bottom = AVISO_ALTO
+	_placa_de_logro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fondo := _placa()
+	fondo.set_content_margin_all(8)
+	fondo.content_margin_left = 16
+	fondo.content_margin_right = 16
+	_placa_de_logro.add_theme_stylebox_override("panel", fondo)
+	_placa_de_logro.visible = false
+	add_child(_placa_de_logro)
 	_aviso = Label.new()
 	_aviso.name = "AvisoDeLogro"
-	_aviso.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_aviso.position = Vector2(0, 96)
 	_aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_aviso.add_theme_font_size_override("font_size", 34)
+	_aviso.add_theme_font_size_override("font_size", 18)
 	_aviso.add_theme_color_override("font_color", Color(1.0, 0.92, 0.62))
 	_aviso.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	_aviso.add_theme_constant_override("outline_size", 8)
-	_aviso.visible = false
+	_aviso.add_theme_constant_override("outline_size", 4)
 	_aviso.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_aviso)
+	_placa_de_logro.add_child(_aviso)
 	GameManager.logro_obtenido.connect(_al_conseguir_logro)
 
 
@@ -252,12 +270,12 @@ func _al_conseguir_logro(id: String) -> void:
 	if _aviso == null:
 		return
 	_aviso.text = GameManager.titular_de_logro(id)
-	_aviso.visible = true
-	_aviso.modulate.a = 1.0
+	_placa_de_logro.visible = true
+	_placa_de_logro.modulate.a = 1.0
 	var t := create_tween()
 	t.tween_interval(AVISO_SEGUNDOS)
-	t.tween_property(_aviso, "modulate:a", 0.0, 0.6)
-	t.tween_callback(func() -> void: _aviso.visible = false)
+	t.tween_property(_placa_de_logro, "modulate:a", 0.0, 0.6)
+	t.tween_callback(func() -> void: _placa_de_logro.visible = false)
 
 
 # --- Consejos de zona ------------------------------------------------------
@@ -287,7 +305,7 @@ func consejo(texto: String, segundos := 7.0) -> void:
 		_consejo_texto.add_theme_color_override("font_color", PLACA.LETRA)
 		_consejo.add_child(_consejo_texto)
 		add_child(_consejo)
-	_consejo_texto.text = texto
+	_consejo_texto.text = Botones.traducir(tr(texto))
 	# Anclado abajo al centro, hay que descontar la mitad de lo que mide para
 	# que quede centrado de verdad, y su alto para que no se salga por abajo.
 	await get_tree().process_frame
@@ -324,21 +342,21 @@ func bind_player(player: Node) -> void:
 func _on_health(current: int, maximum: int) -> void:
 	_hp.max_value = maximum
 	_hp.value = current
-	_hp_label.text = "Vida %d/%d" % [current, maximum]
+	_hp_label.text = tr("Vida %d/%d") % [current, maximum]
 
 
 func _on_energy(current: int, maximum: int) -> void:
 	_energy.max_value = maximum
 	_energy.value = current
-	_energy_label.text = "Energía %d/%d" % [current, maximum]
+	_energy_label.text = tr("Energía %d/%d") % [current, maximum]
 
 
 func _refresh_abilities() -> void:
 	if _swap:
 		_swap.text = texto_del_letrero_de_controles()
-	_abilities.text = "Arco %s   Alas %s   Guanaco %s" % [
-		_tick(GameManager.has_ability("bow")),
-		_tick(GameManager.has_ability("wings")),
+	_abilities.text = "%s %s   %s %s   %s %s" % [tr("Arco"),
+		_tick(GameManager.has_ability("bow")), tr("Alas"),
+		_tick(GameManager.has_ability("wings")), tr("Guanaco"),
 		_tick(GameManager.has_ability("guanaco")),
 	]
 
@@ -359,7 +377,7 @@ func _refresh_debug() -> void:
 ## cuando lo último que se tocó fue un mando. Se traduce ACÁ y no en los
 ## cincuenta y tantos sitios que escriben el texto.
 func show_prompt(text: String) -> void:
-	_prompt.text = Botones.traducir(text)
+	_prompt.text = Botones.traducir(tr(text))
 	_prompt.visible = true
 
 
@@ -367,9 +385,29 @@ func hide_prompt() -> void:
 	_prompt.visible = false
 
 
-func show_banner(text: String) -> void:
-	_banner.text = Botones.traducir(text)
+## Un aviso en la placa del centro. Se va solo a los `segundos`; con 0 se
+## queda hasta que alguien llame a `clear_banner`.
+##
+## Antes se quedaba siempre: «El camino se abre» del Isluga, o el de la
+## embestida del guanaco, no se iban nunca porque quien los ponía no los
+## quitaba. Ahora el que quiera uno fijo lo pide con 0.
+const BANNER_SEGUNDOS := 4.0
+var _banner_vence := 0
+
+
+func show_banner(text: String, segundos := BANNER_SEGUNDOS) -> void:
+	_banner.text = Botones.traducir(tr(text))
 	_banner.visible = true
+	_banner_vence += 1
+	if segundos <= 0.0:
+		return
+	var este := _banner_vence
+	get_tree().create_timer(segundos).timeout.connect(func() -> void:
+		# Se vuelve a buscar en vez de capturar `self`: si el HUD se liberó,
+		# la lambda no debe tocarlo. Y sólo se quita si nadie puso otro después.
+		var h := get_tree().get_first_node_in_group("hud")
+		if h != null and h.get("_banner_vence") == este and h.has_method("clear_banner"):
+			h.clear_banner())
 
 
 func clear_banner() -> void:
@@ -390,9 +428,9 @@ const LETRERO_GUANACO := "[Q] invocar · [C] montar · [G] embestir"
 
 
 func texto_del_letrero_de_controles() -> String:
-	var t := LETRERO_CAMBIAR
+	var t := tr(LETRERO_CAMBIAR)
 	if GameManager.has_ability("guanaco"):
-		t = LETRERO_GUANACO + "\n" + t
+		t = tr(LETRERO_GUANACO) + "\n" + t
 	return Botones.traducir(t)
 
 
@@ -406,7 +444,7 @@ func texto_del_letrero_de_controles() -> String:
 ## tapa la pantalla.
 func show_hint(text: String) -> void:
 	if _hint_label:
-		_hint_label.text = Botones.traducir(text)
+		_hint_label.text = Botones.traducir(tr(text))
 	if _hint:
 		_hint.visible = false
 

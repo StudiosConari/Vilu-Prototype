@@ -1,6 +1,8 @@
 @tool
 extends Node3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Beat 6 — Encuentro con el Yastay (guanaco gigante sagrado).
 ##
 ## FLUJO:
@@ -659,14 +661,14 @@ func _on_inspect(player: Node, body: Node3D, zone: Area3D) -> void:
 	Misiones.contar("cazadores", _inspected.size())
 	var total := _hunters.size()
 	if _inspected.size() < total:
-		_banner("Cuerpos revisados: %d/%d" % [_inspected.size(), total], 2.5)
+		_banner(tr("Cuerpos revisados: %d/%d") % [_inspected.size(), total], 2.5)
 		return
 
 	# Todos revisados -> segundo fragmento
 	if not GameManager.has_ability("talisman_frag_2"):
 		GameManager.unlock("talisman_frag_2")
 	_hint("Llevá el talismán a la Bruja en el poblado.")
-	var res := DialogueManager.create_resource_from_text(TALK_FRAG2)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(TALK_FRAG2))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 
@@ -702,7 +704,7 @@ func _begin_aggressive() -> void:
 		_yastay_origen = _yastay.transform
 		_yastay_casa = _yastay.global_position
 	if is_instance_valid(_yastay_label):
-		_yastay_label.text = "Yastay\n¡Intruso!"
+		_yastay_label.text = tr("Yastay\n¡Intruso!")
 	# Se frena un poco antes de atacar: la pareja habla y se reparte el trabajo.
 	_charlando = true
 	_trabar_a_los_jugadores(true)
@@ -1027,7 +1029,7 @@ func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 	Misiones.contar("guanacos", _sanados.size())
 	_levantar(guanaco)
 	if _sanados.size() < _heridos.size():
-		_banner("Guanacos sanados: %d/%d" % [_sanados.size(), _heridos.size()], 2.5)
+		_banner(tr("Guanacos sanados: %d/%d") % [_sanados.size(), _heridos.size()], 2.5)
 		# Al segundo, Emilia avisa de que le cuesta seguir esquivando.
 		if _sanados.size() == 2:
 			CHARLA.una_vez(get_tree(), "yastay_segundo_guanaco", TALK_SEGUNDO)
@@ -1140,7 +1142,7 @@ func _yastay_speaks() -> void:
 
 	DialogueManager.dialogue_ended.connect(
 		_give_blessing.unbind(1), CONNECT_ONE_SHOT)
-	var res := DialogueManager.create_resource_from_text(TALK_BLESSING)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(TALK_BLESSING))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 
@@ -1417,7 +1419,7 @@ func _banner(text: String, dur := 0.0) -> void:
 	var hud := get_tree().get_first_node_in_group("hud")
 	if not hud or not hud.has_method("show_banner"):
 		return
-	hud.show_banner(text)
+	hud.show_banner(text, dur)
 	if dur > 0.0:
 		get_tree().create_timer(dur).timeout.connect(func() -> void:
 			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que

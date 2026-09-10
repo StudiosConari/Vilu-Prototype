@@ -1,6 +1,8 @@
 @tool
 extends Node3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Poblado del altiplano — HUB narrativo. Se visita TRES veces y cambia según
 ## el progreso:
 ##
@@ -458,7 +460,7 @@ func _mat(c: Color) -> StandardMaterial3D:
 
 
 func _show(text: String) -> void:
-	var res := DialogueManager.create_resource_from_text(text)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(text))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 

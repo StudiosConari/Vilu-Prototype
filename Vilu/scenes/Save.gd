@@ -62,6 +62,7 @@ func _ready() -> void:
 		controles = ctrl if ctrl is Dictionary else {}
 	aplicar_pantalla()
 	aplicar_master()
+	aplicar_idioma()
 
 
 func _write() -> void:
@@ -122,6 +123,13 @@ func aplicar_master() -> void:
 func set_idioma(cual: String) -> void:
 	idioma = "en" if cual == "en" else "es"
 	_write()
+	aplicar_idioma()
+
+
+## El idioma guardado pasa al motor: es lo que hace que los textos salgan en
+## inglés. Se aplica al arrancar y cada vez que se cambia en opciones.
+func aplicar_idioma() -> void:
+	TranslationServer.set_locale(idioma)
 
 
 ## Los controles que el jugador cambió: acción -> {"teclado": [...], "mando": [...]}.

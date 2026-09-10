@@ -12,13 +12,13 @@ extends Control
 ##
 ## CÓMO ESTÁ HECHA. La hoja es un DIBUJO —`textures/ui/controles_teclado.png`
 ## y `controles_mando.png`— con el marco, el título, el teclado o el mando de
-## adorno y dieciséis filas con su icono, su nombre y una caja vacía. Encima
-## de cada caja va el botón de verdad, colocado por fracciones del dibujo, con
-## la tecla o el botón que haya puesto AHORA. El dibujo traía cuatro filas de
-## cosas que el juego no tiene —agacharse, inventario, habilidades, emociones—:
-## a la primera se le borró el rótulo y lleva «Montar guanaco» escrito encima,
-## y las otras tres se quitaron subiendo las cuatro últimas filas. La cámara es
-## fija, así que no hay filas de mirar ni de acercar.
+## adorno y dieciséis filas con su icono y una caja vacía. Encima de cada caja
+## va el botón de verdad, colocado por fracciones del dibujo, con la tecla o el
+## botón que haya puesto AHORA; el nombre de cada fila lo escribe el juego,
+## para que salga en el idioma puesto. El dibujo traía cuatro filas de cosas
+## que el juego no tiene —agacharse, inventario, habilidades, emociones—: la
+## primera es ahora «Montar guanaco» y las otras tres se quitaron subiendo las
+## cuatro últimas filas. La cámara es fija, así que no hay filas de mirar.
 ##
 ## Con mando: se navega con la cruceta o el stick, A cambia, B vuelve.
 
@@ -41,7 +41,7 @@ const PROPORCION := 1168.0 / 2048.0
 ## Dónde caen las cajas de cada fila, en fracciones del dibujo. Medidas sobre
 ## el original de 4096 × 2336. Las dos hojas no coinciden al píxel.
 const CAJA_X := Vector2(0.8118, 0.9419)
-const ROTULO_X := Vector2(0.5859, 0.8032)
+const ROTULO_X := Vector2(0.5884, 0.8032)
 const FILAS_Y := {
 	false: [[0.1742, 0.2008], [0.2145, 0.2410], [0.2543, 0.2812], [0.2945, 0.3206],
 		[0.3343, 0.3609], [0.3737, 0.4003], [0.4131, 0.4401], [0.4533, 0.4803],
@@ -53,26 +53,26 @@ const FILAS_Y := {
 		[0.6503, 0.6794], [0.6901, 0.7192], [0.7299, 0.7590], [0.7701, 0.7988]],
 }
 
-## Qué va en cada fila del dibujo, en su orden. `que` sólo en las filas cuyo
-## rótulo se borró del dibujo y hay que escribir. `fija`: se enseña pero no se
-## cambia.
+## Qué va en cada fila del dibujo, en su orden. Los rótulos se borraron del
+## dibujo —quedan los iconos— y los escribe el juego, que así los traduce.
+## `fija`: se enseña pero no se cambia.
 const FILAS := [
-	{"acciones": ["move_forward"], "fija": true},
-	{"acciones": ["move_back"], "fija": true},
-	{"acciones": ["move_left"], "fija": true},
-	{"acciones": ["move_right"], "fija": true},
-	{"acciones": ["run"]},
-	{"acciones": ["jump"]},
-	{"acciones": ["attack"]},
-	{"acciones": ["interact"]},
-	{"acciones": ["guanaco"]},
-	{"acciones": ["triple_arrow"]},
-	{"acciones": ["rodar"]},
+	{"que": "Arriba", "acciones": ["move_forward"], "fija": true},
+	{"que": "Abajo", "acciones": ["move_back"], "fija": true},
+	{"que": "Izquierda", "acciones": ["move_left"], "fija": true},
+	{"que": "Derecha", "acciones": ["move_right"], "fija": true},
+	{"que": "Correr", "acciones": ["run"]},
+	{"que": "Saltar", "acciones": ["jump"]},
+	{"que": "Atacar", "acciones": ["attack"]},
+	{"que": "Interactuar", "acciones": ["interact"]},
+	{"que": "Invocar", "acciones": ["guanaco"]},
+	{"que": "Triple Flecha", "acciones": ["triple_arrow"]},
+	{"que": "Rodar", "acciones": ["rodar"]},
 	{"que": "Montar guanaco", "acciones": ["guanaco_montar"]},
-	{"acciones": ["swap_ai"]},
-	{"acciones": ["swap_hold"]},
-	{"acciones": ["ui_cancel"]},
-	{"acciones": ["guanaco_charge"]},
+	{"que": "Cambiar Personaje (Seguir)", "acciones": ["swap_ai"]},
+	{"que": "Cambiar Personaje (Anclar)", "acciones": ["swap_hold"]},
+	{"que": "Menú de Pausa", "acciones": ["ui_cancel"]},
+	{"que": "Carga (Ataque de Invocación)", "acciones": ["guanaco_charge"]},
 ]
 
 ## Dónde van «Restablecer» y «Volver», en el hueco que deja cada dibujo: bajo

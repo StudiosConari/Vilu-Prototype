@@ -1,6 +1,8 @@
 @tool
 extends Node3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Secuencia 6 — La prueba del Alicanto.
 ##
 ## Un corredor se BIFURCA en dos caminos:
@@ -370,6 +372,7 @@ const ALETEO_RITMO := 2.2
 
 
 func _process(delta: float) -> void:
+	_vigilar_la_bifurcacion()
 	_t += delta
 	if is_instance_valid(_alicanto):
 		# Sólo sube y baja, aleteando en el sitio. Antes giraba sobre su eje
@@ -388,7 +391,14 @@ func _process(delta: float) -> void:
 ## en dos» no salía nunca. Ahora es tan ancho como la plataforma y el doble de
 ## hondo, para que no haya por dónde esquivarlo. Se le pone una caja propia y
 ## no se toca la del archivo, que podría compartirse.
-const ANCHO_DE_LA_BIFURCACION := Vector3(26.0, 4.0, 6.0)
+## Y ALTO: la quebrada de ahora va cuesta arriba —la bifurcación esculpida
+## queda unos 7 m por encima del punto donde se horneó el disparador— y una
+## caja de 4 m de alto quedaba enterrada bajo los pies del jugador.
+const ANCHO_DE_LA_BIFURCACION := Vector3(26.0, 40.0, 8.0)
+
+## Y por si el terreno cambia otra vez: a menos de esto de la bifurcación, en
+## horizontal y a cualquier altura, la charla salta igual.
+const CERCA_DE_LA_BIFURCACION := 9.0
 
 
 func _ensanchar_la_bifurcacion(fork: Area3D) -> void:
@@ -397,6 +407,23 @@ func _ensanchar_la_bifurcacion(fork: Area3D) -> void:
 			var caja := BoxShape3D.new()
 			caja.size = ANCHO_DE_LA_BIFURCACION
 			(h as CollisionShape3D).shape = caja
+
+
+## La red de seguridad del disparador: la distancia horizontal al punto de
+## la bifurcación, sin mirar la altura. Es lo que hace que la charla salga
+## aunque el jugador pase por encima o por debajo de la caja.
+func _vigilar_la_bifurcacion() -> void:
+	if _fork_seen or _phase != Phase.APPROACH or not is_inside_tree():
+		return
+	var sitio := to_global(Vector3(0.0, 1.5, -3.5))
+	for p in get_tree().get_nodes_in_group("player"):
+		if not p is Node3D:
+			continue
+		var d: Vector3 = (p as Node3D).global_position - sitio
+		d.y = 0.0
+		if d.length() <= CERCA_DE_LA_BIFURCACION:
+			_on_fork_entered(p)
+			return
 
 
 func _on_fork_entered(body: Node3D) -> void:
@@ -798,7 +825,7 @@ func _mat_emit(c: Color, emit: Color, energy := 1.0) -> StandardMaterial3D:
 
 
 func _show(text: String) -> void:
-	var res := DialogueManager.create_resource_from_text(text)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(text))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 
@@ -812,7 +839,7 @@ func _banner(text: String, dur := 0.0) -> void:
 	var hud := get_tree().get_first_node_in_group("hud")
 	if not hud or not hud.has_method("show_banner"):
 		return
-	hud.show_banner(text)
+	hud.show_banner(text, dur)
 	if dur > 0.0:
 		get_tree().create_timer(dur).timeout.connect(func() -> void:
 			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que

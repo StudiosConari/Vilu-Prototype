@@ -70,7 +70,8 @@ static func construir() -> Control:
 
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.03, 0.06, 0.86)
+	# Un velo ligero: detrás tiene que verse la portada de Opciones.
+	dim.color = Color(0.02, 0.03, 0.06, 0.35)
 	raiz.add_child(dim)
 
 	var cc := CenterContainer.new()

@@ -49,17 +49,14 @@ func _ready() -> void:
 	# texto suelto sobre negro.
 	var con_arte := PLACA.fondo(self, 0.6)
 
-	var centro := CenterContainer.new()
-	centro.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(centro)
-
-	var marco := PanelContainer.new()
-	marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.92, 44))
-	centro.add_child(marco)
-	var aire := MarginContainer.new()
-	aire.add_theme_constant_override("margin_top", 30)
-	aire.add_theme_constant_override("margin_bottom", 30)
-	marco.add_child(aire)
+	# El mismo marco dibujado que el selector de zonas: la estrella y las alas
+	# arriba, y la lista en el hueco. Sin el dibujo, la placa de siempre.
+	var raiz := Control.new()
+	raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(raiz)
+	var aire := PLACA.marco_dibujado(raiz)
+	aire.add_theme_constant_override("margin_left", 30)
+	aire.add_theme_constant_override("margin_right", 30)
 
 	var caja := VBoxContainer.new()
 	caja.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -77,7 +74,7 @@ func _ready() -> void:
 
 	caja.add_child(_espacio(8))
 	var hechos := GameManager.logros_obtenidos()
-	caja.add_child(_texto("%d de %d logros" % [hechos, GameManager.LOGROS.size()],
+	caja.add_child(_texto(tr("%d de %d logros") % [hechos, GameManager.LOGROS.size()],
 		20, COLOR_TEXTO))
 	caja.add_child(_espacio(4))
 

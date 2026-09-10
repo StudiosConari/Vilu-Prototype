@@ -1,5 +1,7 @@
 extends Node3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Zona Mina Corrupta — 4 secciones + persecución del Chupacabras.
 ##
 ## S1 (Z=0→-15): entrada, viga baja + pilar
@@ -441,7 +443,7 @@ func _trigger_claw_dialogue() -> void:
 		return
 	_claw_fired = true
 	Sfx.play("boss", -4.0, 0.30)
-	var res := DialogueManager.create_resource_from_text(DIALOGUE_GARRAS)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(DIALOGUE_GARRAS))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 
@@ -477,7 +479,7 @@ func _avisar_lo_que_falta() -> void:
 			faltan.append(str(l["titulo"]))
 	if faltan.is_empty():
 		return
-	_banner("El Chupacabras todavía no da la cara. Te falta: %s"
+	_banner(tr("El Chupacabras todavía no da la cara. Te falta: %s")
 		% ", ".join(faltan), 6.0)
 
 
@@ -953,7 +955,7 @@ func _banner(text: String, auto_clear := 0.0) -> void:
 	var hud := get_tree().get_first_node_in_group("hud")
 	if not hud or not hud.has_method("show_banner"):
 		return
-	hud.show_banner(text)
+	hud.show_banner(text, auto_clear)
 	if auto_clear > 0.0:
 		get_tree().create_timer(auto_clear).timeout.connect(func() -> void:
 			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que

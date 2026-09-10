@@ -95,9 +95,14 @@ func test_creditos_se_abren_y_se_cierran() -> void:
 func test_con_imagenes_la_entrada_se_dibuja() -> void:
 	var reposo := ImageTexture.create_from_image(Image.create(300, 60, false, Image.FORMAT_RGBA8))
 	var activo := ImageTexture.create_from_image(Image.create(300, 60, false, Image.FORMAT_RGBA8))
-	var b: TextureButton = TITULO.boton_con_imagenes(reposo, activo, 300.0)
+	var b: TextureButton = TITULO.boton_con_imagenes(reposo, activo, 300.0, "Nueva partida")
 	add_child_autofree(b)
 	assert_eq(b.texture_normal, reposo)
+	# Las palabras las pone el juego encima del dibujo, y se traducen solas.
+	var l: Label = b.get_node("Texto")
+	assert_eq(l.text, "Nueva partida", "la etiqueta lleva el texto")
+	assert_ne(l.auto_translate_mode, Node.AUTO_TRANSLATE_MODE_DISABLED, "y se traduce con el idioma")
+	assert_gt(l.anchor_left, 0.25, "a la derecha del icono")
 	assert_almost_eq(b.custom_minimum_size.y, 60.0, 0.5, "alto según el ancho de la columna")
 	# Con el ratón encima o el foco se aclara la de reposo, no se pasa a la de
 	# oro: así la pantalla no se carga. La de oro es para el pulsado.
@@ -228,4 +233,31 @@ func test_el_selector_de_zonas_va_en_su_marco() -> void:
 	var textos := _textos(zonas)
 	assert_true(textos.has("Volver"), "con Volver dentro")
 	assert_true(textos.has("1 La Tirana"), "y las paradas")
+
+
+## Tres portadas: la de inicio con la puerta, la del menú al pasarla y la de
+## Opciones mientras están abiertas, con fundido entre una y otra.
+func test_la_portada_cambia_con_la_puerta_y_con_opciones() -> void:
+	var t := await _titulo()
+	assert_eq(t.get("_portada_actual"), "inicio", "con la puerta, la de inicio")
+	var abajo: TextureRect = t.get("_portada_de_abajo")
+	assert_not_null(abajo.texture, "y está puesta")
+	t.call("_entrar_al_menu")
+	assert_eq(t.get("_portada_actual"), "menu", "al pasar la puerta, la del menú")
+	var arriba: TextureRect = t.get("_portada_de_arriba")
+	assert_lt(arriba.modulate.a, 1.0, "entra con fundido, no de golpe")
+	await wait_seconds(t.FUNDIDO_DE_PORTADA + 0.2)
+	assert_eq(abajo.texture.resource_path, t.PORTADAS["menu"], "y al terminar queda abajo")
+	(t.get("_options") as Control).visible = true
+	assert_eq(t.get("_portada_actual"), "opciones", "con Opciones, la suya")
+	assert_false((t.get("_columna") as Control).visible, "y el menú escondido debajo")
+	(t.get("_options") as Control).visible = false
+	assert_eq(t.get("_portada_actual"), "menu", "y al cerrarlas, la del menú")
+	assert_true((t.get("_columna") as Control).visible, "con el menú de vuelta")
+
+
+func test_volviendo_del_juego_arranca_en_la_del_menu() -> void:
+	GameManager.se_puede_continuar = true
+	var t := await _titulo()
+	assert_eq(t.get("_portada_actual"), "menu")
 

@@ -570,7 +570,7 @@ func _construir_paradas_de_bus() -> void:
 		area.set_script(PARADA_DE_BUS)
 		area.name = "Parada_" + hijo.name
 		area.bus = hijo.name
-		area.prompt = "[E] Viajar a %s" % etiqueta
+		area.prompt = tr("[E] Viajar a %s") % tr(etiqueta)
 		add_child(area)
 		area.global_position = caja.position + caja.size * 0.5
 
