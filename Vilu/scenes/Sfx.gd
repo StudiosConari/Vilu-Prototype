@@ -40,7 +40,8 @@ func _ready() -> void:
 			_sounds[id] = s
 	# Musica de fondo (loop).
 	_music = AudioStreamPlayer.new()
-	_music.stream = _musica_de_fondo()
+	_base = _musica_de_fondo()
+	_music.stream = _base
 	add_child(_music)
 	apply_music()
 	_music.play()
@@ -94,6 +95,46 @@ func _musica_de_fondo() -> AudioStream:
 func apply_music() -> void:
 	if _music:
 		_music.volume_db = linear_to_db(maxf(Save.music_vol, 0.0001)) - 8.0
+
+
+## La canción de un sitio en particular: la mina tiene la suya.
+##
+## Cambia la pista del reproductor y la deja sonando desde el principio. Si le
+## pasan la que ya suena no hace nada, para no cortarla al pasar de una zona a
+## otra que comparte música. Con null vuelve a la del juego.
+func poner_musica(pista: AudioStream) -> void:
+	if _music == null:
+		return
+	if pista == null:
+		volver_a_la_musica_del_juego()
+		return
+	if _music.stream == pista and _music.playing:
+		return
+	_music.stream = pista
+	apply_music()
+	_music.play()
+
+
+## De vuelta a la canción del juego, la de siempre.
+func volver_a_la_musica_del_juego() -> void:
+	if _music == null:
+		return
+	if _base == null:
+		_base = _musica_de_fondo()
+	if _music.stream == _base and _music.playing:
+		return
+	_music.stream = _base
+	apply_music()
+	_music.play()
+
+
+## La pista que suena ahora. Lo consultan los tests.
+func musica_actual() -> AudioStream:
+	return _music.stream if _music != null else null
+
+
+## La canción del juego, guardada para poder volver a ella.
+var _base: AudioStream = null
 
 
 func play(sfx_name: String, volume_db: float = -4.0, pitch: float = 1.0) -> void:

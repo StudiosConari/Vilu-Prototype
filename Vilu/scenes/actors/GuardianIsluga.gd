@@ -15,7 +15,7 @@ const ALTO          := 4.09
 
 const FIRST_TALK := "~ start
 Guardián: Bienvenidos al volcán Isluga. Soy su guardián.
-Guardián: Han cruzado el norte de Chile. El camino al sur les espera.
+Guardián: Han cruzado la prueba del volcan. Activare este punto para que puedan volver.
 Guardián: Pueden consultar el mapa de los volcanes sagrados.
 => END
 "

@@ -113,10 +113,21 @@ func _volver_a_empezar() -> void:
 
 
 func _al_conseguir_logro(id: String) -> void:
-	var m: Dictionary = actual()
-	if m.is_empty() or String(m.get("logro", "")) != id:
-		return
-	hecho(String(m["id"]), int(m.get("total", 1)))
+	# Se busca la misión que cierra este logro y se avisa como cualquier otro
+	# hecho: si es la activa, se cumple; si todavía no le toca, `hecho` la deja
+	# anotada para cuando le llegue el turno.
+	#
+	# Antes sólo se miraba la misión ACTIVA y, si no era la suya, el logro se
+	# tiraba. Con «El Correcaminos» eso dejaba la cadena colgada para siempre:
+	# el talismán se puede agarrar y salir huyendo de la mina con un solo
+	# obelisco encendido, así que el logro llegaba mientras la misión activa era
+	# todavía «Activa ambos obeliscos». Al encender el segundo aparecía
+	# «Investiga el final de la mina» esperando un logro que ya se tenía y que
+	# no se vuelve a conceder.
+	for m in CADENA:
+		if String(m.get("logro", "")) == id:
+			hecho(String(m["id"]), int(m.get("total", 1)))
+			return
 
 
 func _al_cambiar_de_region(region: String) -> void:
@@ -128,9 +139,38 @@ func _al_cambiar_de_region(region: String) -> void:
 
 
 ## Avisa de que se llegó a una zona o región. Lo llama el mundo.
+##
+## Llegar a un sitio también da por hechas las misiones de pasillo que quedaban
+## antes —«Ve al terminal», «Viaja a Atacama»—, siempre que ninguna de ellas
+## cierre un logro que todavía no se tiene. Entrando por la parada del Alicanto
+## desde el menú la cadena quedaba en «Ve al terminal de buses», que no cierra
+## ningún logro y que en Atacama ya no se puede hacer.
 func llegue_a(id: String) -> void:
 	for m in AL_LLEGAR.get(id, []):
+		_saltar_hasta(String(m))
 		hecho(String(m))
+
+
+## Adelanta la cadena hasta `id` si lo que hay en medio es sólo de pasillo.
+##
+## Lo que cierra un logro no se salta nunca: ir a la mina desde el principio no
+## puede dar por hecha a la Tirana. Y no se salta hacia atrás ni durante la
+## celebración de otra misión.
+func _saltar_hasta(id: String) -> void:
+	if terminada() or _celebrando:
+		return
+	var destino := _indice_de(id)
+	if destino <= _indice:
+		return
+	for i in range(_indice, destino):
+		var logro := String(CADENA[i].get("logro", ""))
+		if logro != "" and not GameManager.tiene_logro(logro):
+			return
+	_indice = destino
+	_hechos = int(_adelantados.get(id, 0))
+	_adelantados.erase(id)
+	cambio.emit(actual())
+	avance.emit(_hechos, _total())
 
 
 ## Deja la cadena en la primera misión que aún no esté cerrada por un logro.

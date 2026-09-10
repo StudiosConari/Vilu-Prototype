@@ -96,6 +96,26 @@ func test_tiene_las_cuatro_salidas() -> void:
 		assert_true(t in textos, "está '%s'" % t)
 
 
+## «Reiniciar» te devolvía a la primera zona pero con la misión de la última:
+## recargaba la escena y dejaba el progreso, que vive en un autoload.
+func test_reiniciar_empieza_de_cero() -> void:
+	var m := await _menu()
+	GameManager.set_beat(7)
+	GameManager.conceder("tirana")
+	Misiones.sincronizar_con_los_logros()
+	assert_ne(String(Misiones.actual()["id"]), "carmen", "la cadena estaba avanzada")
+
+	var recargas := [0]
+	m.set("_recargar", func() -> void: recargas[0] += 1)
+	for b in _botones(m.get("_panel")):
+		if b.text == "Reiniciar":
+			b.pressed.emit()
+	assert_eq(recargas[0], 1, "vuelve a cargar la escena")
+	assert_eq(Save.beat_index, 0, "desde el primer beat")
+	assert_false(GameManager.tiene_logro("tirana"), "sin los logros de antes")
+	assert_eq(String(Misiones.actual()["id"]), "carmen", "y con la primera misión")
+
+
 func _botones(n: Node) -> Array:
 	var r: Array = []
 	if n is Button:
@@ -113,3 +133,47 @@ func test_esta_puesto_en_la_escena_del_juego() -> void:
 		if String(st.get_node_name(i)) == "MenuDePausa":
 			hay = true
 	assert_true(hay, "el menú de pausa, colgado de Game")
+
+
+## A los lados del menú van los movimientos de cada uno: Emilia a la izquierda
+## y Benjamín a la derecha, con la tecla que tengan puesta ahora.
+func _textos(n: Node) -> String:
+	var r := ""
+	if n is Label:
+		r += (n as Label).text + "\n"
+	for h in n.get_children():
+		r += _textos(h)
+	return r
+
+
+func test_las_hojas_de_movimientos_flanquean_el_menu() -> void:
+	var m := await _menu()
+	var panel: Control = m.get("_panel")
+	var emilia: Control = panel.find_child("HojaEmilia", true, false)
+	var benja: Control = panel.find_child("HojaBenjamín", true, false)
+	var comun: Control = panel.find_child("HojaLosdos", true, false)
+	assert_not_null(emilia, "la hoja de Emilia")
+	assert_not_null(benja, "y la de Benjamín")
+	assert_not_null(comun, "y la de lo que comparten")
+	var fila := emilia.get_parent()
+	assert_eq(fila, benja.get_parent(), "en la misma fila")
+	assert_lt(emilia.get_index(), benja.get_index(), "Emilia a la izquierda, Benjamín a la derecha")
+	# La común va debajo del menú: en la columna del medio, después del marco.
+	var columna := comun.get_parent()
+	assert_eq(columna.get_parent(), fila, "la común cuelga de la columna del medio")
+	assert_eq(comun.get_index(), columna.get_child_count() - 1, "y es lo último, debajo del menú")
+
+	m.call("_pausar")
+	var te := _textos(emilia)
+	var tb := _textos(benja)
+	var tc := _textos(comun)
+	for que in ["Combo de 4 golpes", "Golpe cargado", "Doble salto", "Planear"]:
+		assert_true(te.contains(que), "Emilia: " + que)
+	for que in ["Disparo rápido", "Disparo cargado", "Flecha triple", "Guanaco: invocar", "Guanaco: montar", "Guanaco: embestir"]:
+		assert_true(tb.contains(que), "Benjamín: " + que)
+	for que in ["Moverse / correr", "Saltar", "Rodar", "Hablar / usar", "Cambiar (te sigue)", "Cambiar (anclado)"]:
+		assert_true(tc.contains(que), "los dos: " + que)
+	assert_false(te.contains("Cambiar") or tb.contains("Rodar"), "lo común no se repite en las suyas")
+	assert_true(tb.contains("C") and tc.contains("Shift"), "con las teclas que tienen puestas ahora")
+	get_tree().paused = false
+

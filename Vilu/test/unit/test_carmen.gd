@@ -438,3 +438,21 @@ func test_la_plaza_la_tiene_apuntada() -> void:
 		"Carmen sabe a qué puerta ir")
 	assert_eq(props.get("sitio_de_baile"), NodePath("../SitioDeLaTirana"),
 		"y dónde ponerse a bailar")
+
+
+## La gente de la fiesta ya no dice una frase: tiene una conversación entera,
+## una réplica por línea, y el guion se arma de eso.
+func test_la_gente_de_la_fiesta_conversa() -> void:
+	var INTERACT := load("res://scenes/actors/FestivalNPCInteract.gd")
+	var guion: String = INTERACT.guion_de("NPC: Hola.\nEmilia: ¿Qué tal?\nSin quién.")
+	assert_true(guion.begins_with("~ start\n"), "empieza donde el Dialogue Manager espera")
+	assert_true(guion.contains("NPC: Hola.\nEmilia: ¿Qué tal?\nNPC: Sin quién."),
+		"cada línea es una réplica y la que no dice quién la dice el NPC")
+	assert_true(guion.ends_with("=> END\n"))
+	var director := load("res://scenes/actors/FiestaDirector.gd")
+	var datos: Array = director.NPC_DATA
+	assert_eq(datos.size(), 5)
+	for i in 4:
+		assert_true(String(datos[i][3]).contains("Emilia:"), "la persona %d conversa con Emilia" % (i + 1))
+	assert_eq(String(datos[4][3]), "", "la quinta sólo grita")
+

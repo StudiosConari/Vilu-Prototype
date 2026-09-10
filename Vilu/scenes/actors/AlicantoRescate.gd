@@ -44,17 +44,17 @@ const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 
 const TALK_FORK := "~ start
 Benjamín: El camino se parte en dos.
-Emilia: Por la izquierda hay algo brillando. Mucho algo.
+Emilia: Por la izquierda hay algo brillando.
 Benjamín: Por la derecha hay alguien tirado en el suelo. Se está quejando.
 Emilia: ...
-Benjamín: Vos elegís.
+Benjamín: Tu Eliges, Emilia.
 => END
 "
 
 const TALK_HURT := "~ start
 Herida: No... no se acerquen al oro. Por favor.
 Herida: Vine con mi hermano. Él agarró un puñado y el suelo... el suelo no estaba.
-Emilia: Quedate quieta. Te vamos a sacar de acá.
+Emilia: Quedate quieto. Te vamos a ayudar.
 Herida: Hay algo mirando desde el fondo del barranco. Nos estuvo mirando todo el tiempo.
 => END
 "
@@ -63,7 +63,7 @@ const TALK_WINGS := "~ start
 Alicanto: Tres bajaron hoy a mi quebrada.
 Alicanto: El primero corrió al oro y el oro se lo tragó.
 Alicanto: El segundo corrió al oro y todavía está cayendo.
-Alicanto: Ustedes se agacharon a levantar a una desconocida.
+Alicanto: Ustedes se agacharon a levantar a una persona herida.
 Alicanto: Guío al minero honrado y despeño al codicioso. Ese es todo mi oficio.
 Alicanto: Toma mis alas, Emilia. Que te sostengan donde la roca se acabe.
 Emilia: ...Puedo sentirlo. Como si el aire pesara menos.
@@ -136,6 +136,7 @@ func _reponer_logica() -> void:
 	else:
 		if not fork.body_entered.is_connected(_on_fork_entered):
 			fork.body_entered.connect(_on_fork_entered)
+		_ensanchar_la_bifurcacion(fork)
 		# La bifurcación en sí ya no se marca: se marcan LOS DOS RAMALES, cada
 		# uno en su pasillo. Ver `_marcar_los_dos_caminos`.
 
@@ -379,6 +380,24 @@ func _process(delta: float) -> void:
 
 
 # ─── Bifurcación ─────────────────────────────────────────────────────────────
+
+## El disparador de la bifurcación tiene que cubrir el pasillo ENTERO.
+##
+## Se horneó con 10 m de ancho sobre una plataforma de 26: quien bajaba por
+## cualquiera de los lados pasaba de largo y la charla de «el camino se parte
+## en dos» no salía nunca. Ahora es tan ancho como la plataforma y el doble de
+## hondo, para que no haya por dónde esquivarlo. Se le pone una caja propia y
+## no se toca la del archivo, que podría compartirse.
+const ANCHO_DE_LA_BIFURCACION := Vector3(26.0, 4.0, 6.0)
+
+
+func _ensanchar_la_bifurcacion(fork: Area3D) -> void:
+	for h in fork.get_children():
+		if h is CollisionShape3D:
+			var caja := BoxShape3D.new()
+			caja.size = ANCHO_DE_LA_BIFURCACION
+			(h as CollisionShape3D).shape = caja
+
 
 func _on_fork_entered(body: Node3D) -> void:
 	if _fork_seen or not body.is_in_group("player"):
@@ -626,7 +645,7 @@ func _build_canyon() -> void:
 	add_child(fork)
 	var fcs  := CollisionShape3D.new()
 	var fbox := BoxShape3D.new()
-	fbox.size = Vector3(10.0, 4.0, 3.0)
+	fbox.size = ANCHO_DE_LA_BIFURCACION
 	fcs.shape = fbox
 	fork.add_child(fcs)
 	fork.body_entered.connect(_on_fork_entered)

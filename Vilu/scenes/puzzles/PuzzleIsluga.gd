@@ -20,6 +20,10 @@ signal solved
 
 @export var advance_to_beat := 4
 
+## La música del ascenso. Game la pone al entrar al volcán y devuelve la del
+## juego al salir, como con la mina.
+@export var musica: AudioStream = preload("res://audio/musica/ascenso_isluga.mp3")
+
 ## Por debajo de esta altura se cuenta como caído al vacío.
 ##
 ## El suelo jugable del cráter empieza en y≈297 y el manto de nubes está en 290.
@@ -37,6 +41,9 @@ func _ready() -> void:
 	_hint("Isluga (cooperativo): subí por TU plataforma. Activá tu obelisco con [E] para poner en marcha el ascensor del OTRO. Arriba los espera el guardián.")
 	_spawn_guardian()
 	_abrir_si_ya_estaba_resuelto()
+	_recordar_el_cambio.call_deferred()
+	# Al llegar, la pareja mira al fondo del cráter y decide separarse.
+	CHARLA.una_vez(get_tree(), "llegada_isluga", TALK_LLEGADA, 1.2)
 
 
 func _wire_elevator(cube_name: String, vert_name: String) -> void:
@@ -106,6 +113,25 @@ func _hint(text: String) -> void:
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud and hud.has_method("show_hint"):
 		hud.show_hint(text)
+
+
+## Lo que hay que recordar al entrar al volcán. Cada uno resuelve su lado.
+const RECORDATORIO := "Recuerda presionar [T] para resolver el puzzle por separado"
+
+const CHARLA := preload("res://scenes/core/Charla.gd")
+const TALK_LLEGADA := "~ start
+Emilia: Creo que veo una persona gigante al final.
+Benjamín: No sé si sea una persona, Emi. Parece una roca parada.
+Emilia: Creo que debemos separarnos.
+Benjamín: ¡Está bien! Entonces yo iré por la derecha.
+=> END
+"
+
+
+func _recordar_el_cambio() -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("mostrar_nota"):
+		hud.mostrar_nota(RECORDATORIO, 12.0)
 
 
 ## Si el cráter ya se superó en esta partida, el camino de salida está puesto

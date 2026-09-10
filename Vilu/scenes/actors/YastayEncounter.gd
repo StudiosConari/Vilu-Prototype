@@ -16,8 +16,8 @@ const INTERACT_SCR := preload("res://scenes/actors/Interactable.gd")
 const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 
 const TALK_BLESSING := "~ start
-Yastay: Alto. Bajad las armas.
-Yastay: Has demostrado que no eras como esos cazadores.
+Yastay: Alto.
+Yastay: Han demostrado que no son como esos cazadores.
 Yastay: Recuperaste a un guanaco de mi rebaño, y al parecer quiere ser tu amigo.
 Yastay: Puedes llevarlo contigo, arquero. Que te guarde el camino.
 Benjamín: Gracias, Yastay.
@@ -670,6 +670,29 @@ func _on_inspect(player: Node, body: Node3D, zone: Area3D) -> void:
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 
+const CHARLA := preload("res://scenes/core/Charla.gd")
+
+## Cuando el Yastay se les viene encima, se frena un momento y ellos deciden
+## el plan: Emilia lo entretiene y Benjamín sana.
+const TALK_SENUELO := "~ start
+Benjamín: Creo que sé lo que debemos hacer. No lo ataques, pero atrae su atención, Emilia.
+Emilia: Está bien, intentaré atraer su atención.
+=> END
+"
+
+## Al sanar al segundo guanaco.
+const TALK_SEGUNDO := "~ start
+Emilia: ¡Me está costando esquivarlo! ¿Cómo vas, Benja?
+Benjamín: ¡Aguanta, Emi, ya casi estoy listo!
+=> END
+"
+
+## Mientras hablan, el Yastay espera; después de la charla se le da el
+## control a Benjamín y Emilia sale a hacer de señuelo.
+var _charlando := false
+var _senuelo: Node3D = null
+
+
 func _begin_aggressive() -> void:
 	_phase = Phase.AGGRESSIVE
 	# Se anota AQUÍ, justo antes de la primera persecución, y no al nacer: si se
@@ -680,8 +703,38 @@ func _begin_aggressive() -> void:
 		_yastay_casa = _yastay.global_position
 	if is_instance_valid(_yastay_label):
 		_yastay_label.text = "Yastay\n¡Intruso!"
-	_banner("¡El Yastay os ve! Emilia: esquiva sus cargas. Benjamín: sana al guanaco herido.", 6.0)
-	_hint("Emilia esquiva. Benjamín acércate al guanaco herido.")
+	# Se frena un poco antes de atacar: la pareja habla y se reparte el trabajo.
+	_charlando = true
+	_trabar_a_los_jugadores(true)
+	CHARLA.decir_y_luego(TALK_SENUELO, _empezar_el_senuelo)
+
+
+## Terminada la charla: Benjamín al mando, Emilia a entretener al Yastay.
+func _empezar_el_senuelo() -> void:
+	_charlando = false
+	_trabar_a_los_jugadores(false)
+	var benja: Node3D = null
+	var emilia: Node3D = null
+	for p in get_tree().get_nodes_in_group("player"):
+		if p.get("is_archer") == true:
+			benja = p
+		else:
+			emilia = p
+	var juego := get_tree().get_first_node_in_group("game")
+	if benja != null and juego != null and juego.has_method("activar_a"):
+		juego.activar_a(benja)
+	if emilia != null and emilia.has_method("hacer_de_senuelo") and is_instance_valid(_yastay):
+		emilia.hacer_de_senuelo(_yastay, centro_de_zona, radio_de_zona * 0.8)
+		_senuelo = emilia
+	_banner("Emilia distrae al Yastay. Benjamín: sana a los guanacos heridos.", 6.0)
+	_hint("Emilia entretiene al Yastay. Benjamín: acércate a los guanacos heridos.")
+
+
+## A quién persigue: a Emilia mientras haga de señuelo; si no, a quien se maneja.
+func _presa() -> Node3D:
+	if is_instance_valid(_senuelo) and _senuelo.has_method("es_senuelo") and _senuelo.es_senuelo():
+		return _senuelo
+	return _active_player()
 
 
 func _process(delta: float) -> void:
@@ -692,9 +745,9 @@ func _process(delta: float) -> void:
 
 
 func _yastay_think(delta: float) -> void:
-	if not is_instance_valid(_yastay):
+	if not is_instance_valid(_yastay) or _charlando:
 		return
-	var target := _active_player()
+	var target := _presa()
 	if target == null:
 		return
 	var to_t := target.global_position - _yastay.global_position
@@ -975,6 +1028,9 @@ func _on_heal_entered(body: Node3D, guanaco: Node3D = null) -> void:
 	_levantar(guanaco)
 	if _sanados.size() < _heridos.size():
 		_banner("Guanacos sanados: %d/%d" % [_sanados.size(), _heridos.size()], 2.5)
+		# Al segundo, Emilia avisa de que le cuesta seguir esquivando.
+		if _sanados.size() == 2:
+			CHARLA.una_vez(get_tree(), "yastay_segundo_guanaco", TALK_SEGUNDO)
 		return
 	_heal()
 
@@ -1019,6 +1075,10 @@ func _heal() -> void:
 	_wound_healed = true
 	_phase = Phase.RESOLVED
 	_hint("Los guanacos se recuperan. El Yastay asiente…")
+	# Emilia deja de hacer de señuelo y vuelve a seguir.
+	if is_instance_valid(_senuelo) and _senuelo.has_method("set_ai_mode"):
+		_senuelo.set_ai_mode(true)
+	_senuelo = null
 
 	# Los guanacos ya se levantaron uno a uno en _levantar(); acá sólo queda
 	# cerrar la secuencia.
@@ -1338,6 +1398,8 @@ func _mat_emit(c: Color, emit: Color) -> StandardMaterial3D:
 
 
 func _active_player() -> Node3D:
+	if not is_inside_tree():
+		return null
 	for p in get_tree().get_nodes_in_group("player"):
 		if "active" in p and p.active:
 			return p

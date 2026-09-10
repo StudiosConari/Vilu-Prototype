@@ -12,23 +12,49 @@ const TALK_NONE := "~ start
 Bruja: Siento una energía oscura por aquí... ¿qué buscan?
 => END
 "
+## Las preguntas que se le pueden hacer sobre lo que se vio en la mina. Van
+## después de entregar el primer fragmento, y también en las visitas de
+## después mientras falte el segundo: es cuando esas dudas están frescas.
+const PREGUNTAS := "~ preguntas
+Bruja: ¿Tienen alguna otra pregunta?
+- Vimos a un fantasma en la mina. ¿Tienes alguna información de ella?
+	Bruja: ¿Un fantasma en la mina? ¿Cómo era?
+	Emilia: Era una mujer muy alta y volaba. Nos gritó cuando nos vio.
+	Bruja: Creo que pudo ser La Lola… Es una leyenda minera del norte. Dicen que fue una mujer marcada por una tragedia amorosa y que, después de morir, su espíritu quedó vagando cerca de minas y caminos del desierto.
+	Bruja: Algunos aseguran que aparece de noche para atraer o desorientar a los viajeros.
+	=> preguntas
+- Hay un perro gigante negro en la mina. ¿Qué crees que sea?
+	Bruja: Creo que pudo ser el Chupacabras. Es una criatura de la que se cuentan historias en distintos lugares de Chile.
+	Bruja: Dicen que aparece de noche cerca de zonas rurales y corrales, atacando animales y dejándolos sin sangre.
+	Bruja: Nadie sabe realmente cómo es, porque cada persona que asegura haberlo visto lo describe de manera distinta. Pero muchos dicen que es un canino negro, con cola larga y patas gigantes.
+	=> preguntas
+- Vimos a unos mineros con los ojos blancos que nos atacaron. ¿Sabes algo de eso?
+	Bruja: Esos mineros no siempre fueron así. Desde que aparecieron esos símbolos extraños en las galerías comenzaron a ponerse violentos, desconfiados y obsesionados con el mineral.
+	Bruja: Algunos creen que algo los está contaminando. Si logran derrotarlos sin destruir aquello que queda de ellos… puede que vuelvan en sí.
+	=> preguntas
+- No, gracias.
+	=> END
+"
+
 const TALK_FRAG := "~ start
 Bruja: ¡Ese símbolo... lo conozco!
 Bruja: Pero está incompleto. Si encuentran otra parte más, tráiganmela.
-=> END
-"
+Bruja: Quizas este conectado con todo lo que esta pasando.
+=> preguntas
+" + PREGUNTAS
+
 const TALK_WAIT := "~ start
 Bruja: El símbolo aún está incompleto. Busquen el otro fragmento.
-=> END
-"
+=> preguntas
+" + PREGUNTAS
 const TALK_BOTH := "~ start
 Bruja: ¡Las dos piezas! Déjenmelas, déjenmelas...
-Bruja: Calzan. Es el sello de Vilu, y no lo partió ningún animal.
+Bruja: Calzan. Es un sello muy raro, Mezcla muchas cosas, sin duda.
 Bruja: Esto es obra de los ocultistas. Ellos corrompieron a los mineros.
 Bruja: Ellos soltaron al chupacabras. Ellos mandaron a los cazadores tras el Yastay.
-Bruja: Todo lo que vieron desde La Tirana hasta la cumbre lleva su firma.
+Bruja: Todo lo que vieron hasta ahora, lleva su firma.
 Emilia: ¿Y qué es lo que quieren?
-Bruja: El poder de los volcanes. Y les llevan varios pasos de ventaja.
+Bruja: Creo que estan aqui por los avistamientos de seres miticos. Y les llevan varios pasos de ventaja.
 => END
 "
 const TALK_DONE := "~ start

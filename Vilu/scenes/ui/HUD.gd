@@ -19,7 +19,9 @@ extends CanvasLayer
 
 func _ready() -> void:
 	_montar_misiones()
+	_montar_nota()
 	_montar_aviso_de_logro()
+	_montar_cartel()
 	GameManager.ability_unlocked.connect(func(_a: String) -> void: _refresh_abilities())
 	GameManager.beat_changed.connect(func(_i: int) -> void: _refresh_debug())
 	TravelManager.region_changed.connect(func(_r: String) -> void: _refresh_debug())
@@ -54,14 +56,7 @@ func _montar_misiones() -> void:
 	_mis_panel.position = Vector2(-430, 18)
 	_mis_panel.custom_minimum_size = Vector2(412, 0)
 	_mis_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var fondo := StyleBoxFlat.new()
-	fondo.bg_color = Color(0.06, 0.07, 0.10, 0.55)
-	fondo.border_color = Color(0.85, 0.80, 0.55, 0.55)
-	fondo.set_border_width_all(2)
-	fondo.set_corner_radius_all(6)
-	fondo.set_content_margin_all(12)
-	_mis_panel.add_theme_stylebox_override("panel", fondo)
+	_mis_panel.add_theme_stylebox_override("panel", _placa())
 	add_child(_mis_panel)
 
 	var caja := VBoxContainer.new()
@@ -110,6 +105,131 @@ func _pintar_mision(m: Dictionary, hechos: int) -> void:
 	var hecha := hechos >= total
 	_mis_texto.add_theme_color_override("font_color",
 		Color(0.60, 0.95, 0.60) if hecha else Color(0.95, 0.95, 0.95))
+
+
+## El estilo de los recuadros del HUD: el de misiones, y los que lo copian.
+func _placa() -> StyleBoxFlat:
+	var fondo := StyleBoxFlat.new()
+	fondo.bg_color = Color(0.06, 0.07, 0.10, 0.55)
+	fondo.border_color = Color(0.85, 0.80, 0.55, 0.55)
+	fondo.set_border_width_all(2)
+	fondo.set_corner_radius_all(6)
+	fondo.set_content_margin_all(12)
+	return fondo
+
+
+## El recuadro del centro de la pantalla: los avisos —«¡La lava quema!», «Nuevo
+## logro»— iban sueltos arriba del todo, en letras blancas sobre lo que hubiera
+## detrás, y sobre el cielo del volcán no se leían. Ahora salen en el centro,
+## con la misma placa que el recuadro de misiones. Los dos carteles se meten
+## dentro y la placa se ve mientras alguno tenga algo que decir.
+var _cartel: PanelContainer = null
+
+
+func _montar_cartel() -> void:
+	_cartel = PanelContainer.new()
+	_cartel.name = "Cartel"
+	_cartel.set_anchors_preset(Control.PRESET_CENTER)
+	_cartel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_cartel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_cartel.custom_minimum_size = Vector2(640, 0)
+	_cartel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cartel.add_theme_stylebox_override("panel", _placa())
+	_cartel.visible = false
+	add_child(_cartel)
+	# En el centro justo: se probó un poco más arriba y se leía como «arriba»,
+	# no como «en medio». Son desplazamientos desde el ancla, no una posición:
+	# `position` es absoluta y con (-320, -180) la placa quedaba fuera de la
+	# pantalla. Crece hacia los dos lados desde el centro.
+	_cartel.offset_left = -320
+	_cartel.offset_right = 320
+	_cartel.offset_top = 0
+	_cartel.offset_bottom = 0
+
+	var caja := VBoxContainer.new()
+	caja.add_theme_constant_override("separation", 6)
+	_cartel.add_child(caja)
+	for l: Label in [_aviso, _banner]:
+		if l.get_parent() != null:
+			l.get_parent().remove_child(l)
+		caja.add_child(l)
+		l.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size = Vector2(616, 0)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_refrescar_cartel()
+
+
+## Cada cuadro, y no por la señal `visibility_changed`: dentro de una placa
+## oculta, mostrar el cartel no la dispara —la visibilidad efectiva no cambia—
+## y la placa se quedaba escondida con el aviso dentro.
+func _process(_delta: float) -> void:
+	_refrescar_cartel()
+
+
+func _refrescar_cartel() -> void:
+	if _cartel != null:
+		_cartel.visible = _aviso.visible or _banner.visible
+
+
+## Un recuadro bajo el de misiones, para un recordatorio que dura un rato.
+##
+## Lo pidió el volcán: quien entra tiene que acordarse de que con [T] cada uno
+## resuelve el puzzle por separado, y el cartel de abajo ya no se muestra.
+var _nota_panel: PanelContainer = null
+var _nota_texto: Label = null
+var _nota_vence := 0
+
+
+func _montar_nota() -> void:
+	_nota_panel = PanelContainer.new()
+	_nota_panel.name = "Nota"
+	_nota_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_nota_panel.custom_minimum_size = Vector2(412, 0)
+	_nota_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_nota_panel.add_theme_stylebox_override("panel", _placa())
+	_nota_panel.visible = false
+	add_child(_nota_panel)
+	_nota_texto = Label.new()
+	_nota_texto.add_theme_font_size_override("font_size", 17)
+	_nota_texto.add_theme_color_override("font_color", Color(1.0, 0.92, 0.62))
+	_nota_texto.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_nota_texto.custom_minimum_size = Vector2(388, 0)
+	_nota_panel.add_child(_nota_texto)
+
+
+## Muestra un recordatorio bajo las misiones durante `segundos` (0 = hasta que
+## se quite a mano).
+func mostrar_nota(texto: String, segundos := 10.0) -> void:
+	if _nota_panel == null:
+		return
+	_nota_texto.text = Botones.traducir(texto)
+	_nota_panel.visible = true
+	_colocar_nota.call_deferred()
+	_nota_vence += 1
+	if segundos <= 0.0:
+		return
+	var esta := _nota_vence
+	get_tree().create_timer(segundos).timeout.connect(func() -> void:
+		var h := get_tree().get_first_node_in_group("hud")
+		if h != null and h.get("_nota_vence") == esta and h.has_method("quitar_nota"):
+			h.quitar_nota())
+
+
+func quitar_nota() -> void:
+	if _nota_panel != null:
+		_nota_panel.visible = false
+
+
+## Justo debajo del recuadro de misiones, mida lo que mida éste.
+func _colocar_nota() -> void:
+	if _nota_panel == null or _mis_panel == null:
+		return
+	var y := _mis_panel.position.y + _mis_panel.size.y + 10.0
+	if not _mis_panel.visible:
+		y = _mis_panel.position.y
+	_nota_panel.position = Vector2(_mis_panel.position.x, y)
 
 
 func _montar_aviso_de_logro() -> void:
@@ -214,6 +334,8 @@ func _on_energy(current: int, maximum: int) -> void:
 
 
 func _refresh_abilities() -> void:
+	if _swap:
+		_swap.text = texto_del_letrero_de_controles()
 	_abilities.text = "Arco %s   Alas %s   Guanaco %s" % [
 		_tick(GameManager.has_ability("bow")),
 		_tick(GameManager.has_ability("wings")),
@@ -257,6 +379,21 @@ func clear_banner() -> void:
 func show_swap_hint(on: bool) -> void:
 	if _swap:
 		_swap.visible = on
+		_swap.text = texto_del_letrero_de_controles()
+
+
+## Lo que dice el letrero de abajo a la derecha: cómo cambiar de personaje y,
+## en cuanto Benjamín tiene al guanaco, cómo usarlo. Crece hacia arriba para
+## que la segunda línea no se salga por abajo.
+const LETRERO_CAMBIAR := "[R] cambiar (IA) · [T] cambiar (queda quieto)"
+const LETRERO_GUANACO := "[Q] invocar · [C] montar · [G] embestir"
+
+
+func texto_del_letrero_de_controles() -> String:
+	var t := LETRERO_CAMBIAR
+	if GameManager.has_ability("guanaco"):
+		t = LETRERO_GUANACO + "\n" + t
+	return Botones.traducir(t)
 
 
 ## Panel de instrucción persistente (transparente) para puzzles.

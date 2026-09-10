@@ -32,11 +32,25 @@ var _con_mando := false
 var _tabla := {}
 
 
+const REMAPEO := preload("res://scenes/core/Remapeo.gd")
+
+
 func _ready() -> void:
 	# En procesos sin ventana esto no pinta nada, pero tampoco estorba: sin
 	# eventos, `_con_mando` se queda en false y `traducir` devuelve el texto tal
 	# cual.
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Los controles que el jugador cambió, puestos al arrancar. `Save` ya los
+	# leyó: va antes en la lista de autoloads.
+	if has_node("/root/Save"):
+		var mapa = get_node("/root/Save").get("controles")
+		if mapa is Dictionary and not (mapa as Dictionary).is_empty():
+			REMAPEO.aplicar(mapa)
+
+
+## Tira la tabla tecla -> botón para que se arme de nuevo con el mapa actual.
+func olvidar_tabla() -> void:
+	_tabla = {}
 
 
 ## Se mira TODO lo que entra, sin consumir nada.

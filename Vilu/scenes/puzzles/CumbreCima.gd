@@ -15,6 +15,10 @@ signal reached_summit
 
 @export var advance_to_beat := 7
 
+## La música del ascenso. Game la pone al entrar al volcán y devuelve la del
+## juego al salir, como con la mina.
+@export var musica: AudioStream = preload("res://audio/musica/ascenso_ojos_del_salado.mp3")
+
 var _solved := false
 var _bridge_latched := false
 var _bridge_state := -1
@@ -49,6 +53,9 @@ func _ready() -> void:
 	_arrancar_recorridos()
 	_armar_interruptores()
 	_vestir_corrientes()
+	_recordar_el_cambio.call_deferred()
+	# Al llegar, la pareja reconoce al guardián de lejos y busca el camino.
+	CHARLA.una_vez(get_tree(), "llegada_ojos_del_salado", TALK_LLEGADA, 1.2)
 	# Al reaparecer tras una caída, la plataforma vuelve al principio: si se
 	# quedara a mitad de camino no habría forma de volver a subirse.
 	var juego := get_tree().get_first_node_in_group("game")
@@ -283,6 +290,28 @@ func _hint(text: String) -> void:
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud and hud.has_method("show_hint"):
 		hud.show_hint(text)
+
+
+## Lo que hay que recordar al entrar al volcán. Cada uno resuelve su lado.
+const RECORDATORIO := "Recuerda presionar [T] para resolver el puzzle por separado"
+
+const CHARLA := preload("res://scenes/core/Charla.gd")
+const TALK_LLEGADA := "~ start
+Benjamín: Bueno, ahora sabemos que eso que se ve al final no es una persona.
+Emilia: Sí, debe ser otro guardián. Tendremos que superar esto de la misma forma.
+Benjamín: Pero no veo un camino. No podemos saltar hasta el otro lado.
+Emilia: Quizás yo sí pueda, con mis alas.
+Benjamín: ¿Me vas a dejar atrás?
+Emilia: Noo, era broma. Mira ese símbolo de guanaco en el suelo. Quizás tú debas hacer algo.
+Benjamín: ¡Lo intentaré!
+=> END
+"
+
+
+func _recordar_el_cambio() -> void:
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud and hud.has_method("mostrar_nota"):
+		hud.mostrar_nota(RECORDATORIO, 12.0)
 
 
 # ─── Plataformas con recorrido ────────────────────────────────────────────────

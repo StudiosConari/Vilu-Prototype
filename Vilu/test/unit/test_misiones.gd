@@ -76,6 +76,37 @@ func test_un_logro_cierra_su_mision() -> void:
 	assert_eq(String(Misiones.actual()["id"]), "mina", "y pasa a la siguiente")
 
 
+## Un logro que llega ANTES de que toque su misión no se pierde.
+##
+## El talismán se puede agarrar y salir huyendo con un solo obelisco
+## encendido: «El Correcaminos» llegaba con «Activa ambos obeliscos» todavía
+## activa y se tiraba. Al encender el segundo aparecía «Investiga el final de
+## la mina» esperando un logro que ya se tenía y que no se concede dos veces.
+func test_un_logro_adelantado_cierra_su_mision_cuando_le_toca() -> void:
+	var hasta := func(id: String) -> void:
+		while not Misiones.terminada() and String(Misiones.actual()["id"]) != id:
+			var m: Dictionary = Misiones.actual()
+			Misiones.hecho(String(m["id"]), int(m["total"]))
+			await wait_seconds(Misiones.ESPERA + 0.15)
+	await hasta.call("obeliscos")
+	assert_eq(String(Misiones.actual()["id"]), "obeliscos")
+
+	# Sale huyendo con un obelisco: el logro llega antes de tiempo.
+	Misiones.hecho("obeliscos")
+	GameManager.conceder("mina")
+	assert_eq(String(Misiones.actual()["id"]), "obeliscos", "sigue pidiendo el otro obelisco")
+	assert_eq(Misiones.hechos(), 1, "y no cuenta el logro como obelisco")
+
+	# El segundo obelisco: la del fondo de la mina se cumple sola con el logro
+	# que ya había, y se pasa al talismán.
+	Misiones.hecho("obeliscos")
+	await wait_seconds(Misiones.ESPERA + 0.2)
+	assert_eq(String(Misiones.actual()["id"]), "fondo_mina", "primero se ve cumplida")
+	assert_eq(Misiones.hechos(), 1)
+	await wait_seconds(Misiones.ESPERA + 0.2)
+	assert_eq(String(Misiones.actual()["id"]), "talisman_1", "y después pasa a la siguiente")
+
+
 ## Entrando por una parada tardía del menú, la cadena tiene que aparecer donde
 ## corresponde y no en la primera misión.
 func test_se_coloca_sola_segun_los_logros_que_ya_haya() -> void:
@@ -99,6 +130,27 @@ func test_llegar_a_la_mina_sirve_las_dos_veces() -> void:
 
 	Misiones.llegue_a("Mina")
 	assert_eq(Misiones.hechos(), 1, "llegar a la mina cumple la de buscarla")
+
+
+## Entrar por la parada del Alicanto dejaba la cadena en «Ve al terminal de
+## buses»: no cierra ningún logro, y desde Atacama ya no se puede hacer.
+func test_llegar_al_alicanto_da_por_hecho_el_viaje() -> void:
+	for id in ["tirana", "mina", "talisman_1", "isluga"]:
+		GameManager.conceder(id)
+	Misiones.sincronizar_con_los_logros()
+	assert_eq(String(Misiones.actual()["id"]), "terminal", "así entra la parada")
+
+	Misiones.llegue_a("Alicanto")
+	assert_eq(String(Misiones.actual()["id"]), "alicanto",
+		"el terminal y el viaje quedan atrás")
+	assert_eq(Misiones.hechos(), 1, "y llegar cumple la de buscarlo")
+
+
+## Pero lo que cierra un logro no se salta: la mina no da por hecha a la Tirana.
+func test_llegar_a_la_mina_no_salta_a_la_tirana() -> void:
+	Misiones.llegue_a("Mina")
+	assert_eq(String(Misiones.actual()["id"]), "carmen", "sigue donde estaba")
+	assert_eq(Misiones.hechos(), 0)
 
 
 ## El camino del Alicanto se puede fallar: el texto cambia y se vuelve a pedir.

@@ -27,16 +27,17 @@ const ORO := Color(0.96, 0.84, 0.46)
 ## las dos formas: mirar alrededor con el ratón no es una acción, es el
 ## movimiento del puntero, y no hay nada en el `InputMap` que enseñar.
 const FILAS := [
-	{"que": "Moverse",            "acciones": ["move_forward", "move_left", "move_back", "move_right"]},
+	{"que": "Moverse",            "acciones": ["move_forward", "move_left", "move_back", "move_right"], "fija": true},
 	{"que": "Mirar alrededor",    "acciones": ["cam_izquierda", "cam_derecha", "cam_arriba", "cam_abajo"],
-	 "sin_teclado": "Mover el ratón"},
+	 "sin_teclado": "Mover el ratón", "fija": true},
 	{"que": "Correr",             "acciones": ["run"]},
 	{"que": "Saltar / planear",   "acciones": ["jump"]},
 	{"que": "Rodar",              "acciones": ["rodar"]},
 	{"que": "Atacar / tensar",    "acciones": ["attack"]},
 	{"que": "Flecha triple",      "acciones": ["triple_arrow"]},
 	{"que": "Hablar / usar",      "acciones": ["interact"]},
-	{"que": "Guanaco",            "acciones": ["guanaco"]},
+	{"que": "Guanaco (invocar)",  "acciones": ["guanaco"]},
+	{"que": "Guanaco (montar)",   "acciones": ["guanaco_montar"]},
 	{"que": "Embestida",          "acciones": ["guanaco_charge"]},
 	{"que": "Cambiar (te sigue)", "acciones": ["swap_ai"]},
 	{"que": "Cambiar (se queda)", "acciones": ["swap_hold"]},
@@ -68,51 +69,20 @@ const RATON := {
 }
 
 
-## Devuelve el panel ya montado y OCULTO. Quien lo pide decide cuándo se ve.
+## Devuelve la hoja ya montada y OCULTA. Quien la pide decide cuándo se ve.
+##
+## La hoja de verdad vive en HojaDeControles.gd, que es un Control con guion:
+## desde que los controles se pueden cambiar necesita escuchar la entrada, y un
+## constructor estático no puede. Esto queda como puerta de entrada para que
+## quien la abría siga abriéndola igual.
+const HOJA := preload("res://scenes/ui/HojaDeControles.gd")
+
+
 static func construir(con_mando: bool) -> Control:
-	var raiz := Control.new()
-	raiz.name = "PanelDeControles"
-	raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
-	raiz.visible = false
-
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.03, 0.06, 0.90)
-	raiz.add_child(dim)
-
-	var cc := CenterContainer.new()
-	cc.set_anchors_preset(Control.PRESET_FULL_RECT)
-	raiz.add_child(cc)
-
-	var marco := PanelContainer.new()
-	marco.custom_minimum_size = Vector2(ANCHO, 0)
-	marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.94, 26))
-	cc.add_child(marco)
-
-	var aire := MarginContainer.new()
-	for lado: String in ["top", "bottom"]:
-		aire.add_theme_constant_override("margin_" + lado, 22)
-	for lado: String in ["left", "right"]:
-		aire.add_theme_constant_override("margin_" + lado, 34)
-	marco.add_child(aire)
-
-	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 6)
-	aire.add_child(vb)
-	vb.add_child(PLACA.lema("GAMEPAD" if con_mando else "TECLADO Y RATÓN", 30))
-	vb.add_child(PLACA.filete())
-
-	for f: Dictionary in FILAS:
-		var como := describir(f, con_mando)
-		if como == "":
-			continue          # esa fila no se hace de esta manera
-		vb.add_child(_fila(String(f["que"]), como))
-
-	vb.add_child(PLACA.filete())
-	var volver := PLACA.boton("Volver")
-	volver.pressed.connect(func() -> void: raiz.visible = false)
-	vb.add_child(volver)
-	return raiz
+	var hoja := Control.new()
+	hoja.set_script(HOJA)
+	hoja.call("montar", con_mando)
+	return hoja
 
 
 ## Con qué se hace esa fila, ya en palabras. "" si no se hace de esa manera.
@@ -160,19 +130,3 @@ static func nombre_de(e: InputEvent, con_mando: bool) -> String:
 	return ""
 
 
-static func _fila(que: String, como: String) -> Control:
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 16)
-	var a := Label.new()
-	a.text = que
-	a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	a.add_theme_font_size_override("font_size", 20)
-	a.add_theme_color_override("font_color", Color(0.90, 0.90, 0.95))
-	h.add_child(a)
-	var b := Label.new()
-	b.text = como
-	b.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	b.add_theme_font_size_override("font_size", 20)
-	b.add_theme_color_override("font_color", ORO)
-	h.add_child(b)
-	return h

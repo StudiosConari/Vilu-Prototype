@@ -335,8 +335,34 @@ func _check_fall() -> void:
 	var limite := _limite_de_caida()
 	for c in party:
 		if is_instance_valid(c) and c.global_position.y < limite:
+			if traer_al_lado(c):
+				continue
 			_respawn()
 			return
+
+
+## Al compañero que no se maneja, caerse no le cuesta el intento: vuelve al
+## lado del que sí se maneja y se sigue. Devuelve false si `quien` es el que
+## se maneja —o no es del party—, y entonces toca el rescate de siempre.
+##
+## Es el mismo trato que ya tiene con el daño: el que no está seleccionado no
+## lo recibe. Antes, que la IA se cayera a la lava del volcán devolvía al party
+## entero al punto seguro y había que rehacer la subida por una torpeza que no
+## era del jugador.
+func traer_al_lado(quien: Node) -> bool:
+	if quien == null or not party.has(quien):
+		return false
+	var lider := active_character()
+	if lider == null or lider == quien or not is_instance_valid(lider):
+		return false
+	var pos: Vector3 = lider.global_position
+	var off := _si_hay_suelo(pos, Vector3(2.0, 0.0, 0.0), quien)
+	quien.global_position = pos + off + Vector3(0.0, 0.3, 0.0)
+	quien.velocity = Vector3.ZERO
+	# Que no vuelva a pedir lo mismo en el cuadro siguiente si el que se maneja
+	# está en el aire y el compañero cae otra vez.
+	_espera_de_rescate = RESCATE_MINIMO
+	return true
 
 
 ## El umbral de caída de la zona en la que se está.
@@ -364,9 +390,13 @@ func _limite_de_caida() -> float:
 ## Devuelve al party al punto seguro por algo que no es caerse: la lava, por
 ## ahora. El daño se aplica DESPUÉS de reubicar porque el rescate cura al party
 ## entero; sin esto tocar la lava no costaría nada.
-func volver_al_punto_seguro(motivo: String, dano := 0.0) -> void:
+func volver_al_punto_seguro(motivo: String, dano := 0.0, quien: Node = null) -> void:
 	var que_hacer := decidir_rescate()
 	if not que_hacer[0]:
+		return
+	# El compañero que no se maneja no cuesta el intento: vuelve al lado del
+	# otro y ya.
+	if quien != null and traer_al_lado(quien):
 		return
 	_espera_de_rescate = RESCATE_MINIMO
 	_respawn(motivo)
@@ -747,6 +777,16 @@ func _swap(combat: bool) -> void:
 		leaving.set_ai_mode(combat)
 
 
+## Pasa el control a ESE personaje. El que lo deja no cambia de modo: quien
+## llama decide qué hace (seguir, quedarse, hacer de señuelo).
+func activar_a(quien: Node) -> void:
+	var i := party.find(quien)
+	if i < 0 or i == active_index:
+		return
+	active_index = i
+	_apply_active()
+
+
 func add_party_member(character: Node) -> void:
 	if character in party:
 		return
@@ -818,6 +858,10 @@ func _move_to_spawn(region: Node, use_travel_spawn: bool = false) -> void:
 	# Y la cámara detrás, mirando lo mismo. Con _cam_yaw = 0 se pone en +Z y
 	# mira hacia -Z, o sea que coincide con el marcador sin rotar.
 	_cam_yaw = yaw
+	# Plantada en el sitio nuevo, no viajando hasta él: al subir al Isluga el
+	# foco seguía interpolando desde el mundo de abajo y, mientras aclaraba el
+	# fundido, se veía a la pareja «desplazada» hacia el cráter desde lejos.
+	_pegar_la_camara(spawn.global_position)
 
 	# Acabar de llegar a una región la convierte en el último punto seguro.
 	#
@@ -885,6 +929,7 @@ func enter_interior(id: String, use_travel_spawn := false) -> void:
 		if r != null:
 			TOON_SKIN.new().aplicar(r, ajustes_toon)
 		_aplicar_ambiente_interior(r)
+		_aplicar_musica_interior(r)
 		# El viaje rÃ¡pido entra por el TravelSpawn, junto al guardiÃ¡n. Antes este
 		# argumento se perdÃ­a por el camino y el mapa te dejaba en el PlayerSpawn,
 		# o sea al principio del puzle: habÃ­a que rehacerlo entero para volver a
@@ -946,7 +991,22 @@ func _aplicar_ambiente_interior(r: Node) -> void:
 		sol.visible = false
 
 
+## Un interior puede traer su propia música, como trae su ambiente.
+##
+## La mina tiene la suya. El que no declare `musica` —o la deje vacía— se queda
+## con la del juego, y como esto corre también al pasar de un interior a otro
+## (el portal entre volcanes), ahí se vuelve a la de siempre.
+func _aplicar_musica_interior(r: Node) -> void:
+	var pista: AudioStream = null
+	if r != null and "musica" in r:
+		pista = r.musica as AudioStream
+	if has_node("/root/Sfx"):
+		get_node("/root/Sfx").call("poner_musica", pista)
+
+
 func _restaurar_ambiente() -> void:
+	if has_node("/root/Sfx"):
+		get_node("/root/Sfx").call("volver_a_la_musica_del_juego")
 	var sol := get_node_or_null("Sun") as DirectionalLight3D
 	if sol != null:
 		sol.visible = true

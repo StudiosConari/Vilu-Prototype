@@ -25,11 +25,96 @@ func _textos(n: Node, r: Array = []) -> Array:
 func test_hay_un_ajuste_de_pantalla() -> void:
 	var p := OPCIONES.construir()
 	add_child_autofree(p)
-	var hay := false
-	for t: String in _textos(p):
-		if t.begins_with("Pantalla:"):
-			hay = true
-	assert_true(hay, "las opciones traen el ajuste de pantalla")
+	var sel: Control = p.find_child("Pantalla", true, false)
+	assert_not_null(sel, "las opciones traen el ajuste de pantalla")
+	assert_true(_textos(sel).has(OPCIONES._texto_de_pantalla()), "y dice en qué está")
+
+
+## El panel es un dibujo con los controles de verdad encima, cada uno en el
+## hueco que le toca.
+func test_el_panel_es_el_dibujo_con_los_controles_encima() -> void:
+	var p := OPCIONES.construir()
+	add_child_autofree(p)
+	var dibujo: TextureRect = p.find_child("Dibujo", true, false)
+	assert_not_null(dibujo, "está el dibujo")
+	assert_not_null(dibujo.texture, "con la imagen de opciones cargada")
+	for nombre in ["AudioGeneral", "Musica", "Efectos", "Pantalla", "Idioma", "Controles", "Guardar", "Volver"]:
+		var c: Control = p.find_child(nombre, true, false)
+		assert_not_null(c, nombre + " está")
+		if c != null:
+			assert_true(c.anchor_left > 0.0 and c.anchor_right < 1.0, nombre + " anclado dentro del dibujo")
+	for nombre in ["AudioGeneral", "Musica", "Efectos"]:
+		assert_true(p.find_child(nombre, true, false) is HSlider, nombre + " es un deslizador")
+
+
+## «Volver» deja todo como estaba al abrir; «Guardar» se queda con lo tocado.
+func test_volver_deshace_y_guardar_conserva() -> void:
+	var musica_antes := Save.music_vol
+	var p := OPCIONES.construir()
+	add_child_autofree(p)
+	p.visible = true
+	await wait_frames(1)
+	var s: HSlider = p.find_child("Musica", true, false)
+	s.value = 0.15
+	assert_almost_eq(Save.music_vol, 0.15, 0.001, "moverlo aplica en el acto")
+	(p.find_child("Volver", true, false) as Button).pressed.emit()
+	assert_almost_eq(Save.music_vol, musica_antes, 0.001, "Volver lo deja como estaba")
+	assert_false(p.visible, "y cierra")
+
+	p.visible = true
+	await wait_frames(1)
+	s.value = 0.35
+	(p.find_child("Guardar", true, false) as Button).pressed.emit()
+	assert_almost_eq(Save.music_vol, 0.35, 0.001, "Guardar se queda con lo nuevo")
+	assert_false(p.visible, "y cierra")
+	Save.set_music_vol(musica_antes)
+
+
+## El selector: las flechas dan la vuelta, y la cruceta del mando también.
+func test_el_selector_da_la_vuelta() -> void:
+	var p := OPCIONES.construir()
+	add_child_autofree(p)
+	var idioma_antes := Save.idioma
+	var sel: Control = p.find_child("Idioma", true, false)
+	assert_eq(OPCIONES.indice_de(sel), 0, "arranca en español")
+	var centro: Button = sel.find_child("Centro", true, false)
+	var der := InputEventAction.new()
+	der.action = "ui_right"
+	der.pressed = true
+	centro.gui_input.emit(der)
+	assert_eq(OPCIONES.indice_de(sel), 1, "la cruceta a la derecha pasa al inglés")
+	assert_eq(Save.idioma, "en", "y se guarda")
+	centro.gui_input.emit(der)
+	assert_eq(OPCIONES.indice_de(sel), 0, "y da la vuelta")
+	Save.set_idioma(idioma_antes)
+
+
+## Con el idioma cambia el dibujo entero, que es donde están los nombres.
+func test_el_idioma_cambia_el_dibujo() -> void:
+	var idioma_antes := Save.idioma
+	var p := OPCIONES.construir()
+	add_child_autofree(p)
+	var dibujo: TextureRect = p.find_child("Dibujo", true, false)
+	var es: Texture2D = dibujo.texture
+	var sel: Control = p.find_child("Idioma", true, false)
+	sel.find_child("Centro", true, false).pressed.emit()
+	assert_ne(dibujo.texture, es, "en inglés es otro dibujo")
+	assert_eq(dibujo.texture.resource_path, OPCIONES.DIBUJOS["en"])
+	# Y lo que dicen las cajas cambia con él.
+	var todo := " ".join(PackedStringArray(_textos(p.find_child("Pantalla", true, false))))
+	assert_true("Fullscreen" in todo or "Windowed" in todo, "la pantalla en inglés: " + todo)
+	todo = " ".join(PackedStringArray(_textos(p.find_child("Controles", true, false))))
+	assert_true("Keyboard" in todo or "Gamepad" in todo, "los controles en inglés: " + todo)
+	Save.set_idioma(idioma_antes)
+
+
+## El volumen general manda sobre el bus Master.
+func test_el_audio_general_va_al_bus_master() -> void:
+	var antes := Save.master_vol
+	Save.set_master_vol(0.5)
+	var bus := AudioServer.get_bus_index("Master")
+	assert_almost_eq(AudioServer.get_bus_volume_db(bus), linear_to_db(0.5), 0.01)
+	Save.set_master_vol(antes)
 
 
 func test_el_boton_dice_en_que_esta() -> void:
@@ -68,20 +153,36 @@ func test_en_headless_no_se_toca_la_ventana() -> void:
 func test_hay_una_chuleta_para_cada_cosa() -> void:
 	var p := OPCIONES.construir()
 	add_child_autofree(p)
-	var ts := _textos(p)
-	assert_has(ts, "Controles: teclado y ratón")
-	assert_has(ts, "Controles: gamepad")
+	var sel: Control = p.find_child("Controles", true, false)
+	assert_not_null(sel, "el selector de controles")
+	var ts := _textos(sel)
+	assert_true(ts.has("Teclado y ratón") or ts.has("Mando"), "elige la clase")
+	var hojas := 0
+	for h in p.get_children():
+		if h.is_in_group("hoja_de_controles"):
+			hojas += 1
+	assert_eq(hojas, 2, "y hay una hoja por clase")
+	# Pulsar el centro abre la hoja de la clase elegida.
+	OPCIONES._poner_indice(sel, 1, false)
+	sel.find_child("Centro", true, false).pressed.emit()
+	var abierta: Control = null
+	for h in p.get_children():
+		if h.is_in_group("hoja_de_controles") and (h as Control).visible:
+			abierta = h
+	assert_not_null(abierta, "se abre una hoja")
+	assert_true(bool(abierta.get("con_mando")), "la del mando")
 
 
 func test_la_chuleta_del_mando_dice_botones_de_mando() -> void:
 	var p: Control = CONTROLES.construir(true)
 	add_child_autofree(p)
 	var ts := _textos(p)
-	assert_has(ts, "GAMEPAD")
+	assert_true(bool(p.get("con_mando")), "es la del mando")
 	# Los nombres salen del InputMap: si el mapa cambia, esto cambia con él.
 	var todo := " ".join(PackedStringArray(ts))
 	assert_true("Stick izquierdo" in todo, "moverse es el stick izquierdo")
-	assert_true("Stick derecho" in todo, "mirar es el stick derecho")
+	# Mirar ya no está: la cámara es fija.
+	assert_false("Stick derecho" in todo, "sin fila de mirar")
 	assert_false("W" in todo.split(" "), "no se cuelan teclas")
 
 
@@ -89,9 +190,33 @@ func test_la_chuleta_del_teclado_dice_teclas() -> void:
 	var p: Control = CONTROLES.construir(false)
 	add_child_autofree(p)
 	var todo := " ".join(PackedStringArray(_textos(p)))
-	assert_true("TECLADO" in todo, "es la del teclado")
+	assert_false(bool(p.get("con_mando")), "es la del teclado")
 	assert_true("W" in todo, "sale la W de avanzar")
 	assert_false("Stick" in todo, "y ningún stick")
+
+
+## La hoja es el dibujo con un control por caja, dieciséis filas —sin cámara,
+## que es fija— y en la que traía «agacharse» va montar el guanaco.
+func test_la_hoja_es_el_dibujo_con_una_caja_por_fila() -> void:
+	for mando in [false, true]:
+		var p: Control = CONTROLES.construir(mando)
+		add_child_autofree(p)
+		var dibujo: TextureRect = p.find_child("Dibujo", true, false)
+		assert_not_null(dibujo, "está el dibujo")
+		assert_not_null(dibujo.texture, "con su imagen")
+		assert_eq(p.FILAS.size(), 16, "una fila por caja del dibujo")
+		assert_eq((p.FILAS_Y[mando] as Array).size(), 16, "y una caja por fila")
+		var ts := _textos(p)
+		assert_has(ts, "Montar guanaco", "escrito encima del rótulo borrado")
+		for que in ["Mirar alrededor", "Acercar cámara", "Alejar cámara"]:
+			assert_does_not_have(ts, que, que + " no: la cámara es fija")
+		var ayuda: Label = p.find_child("Ayuda", true, false)
+		assert_gt(ayuda.anchor_top, 0.8, "la ayuda va al pie, no sobre el título")
+		var botones: Dictionary = p.get("_botones")
+		assert_true(botones.has("guanaco_montar"), "montar se puede cambiar")
+		assert_false(botones.has("move_forward"), "moverse no")
+		if not mando:
+			assert_eq((botones["guanaco_montar"] as Button).text, "C", "y dice la tecla que tiene")
 
 
 func test_no_se_repite_el_stick_cuatro_veces() -> void:

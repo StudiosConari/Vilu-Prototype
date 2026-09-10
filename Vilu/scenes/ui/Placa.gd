@@ -112,6 +112,75 @@ static func lema(txt: String, tamano := 22) -> Label:
 	return l
 
 
+## Que al mostrarse un panel el foco caiga en `primero`.
+##
+## Sin foco, un mando no puede hacer nada en un menú: la cruceta no tiene desde
+## dónde moverse y la A no tiene qué pulsar. Con el ratón no se nota, porque el
+## ratón no necesita foco, y por eso nadie lo echó de menos hasta que alguien
+## probó el juego con mando y no pudo entrar a Opciones.
+##
+## Diferido: un Control recién mostrado todavía no está dispuesto, y pedirle el
+## foco en el mismo cuadro no siempre prende.
+static func enfocar_al_mostrar(panel: Control, primero: Control) -> void:
+	panel.visibility_changed.connect(func() -> void:
+		if panel.visible and is_instance_valid(primero):
+			primero.call_deferred("grab_focus"))
+
+
+## Una lista que se desplaza, con la barra a juego con la placa.
+##
+## La barra de fábrica era gris, fina y pegada a los botones: parecía el borde
+## de la última entrada. Ésta va en el oro del marco, más ancha, y separada de
+## la lista por un margen para que se lea como una pieza aparte.
+##
+## Devuelve [scroll, contenedor]: lo que se liste se cuelga del contenedor.
+const ANCHO_DE_BARRA := 14
+const AIRE_ANTES_DE_LA_BARRA := 16
+
+
+static func lista_con_scroll() -> Array:
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
+	var barra := scroll.get_v_scroll_bar()
+	barra.custom_minimum_size = Vector2(ANCHO_DE_BARRA, 0)
+	var fondo := StyleBoxFlat.new()
+	fondo.bg_color = Color(TINTA.r, TINTA.g, TINTA.b, 0.55)
+	fondo.border_width_left = 1
+	fondo.border_width_right = 1
+	fondo.border_width_top = 1
+	fondo.border_width_bottom = 1
+	fondo.border_color = Color(ORO.r, ORO.g, ORO.b, 0.45)
+	fondo.corner_radius_top_left = 6
+	fondo.corner_radius_top_right = 6
+	fondo.corner_radius_bottom_left = 6
+	fondo.corner_radius_bottom_right = 6
+	barra.add_theme_stylebox_override("scroll", fondo)
+	for estado in [["grabber", ORO], ["grabber_highlight", ORO_VIVO], ["grabber_pressed", ORO_VIVO]]:
+		var g := StyleBoxFlat.new()
+		g.bg_color = estado[1]
+		g.corner_radius_top_left = 6
+		g.corner_radius_top_right = 6
+		g.corner_radius_bottom_left = 6
+		g.corner_radius_bottom_right = 6
+		g.content_margin_left = 2
+		g.content_margin_right = 2
+		g.content_margin_top = 2
+		g.content_margin_bottom = 2
+		barra.add_theme_stylebox_override(String(estado[0]), g)
+
+	# El aire entre la lista y la barra.
+	var aire := MarginContainer.new()
+	aire.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	aire.add_theme_constant_override("margin_right", AIRE_ANTES_DE_LA_BARRA)
+	scroll.add_child(aire)
+	var contenedor := VBoxContainer.new()
+	contenedor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	aire.add_child(contenedor)
+	return [scroll, contenedor]
+
+
 ## Una raya de oro, para cerrar una columna por abajo.
 static func filete() -> Control:
 	var caja := MarginContainer.new()

@@ -21,8 +21,100 @@ func test_suena_en_bucle() -> void:
 	assert_gt(s.get_length(), 30.0, "y dura lo que dura una canción")
 
 
+## La mina tiene su propia música: se pone al entrar y al salir vuelve la del
+## juego.
+const MINA_MP3 := "res://audio/musica/mina.mp3"
+
+
+func test_la_mina_trae_su_cancion() -> void:
+	assert_true(ResourceLoader.exists(MINA_MP3), "el archivo está importado")
+	var s := load(MINA_MP3) as AudioStreamMP3
+	assert_not_null(s)
+	assert_true(s.loop, "y se repite: la mina dura más que la pista")
+	var m := Node3D.new()
+	m.set_script(load("res://scenes/actors/MinaCueva.gd"))
+	assert_eq(m.get("musica"), s, "la mina la declara como suya")
+	m.free()
+
+
+## Cada volcán tiene la suya, y no es la misma.
+func test_cada_volcan_trae_su_ascenso() -> void:
+	var pares := {
+		"res://scenes/puzzles/PuzzleIsluga.gd": "res://audio/musica/ascenso_isluga.mp3",
+		"res://scenes/puzzles/CumbreCima.gd": "res://audio/musica/ascenso_ojos_del_salado.mp3",
+	}
+	var vistas: Array = []
+	for guion: String in pares:
+		var ruta: String = pares[guion]
+		assert_true(ResourceLoader.exists(ruta), "%s está importado" % ruta)
+		var s := load(ruta) as AudioStreamMP3
+		assert_true(s.loop, "%s se repite" % ruta)
+		var n := Node3D.new()
+		n.set_script(load(guion))
+		assert_eq(n.get("musica"), s, "%s la declara como suya" % guion)
+		assert_false(vistas.has(s), "y no es la misma que la del otro volcán")
+		vistas.append(s)
+		n.free()
+
+
+func test_poner_y_devolver_la_musica() -> void:
+	# Otra prueba pudo dejar puesta la de un volcán: se parte de la del juego.
+	Sfx.volver_a_la_musica_del_juego()
+	var base: AudioStream = Sfx.musica_actual()
+	assert_true(base is AudioStreamMP3 and not (base as AudioStreamMP3).resource_path.contains("ascenso"),
+		"la del juego es la canción principal")
+	var mina := load(MINA_MP3) as AudioStream
+	Sfx.poner_musica(mina)
+	assert_eq(Sfx.musica_actual(), mina, "al entrar suena la de la mina")
+	Sfx.volver_a_la_musica_del_juego()
+	assert_eq(Sfx.musica_actual(), base, "al salir vuelve la del juego")
+	Sfx.poner_musica(null)
+	assert_eq(Sfx.musica_actual(), base, "un interior sin música deja la del juego")
+
+
 func test_es_la_que_suena() -> void:
 	var reproductor: AudioStreamPlayer = Sfx.get("_music")
 	assert_not_null(reproductor, "hay reproductor de música")
 	assert_true(reproductor.stream is AudioStreamMP3,
 		"y lo que tiene puesto es la canción, no la generada")
+
+
+## Al entrar a cualquiera de los dos volcanes, un recordatorio bajo las
+## misiones: con [T] cada uno resuelve el puzzle por separado.
+func test_los_volcanes_recuerdan_el_cambio_de_personaje() -> void:
+	for guion in ["res://scenes/puzzles/PuzzleIsluga.gd", "res://scenes/puzzles/CumbreCima.gd"]:
+		var n := Node3D.new()
+		n.set_script(load(guion))
+		assert_true(n.has_method("_recordar_el_cambio"), "%s lo recuerda" % guion)
+		assert_true(String(n.get("RECORDATORIO")).contains("[T]"),
+			"y nombra la tecla, traducible al mando")
+		n.free()
+
+
+## Los avisos —«¡La lava quema!», los logros— salen en el centro y con placa,
+## como el recuadro de misiones, y no sueltos arriba del todo.
+func test_los_avisos_van_en_placa_en_el_centro() -> void:
+	var hud: CanvasLayer = (load("res://scenes/ui/HUD.tscn") as PackedScene).instantiate()
+	add_child_autofree(hud)
+	await wait_frames(2)
+	var cartel: PanelContainer = hud.get("_cartel")
+	assert_not_null(cartel, "hay una placa para los avisos")
+	assert_false(cartel.visible, "que no se ve sin nada que decir")
+	var banner: Label = hud.get("_banner")
+	assert_true(cartel.is_ancestor_of(banner), "el cartel vive dentro de ella")
+	hud.show_banner("¡La lava quema!")
+	hud.call("_process", 0.016)
+	assert_true(cartel.visible, "y se ve al avisar")
+	assert_almost_eq(cartel.anchor_left, 0.5, 0.01, "centrada")
+	assert_almost_eq(cartel.anchor_top, 0.5, 0.01, "centrada")
+	await wait_frames(1)
+	assert_gt(cartel.global_position.x, 0.0, "y dentro de la pantalla, no a la izquierda de todo")
+	assert_gt(cartel.global_position.y, 0.0, "ni por encima")
+	var pantalla := cartel.get_viewport().get_visible_rect().size
+	var centro := cartel.global_position + cartel.size * 0.5
+	assert_almost_eq(centro, pantalla * 0.5, Vector2.ONE * 2.0,
+		"en medio de la pantalla, no un poco hacia arriba")
+	hud.clear_banner()
+	hud.call("_process", 0.016)
+	assert_false(cartel.visible, "y se esconde al quitarlo")
+

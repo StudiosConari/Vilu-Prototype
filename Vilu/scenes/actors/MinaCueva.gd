@@ -17,6 +17,10 @@ extends Node3D
 ## oscuridad que llenar. Dejalo vacío y vuelve a verse como antes.
 @export var ambiente: Environment = preload("res://scenes/core/ambiente_mina.tres")
 
+## La música propia de la mina. Game la pone al entrar y devuelve la del juego
+## al salir, igual que hace con el ambiente. Vacío = sigue sonando la de afuera.
+@export var musica: AudioStream = preload("res://audio/musica/mina.mp3")
+
 ## Los mineros corruptos: el enemigo común de la mina, en el combate y en la
 ## huida. Antes salían de EnemyNormal, la cápsula de greybox, que ya no existe.
 const MINERO          := preload("res://scenes/enemies/MineroCorrupto.tscn")
@@ -90,6 +94,41 @@ func _ready() -> void:
 		_dejar_como_tras_la_huida.call_deferred()
 	_montar_al_ocultista.call_deferred()
 	_precalentar_shaders()
+	_vigilar_la_boca()
+
+
+## Cruzar la boca de la mina durante la huida cierra la persecución, cruce
+## quien cruce.
+##
+## La salida es un ZoneExit: en cuanto CUALQUIER cuerpo del grupo "player" lo
+## toca, pide el viaje y a los 0,4 s de fundido la mina se descarga entera. La
+## comprobación de `_physics_process` sólo miraba al personaje ACTIVO y a un
+## metro por delante de la salida, y esa combinación perdía el logro de dos
+## maneras. La primera: si el compañero iba adelante —dejado con [T] cerca de
+## la entrada para las placas, o simplemente más cerca cuando arrancó la
+## huida— pisaba la salida primero y la mina se iba con el activo todavía a
+## mitad del pasillo. La segunda: la salida está escalada a 0,7 y su caja
+## empieza 0,7 m antes de su centro, o sea que el viaje ya está pedido cuando
+## el activo aún no alcanzó el «metro por delante» que se esperaba.
+##
+## Sin el logro, «Investiga el final de la mina» no se cumplía nunca: el
+## talismán ya está recogido y la huida no se vuelve a disparar.
+##
+## Se escucha la misma señal que usa el ZoneExit. Su propio enganche corre
+## primero —se conectó en su `_ready`, que va antes que el nuestro—, así que el
+## logro se concede en el mismo cuadro en que se pide el viaje, con la mina
+## todavía viva.
+func _vigilar_la_boca() -> void:
+	var salida := get_node_or_null("ExitToPoblado") as Area3D
+	if salida == null:
+		return
+	if not salida.body_entered.is_connected(_al_pisar_la_boca):
+		salida.body_entered.connect(_al_pisar_la_boca)
+
+
+func _al_pisar_la_boca(body: Node3D) -> void:
+	if _chase_active and body.is_in_group("player"):
+		_stop_chase()
 
 
 ## Al descargarse la mina se apaga la huida forzada.
@@ -183,13 +222,15 @@ func _physics_process(delta: float) -> void:
 	_vigilar_al_ocultista()
 	if not _chase_active:
 		return
+	# Red de respaldo de `_al_pisar_la_boca`: si alguien —activo o compañero—
+	# ya pasó la boca, la huida terminó. Antes sólo contaba el activo.
 	for p in get_tree().get_nodes_in_group("player"):
-		if is_instance_valid(p) and p.get("active") == true:
+		if is_instance_valid(p) and p is Node3D:
 			# El umbral sale de la salida real, no de un numero fijo: al escalar la
 			# mina un -2.0 escrito a mano deja de significar "llegaste a la boca".
 			var salida := get_node_or_null("ExitToPoblado") as Node3D
 			var meta := (salida.global_position.z - 1.0) if salida else -1.0
-			if p.global_position.z > meta:
+			if (p as Node3D).global_position.z > meta:
 				_stop_chase()
 				return
 	if is_instance_valid(_chupacabras):
@@ -885,6 +926,8 @@ func _stop_chase() -> void:
 	# guardia de `_chase_active` es el que asegura que sólo cuente escapando —no
 	# se llega a esta línea sin haber corrido.
 	GameManager.conceder("mina")
+	# Afuera, ya a salvo, la pareja habla de lo que acaba de ver.
+	GameManager.huyo_de_la_mina = true
 	for p in _forced_players:
 		if not is_instance_valid(p) or not ("forced_run_dir" in p):
 			continue
@@ -1025,15 +1068,38 @@ func _sitio_del_nido() -> Vector3:
 	return marca.global_position if marca != null else Vector3(0.0, -1.05, -49.0)
 
 
-## Dos puntos rojos que laten, sin sombreado, para que se vean en lo oscuro.
+## El Chupacabras agazapado en lo oscuro, con los ojos encendidos.
 ##
-## Y una luz roja floja pegada a ellos: sin la luz son dos calcomanías; con
-## ella, algo que está ahí y respira.
+## Eran sólo dos puntos rojos flotando. Ahora está el bicho debajo: el modelo
+## en su pose de reposo, de cara a la cámara, y sin más luz que la roja que le
+## sale de los ojos, así que de él se ve apenas la silueta y el hocico. Los ojos
+## van pegados al hueso de la cabeza para que respiren con él.
+##
+## Es sólo el retrato: no corre, no pega y desaparece cuando sale el de verdad.
 func _encender_los_ojos(donde: Vector3) -> Node3D:
 	var raiz := Node3D.new()
 	raiz.name = "OjosEnLaOscuridad"
 	add_child(raiz)
 	raiz.global_position = donde + Vector3(0.0, alto_de_los_ojos, 0.0)
+
+	# El cuerpo, de cara a donde va a estar la cámara: a la altura del suelo,
+	# porque la raíz está a la altura de los ojos.
+	var cuerpo: Node3D = CHUPACABRAS.instantiate()
+	raiz.add_child(cuerpo)
+	cuerpo.position.y = -alto_de_los_ojos
+	ENCAJAR.encajar(cuerpo, 2.4)
+	TOON_SKIN.new().aplicar(cuerpo)
+	cuerpo.rotation.y = _giro_hacia_la_camara()
+	_clip_de(cuerpo, "Idle", true)
+
+	# Los ojos: en la cabeza del modelo si se la encuentra; si no, donde
+	# estaban siempre, a `alto_de_los_ojos` del nido.
+	var padre: Node3D = raiz
+	var centro := Vector3.ZERO
+	var cabeza := _cabeza_del_chupacabras(cuerpo)
+	if cabeza != null:
+		padre = cabeza
+		centro = _delante_de_la_cabeza(cabeza, cuerpo)
 
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(1.0, 0.12, 0.08)
@@ -1042,6 +1108,7 @@ func _encender_los_ojos(donde: Vector3) -> Node3D:
 	mat.emission = Color(1.0, 0.15, 0.1)
 	mat.emission_energy_multiplier = 6.0
 
+	var derecha := padre.global_transform.basis.inverse() * cuerpo.global_transform.basis.x
 	for lado in [-1.0, 1.0]:
 		var ojo := MeshInstance3D.new()
 		var esf := SphereMesh.new()
@@ -1049,14 +1116,17 @@ func _encender_los_ojos(donde: Vector3) -> Node3D:
 		esf.height = 0.15
 		ojo.mesh = esf
 		ojo.material_override = mat
-		raiz.add_child(ojo)
-		ojo.position = Vector3(separacion_de_los_ojos * 0.5 * lado, 0.0, 0.0)
+		padre.add_child(ojo)
+		ojo.position = centro + derecha.normalized() * separacion_de_los_ojos * 0.5 * lado
+		# El hueso trae la escala del modelo: la esfera se mide en metros.
+		ojo.scale = Vector3.ONE / maxf(padre.global_transform.basis.get_scale().y, 0.001)
 
 	var luz := OmniLight3D.new()
 	luz.light_color = Color(1.0, 0.25, 0.18)
 	luz.light_energy = 1.6
 	luz.omni_range = 4.5
-	raiz.add_child(luz)
+	padre.add_child(luz)
+	luz.position = centro
 
 	# Laten: dos puntos fijos parecen un cartel, y parpadeando parecen vivos.
 	#
@@ -1067,6 +1137,56 @@ func _encender_los_ojos(donde: Vector3) -> Node3D:
 	tw.tween_property(luz, "light_energy", 0.5, 0.55)
 	tw.tween_property(luz, "light_energy", 1.8, 0.45)
 	return raiz
+
+
+## Hacia dónde girar el modelo para que mire a la cámara.
+##
+## La cámara del juego se pone a `_cam_yaw` del objetivo, así que ése es el
+## rumbo. El modelo mira por +Z, y girar el nodo `yaw` radianes en Y lleva su
+## +Z justo a (sin yaw, 0, cos yaw), que es donde se planta la cámara.
+func _giro_hacia_la_camara() -> float:
+	var juego := get_tree().get_first_node_in_group("game")
+	if juego == null:
+		return 0.0
+	var yaw = juego.get("_cam_yaw")
+	return float(yaw) if yaw != null else 0.0
+
+
+## El hueso de la cabeza, enganchado para colgarle cosas.
+func _cabeza_del_chupacabras(cuerpo: Node3D) -> BoneAttachment3D:
+	var esq := _esqueleto_de(cuerpo)
+	if esq == null or esq.find_bone("Head") < 0:
+		return null
+	var b := BoneAttachment3D.new()
+	b.bone_name = "Head"
+	esq.add_child(b)
+	return b
+
+
+## Dónde caen los ojos en el espacio del hueso: entre la cabeza y su punta,
+## un poco por delante.
+func _delante_de_la_cabeza(cabeza: BoneAttachment3D, cuerpo: Node3D) -> Vector3:
+	var esq := cabeza.get_parent() as Skeleton3D
+	var idx := esq.find_bone("Head")
+	var punta := esq.find_bone("Headtip")
+	var mundo_cabeza: Vector3 = esq.global_transform * esq.get_bone_global_pose(idx).origin
+	var mundo_punta: Vector3 = mundo_cabeza + cuerpo.global_transform.basis.z.normalized() * 0.5
+	if punta >= 0:
+		mundo_punta = esq.global_transform * esq.get_bone_global_pose(punta).origin
+	var mundo := mundo_cabeza.lerp(mundo_punta, 0.45) 		+ cuerpo.global_transform.basis.z.normalized() * 0.12
+	# En coordenadas del hueso, con la pose de ahora.
+	var t_hueso: Transform3D = esq.global_transform * esq.get_bone_global_pose(idx)
+	return t_hueso.affine_inverse() * mundo
+
+
+func _esqueleto_de(n: Node) -> Skeleton3D:
+	if n is Skeleton3D:
+		return n
+	for h in n.get_children():
+		var x := _esqueleto_de(h)
+		if x != null:
+			return x
+	return null
 
 
 # ─── El ocultista del pasillo ────────────────────────────────────────────────
@@ -1257,16 +1377,6 @@ func _absorber_el_avance() -> void:
 	if esq == null:
 		return
 	_ocultista.global_position += esq.global_transform.basis * _avance_de_la_vuelta
-
-
-func _esqueleto_de(n: Node) -> Skeleton3D:
-	if n is Skeleton3D:
-		return n
-	for h in n.get_children():
-		var x := _esqueleto_de(h)
-		if x != null:
-			return x
-	return null
 
 
 ## El frente de estos modelos es +Z: medido del talón a los dedos sobre el rig.
