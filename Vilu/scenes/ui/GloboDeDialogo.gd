@@ -121,6 +121,12 @@ func _notification(what: int) -> void:
 	## Detect a change of locale and update the current dialogue line to show the new language
 	if what == NOTIFICATION_TRANSLATION_CHANGED and _locale != TranslationServer.get_locale() and is_instance_valid(dialogue_label):
 		_locale = TranslationServer.get_locale()
+		# Sólo si hay una línea en curso y viene de un recurso con archivo: los
+		# guiones del juego se crean desde texto y no tienen UID, así que
+		# `refresh` intentaba cargar "uid://a" y reventaba. Con el idioma se
+		# traduce el guion entero al crearlo (Idioma.guion), no línea a línea.
+		if not is_instance_valid(dialogue_line) or not "@" in dialogue_line.id 				or dialogue_line.id.begins_with("@"):
+			return
 		var visible_ratio: float = dialogue_label.visible_ratio
 		await dialogue_line.refresh()
 		if visible_ratio < 1:

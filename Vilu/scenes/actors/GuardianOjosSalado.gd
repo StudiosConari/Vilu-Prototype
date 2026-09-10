@@ -1,5 +1,7 @@
 extends Node3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Guardián Ojos del Salado — aparece en la cima de Cumbre (Beat 7).
 ## CumbreCima.gd lo instancia dinámicamente en _ready().
 
@@ -101,7 +103,7 @@ func _on_interacted(_player: Node) -> void:
 
 
 func _show_dialogue(text: String) -> void:
-	var res := DialogueManager.create_resource_from_text(text)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(text))
 	DialogueManager.dialogue_ended.connect(_open_map.unbind(1), CONNECT_ONE_SHOT)
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 

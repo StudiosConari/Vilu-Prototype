@@ -96,7 +96,7 @@ func _hint_missing() -> void:
 			falta.append("ALAS" if a == "wings" else ("GUANACO" if a == "guanaco" else a))
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud and hud.has_method("show_banner"):
-		hud.show_banner("Te falta: %s — consíguelo antes de seguir" % ", ".join(falta))
+		hud.show_banner(tr("Te falta: %s — consíguelo antes de seguir") % ", ".join(falta))
 		get_tree().create_timer(3.0).timeout.connect(func() -> void:
 			# El HUD se vuelve a buscar acá dentro en vez de capturarlo: una lambda que
 			# captura un nodo y sobrevive a que lo liberen da "Lambda capture at index 0

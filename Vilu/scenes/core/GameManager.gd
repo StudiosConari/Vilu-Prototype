@@ -58,7 +58,7 @@ func titular_de_logro(id: String) -> String:
 	for i in LOGROS.size():
 		if LOGROS[i]["id"] == id:
 			var ordinal: String = ORDINALES[i] if i < ORDINALES.size() else "Nuevo"
-			return "%s logro: %s" % [ordinal, LOGROS[i]["titulo"]]
+			return tr("%s logro: %s") % [tr(ordinal), tr(String(LOGROS[i]["titulo"]))]
 	return id
 
 ## Hay una partida en marcha a la que volver: se pone al salir al título desde

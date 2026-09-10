@@ -118,3 +118,24 @@ func test_los_avisos_van_en_placa_en_el_centro() -> void:
 	hud.call("_process", 0.016)
 	assert_false(cartel.visible, "y se esconde al quitarlo")
 
+
+## El aviso del centro se va solo: «El camino se abre» se quedaba para siempre.
+func test_el_aviso_se_va_solo() -> void:
+	var hud: CanvasLayer = (load("res://scenes/ui/HUD.tscn") as PackedScene).instantiate()
+	add_child_autofree(hud)
+	await wait_frames(1)
+	var banner: Label = hud.get("_banner")
+	hud.show_banner("El camino se abre", 0.2)
+	assert_true(banner.visible, "se ve")
+	await wait_seconds(0.4)
+	assert_false(banner.visible, "y a los 0,2 s se fue solo")
+	hud.show_banner("Fijo", 0.0)
+	await wait_seconds(0.3)
+	assert_true(banner.visible, "con 0 se queda hasta que alguien lo quite")
+	# Uno nuevo no lo quita el vencimiento del anterior.
+	hud.show_banner("Primero", 0.2)
+	hud.show_banner("Segundo", 0.0)
+	await wait_seconds(0.4)
+	assert_true(banner.visible and banner.text == "Segundo", "el segundo no se va por culpa del primero")
+	hud.clear_banner()
+

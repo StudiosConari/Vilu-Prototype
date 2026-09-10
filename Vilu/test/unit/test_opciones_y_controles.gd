@@ -207,7 +207,8 @@ func test_la_hoja_es_el_dibujo_con_una_caja_por_fila() -> void:
 		assert_eq(p.FILAS.size(), 16, "una fila por caja del dibujo")
 		assert_eq((p.FILAS_Y[mando] as Array).size(), 16, "y una caja por fila")
 		var ts := _textos(p)
-		assert_has(ts, "Montar guanaco", "escrito encima del rótulo borrado")
+		for que in ["Arriba", "Correr", "Montar guanaco", "Carga (Ataque de Invocación)"]:
+			assert_has(ts, que, que + ": el rótulo lo escribe el juego")
 		for que in ["Mirar alrededor", "Acercar cámara", "Alejar cámara"]:
 			assert_does_not_have(ts, que, que + " no: la cámara es fija")
 		var ayuda: Label = p.find_child("Ayuda", true, false)

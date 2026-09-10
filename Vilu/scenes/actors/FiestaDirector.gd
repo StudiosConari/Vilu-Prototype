@@ -129,7 +129,7 @@ func _spawn_npc(pos: Vector3, bubble: String, clue: String, color: Color) -> voi
 
 	# Burbuja flotante
 	var lbl := Label3D.new()
-	lbl.text = bubble
+	lbl.text = tr(bubble)
 	lbl.position = Vector3(0, 2.3, 0)
 	lbl.pixel_size = 0.007
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED

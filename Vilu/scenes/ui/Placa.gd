@@ -112,6 +112,60 @@ static func lema(txt: String, tamano := 22) -> Label:
 	return l
 
 
+## El marco dibujado —el panel de «Cargar partida», con la estrella y las
+## alas— para las pantallas que llevan una lista: el selector de zonas y el
+## cierre de logros. Va alto como la ventana y con su proporción; devuelve el
+## contenedor del HUECO de dentro, donde quien lo pide cuelga lo suyo. Sin el
+## dibujo, una placa de las de siempre en su lugar.
+const MARCO_DIBUJADO := "res://textures/ui/fondo_zonas.png"
+const PROPORCION_DEL_MARCO := 0.9816
+const HUECO_DEL_MARCO := Rect2(0.07, 0.13, 0.86, 0.80)
+
+
+static func marco_dibujado(padre: Node, alto_desde := 0.03, alto_hasta := 0.97) -> MarginContainer:
+	var caja := AspectRatioContainer.new()
+	caja.name = "Marco"
+	caja.set_anchors_preset(Control.PRESET_FULL_RECT)
+	caja.anchor_top = alto_desde
+	caja.anchor_bottom = alto_hasta
+	caja.offset_top = 0.0
+	caja.offset_bottom = 0.0
+	caja.ratio = 1.0 / PROPORCION_DEL_MARCO
+	caja.stretch_mode = AspectRatioContainer.STRETCH_FIT
+	padre.add_child(caja)
+
+	var lienzo := Control.new()
+	lienzo.name = "Lienzo"
+	caja.add_child(lienzo)
+	if ResourceLoader.exists(MARCO_DIBUJADO):
+		var dibujo := TextureRect.new()
+		dibujo.name = "Dibujo"
+		dibujo.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dibujo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		dibujo.stretch_mode = TextureRect.STRETCH_SCALE
+		dibujo.texture = load(MARCO_DIBUJADO)
+		dibujo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lienzo.add_child(dibujo)
+	else:
+		var placa := PanelContainer.new()
+		placa.set_anchors_preset(Control.PRESET_FULL_RECT)
+		placa.add_theme_stylebox_override("panel", estilo(0.0, 0.92, 26))
+		lienzo.add_child(placa)
+
+	var hueco := MarginContainer.new()
+	hueco.name = "Hueco"
+	hueco.anchor_left = HUECO_DEL_MARCO.position.x
+	hueco.anchor_top = HUECO_DEL_MARCO.position.y
+	hueco.anchor_right = HUECO_DEL_MARCO.end.x
+	hueco.anchor_bottom = HUECO_DEL_MARCO.end.y
+	hueco.offset_left = 0.0
+	hueco.offset_top = 0.0
+	hueco.offset_right = 0.0
+	hueco.offset_bottom = 0.0
+	lienzo.add_child(hueco)
+	return hueco
+
+
 ## Que al mostrarse un panel el foco caiga en `primero`.
 ##
 ## Sin foco, un mando no puede hacer nada en un menú: la cruceta no tiene desde

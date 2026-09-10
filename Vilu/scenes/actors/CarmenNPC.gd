@@ -1,6 +1,8 @@
 @tool
 extends CharacterBody3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## NPC Carmen — en realidad La Tirana.
 ##
 ## Flujo:
@@ -631,5 +633,5 @@ func _sitio(np: NodePath, por_defecto: Vector3) -> Vector3:
 
 func _show(text: String) -> void:
 	_hablando = true
-	var res := DialogueManager.create_resource_from_text(text)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(text))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")

@@ -1,5 +1,7 @@
 extends Node3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Bruja del talisman — NPC del Poblado.
 ## Sin fragmento: diálogo genérico.
 ## Con talisman_frag_1: reconoce el símbolo y pide buscar el resto.
@@ -174,7 +176,7 @@ func _on_interacted(_player: Node) -> void:
 
 
 func _show(text: String) -> void:
-	var res := DialogueManager.create_resource_from_text(text)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(text))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 

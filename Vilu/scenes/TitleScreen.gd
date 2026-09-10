@@ -41,11 +41,8 @@ const OPCIONES := preload("res://scenes/ui/PanelOpciones.gd")
 ## varias líneas en vez de estirar el bloque hasta salirse de la pantalla.
 const ANCHO_DEL_PANEL := 860.0
 
-## El marco dibujado del selector de zonas (el panel de «Cargar partida»), su
-## proporción alto/ancho y el hueco de dentro, en fracciones del dibujo.
-const FONDO_DE_ZONAS := "res://textures/ui/fondo_zonas.png"
-const PROPORCION_DEL_MARCO := 0.9816
-const HUECO_DEL_MARCO := Rect2(0.07, 0.13, 0.86, 0.80)
+## El marco dibujado del selector de zonas es el de Placa.marco_dibujado.
+const PROPORCION_DEL_MARCO := PLACA.PROPORCION_DEL_MARCO
 
 ## El recorrido del prototipo, en orden, para el selector de debug.
 ##
@@ -107,7 +104,9 @@ func _ready() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.color = Color(0.10, 0.12, 0.17)
 	add_child(bg)
-	var con_arte := PLACA.fondo(self, 0.45)
+	var con_arte := _montar_portadas()
+	if not con_arte:
+		con_arte = PLACA.fondo(self, 0.45)
 
 	# Título, subtítulo y botones en UNA columna, no cada cosa por su cuenta.
 	#
@@ -225,6 +224,11 @@ func _ready() -> void:
 	_primero = seguir if seguir != null else newgame
 	_enfocar_sin_encender(_primero)
 	_options.visibility_changed.connect(func() -> void:
+		# Con Opciones abiertas, la portada en la que cada uno va por su lado, y
+		# el menú escondido: con el velo ligero se transparentaba debajo.
+		_cambiar_portada("opciones" if _options.visible else "menu")
+		if _puerta_abierta:
+			_columna.visible = not _options.visible
 		if not _options.visible:
 			_enfocar_sin_encender(opts))
 	_zonas.visibility_changed.connect(func() -> void:
@@ -238,6 +242,80 @@ func _ready() -> void:
 func _enfocar_sin_encender(b: BaseButton) -> void:
 	b.set_meta("foco_silencioso", true)
 	b.call_deferred("grab_focus")
+
+
+# ─── Las portadas ─────────────────────────────────────────────────────────────
+#
+# Tres cuadros del mismo lugar: la pareja de pie mirando el horizonte mientras
+# dice «Presiona cualquier botón», sentada cuando ya está el menú, y cada uno
+# por su lado al abrir Opciones. Se cambia de uno a otro con un fundido corto
+# y suave: hay dos cuadros superpuestos y el que entra aparece encima.
+
+const PORTADAS := {
+	"inicio": "res://textures/ui/portada_inicio.png",
+	"menu": "res://textures/ui/portada_menu.png",
+	"opciones": "res://textures/ui/portada_opciones.png",
+}
+## Cuánto dura el fundido entre portadas, en segundos.
+const FUNDIDO_DE_PORTADA := 0.6
+## Un velo ligero encima, para que se lean los textos sin apagar el cuadro.
+const VELO_DE_PORTADA := 0.18
+
+var _portada_de_abajo: TextureRect = null
+var _portada_de_arriba: TextureRect = null
+var _portada_actual := ""
+var _fundido_de_portada: Tween = null
+
+
+## Cuelga los dos cuadros y pone el primero. Devuelve si había portadas.
+func _montar_portadas() -> bool:
+	for clave: String in PORTADAS:
+		if not ResourceLoader.exists(String(PORTADAS[clave])):
+			return false
+	_portada_de_abajo = _cuadro_de_portada("PortadaDeAbajo")
+	_portada_de_arriba = _cuadro_de_portada("PortadaDeArriba")
+	_portada_de_arriba.modulate.a = 0.0
+	var velo := ColorRect.new()
+	velo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	velo.color = Color(0.04, 0.05, 0.09, VELO_DE_PORTADA)
+	velo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(velo)
+	# Volviendo del juego no hay puerta: se arranca ya con la del menú.
+	_portada_actual = "menu" if GameManager.se_puede_continuar else "inicio"
+	_portada_de_abajo.texture = load(String(PORTADAS[_portada_actual]))
+	return true
+
+
+func _cuadro_de_portada(nombre: String) -> TextureRect:
+	var img := TextureRect.new()
+	img.name = nombre
+	img.set_anchors_preset(Control.PRESET_FULL_RECT)
+	img.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	img.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(img)
+	return img
+
+
+## Pasa a otra portada con un fundido: la nueva aparece encima de la vieja y,
+## al terminar, se convierte en la de abajo para el siguiente cambio.
+func _cambiar_portada(clave: String) -> void:
+	if _portada_de_abajo == null or clave == _portada_actual or not PORTADAS.has(clave):
+		return
+	if _fundido_de_portada != null and _fundido_de_portada.is_valid():
+		_fundido_de_portada.kill()
+		# Un cambio a mitad de otro: lo que ya se veía arriba pasa abajo.
+		if _portada_de_arriba.modulate.a > 0.5:
+			_portada_de_abajo.texture = _portada_de_arriba.texture
+	_portada_actual = clave
+	_portada_de_arriba.texture = load(String(PORTADAS[clave]))
+	_portada_de_arriba.modulate.a = 0.0
+	_fundido_de_portada = create_tween()
+	_fundido_de_portada.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_fundido_de_portada.tween_property(_portada_de_arriba, "modulate:a", 1.0, FUNDIDO_DE_PORTADA)
+	_fundido_de_portada.tween_callback(func() -> void:
+		_portada_de_abajo.texture = _portada_de_arriba.texture
+		_portada_de_arriba.modulate.a = 0.0)
 
 
 func _montar_puerta() -> void:
@@ -283,9 +361,11 @@ func _abrir_la_puerta() -> void:
 
 
 func _entrar_al_menu() -> void:
+	_puerta_abierta = true
 	if _puerta != null:
 		_puerta.visible = false
 	_columna.visible = true
+	_cambiar_portada("menu")
 	if _primero != null:
 		_enfocar_sin_encender(_primero)
 
@@ -460,47 +540,8 @@ func _build_debug_zones() -> void:
 	_zonas.add_child(dim)
 
 	# El marco es un DIBUJO —el panel de «Cargar partida», con la estrella y
-	# las alas arriba— alto como la ventana y con su proporción; la lista va
-	# dentro, en el hueco del marco. Sin el dibujo, la placa de siempre.
-	var caja := AspectRatioContainer.new()
-	caja.set_anchors_preset(Control.PRESET_FULL_RECT)
-	caja.anchor_top = 0.03
-	caja.anchor_bottom = 0.97
-	caja.offset_top = 0.0
-	caja.offset_bottom = 0.0
-	caja.ratio = 1.0 / PROPORCION_DEL_MARCO
-	caja.stretch_mode = AspectRatioContainer.STRETCH_FIT
-	_zonas.add_child(caja)
-
-	var lienzo := Control.new()
-	lienzo.name = "Lienzo"
-	caja.add_child(lienzo)
-	if ResourceLoader.exists(FONDO_DE_ZONAS):
-		var dibujo := TextureRect.new()
-		dibujo.name = "Dibujo"
-		dibujo.set_anchors_preset(Control.PRESET_FULL_RECT)
-		dibujo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		dibujo.stretch_mode = TextureRect.STRETCH_SCALE
-		dibujo.texture = load(FONDO_DE_ZONAS)
-		dibujo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lienzo.add_child(dibujo)
-	else:
-		var marco := PanelContainer.new()
-		marco.set_anchors_preset(Control.PRESET_FULL_RECT)
-		marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.92, 26))
-		lienzo.add_child(marco)
-
-	# El hueco del marco: debajo de las alas y por dentro del filete.
-	var aire := MarginContainer.new()
-	aire.anchor_left = HUECO_DEL_MARCO.position.x
-	aire.anchor_top = HUECO_DEL_MARCO.position.y
-	aire.anchor_right = HUECO_DEL_MARCO.end.x
-	aire.anchor_bottom = HUECO_DEL_MARCO.end.y
-	aire.offset_left = 0.0
-	aire.offset_top = 0.0
-	aire.offset_right = 0.0
-	aire.offset_bottom = 0.0
-	lienzo.add_child(aire)
+	# las alas arriba— y la lista va dentro, en su hueco. Ver Placa.marco_dibujado.
+	var aire := PLACA.marco_dibujado(_zonas)
 
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -522,11 +563,8 @@ func _build_debug_zones() -> void:
 
 	for i in DEBUG_ZONES.size():
 		var b := PLACA.boton(_etiqueta(DEBUG_ZONES[i]))
-		# El detalle de lo que te vas a encontrar hecho va en el tooltip y no
-		# debajo del botón: escrito eran dos renglones de letra pequeña por
-		# parada, once veces, y la lista se leía como una parrilla de datos en
-		# vez de como un menú. Quien lo necesite lo tiene pasando el ratón.
-		b.tooltip_text = _resumen(i)
+		# Sin tooltip: el resumen de lo que trae cada parada se montaba encima
+		# de la lista al pasar el ratón y estorbaba más de lo que ayudaba.
 		b.pressed.connect(_on_debug_zone.bind(i))
 		lista.add_child(b)
 
@@ -546,23 +584,23 @@ func _build_debug_zones() -> void:
 ## no puede quedar desfasado.
 func _etiqueta(z: Dictionary) -> String:
 	if String(z["zona"]) != "Poblado":
-		return str(z["nombre"])
-	return "%s (%s)" % [z["nombre"],
-		"Atacama" if String(z["mundo"]) == MUNDO_ATACAMA else "Tarapacá"]
+		return tr(str(z["nombre"]))
+	return "%s (%s)" % [tr(str(z["nombre"])),
+		tr("Atacama" if String(z["mundo"]) == MUNDO_ATACAMA else "Tarapacá")]
 
 
 ## Qué te vas a encontrar hecho al entrar por esa parada.
 func _resumen(indice: int) -> String:
 	var hechos := _logros_previos(indice)
 	if hechos.is_empty():
-		return "Empieza de cero."
+		return tr("Empieza de cero.")
 	var titulos: PackedStringArray = []
 	for id in hechos:
-		titulos.append(str(GameManager.logro(id).get("titulo", id)))
-	var texto := "Logros hechos: " + ", ".join(titulos)
+		titulos.append(tr(str(GameManager.logro(id).get("titulo", id))))
+	var texto := tr("Logros hechos: ") + ", ".join(titulos)
 	var hab := _habilidades_previas(indice)
 	if not hab.is_empty():
-		texto += "\nCon: " + ", ".join(hab)
+		texto += tr("\nCon: ") + ", ".join(hab)
 	return texto
 
 
@@ -640,7 +678,7 @@ func _on_new_game() -> void:
 ## El menú es el mismo en todos los casos —los mismos botones y en el mismo
 ## orden—; lo que cambia es cómo se ven sobre lo que hay debajo.
 func _entrada(con_arte: bool, texto: String, tamano: int, alto: int, clave := "") -> BaseButton:
-	var b: BaseButton = _boton_dibujado(clave)
+	var b: BaseButton = _boton_dibujado(clave, texto)
 	if b == null:
 		b = PLACA.boton(texto) if con_arte else _boton_menu(texto, tamano, alto)
 	# Qué entrada es, se dibuje como se dibuje: un botón de imagen no tiene
@@ -655,7 +693,7 @@ func _entrada(con_arte: bool, texto: String, tamano: int, alto: int, clave := ""
 ## Sin la encendida —«Seleccionar zona» usa el dibujo de «Cargar partida», que
 ## vino sin su versión encendida— se usa la misma de reposo y se le sube el
 ## brillo con el ratón encima o el foco.
-func _boton_dibujado(clave: String) -> TextureButton:
+func _boton_dibujado(clave: String, texto := "") -> TextureButton:
 	if clave == "":
 		return null
 	var reposo := CARPETA_DE_BOTONES + clave + ".png"
@@ -663,8 +701,8 @@ func _boton_dibujado(clave: String) -> TextureButton:
 	if not ResourceLoader.exists(reposo):
 		return null
 	if ResourceLoader.exists(activo):
-		return boton_con_imagenes(load(reposo), load(activo), _ancho_de_columna)
-	return boton_con_imagenes(load(reposo), null, _ancho_de_columna)
+		return boton_con_imagenes(load(reposo), load(activo), _ancho_de_columna, texto)
+	return boton_con_imagenes(load(reposo), null, _ancho_de_columna, texto)
 
 
 ## Un botón hecho de dos imágenes: la de reposo y la encendida en oro.
@@ -677,7 +715,17 @@ func _boton_dibujado(clave: String) -> TextureButton:
 const ENCENDIDO_A_MANO := Color(1.35, 1.25, 0.95)
 
 
-static func boton_con_imagenes(reposo: Texture2D, activo: Texture2D, ancho := 420.0) -> TextureButton:
+## Las palabras las pone el juego, no el dibujo: los botones vienen sólo con
+## el icono, y la etiqueta de encima se traduce sola al cambiar de idioma.
+## Va a la derecha del icono, en la letra serif del sistema, crema en reposo
+## y dorada al pulsar, como en el arte que tenía las palabras pintadas.
+const TEXTO_DESDE := 0.33
+const TEXTO_HASTA := 0.86
+const LETRA_DE_BOTON := Color(0.96, 0.93, 0.85)
+const LETRA_PULSADA := Color(0.99, 0.90, 0.60)
+
+
+static func boton_con_imagenes(reposo: Texture2D, activo: Texture2D, ancho := 420.0, texto := "") -> TextureButton:
 	var b := TextureButton.new()
 	b.texture_normal = reposo
 	if activo != null:
@@ -697,6 +745,32 @@ static func boton_con_imagenes(reposo: Texture2D, activo: Texture2D, ancho := 42
 	# Pulsado se ve la de oro tal cual, sin aclarar encima.
 	b.button_down.connect(encender.bind(false))
 	b.button_up.connect(func() -> void: encender.call(b.has_focus() or b.is_hovered()))
+
+	if texto != "":
+		var l := Label.new()
+		l.name = "Texto"
+		l.text = texto
+		l.anchor_left = TEXTO_DESDE
+		l.anchor_right = TEXTO_HASTA
+		l.anchor_top = 0.0
+		l.anchor_bottom = 1.0
+		l.offset_left = 0.0
+		l.offset_right = 0.0
+		l.offset_top = 0.0
+		l.offset_bottom = 0.0
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var serif := SystemFont.new()
+		serif.font_names = PackedStringArray(["Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif"])
+		l.add_theme_font_override("font", serif)
+		l.add_theme_font_size_override("font_size", maxi(12, roundi(ancho * reposo.get_height() / maxf(float(reposo.get_width()), 1.0) * 0.38)))
+		l.add_theme_color_override("font_color", LETRA_DE_BOTON)
+		l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+		l.add_theme_constant_override("shadow_offset_y", 2)
+		b.add_child(l)
+		b.button_down.connect(func() -> void: l.add_theme_color_override("font_color", LETRA_PULSADA))
+		b.button_up.connect(func() -> void: l.add_theme_color_override("font_color", LETRA_DE_BOTON))
 	b.ignore_texture_size = true
 	b.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	b.size_flags_horizontal = Control.SIZE_FILL

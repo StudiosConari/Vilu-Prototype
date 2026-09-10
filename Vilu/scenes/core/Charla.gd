@@ -1,5 +1,7 @@
 extends RefCounted
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Las charlas de la pareja: lo que Emilia y Benjamín se dicen al llegar a un
 ## sitio o después de un susto.
 ##
@@ -16,8 +18,15 @@ const BALLOON := "res://scenes/ui/GloboDeDialogo.tscn"
 
 
 ## Abre el globo con este guion, ya mismo.
+##
+## Sin nadie a quien hablarle —sin un jugador en el árbol— no se abre nada:
+## pasa en los tests, que montan una escena suelta y a los dos segundos
+## saltaba un globo de verdad en mitad de otra prueba.
 static func decir(texto: String) -> void:
-	var res := DialogueManager.create_resource_from_text(texto)
+	var arbol := Engine.get_main_loop() as SceneTree
+	if arbol != null and arbol.get_nodes_in_group("player").is_empty():
+		return
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(texto))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 

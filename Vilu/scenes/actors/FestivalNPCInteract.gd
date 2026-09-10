@@ -1,5 +1,7 @@
 extends Area3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Zona de interacción para los NPCs de la Fiesta de La Tirana.
 ## Funciona igual que Interactable.gd pero incluye lógica de pista propia
 ## para no depender de closures de captura entre escenas.
@@ -37,7 +39,7 @@ func interact(_player: Node) -> void:
 		return
 	_spoken = true
 	clue_triggered.emit()
-	var res := DialogueManager.create_resource_from_text(guion_de(clue))
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(guion_de(clue)))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
 
 

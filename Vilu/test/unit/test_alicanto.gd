@@ -315,3 +315,20 @@ func test_la_bifurcacion_salta_por_los_costados() -> void:
 	p.global_position = z.to_global(Vector3(11.0, 1.0, -3.5))
 	await wait_physics_frames(3)
 	assert_true(bool(z.get("_fork_seen")), "por el costado también salta")
+
+
+## La bifurcación esculpida está más alta que el disparador horneado: la
+## charla tiene que saltar pasando por encima, a cualquier altura.
+func test_la_bifurcacion_salta_aunque_el_suelo_este_mas_alto() -> void:
+	var z := Node3D.new()
+	z.set_script(RESCATE)
+	z.geometria_fijada = true
+	add_child_autofree(z)
+	await wait_physics_frames(1)
+	var p := Node3D.new()
+	p.add_to_group("player")
+	add_child_autofree(p)
+	p.global_position = z.to_global(Vector3(4.0, 9.0, -6.0))
+	z.call("_process", 0.016)
+	assert_true(bool(z.get("_fork_seen")), "a 9 m de altura y a un lado, salta igual")
+

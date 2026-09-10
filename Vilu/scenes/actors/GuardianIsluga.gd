@@ -1,5 +1,7 @@
 extends Node3D
 
+const IDIOMA := preload("res://scenes/core/Idioma.gd")
+
 ## Guardián del Isluga — NPC en la plataforma superior que muestra el mapa de Chile.
 ## PuzzleIsluga.gd lo instancia dinámicamente en _ready().
 
@@ -75,7 +77,7 @@ func _on_interacted(_player: Node) -> void:
 
 
 func _show_dialogue(text: String) -> void:
-	var res := DialogueManager.create_resource_from_text(text)
+	var res := DialogueManager.create_resource_from_text(IDIOMA.guion(text))
 	# CONNECT_ONE_SHOT: abre el mapa solo cuando ESTE diálogo termina
 	DialogueManager.dialogue_ended.connect(_open_map.unbind(1), CONNECT_ONE_SHOT)
 	DialogueManager.dialogue_ended.connect(_abrir_salida.unbind(1), CONNECT_ONE_SHOT)
