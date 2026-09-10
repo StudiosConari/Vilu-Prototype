@@ -8,20 +8,24 @@ extends Node3D
 const INTERACT_SCRIPT := preload("res://scenes/actors/FestivalNPCInteract.gd")
 const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 
-# [pos_x, pos_z, burbuja flotante, pista al hablar]
+# [pos_x, pos_z, burbuja flotante, lo que dice al hablarle]
+#
+# Lo que dice puede ser una sola frase o una conversación entera: una réplica
+# por línea, «Quién: qué», y el que no lleve quién habla es el NPC. Salen del
+# documento de diálogos del estudio.
 const NPC_DATA: Array = [
 	[7.0,  -3.0,
 	 "¡Viva La Tirana!",
-	 "Vi a una mujer con los ojos brillantes junto al altar. Sonreía como si supiera algo que nosotros no..."],
+	 "NPC: ¿Primera vez en La Tirana? Entonces fíjense bien en los bailes. Aquí no se viene solo a bailar por bailar. Muchas agrupaciones llevan años participando y cada danza es una forma de agradecer, cumplir una promesa o demostrar su devoción a la Virgen del Carmen.\nEmilia: Entonces todo ese esfuerzo… ¿también es parte de la ofrenda?\nNPC: Exactamente. Por eso verán trajes, máscaras y coreografías muy distintas entre una agrupación y otra.\nBenjamín: Se nota que algunos llevan muchísimo tiempo preparando esto.\nNPC: Y hablando de cosas que llaman la atención… corre un rumor bastante extraño este año. Dicen que La Tirana está caminando entre la gente.\nEmilia: ¿La Tirana? ¿La de la leyenda?\nNPC: Eso dicen. No sé si creerlo, pero escuché que quienes aseguran haberla visto coinciden en algo: tiene el pelo castaño."],
 	[-7.0, -5.0,
 	 "¡La danza es sagrada! ♪",
-	 "Se dice que La Tirana camina entre nosotros disfrazada en las fiestas. Mira bien a quien te rodea."],
+	 "NPC: Toda esta fiesta gira alrededor de la Virgen del Carmen. Hay personas que llegan desde muy lejos para agradecerle, pedir su protección o cumplir una manda que hicieron hace años.\nBenjamín: ¿Una manda?\nNPC: Una promesa. Algunos peregrinan, otros bailan durante años con una agrupación y otros vienen cada julio sin falta. Para muchas familias, regresar a La Tirana es una tradición que pasa de generación en generación.\nEmilia: Ahora entiendo por qué viene tanta gente.\nNPC: Sí… aunque este año todos hablan de algo más que de la fiesta.\nBenjamín: ¿También escuchó el rumor?\nNPC: Claro. Dicen que La Tirana apareció entre los peregrinos. Una conocida jura que la vio pasar esta mañana.\nEmilia: ¿Y cómo era?\nNPC: Solo alcanzó a decirme una cosa: era una mujer alta."],
 	[5.0, -12.0,
 	 "¡Este año vendrá!",
-	 "La Tirana lleva poderes que transfiere solo a quienes la reconocen. ¿Ya hablaste con la señora del norte?"],
+	 "NPC: Si quieren encontrar el corazón de la fiesta, sigan el sonido. Trompetas, trombones, bombos, cajas, platillos… las bandas acompañan a los bailes prácticamente durante toda la celebración.\nBenjamín: Debe ser agotador tocar durante tantas horas.\nNPC: Lo es. Pero cuando una agrupación entra bailando y toda la calle comienza a vibrar con los bombos, se te olvida el cansancio.\nEmilia: Con tanta música cuesta hasta saber de dónde viene cada cosa.\nNPC: Entonces quizás tampoco escucharon el comentario que está corriendo entre los músicos.\nBenjamín: Déjame adivinar… La Tirana.\nNPC: Así es. Hay quienes dicen que vino a su propia fiesta escondida entre los bailarines.\nEmilia: ¿Alguien logró reconocerla?\nNPC: No exactamente. Pero yo les digo algo: nunca había visto un traje tan bien hecho como el de la mujer que estaba bailando en el centro de la plaza. Si están buscando a alguien extraño… yo empezaría por ahí."],
 	[-5.0, -9.0,
 	 "¡Aymaraes y fiesta!",
-	 "No te fíes de las apariencias en la fiesta. La Tirana es maestra del disfraz y camina entre nosotros."],
+	 "NPC: Este pueblo guarda historias mucho más antiguas que cualquiera de nosotros. Hasta su nombre está ligado a la leyenda de una mujer a la que llamaron La Tirana del Tamarugal.\nEmilia: La princesa que vivía escondida en estas tierras…\nNPC: Eso cuenta la tradición. Con los años, historia, religión y leyenda terminaron mezclándose aquí. Por eso durante estas fechas nunca faltan cuentos sobre cosas que aparecen en el desierto.\nBenjamín: Y este año parece que hay uno bastante específico.\nNPC: Je… así que también lo escucharon.\nEmilia: Dicen que La Tirana está aquí.\nNPC: Algunos incluso aseguran haber hablado con ella sin darse cuenta.\nBenjamín: ¿Hay alguna forma de reconocerla?\nNPC: Hay una última cosa que se repite en todas las historias. Dicen que La Tirana tiene los ojos de un color muy especial.\nEmilia: ¿Qué color?\nNPC: Eso tendrán que descubrirlo ustedes."],
 	[3.5, -15.0,
 	 "¡Que viva el norte! 🎉",
 	 ""],

@@ -537,6 +537,11 @@ func _buscar_por_prefijo(n: Node, prefijo: String) -> Node3D:
 ## Margen alrededor del bus desde el que ya se puede subir, en metros.
 const MARGEN_PARADA := 2.5
 
+## Hasta dónde llega el terminal alrededor del bus, en metros: las cuerdas y
+## las bancas de la espera. «Ve al terminal de buses» se cumple al pisar esto,
+## no al arrimarse al bus.
+const RADIO_DEL_TERMINAL := 22.0
+
 
 ## Cuelga una parada de bus de cada autobús de la escena.
 ##
@@ -574,10 +579,29 @@ func _construir_paradas_de_bus() -> void:
 		forma.size = caja.size + Vector3.ONE * (MARGEN_PARADA * 2.0)
 		cs.shape = forma
 		area.add_child(cs)
+		_construir_zona_del_terminal(hijo.name, caja.position + caja.size * 0.5)
 		n_paradas += 1
 
 	if n_paradas > 0:
 		print("[mundo] paradas de bus: %d — viajan a %s" % [n_paradas, etiqueta])
+
+
+## El terminal alrededor de cada bus: entrar cumple «Ve al terminal de buses».
+func _construir_zona_del_terminal(bus: String, centro: Vector3) -> void:
+	var zona := Area3D.new()
+	zona.name = "Terminal_" + bus
+	zona.collision_layer = 0
+	zona.collision_mask = 2
+	add_child(zona)
+	zona.global_position = centro
+	var cs := CollisionShape3D.new()
+	var esf := SphereShape3D.new()
+	esf.radius = RADIO_DEL_TERMINAL
+	cs.shape = esf
+	zona.add_child(cs)
+	zona.body_entered.connect(func(cuerpo: Node3D) -> void:
+		if cuerpo.is_in_group("player"):
+			Misiones.hecho("terminal"))
 
 
 ## Todos los autobuses de la escena, estén colgados donde estén.

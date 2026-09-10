@@ -9,7 +9,9 @@ signal clue_triggered
 const BALLOON := "res://scenes/ui/GloboDeDialogo.tscn"
 
 @export var prompt  := "[E] Hablar"
-@export var clue    := ""   # texto que se muestra al interactuar
+## Lo que dice al hablarle: una frase, o una conversación entera con una
+## réplica por línea («Quién: qué»). Las líneas sin quién las dice el NPC.
+@export var clue    := ""
 
 var _spoken := false
 
@@ -35,6 +37,19 @@ func interact(_player: Node) -> void:
 		return
 	_spoken = true
 	clue_triggered.emit()
-	var text := "~ start\nNPC: %s\n=> END\n" % clue
-	var res := DialogueManager.create_resource_from_text(text)
+	var res := DialogueManager.create_resource_from_text(guion_de(clue))
 	DialogueManager.show_dialogue_balloon_scene(BALLOON, res, "start")
+
+
+## El guion del Dialogue Manager para lo que dice: cada línea es una réplica.
+static func guion_de(texto: String) -> String:
+	var lineas: PackedStringArray = []
+	for l in texto.split("\n"):
+		var t := l.strip_edges()
+		if t == "":
+			continue
+		# «Quién: qué» ya viene con quién habla; si no, habla el NPC.
+		if not t.match("*: *"):
+			t = "NPC: " + t
+		lineas.append(t)
+	return "~ start\n" + "\n".join(lineas) + "\n=> END\n"

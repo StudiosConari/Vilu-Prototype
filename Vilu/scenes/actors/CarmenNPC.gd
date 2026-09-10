@@ -68,7 +68,7 @@ var _en_escena := false
 
 const DIALOGUE_FASE1 := "~ start
 Carmen: ¡Bienvenidos a la Fiesta de La Tirana! Una celebración sagrada del norte.
-Carmen: Hablen con la gente del pueblo, guardan secretos de la fiesta.
+Carmen: Hablen con la gente del pueblo, Ellos les daran información de la fiesta.
 Carmen: Yo tengo algo que hacer en la iglesia. Después los busco.
 => END
 "
@@ -81,13 +81,12 @@ Carmen: Sigan explorando la fiesta. Aún hay más que descubrir.
 const DIALOGUE_REVELACION := "~ start
 Carmen: Veo que ya saben quién soy. Está bien... Soy La Tirana.
 Carmen: Aquí está tu don, guerrera. Emilia: COMBO de cuatro golpes. Benjamín: FLECHA TRIPLE (tecla F, gasta energía).
-Carmen: Cambien de héroe con R (el otro pelea solo) o con T (se queda quieto, para puzzles).
-Carmen: El paso del norte los espera. La mina guarda algo oscuro...
+Carmen: El paso del norte los espera.
 => END
 "
 
 const DIALOGUE_AGAIN := "~ start
-Carmen: Ya tienen su don. La mina los espera al norte.
+Carmen: Ya tienen su don.
 => END
 "
 

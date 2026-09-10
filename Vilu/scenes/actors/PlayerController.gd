@@ -47,7 +47,9 @@ const ALTO_PERSONAJE := 2.2
 ## SIGUIENDO: acompaña al activo, un paso atrás y al costado. QUIETO: se queda
 ## en su sitio. En ninguno de los dos pelea ni recibe daño: las batallas son del
 ## personaje que estás llevando.
-enum AiMode { SIGUIENDO, FROZEN }
+## SENUELO: se aleja de `senuelo_de` para que la persiga, sin salirse de la
+## arena. Es lo que hace Emilia con el Yastay mientras Benjamín sana.
+enum AiMode { SIGUIENDO, FROZEN, SENUELO }
 
 @export_group("Rol")
 @export var is_archer := false
@@ -90,14 +92,14 @@ enum AiMode { SIGUIENDO, FROZEN }
 @export var AGARRE_MULTIPLICADOR := 2.4
 
 @export_group("Rodada")
-## Reserva por si no hay animación. Con Emilia manda el clip: escribir su
-## duración a mano ya quedó obsoleto una vez —la rodada pasó de 1.20 a 0.97 s— y
-## el personaje seguía deslizándose un cuarto de segundo sin animación.
-@export var rodada_duracion := 1.0
+## Cuánto dura la rodada, en segundos, PARA LOS DOS. El clip de cada personaje
+## se acelera lo que haga falta para caber en este tiempo: el de Emilia dura
+## 0,9 s y el de Benjamín 1,1, y con un ritmo fijo cada uno rodaba distinto y
+## llegaba a distinta distancia. 0,57 es lo que duraba la de Emilia con el
+## ritmo de antes (0,91 s de clip a 1,6), así que ella no cambia.
+@export var rodada_duracion := 0.57
 ## Con 4.5 recorría 3.14 m y quedaba corta; a 6.75 son la mitad más.
 @export var rodada_velocidad := 6.75
-## Cuánto se acelera la animación de la rodada. A 1.0 dura 1.17 s; a 1.6, 0.73 s.
-@export var rodada_ritmo := 1.6
 @export var rodada_espera := 0.8
 
 @export_group("Patada corriendo")
@@ -131,11 +133,14 @@ var mounted := false
 ## lomo del guanaco: por encima se ve flotando y por debajo se le hunden las
 ## piernas. Está expuesto porque el número depende del modelo, y el modelo
 ## cambia.
-@export var alto_de_montura := 0.64
+@export var alto_de_montura := 0.39
+## Cuánto se hunde la cadera en el pelo del lomo al sentarse, en metros. En 0
+## queda apoyada justo encima; un poco más y se lee como peso de verdad.
+@export var hundimiento_en_el_lomo := 0.10
 ## Cuánto se adelanta el guanaco respecto del jinete, en metros. Sube este
 ## número y Benjamín se sienta más ATRÁS, hacia la grupa; bájalo y se va hacia
 ## el cuello. En 0 quedan en el mismo punto, que es como iba antes.
-@export var avance_de_montura := 0.20
+@export var avance_de_montura := 0.55
 var in_updraft := false             # dentro de una corriente ascendente (lo setea Updraft.gd)
 ## Dentro de una corriente DESCENDENTE. Lo pone el mismo Updraft.gd.
 var in_downdraft := false
@@ -157,6 +162,7 @@ var _jumps_done := 0
 var _jump_held_prev := false
 var _e_held_prev := false
 var _q_held_prev := false
+var _c_held_prev := false
 var _combo_step := 0
 var _combo_timer := 0.0
 var _attack_cd := 0.0
@@ -183,10 +189,12 @@ func _ready() -> void:
 	DialogueManager.dialogue_started.connect(func(_r: Resource) -> void:
 		_globo_abierto = true
 		input_locked = true
+		_bajarse_para_hablar()
 		if _emilia != null: _emilia.hablar(true))
 	DialogueManager.dialogue_ended.connect(func(_r: Resource) -> void:
 		_globo_abierto = false
 		if _emilia != null: _emilia.hablar(false)
+		_volver_a_subirse()
 		_devolver_el_control.call_deferred())
 	can_glide = (not is_archer) and GameManager.has_ability("wings")
 	_montar_emilia()
@@ -286,6 +294,8 @@ func _physics_process(delta: float) -> void:
 		dir = _rumbo_esquivando(forced_run_dir)
 	elif ai_mode == AiMode.SIGUIENDO:
 		dir = _rumbo_esquivando(_ai_behavior())
+	elif ai_mode == AiMode.SENUELO:
+		dir = _rumbo_esquivando(_senuelo_behavior())
 	else:
 		dir = _hold_behavior()   # QUIETO: se queda en su puesto
 
@@ -338,6 +348,8 @@ func _physics_process(delta: float) -> void:
 		speed = run_speed
 	elif not active and ai_mode == AiMode.SIGUIENDO:
 		speed = _velocidad_de_escolta()
+	elif not active and ai_mode == AiMode.SENUELO:
+		speed = run_speed
 	# Cruzando un hueco hace falta carrerilla: el salto dura ~0.67 s, y a paso de
 	# caminar eso son 2.7 m de alcance. Con la velocidad de correr pasan de 5 m,
 	# que es lo que hay entre las plataformas del volcán.
@@ -392,9 +404,41 @@ func _physics_process(delta: float) -> void:
 	if mounted and guanaco_companion() == null:
 		mounted = false
 		_pose_de_montado(false)
-	# Montado: el jinete se eleva para quedar sobre el lomo del guanaco.
+	# Montado: el jinete se eleva para quedar sentado sobre el lomo del guanaco.
 	_visual.position.y = lerp(_visual.position.y,
-		alto_de_montura if mounted else 0.0, 12.0 * delta)
+		_alto_para_sentarse() if mounted else 0.0, 12.0 * delta)
+
+
+## Cuánto hay que subir el muñeco para que la cadera toque el lomo.
+##
+## Se calcula con lo que hay delante: el lomo lo mide el guanaco de su propia
+## malla y la cadera se lee del esqueleto en la pose de jinete. Restando una de
+## otra sale el número, y no envejece: cambió el modelo del guanaco y Benjamín
+## quedó flotando porque `alto_de_montura` seguía siendo el del modelo viejo.
+## Ese export queda como respaldo para cuando no hay de dónde medir.
+func _alto_para_sentarse() -> float:
+	if not is_inside_tree():
+		return alto_de_montura
+	var g := guanaco_companion()
+	if g == null or not g.has_method("altura_del_lomo"):
+		return alto_de_montura
+	var cadera := _altura_de_la_cadera()
+	if cadera <= 0.0:
+		return alto_de_montura
+	return maxf(float(g.call("altura_del_lomo")) - cadera + hundimiento_en_el_lomo, 0.0)
+
+
+## La cadera del muñeco, en metros sobre el origen del Visual, con la pose que
+## tenga puesta ahora. -1 si no hay esqueleto que mirar.
+func _altura_de_la_cadera() -> float:
+	var esq := _esqueleto_de(_emilia)
+	if esq == null or _visual == null:
+		return -1.0
+	var i := esq.find_bone("mixamorig_Hips")
+	if i < 0:
+		return -1.0
+	var cadera: Vector3 = (esq.global_transform * esq.get_bone_global_pose(i)).origin
+	return cadera.y - _visual.global_position.y
 
 
 ## Cuánto queda dormido, en segundos. 0 = despierto.
@@ -478,43 +522,108 @@ func _player_input() -> Vector3:
 		_interactable.interact(self)
 	_e_held_prev = e_held
 
-	# Guanaco (Q) — solo Benjamín. Ciclo: invocar -> montar -> guardar.
+	# Guanaco — solo Benjamín. Q lo invoca o lo guarda; C sube y baja.
 	if is_archer and GameManager.has_ability("guanaco"):
 		var q_held := Input.is_action_pressed("guanaco")
 		if q_held and not _q_held_prev:
-			_cycle_guanaco()
+			_alternar_guanaco()
 		_q_held_prev = q_held
+		var c_held := Input.is_action_pressed("guanaco_montar")
+		if c_held and not _c_held_prev:
+			_alternar_montura()
+		_c_held_prev = c_held
 
 	return dir
 
 
 # --- Guanaco compañero (Benjamín, tras la bendición del Yastay) ---
-## Q alterna entre los tres estados: sin guanaco -> invocado -> montado -> guardado.
-func _cycle_guanaco() -> void:
+## Q: sin guanaco lo invoca; con guanaco lo guarda (bajándose antes si iba
+## montado).
+##
+## Antes Q hacía las tres cosas en ciclo —invocar, montar, guardar— y no había
+## forma de bajarse sin que el guanaco desapareciera. Ahora montar y bajarse
+## son cosa de C, y el guanaco se queda esperando al lado.
+func _alternar_guanaco() -> void:
 	var g := guanaco_companion()
 	if g == null:
 		_summon_guanaco()
-	elif not mounted:
-		mounted = true
-		if g.has_method("set_mounted"):
-			g.set_mounted(true)
-		_pose_de_montado(true)
-		_banner("Guanaco: MONTADO · [Q] guardar")
+		return
+	if mounted:
+		_bajarse()
+	g.queue_free()
+
+
+## C: sube al guanaco, y otra vez, se baja sin guardarlo. Sin guanaco no hace
+## nada: invocarlo es cosa de Q.
+func _alternar_montura() -> void:
+	var g := guanaco_companion()
+	if g == null:
+		return
+	if mounted:
+		_bajarse()
 	else:
-		mounted = false
-		if g.has_method("set_mounted"):
-			g.set_mounted(false)
-		_pose_de_montado(false)
-		g.queue_free()
-		_banner("Guanaco guardado · [Q] invocar")
+		_subirse()
+
+
+func _subirse() -> void:
+	var g := guanaco_companion()
+	if g == null or mounted:
+		return
+	mounted = true
+	if g.has_method("set_mounted"):
+		g.set_mounted(true)
+	_pose_de_montado(true)
+
+
+func _bajarse() -> void:
+	if not mounted:
+		return
+	mounted = false
+	var g := guanaco_companion()
+	if g != null and g.has_method("set_mounted"):
+		g.set_mounted(false)
+	_pose_de_montado(false)
+
+
+## Lo que hacía Q antes, para lo que todavía lo llame por ese nombre.
+func _cycle_guanaco() -> void:
+	if guanaco_companion() == null:
+		_summon_guanaco()
+	elif not mounted:
+		_subirse()
+	else:
+		_alternar_guanaco()
+
+
+## Se baja del guanaco para hablar y vuelve a subirse al terminar.
+##
+## Hablar montado dejaba al guanaco parado debajo de Benjamín, con él sentado
+## en el aire y el clip de hablar peleando con la pose de jinete. Al abrirse un
+## diálogo se desmonta —el guanaco se queda invocado y se pone a su lado, como
+## cuando lo sigue— y al cerrarse vuelve a montarlo solo, sin pulsar nada.
+var _remontar_al_terminar := false
+
+
+func _bajarse_para_hablar() -> void:
+	if not mounted:
+		return
+	_bajarse()
+	_remontar_al_terminar = true
+
+
+func _volver_a_subirse() -> void:
+	if not _remontar_al_terminar:
+		return
+	_remontar_al_terminar = false
+	_subirse()
 
 
 func _summon_guanaco() -> void:
 	var g := Node3D.new()
 	g.set_script(GUANACO_COMP_SCR)
 	_al_mundo(g)
-	g.global_position = global_position + _visual.global_transform.basis.x * 1.8
-	_banner("Guanaco invocado · [Q] montar · [G] embestir")
+	# Aparece donde después va a seguirte: a un lado, a la misma distancia.
+	g.global_position = global_position + _visual.global_transform.basis.x * GUANACO_COMP_SCR.FOLLOW_DIST
 
 
 func guanaco_companion() -> Node3D:
@@ -1351,9 +1460,11 @@ func _rodar() -> void:
 		return
 	_rodada_dir = d.normalized()
 
+	# La duración manda y el clip se le ajusta. Sin clip se rueda igual, el
+	# mismo tiempo, sólo que sin animación.
 	var dura := rodada_duracion
 	if _emilia != null:
-		var del_clip: float = _emilia.call("rodar", rodada_ritmo)
+		var del_clip: float = _emilia.call("rodar_en", rodada_duracion)
 		if del_clip > 0.0:
 			dura = del_clip
 	_rodando = dura
@@ -1413,6 +1524,57 @@ func _ai_behavior() -> Vector3:
 	if hacia.length() <= seguir_holgura:
 		return Vector3.ZERO
 	return hacia.normalized()
+
+
+# ─── Señuelo ─────────────────────────────────────────────────────────────────
+
+## A quién hay que mantener entretenido, y dentro de qué ruedo.
+var senuelo_de: Node3D = null
+var senuelo_centro := Vector3.ZERO
+var senuelo_radio := 10.0
+## Más cerca que esto, se aleja; más lejos que esto, se acerca para que no la
+## pierda de vista. En medio, da vueltas a su alrededor.
+const SENUELO_CERCA := 6.0
+const SENUELO_LEJOS := 9.5
+
+
+## Hace de señuelo de `objetivo` sin salirse de un círculo de `radio` metros
+## alrededor de `centro`. Se corta con `set_ai_mode`, o sea al cambiar de
+## personaje.
+func hacer_de_senuelo(objetivo: Node3D, centro: Vector3, radio: float) -> void:
+	senuelo_de = objetivo
+	senuelo_centro = centro
+	senuelo_radio = maxf(radio, 3.0)
+	ai_mode = AiMode.SENUELO
+
+
+func es_senuelo() -> bool:
+	return ai_mode == AiMode.SENUELO and is_instance_valid(senuelo_de)
+
+
+## Alejarse en diagonal, no en línea recta: huyendo derecho se termina contra
+## el borde del ruedo con el bicho encima. Girando a su alrededor siempre queda
+## sitio, y si se sale del ruedo, tira de vuelta al centro.
+func _senuelo_behavior() -> Vector3:
+	if not is_instance_valid(senuelo_de):
+		return Vector3.ZERO
+	var desde := global_position - senuelo_de.global_position
+	desde.y = 0.0
+	var d := desde.length()
+	var lejos := desde.normalized() if d > 0.01 else Vector3.RIGHT
+	var tangente := Vector3.UP.cross(lejos)
+	var al_centro := senuelo_centro - global_position
+	al_centro.y = 0.0
+	var rumbo := Vector3.ZERO
+	if d < SENUELO_CERCA:
+		rumbo = lejos * 0.6 + tangente * 0.8
+	elif d > SENUELO_LEJOS:
+		rumbo = -lejos
+	else:
+		rumbo = tangente
+	if al_centro.length() > senuelo_radio:
+		rumbo += al_centro.normalized() * 1.5
+	return rumbo.normalized() if rumbo.length() > 0.01 else Vector3.ZERO
 
 
 ## Modo QUIETO (T): se queda en su puesto. Tampoco pelea.

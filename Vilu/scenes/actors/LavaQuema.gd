@@ -70,5 +70,5 @@ func _physics_process(_delta: float) -> void:
 			continue
 		var juego := get_tree().get_first_node_in_group("game")
 		if juego and juego.has_method("volver_al_punto_seguro"):
-			juego.volver_al_punto_seguro("¡La lava quema! Volvés al punto seguro", dano)
+			juego.volver_al_punto_seguro("¡La lava quema! Volvés al punto seguro", dano, cuerpo)
 		return

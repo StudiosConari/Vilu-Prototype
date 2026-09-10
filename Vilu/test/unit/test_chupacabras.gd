@@ -208,6 +208,19 @@ func test_antes_de_salir_se_le_ven_los_ojos() -> void:
 	assert_almost_eq(ojos.global_position,
 		cueva.call("_sitio_del_nido") + Vector3(0, cueva.get("alto_de_los_ojos"), 0),
 		Vector3.ONE * 0.05, "en el nido")
+	# Y debajo de los ojos está el bicho, no dos puntos flotando.
+	var esq: Node = cueva.call("_esqueleto_de", ojos)
+	assert_not_null(esq, "se ve el cuerpo del Chupacabras en la sombra")
+	var cabeza: Node = null
+	for h in esq.get_children():
+		if h is BoneAttachment3D:
+			cabeza = h
+	assert_not_null(cabeza, "los ojos cuelgan de su cabeza")
+	var luces := 0
+	for h in cabeza.get_children():
+		if h is OmniLight3D:
+			luces += 1
+	assert_eq(luces, 1, "con la luz roja en los ojos")
 
 	await wait_seconds(1.0)
 	assert_false(is_instance_valid(ojos), "se apagan")

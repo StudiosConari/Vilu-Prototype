@@ -280,3 +280,38 @@ func _mallas(n: Node) -> Array:
 	for h in n.get_children():
 		r.append_array(_mallas(h))
 	return r
+
+
+## La charla de la bifurcación tiene que saltar por cualquier lado del
+## pasillo: el disparador horneado medía 10 m sobre una plataforma de 26 y
+## quien bajaba por un costado pasaba de largo.
+func test_la_bifurcacion_salta_por_los_costados() -> void:
+	# La zona horneada, con su disparador estrecho tal como quedó en el .tscn.
+	var z := Node3D.new()
+	z.set_script(RESCATE)
+	z.geometria_fijada = true
+	var fork := Area3D.new()
+	fork.collision_layer = 0
+	fork.collision_mask = 2
+	fork.position = Vector3(0.0, 1.5, -3.5)
+	var cs := CollisionShape3D.new()
+	var caja := BoxShape3D.new()
+	caja.size = Vector3(10.0, 4.0, 3.0)
+	cs.shape = caja
+	fork.add_child(cs)
+	z.add_child(fork)
+	add_child_autofree(z)
+	await wait_physics_frames(2)
+
+	var ahora := (fork.get_child(0) as CollisionShape3D).shape as BoxShape3D
+	assert_gte(ahora.size.x, 26.0, "al volver a enganchar la lógica se ensancha a la plataforma entera")
+	var p := CharacterBody3D.new()
+	p.add_to_group("player")
+	p.collision_layer = 2
+	var pcs := CollisionShape3D.new()
+	pcs.shape = CapsuleShape3D.new()
+	p.add_child(pcs)
+	add_child_autofree(p)
+	p.global_position = z.to_global(Vector3(11.0, 1.0, -3.5))
+	await wait_physics_frames(3)
+	assert_true(bool(z.get("_fork_seen")), "por el costado también salta")

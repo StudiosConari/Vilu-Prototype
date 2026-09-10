@@ -50,9 +50,24 @@ func test_lleva_el_estilo_del_recuadro_de_misiones() -> void:
 	assert_almost_eq(caja.bg_color.g, FONDO.g, 0.01)
 	assert_almost_eq(caja.bg_color.b, FONDO.b, 0.01)
 	assert_lt(caja.bg_color.a, 1.0, "y translúcido, no negro macizo")
-	assert_almost_eq(caja.border_color.r, BORDE.r, 0.01, "mismo borde dorado")
-	assert_gt(caja.border_width_top, 0, "con borde")
+	assert_gt(caja.border_color.r, 0.9, "borde dorado")
+	assert_gt(caja.border_color.a, 0.9, "bien visible, no lavado")
+	assert_gte(caja.border_width_top, 3, "con borde grueso")
 	assert_gt(caja.corner_radius_top_left, 0, "y esquinas redondeadas")
+
+
+## El nombre de quien habla va en oro y en negrita, no en gris a medias.
+func test_el_nombre_va_en_oro_y_en_negrita() -> void:
+	var g: CanvasLayer = GLOBO.instantiate()
+	add_child_autofree(g)
+	await wait_frames(3)
+	var nombre: RichTextLabel = g.get_node("%CharacterLabel")
+	assert_almost_eq(nombre.modulate.a, 1.0, 0.01, "opaco")
+	var color := nombre.get_theme_color("default_color")
+	assert_gt(color.r, 0.9, "en oro")
+	assert_lt(color.b, 0.6, "en oro, no blanco")
+	var f := nombre.get_theme_font("normal_font")
+	assert_true(f is FontVariation and (f as FontVariation).variation_embolden > 0.3, "en negrita")
 
 
 ## Y que nadie se haya quedado apuntando al del addon.

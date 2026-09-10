@@ -68,6 +68,9 @@ signal activado
 
 var _activado := false
 var _zona: Area3D = null
+## Si la última vez que se miró seguía tapado. Sirve para cambiar el cartel
+## sólo cuando cambia, no cada cuadro.
+var _tapado := false
 
 
 func _ready() -> void:
@@ -92,6 +95,29 @@ func _ready() -> void:
 	_zona.add_child(cs)
 
 	_zona.interacted.connect(_on_interacted)
+	_tapado = esta_bloqueado()
+	_zona.prompt = _cartel_de_la_zona()
+
+
+## Mientras esté tapado, el cartel del HUD dice que hay que romper los
+## tablones, no «[E] Activar»: ofrecer algo que no se puede hacer se lee como
+## que el obelisco se activa igual desde este lado.
+func _process(_delta: float) -> void:
+	if _activado or _zona == null or requiere.is_empty():
+		return
+	var tapado := esta_bloqueado()
+	if tapado == _tapado:
+		return
+	_tapado = tapado
+	_zona.prompt = _cartel_de_la_zona()
+	# Si el jugador ya está dentro de la zona, el HUD tiene el cartel viejo.
+	for p in get_tree().get_nodes_in_group("player"):
+		if p.get("_interactable") == _zona and p.has_method("set_interactable"):
+			p.set_interactable(_zona)
+
+
+func _cartel_de_la_zona() -> String:
+	return aviso_bloqueado if _tapado else prompt
 
 
 func _on_interacted(jugador: Node) -> void:

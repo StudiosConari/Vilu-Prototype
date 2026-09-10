@@ -84,6 +84,21 @@ func test_activar_a_mano_ignora_la_barricada() -> void:
 	assert_true(bool(o.get("_activado")), "la restauración del duelo pasa igual")
 
 
+## Tapado, el cartel del HUD no ofrece activarlo: dice que hay que romper los
+## tablones. Y en cuanto caen, vuelve el «[E] Activar».
+func test_tapado_el_cartel_dice_que_hay_que_romper() -> void:
+	var t := _tablon("Tablon1")
+	var o := _obelisco([t])
+	var zona: Area3D = o.get("_zona")
+	# `requiere` se rellena después del _ready: el cartel se pone al día en el
+	# primer cuadro.
+	o.call("_process", 0.016)
+	assert_eq(zona.prompt, o.get("aviso_bloqueado"), "mientras está tapado")
+	t.roto = true
+	o.call("_process", 0.016)
+	assert_eq(zona.prompt, o.get("prompt"), "roto el tablón, se puede activar")
+
+
 func test_la_mina_tiene_el_primer_obelisco_atado_a_sus_tablones() -> void:
 	# El guardián de la escena: la lógica puede estar perfecta y no servir de
 	# nada si nadie rellenó `requiere` en Mina.tscn.

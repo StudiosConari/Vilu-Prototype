@@ -104,3 +104,52 @@ func test_sin_huida_cruzar_la_boca_no_concede_nada() -> void:
 	var m := await _cueva()
 	m._stop_chase()
 	assert_false(GameManager.tiene_logro("mina"))
+
+
+## La cueva con su salida puesta, como en Mina.tscn: un Area3D llamada
+## ExitToPoblado que es la que pide el viaje al pisarla.
+func _cueva_con_boca() -> Array:
+	var m := Node3D.new()
+	m.set_script(MINA)
+	var boca := Area3D.new()
+	boca.name = "ExitToPoblado"
+	m.add_child(boca)
+	add_child_autofree(m)
+	await wait_physics_frames(2)
+	return [m, boca]
+
+
+## Pisar la boca cierra la huida y concede el logro, CRUCE QUIEN CRUCE.
+##
+## La salida descarga la mina entera a los 0,4 s de que cualquier personaje la
+## toque. Si el compañero iba adelante —dejado con [T] cerca de la entrada, o
+## más cerca cuando arrancó la huida— la pisaba él, la mina se iba con el
+## activo a mitad del pasillo y el logro no llegaba nunca: «Investiga el final
+## de la mina» quedaba colgada para siempre.
+func test_pisar_la_boca_cierra_la_huida_aunque_cruce_el_companero() -> void:
+	var par: Array = await _cueva_con_boca()
+	var m: Node3D = par[0]
+	var boca: Area3D = par[1]
+	GameManager.unlock("talisman_frag_1")
+	await wait_physics_frames(2)
+	assert_true(m._chase_active, "la huida arrancó")
+
+	var companero := Node3D.new()
+	companero.add_to_group("player")
+	companero.set("active", false)
+	add_child_autofree(companero)
+	boca.body_entered.emit(companero)
+	assert_false(m._chase_active, "pisar la boca termina la huida")
+	assert_true(GameManager.tiene_logro("mina"), "y concede El Correcaminos")
+
+
+## Pisarla sin huida no hace nada: volver a la mina por la puerta y salir de
+## nuevo no regala el logro.
+func test_pisar_la_boca_sin_huida_no_concede_nada() -> void:
+	var par: Array = await _cueva_con_boca()
+	var boca: Area3D = par[1]
+	var p := Node3D.new()
+	p.add_to_group("player")
+	add_child_autofree(p)
+	boca.body_entered.emit(p)
+	assert_false(GameManager.tiene_logro("mina"))

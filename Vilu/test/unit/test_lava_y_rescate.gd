@@ -70,3 +70,41 @@ func test_la_lava_mira_cada_cuadro_no_solo_al_entrar() -> void:
 	assert_true(l.has_method("_physics_process"),
 		"la lava comprueba mientras estás dentro, no sólo al entrar")
 	l.free()
+
+
+## Un personaje del party, con lo justo para colocarlo.
+class Cuerpo extends CharacterBody3D:
+	pass
+
+
+## El compañero que no se maneja no cuesta el intento: si cae a la lava, vuelve
+## al lado del que se maneja, y el party no vuelve al punto seguro.
+func test_el_companero_que_cae_vuelve_al_lado_del_otro() -> void:
+	# El Game se queda FUERA del árbol: su _ready pide el mundo entero, y
+	# `traer_al_lado` sólo mira el party y a quién se maneja.
+	var g := _juego(0.0, 0.0)
+	var lider := Cuerpo.new()
+	var ia := Cuerpo.new()
+	add_child_autofree(lider)
+	add_child_autofree(ia)
+	lider.global_position = Vector3(10.0, 5.0, 10.0)
+	ia.global_position = Vector3(0.0, -40.0, 0.0)
+	g.set("party", [lider, ia])
+	g.set("active_index", 0)
+
+	assert_true(bool(g.call("traer_al_lado", ia)), "al que no se maneja se lo trae")
+	assert_lt(ia.global_position.distance_to(lider.global_position), 3.0,
+		"y queda al lado del que se maneja")
+	assert_eq(lider.global_position, Vector3(10.0, 5.0, 10.0), "que no se mueve")
+	assert_false(bool(g.call("traer_al_lado", lider)),
+		"el que se maneja sí cuesta el intento")
+	g.free()
+
+
+func test_la_lava_sabe_quien_cayo() -> void:
+	# La lava tiene que decir QUIÉN cayó, o el juego no puede distinguir al
+	# compañero del que se maneja.
+	var src := (LAVA as GDScript).source_code
+	assert_true(src.contains("volver_al_punto_seguro(") and src.contains(", cuerpo)"),
+		"la lava pasa el cuerpo que tocó")
+

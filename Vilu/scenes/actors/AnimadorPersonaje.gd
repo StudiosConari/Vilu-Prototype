@@ -118,6 +118,8 @@ func _process(_delta: float) -> void:
 	if _montado:
 		if _anim.assigned_animation != MONTADO:
 			_poner_pose_de_montado()
+		else:
+			_cerrar_las_piernas()
 		return
 	# Tensando: camina si te movés, y quieto vuelve al clip de apuntar entero.
 	#
@@ -166,6 +168,19 @@ func rodar(ritmo: float = 1.0) -> float:
 	var r: float = maxf(ritmo, 0.1)
 	_anim.speed_scale = r          # _una_pasada lo deja en 1.0; se ajusta después
 	return largo / r
+
+
+## La rodada, pero pidiendo CUÁNTO tiene que durar: el ritmo sale del clip.
+##
+## Emilia y Benjamín no comparten clip —el de ella dura 0,9 s, el de él 1,1—, y
+## con un ritmo fijo cada uno rodaba un tiempo distinto y recorría una distancia
+## distinta. Pidiendo la duración, el que tenga el clip más largo lo acelera
+## más y los dos ruedan igual. Devuelve lo que va a durar, o 0 sin clip.
+func rodar_en(duracion: float) -> float:
+	if _anim == null or not _anim.has_animation(RODAR) or duracion <= 0.0:
+		return 0.0
+	var largo: float = _anim.get_animation(RODAR).length
+	return rodar(largo / duracion)
 
 
 ## Un paso de la cadena de cuatro, o la patada de carrera si viene corriendo o
@@ -219,6 +234,10 @@ func _una_pasada(nombre: String) -> float:
 		return 0.0
 	_unica = nombre
 	_anim.speed_scale = 1.0
+	# De una pasada quiere decir sin bucle, venga de donde venga el clip: si se
+	# repitiera, `_al_terminar` no llegaría nunca y el personaje se quedaría
+	# haciendo esto para siempre.
+	_anim.get_animation(nombre).loop_mode = Animation.LOOP_NONE
 	_anim.play(nombre)
 	return _anim.get_animation(nombre).length
 
@@ -463,6 +482,7 @@ func montado(activo: bool) -> void:
 		_poner_pose_de_montado()
 	elif _unica == MONTADO:
 		_unica = ""
+		_muslos_base.clear()
 		# La pose se sostiene con el reproductor EN PAUSA. Desmontando en el aire
 		# nadie elige clip hasta tocar el suelo, y hasta entonces el personaje
 		# bajaba congelado en postura de jinete. Se lo despierta a mano.
@@ -478,6 +498,48 @@ func _poner_pose_de_montado() -> void:
 	# Al primer fotograma, no al último: buscar el final de un clip de dos
 	# fotogramas lo da por terminado y lo descarta, y la pose se pierde.
 	_anim.seek(0.0, true)
+	_muslos_base.clear()
+	_cerrar_las_piernas()
+
+
+## Cuánto se cierran las piernas al ir montado, en grados por muslo.
+##
+## El clip de jinete viene con las piernas muy abiertas —era para un caballo—
+## y sobre el guanaco quedaban colgando lejos del lomo. Se giran los dos muslos
+## hacia adentro sobre la pose del clip, sin tocar el clip. Con 12° las rodillas
+## pasan de 80 a 63 cm de separación; más, y se meten en la panza del guanaco.
+@export var cierre_de_piernas := 12.0
+
+## El eje del muslo alrededor del que se cierra, en coordenadas del hueso: el Z
+## local del muslo de Mixamo, que es el que abre y cierra en el plano frontal.
+## Se midió probando los tres —X levanta el pie hacia adelante, Y lo gira— y
+## está en `test_montar_guanaco`.
+const EJE_DE_CIERRE := Vector3(0.0, 0.0, 1.0)
+
+## El signo de cada muslo: positivo cierra.
+const MUSLOS := {"mixamorig_LeftUpLeg": -1.0, "mixamorig_RightUpLeg": 1.0}
+## La rotación del clip de cada muslo, para girar siempre desde ahí y no
+## acumular un poco más en cada cuadro.
+var _muslos_base := {}
+
+
+func _cerrar_las_piernas() -> void:
+	if cierre_de_piernas == 0.0:
+		return
+	var esq := _buscar_esqueleto(get_parent())
+	if esq == null:
+		esq = _buscar_esqueleto(self)
+	if esq == null:
+		return
+	for nombre: String in MUSLOS:
+		var idx := esq.find_bone(nombre)
+		if idx < 0:
+			continue
+		if not _muslos_base.has(idx):
+			_muslos_base[idx] = esq.get_bone_pose_rotation(idx)
+		var giro := Quaternion(EJE_DE_CIERRE,
+			deg_to_rad(cierre_de_piernas) * float(MUSLOS[nombre]))
+		esq.set_bone_pose_rotation(idx, (_muslos_base[idx] as Quaternion) * giro)
 
 
 # ─── Caminar apuntando ────────────────────────────────────────────────────────
@@ -532,12 +594,24 @@ func _injertar_animaciones_aparte() -> void:
 			continue
 		# Copia propia: la del .glb la comparten todas las instancias, y
 		# cambiarle el bucle allí se lo cambiaría a todo el mundo.
+		#
+		# Se repiten SÓLO los de estar y andar. Antes se repetía todo lo que
+		# llegara por aquí, que era reposo y los cuatro de caminar apuntando; al
+		# entrar el rodar por el mismo camino se quedó en bucle: un clip que se
+		# repite no termina, `_al_terminar` nunca lo suelta y el animador no
+		# vuelve a elegir nada. Benjamín rodaba para siempre.
 		var copia := a.duplicate(true) as Animation
-		copia.loop_mode = Animation.LOOP_LINEAR
+		copia.loop_mode = Animation.LOOP_LINEAR if _se_repite(n) else Animation.LOOP_NONE
 		if lib.has_animation(n):
 			lib.remove_animation(n)
 		lib.add_animation(n, copia)
 	origen.free()
+
+
+## Qué clips se repiten solos: los de estar quieto, moverse y hablar. Los
+## demás —golpes, saltos, rodar— son de una pasada y tienen que terminar.
+func _se_repite(clip: String) -> bool:
+	return clip in [REPOSO, CAMINAR, CORRER, HABLAR] or clip in CLIPS_DE_ARCO
 
 
 ## Cuál de los cuatro toca, según hacia dónde se mueve RESPECTO A DONDE MIRA.

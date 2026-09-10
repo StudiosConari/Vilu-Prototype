@@ -83,6 +83,13 @@ var mutation_cooldown: Timer = Timer.new()
 
 func _ready() -> void:
 	balloon.hide()
+	# El nombre de quien habla: en oro y en negrita, que se lea de un vistazo.
+	# Antes iba al 50 % de opacidad, gris sobre gris. La negrita sale de
+	# engordar la fuente por defecto, como los lemas de las placas.
+	var negrita := FontVariation.new()
+	negrita.base_font = ThemeDB.fallback_font
+	negrita.variation_embolden = 0.7
+	character_label.add_theme_font_override("normal_font", negrita)
 	Engine.get_singleton("DialogueManager").mutated.connect(_on_mutated)
 
 	# If the responses menu doesn't have a next action set, use this one
@@ -199,11 +206,27 @@ func _on_mutated(mutation: Dictionary) -> void:
 		mutation_cooldown.start(0.1)
 
 
+## El botón de HABLAR también avanza.
+##
+## El que empieza una conversación con la X del mando —o con la E— sigue
+## pulsando lo mismo para seguirla; es lo que espera cualquiera. Antes sólo
+## valían la A y el clic, y con mando parecía que el diálogo no avanzaba.
+const HABLAR_ACTION: StringName = &"interact"
+
+
+func _avanza(event: InputEvent) -> bool:
+	return event.is_action_pressed(next_action) or event.is_action_pressed(HABLAR_ACTION)
+
+
 func _on_balloon_gui_input(event: InputEvent) -> void:
-	# See if we need to skip typing of the dialogue
+	# See if we need to skip typing of the dialogue.
+	#
+	# Avanzar mientras el texto se escribe lo COMPLETA: pulsar A mientras las
+	# letras aparecen no hacía nada, y el que pulsa pronto se quedaba pensando
+	# que el botón no era.
 	if dialogue_label.is_typing:
 		var mouse_was_clicked: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.is_pressed()
-		var skip_button_was_pressed: bool = event.is_action_pressed(skip_action)
+		var skip_button_was_pressed: bool = event.is_action_pressed(skip_action) or _avanza(event)
 		if mouse_was_clicked or skip_button_was_pressed:
 			get_viewport().set_input_as_handled()
 			dialogue_label.skip_typing()
@@ -217,7 +240,7 @@ func _on_balloon_gui_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_LEFT:
 		next(dialogue_line.next_id)
-	elif event.is_action_pressed(next_action) and get_viewport().gui_get_focus_owner() == balloon:
+	elif _avanza(event) and get_viewport().gui_get_focus_owner() == balloon:
 		next(dialogue_line.next_id)
 
 

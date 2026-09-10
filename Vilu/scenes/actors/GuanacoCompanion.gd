@@ -21,8 +21,9 @@ const MODELO := preload("res://models/personaje/guanaco.glb")
 ## la cabeza en -Z.
 const GIRO_MODELO := PI
 ## Cuánto mide montado, en metros. Es lo que hace que se lea como una montura y
-## no como un perro; el número lo pediste vos y no ha cambiado.
-const ALTO := 1.96
+## no como un perro. Medía 1,96 y Benjamín, con sus 2,2 m, lo tapaba entero al
+## sentarse: las piernas le colgaban hasta el suelo. Ahora es la mitad más.
+const ALTO := 2.94
 ## Lo que mide el modelo a escala 1. El espiritual medía 0.98 y por eso llevaba
 ## escala 2; éste mide 1.60, así que el factor es otro. Escalar por el número
 ## viejo lo dejaría midiendo tres metros y veinte.
@@ -74,9 +75,11 @@ const FOLLOW_SPEED  := 6.0
 const VELOCIDAD_VERTICAL := 8.0
 ## Desnivel a partir del cual se planta de una vez en vez de subir despacio.
 const SALTO_DE_ALTURA := 6.0
-## Distancia a la que se pone a la DERECHA de Benjamín. A 1.3 se le montaba
-## encima ahora que el modelo mide el doble; a 2.5 quedaba lejísimos.
-const FOLLOW_DIST   := 1.8
+## Distancia a la que se pone a la DERECHA de Benjamín, y a la que aparece al
+## invocarlo. A 1.8 quedaba a un cuerpo entero de distancia y se veía suelto;
+## a 1.2 va pegado a su lado, sin montársele encima: medio guanaco (0,42) más
+## medio Benjamín (0,35) y un palmo de aire.
+const FOLLOW_DIST   := 1.2
 
 var _charging    := false
 var _charge_vel  := Vector3.ZERO
@@ -87,7 +90,6 @@ var _ready_done  := false
 var _mounted     := false
 
 var _g_prev      := false
-var _label: Label3D = null
 var _anim: AnimationPlayer = null
 ## Lo que le queda de coz al saltar. Mientras corre, manda sobre el paso.
 var _salto_restante := 0.0
@@ -108,11 +110,45 @@ func esta_embistiendo() -> bool:
 	return _charging
 
 
+## A qué altura queda el lomo, en metros sobre las patas, ya con la escala.
+##
+## SE MIDE DEL MODELO y no se escribe: el jinete se subía un número fijo y el
+## guanaco cambió de modelo dos veces con el mismo número, así que Benjamín
+## terminó flotando a un palmo del lomo. Se toma el techo de la malla en la
+## franja trasera del cuerpo —de la grupa hasta antes del cuello, que es donde
+## uno se sienta—, y si el modelo cambia, esto cambia con él.
+##
+## El modelo mira hacia +Z (ver GIRO_MODELO), así que la grupa está en -Z.
+const LOMO_DESDE := -0.45
+const LOMO_HASTA := -0.15
+var _lomo := -1.0
+
+
+func altura_del_lomo() -> float:
+	if _lomo > 0.0:
+		return _lomo
+	var techo := 0.0
+	for mi in find_children("*", "MeshInstance3D", true, false):
+		var m: Mesh = (mi as MeshInstance3D).mesh
+		if m == null:
+			continue
+		for s in m.get_surface_count():
+			var arr: Array = m.surface_get_arrays(s)
+			if arr.is_empty() or arr[Mesh.ARRAY_VERTEX] == null:
+				continue
+			for v in arr[Mesh.ARRAY_VERTEX]:
+				var p: Vector3 = v
+				if p.z >= LOMO_DESDE and p.z <= LOMO_HASTA:
+					techo = maxf(techo, p.y)
+	# Sin malla —los tests montan el guanaco sin modelo— se estima: en éste el
+	# lomo queda a algo más de la mitad de la altura.
+	_lomo = techo * ESCALA if techo > 0.0 else ALTO * 0.53
+	return _lomo
+
+
 ## Llamado por PlayerController al montar/desmontar (tecla Q).
 func set_mounted(v: bool) -> void:
 	_mounted = v
-	if is_instance_valid(_label):
-		_label.visible = not v
 
 
 func _process(delta: float) -> void:
@@ -287,15 +323,9 @@ func _build_visual() -> void:
 				_anim.get_animation(c).loop_mode = Animation.LOOP_LINEAR
 		_poner(CLIP_QUIETO, 1.0)
 
-	# Etiqueta: va colgada del guanaco y NO del visual girado, para que el texto
-	# no salga del revés.
-	_label           = Label3D.new()
-	_label.text      = Botones.traducir("Guanaco\n[G] embestir · [Q] montar")
-	_label.font_size = 18
-	# Por encima de la cabeza: con el modelo al doble, a 1.4 quedaba dentro suyo.
-	_label.position  = Vector3(0, 0.6 + ALTO, 0)
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	add_child(_label)
+	# Sin letrero encima: el "[G] embestir · [Q] montar" flotando sobre el
+	# guanaco se quitó, igual que los carteles del HUD al invocarlo. Los
+	# controles se explican desde la interfaz, no desde el animal.
 
 	_pos_previa = global_position
 

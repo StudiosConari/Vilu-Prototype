@@ -22,25 +22,29 @@ const PISO_BALDOSAS := preload("res://scenes/core/PisoBaldosas.gd")
 const BALLOON      := "res://scenes/ui/GloboDeDialogo.tscn"
 
 const TALK_BAR_1 := "~ start
-Parroquiano: Salud. Acá no se habla de la mina, ¿estamos?
-Parroquiano: Lo que sea que hayan visto abajo, déjenlo abajo.
+Ciudadano: Salud. Acá no se habla de la mina, ¿estamos?
+Ciudadano: Lo que sea que hayan visto abajo, déjenlo abajo.
+Ciudadano: Desde hace unos dias estan pasando cosas muy raras.
+Ciudadano: Me han dicho mis conocidos que estan viendo seres miticos.
+Ciudadano: A mi Tambien me han dicho lo mismo, es muy extraño.
+Ciudadano: Algo debio pasar.
 => END
 "
 
 const TALK_BAR_2 := "~ start
-Parroquiano: ...y yo te digo que están locos. Nadie provoca al Yastay y vive para contarlo.
+Ciudadano: ...y yo te digo que están locos. Nadie provoca al Yastay y vive para contarlo.
 Emilia: Perdón. ¿Quién está provocando al Yastay?
-Parroquiano: Cazadores. Bajaron de la cordillera hace una semana.
-Parroquiano: Le están carneando los guanacos de a uno para sacarlo de la quebrada.
-Parroquiano: Lo quieren en la pampa alta, donde no tenga dónde esconderse. Ahí lo atrapan.
+Ciudadano: Cazadores. Bajaron de la cordillera hace una semana.
+Ciudadano: Le están carneando los guanacos de a uno para sacarlo de la quebrada.
+Ciudadano: Lo quieren en la pampa alta, donde no tenga dónde esconderse. Ahí lo atrapan.
 Benjamín: ¿Y nadie hace nada?
-Parroquiano: ¿Vos irías? Si se animan, es camino al norte. Que la Tirana los acompañe.
+Ciudadano: ¿Tu te atreverias? Si se animan, es camino al norte. Que la Virgen los acompañe.
 => END
 "
 
 const TALK_BAR_3 := "~ start
-Parroquiano: Desde que volvieron de los volcanes la gente anda rara.
-Parroquiano: Como si siempre hubiera alguien escuchando de más.
+Ciudadano: Desde que volvieron de los volcanes la gente anda rara.
+Ciudadano: Como si siempre hubiera alguien escuchando de más.
 => END
 "
 
@@ -48,7 +52,7 @@ const TALK_OCULTISTA := "~ start
 Benjamín: Emilia. La del bar.
 Emilia: Estuvo ahí sentada todo el rato. Escuchando cada palabra.
 Emilia: ¡Eh! ¡Vos!
-Benjamín: Se va. Sin apurarse, como si conociera cada callejón del pueblo.
+Benjamín: Se va. Sin apurarse, como si nada.
 Emilia: Entonces la bruja tiene razón. No estamos persiguiendo a un monstruo.
 Emilia: Estamos persiguiendo a gente.
 => END
@@ -93,10 +97,26 @@ func _ready() -> void:
 	GameManager.ability_unlocked.connect(_on_progreso.unbind(1))
 
 
+const CHARLA := preload("res://scenes/core/Charla.gd")
+
+## Lo que se dicen al salir corriendo de la mina la primera vez, ya a salvo.
+const TALK_HUIDA := "~ start
+Benjamín: ¡No lo puedo creer! Primero La Tirana en persona, ahora un fantasma… ¡y hasta un perro gigante demoníaco!
+Emilia: Yo tampoco. Este viaje está cada vez más raro. ¿A ti qué se te ocurre salir a mochilear?
+Benjamín: Esto nunca estuvo en el plan. ¡Aún tengo la piel de gallina!
+=> END
+"
+
+
 ## WorldRoot llama a esto cuando el jugador entra al pueblo.
 func activate() -> void:
 	_refrescar_etapa()
 	_intro_hint()
+	# Recién salidos de la mina con el Chupacabras detrás: un segundo para que
+	# termine el fundido, y hablan.
+	if GameManager.huyo_de_la_mina:
+		GameManager.huyo_de_la_mina = false
+		CHARLA.una_vez(get_tree(), "huida_de_la_mina", TALK_HUIDA, 1.0)
 
 
 func deactivate() -> void:

@@ -61,6 +61,27 @@ func titular_de_logro(id: String) -> String:
 			return "%s logro: %s" % [ordinal, LOGROS[i]["titulo"]]
 	return id
 
+## Hay una partida en marcha a la que volver: se pone al salir al título desde
+## la pausa, y es lo que hace aparecer «Continuar» en el menú. Empezar de nuevo
+## o cerrar el juego la borra. No se guarda: es de esta sesión.
+var se_puede_continuar := false
+
+## Las charlas de la pareja que ya se dijeron en esta partida (ver Charla.gd).
+var _charlas := {}
+
+## true la PRIMERA vez que se pregunta por esa charla; después, false.
+func charla_pendiente(id: String) -> bool:
+	if _charlas.has(id):
+		return false
+	_charlas[id] = true
+	return true
+
+
+## Se acaba de cruzar la boca de la mina huyendo del Chupacabras. Lo pone la
+## mina y lo consume el poblado, que es donde la pareja recupera el aliento y
+## habla de lo que vio.
+var huyo_de_la_mina := false
+
 ## Debug: si no está vacío, Game arranca cargando esta zona (selector del título).
 var debug_start_zone := ""
 
@@ -164,6 +185,9 @@ func conceder(id: String) -> void:
 
 ## Reinicia el progreso (util para tests y para "Nueva partida").
 func reset_progress() -> void:
+	se_puede_continuar = false
+	_charlas.clear()
+	huyo_de_la_mina = false
 	Save.beat_index = 0
 	Save.has_bow = false
 	Save.has_wings = false

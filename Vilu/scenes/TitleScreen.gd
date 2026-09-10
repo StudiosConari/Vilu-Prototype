@@ -5,6 +5,31 @@ extends Control
 var _options: Control
 var _zonas: Control
 var _titulo: Label
+var _primero: BaseButton = null
+## La columna del menú entera, para esconderla detrás de la puerta.
+var _columna: VBoxContainer = null
+
+## La puerta: antes del menú sólo se ve «Presiona cualquier botón» en medio
+## de la portada. Al pulsar algo se enciende un instante y da paso al menú.
+## Volviendo del juego no hay puerta: ya se estaba jugando.
+var _puerta: TextureRect = null
+var _puerta_abierta := false
+const PUERTA := "res://textures/ui/presiona.png"
+const PUERTA_ACTIVA := "res://textures/ui/presiona_activo.png"
+## Cuánto se ve encendida antes de que salga el menú, en segundos.
+const DESTELLO_DE_LA_PUERTA := 0.45
+
+## Los botones dibujados del menú: para cada entrada, `textures/ui/botones/
+## <clave>.png` en reposo y `<clave>_activo.png` con el ratón encima, el foco
+## del mando o pulsado. Si falta el par, la entrada sale con la placa de
+## siempre, así que se pueden ir poniendo de a uno.
+const CARPETA_DE_BOTONES := "res://textures/ui/botones/"
+
+## «Cargar partida» todavía no existe: no se enseña hasta que haya qué cargar.
+## Su dibujo, mientras tanto, lo lleva «Seleccionar zona».
+const CON_CARGAR_PARTIDA := false
+
+var _ancho_de_columna := 420.0
 
 const MUNDO_ATACAMA := "res://scenes/core/WorldAtacama.tscn"
 ## El aspecto de las pantallas que van sobre la ilustración, compartido con el
@@ -15,6 +40,12 @@ const OPCIONES := preload("res://scenes/ui/PanelOpciones.gd")
 ## Fijo a propósito: es lo que obliga a las descripciones largas a partirse en
 ## varias líneas en vez de estirar el bloque hasta salirse de la pantalla.
 const ANCHO_DEL_PANEL := 860.0
+
+## El marco dibujado del selector de zonas (el panel de «Cargar partida»), su
+## proporción alto/ancho y el hueco de dentro, en fracciones del dibujo.
+const FONDO_DE_ZONAS := "res://textures/ui/fondo_zonas.png"
+const PROPORCION_DEL_MARCO := 0.9816
+const HUECO_DEL_MARCO := Rect2(0.07, 0.13, 0.86, 0.80)
 
 ## El recorrido del prototipo, en orden, para el selector de debug.
 ##
@@ -100,15 +131,19 @@ func _ready() -> void:
 		# la columna quedaba descolgada del logo.
 		vb.anchor_left = 0.32
 		vb.anchor_right = 0.56
-		vb.anchor_top = 0.30
-		vb.anchor_bottom = 0.88
+		vb.anchor_top = 0.28
+		vb.anchor_bottom = 0.93
 		vb.offset_left = 0.0
 		vb.offset_right = 0.0
 		vb.offset_top = 0.0
 		vb.offset_bottom = 0.0
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
-	vb.add_theme_constant_override("separation", 14 if not con_arte else 9)
+	vb.add_theme_constant_override("separation", 14 if not con_arte else 6)
 	add_child(vb)
+	_columna = vb
+	# Lo ancho de la columna, en unidades de diseño: de ahí sale el alto de
+	# los botones dibujados, que guardan la proporción del dibujo.
+	_ancho_de_columna = get_viewport_rect().size.x * (vb.anchor_right - vb.anchor_left)
 
 	# El título va dibujado EN el arte, así que sólo se escribe cuando el arte no
 	# está: escribirlo encima daba dos "VILU", uno sobre otro.
@@ -135,19 +170,36 @@ func _ready() -> void:
 	# ningún lado: «JUGAR» continuaba con el progreso que hubiera y «Nueva
 	# partida» lo borraba. Con dos botones seguidos que llevan al mismo sitio,
 	# quien llega al menú por primera vez no tiene forma de saber cuál le toca.
-	var newgame := _entrada(con_arte, "Nueva partida", 40, 80)
+	# «Continuar» sólo cuando hay partida en marcha: cuando se salió al título
+	# desde la pausa. Al abrir el juego no hay a qué volver, y ofrecerlo igual
+	# obligaría a adivinar qué hace.
+	var seguir: BaseButton = null
+	if GameManager.se_puede_continuar:
+		seguir = _entrada(con_arte, "Continuar", 26, 54, "continuar")
+		seguir.pressed.connect(_continuar)
+		vb.add_child(seguir)
+
+	var newgame := _entrada(con_arte, "Nueva partida", 40, 80, "nueva_partida")
 	newgame.pressed.connect(_on_new_game)
 	vb.add_child(newgame)
 
-	var opts := _entrada(con_arte, "Opciones", 26, 54)
+	if CON_CARGAR_PARTIDA:
+		var cargar := _entrada(con_arte, "Cargar partida", 26, 54, "cargar_partida")
+		vb.add_child(cargar)
+
+	var opts := _entrada(con_arte, "Opciones", 26, 54, "opciones")
 	opts.pressed.connect(func() -> void: _options.visible = true)
 	vb.add_child(opts)
 
-	var zonas := _entrada(con_arte, "Seleccionar zona", 26, 54)
+	var creditos := _entrada(con_arte, "Créditos", 26, 54, "creditos")
+	creditos.pressed.connect(func() -> void: _creditos.visible = true)
+	vb.add_child(creditos)
+
+	var zonas := _entrada(con_arte, "Seleccionar zona", 26, 54, "seleccionar_zona")
 	zonas.pressed.connect(func() -> void: _zonas.visible = true)
 	vb.add_child(zonas)
 
-	var quit := _entrada(con_arte, "Salir", 26, 54)
+	var quit := _entrada(con_arte, "Salir", 26, 54, "salir")
 	quit.pressed.connect(func() -> void: get_tree().quit())
 	vb.add_child(quit)
 
@@ -161,6 +213,232 @@ func _ready() -> void:
 	# pequeño cruzadas sobre la ilustración, justo por delante del hielo y los
 	# pingüinos. Lo que hay que ver al abrir el juego es el cuadro y el menú.
 	_build_debug_zones()
+	_build_creditos()
+	_montar_puerta()
+
+	# Con mando: el foco arranca en la primera entrada y vuelve al botón que
+	# abrió cada panel cuando ese panel se cierra. Sin foco, el mando no tiene
+	# por dónde empezar y el menú de inicio era inalcanzable.
+	# El foco que pone el CÓDIGO no enciende el botón: al abrir el menú, «Nueva
+	# partida» se veía como si tuviera el ratón encima sin que nadie lo hubiera
+	# tocado. El que llega moviendo la cruceta o el ratón, sí.
+	_primero = seguir if seguir != null else newgame
+	_enfocar_sin_encender(_primero)
+	_options.visibility_changed.connect(func() -> void:
+		if not _options.visible:
+			_enfocar_sin_encender(opts))
+	_zonas.visibility_changed.connect(func() -> void:
+		if not _zonas.visible:
+			_enfocar_sin_encender(zonas))
+	_creditos.visibility_changed.connect(func() -> void:
+		if not _creditos.visible:
+			_enfocar_sin_encender(creditos))
+
+
+func _enfocar_sin_encender(b: BaseButton) -> void:
+	b.set_meta("foco_silencioso", true)
+	b.call_deferred("grab_focus")
+
+
+func _montar_puerta() -> void:
+	if GameManager.se_puede_continuar or not ResourceLoader.exists(PUERTA):
+		_puerta_abierta = true
+		return
+	_puerta = TextureRect.new()
+	_puerta.name = "Puerta"
+	_puerta.texture = load(PUERTA)
+	_puerta.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_puerta.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_puerta.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# En medio de la pantalla, debajo del logo de la portada.
+	_puerta.anchor_left = 0.27
+	_puerta.anchor_right = 0.73
+	_puerta.anchor_top = 0.42
+	_puerta.anchor_bottom = 0.66
+	add_child(_puerta)
+	_columna.visible = false
+
+
+## Cualquier tecla, botón del ratón o botón del mando abre la puerta. Mover el
+## ratón o el stick, no.
+func _input(event: InputEvent) -> void:
+	if _puerta_abierta:
+		return
+	var pulsado := (event is InputEventKey and event.is_pressed() and not event.is_echo()) \
+		or (event is InputEventMouseButton and event.is_pressed()) \
+		or (event is InputEventJoypadButton and event.is_pressed())
+	if not pulsado:
+		return
+	_abrir_la_puerta()
+	get_viewport().set_input_as_handled()
+
+
+func _abrir_la_puerta() -> void:
+	if _puerta_abierta:
+		return
+	_puerta_abierta = true
+	if _puerta != null and ResourceLoader.exists(PUERTA_ACTIVA):
+		_puerta.texture = load(PUERTA_ACTIVA)
+	get_tree().create_timer(DESTELLO_DE_LA_PUERTA).timeout.connect(_entrar_al_menu)
+
+
+func _entrar_al_menu() -> void:
+	if _puerta != null:
+		_puerta.visible = false
+	_columna.visible = true
+	if _primero != null:
+		_enfocar_sin_encender(_primero)
+
+
+## Vuelve a la partida que se dejó al salir a este menú desde la pausa. El
+## progreso vive en los autoloads y no se tocó: basta con cargar el juego.
+func _continuar() -> void:
+	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")
+
+
+## Los créditos: el dibujo de la pantalla entera —el marco, y Emilia y
+## Benjamín señalando hacia arriba— y el texto subiendo despacio por el hueco
+## del medio, como en el cine. Se cierra con «Volver», con Escape o con la B.
+var _creditos: Control = null
+## El texto que sube, y dónde está.
+var _rollo: VBoxContainer = null
+var _ventana_del_rollo: Control = null
+
+const DIBUJO_DE_CREDITOS := "res://textures/ui/fondo_creditos.png"
+## A cuánto sube, en píxeles de interfaz por segundo.
+const VELOCIDAD_DEL_ROLLO := 28.0
+## Por dónde sube: el hueco entre el marco de arriba y las manos de los dos.
+const HUECO_DEL_ROLLO := Rect2(0.18, 0.10, 0.64, 0.56)
+
+## Cada línea: [texto, tamaño]. De 26 para arriba sale en oro: los títulos y
+## los nombres; los cargos, en letra clara.
+const CREDITOS := [
+	["VILU — El despertar", 40],
+	["", 12],
+	["Un juego de", 20],
+	["Studios Conari", 30],
+	["", 30],
+	["María Inés Cisterna Escobar", 26],
+	["Game Director · Creative Director · Game Designer", 18],
+	["", 20],
+	["Catalina Verónica Valenzuela Vergara", 26],
+	["Game Designer", 18],
+	["", 20],
+	["Kevin Alexis Del Rio Morgado", 26],
+	["Lead Programmer · Narrative Director", 18],
+	["", 30],
+	["Basado en la novela VILU", 20],
+	["", 30],
+	["Gracias a quienes probaron el prototipo", 20],
+	["y a las comunidades del norte de Chile", 20],
+	["que cuidan estas historias.", 20],
+	["", 40],
+	["Nuestras raíces también son futuro.", 26],
+]
+
+
+func _build_creditos() -> void:
+	_creditos = Control.new()
+	_creditos.name = "Creditos"
+	_creditos.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_creditos.visible = false
+	add_child(_creditos)
+
+	var fondo := TextureRect.new()
+	fondo.name = "Dibujo"
+	fondo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fondo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	fondo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	if ResourceLoader.exists(DIBUJO_DE_CREDITOS):
+		fondo.texture = load(DIBUJO_DE_CREDITOS)
+	else:
+		# Sin el dibujo, al menos que no se vea el menú detrás.
+		var velo := ColorRect.new()
+		velo.set_anchors_preset(Control.PRESET_FULL_RECT)
+		velo.color = Color(0.02, 0.06, 0.16, 0.96)
+		_creditos.add_child(velo)
+	_creditos.add_child(fondo)
+
+	# La ventana por la que se ve el rollo: lo que sale de ella se recorta.
+	_ventana_del_rollo = Control.new()
+	_ventana_del_rollo.name = "Ventana"
+	_ventana_del_rollo.clip_contents = true
+	_ventana_del_rollo.anchor_left = HUECO_DEL_ROLLO.position.x
+	_ventana_del_rollo.anchor_top = HUECO_DEL_ROLLO.position.y
+	_ventana_del_rollo.anchor_right = HUECO_DEL_ROLLO.end.x
+	_ventana_del_rollo.anchor_bottom = HUECO_DEL_ROLLO.end.y
+	_ventana_del_rollo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_creditos.add_child(_ventana_del_rollo)
+
+	_rollo = VBoxContainer.new()
+	_rollo.name = "Rollo"
+	_rollo.add_theme_constant_override("separation", 4)
+	_rollo.anchor_right = 1.0
+	_rollo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ventana_del_rollo.add_child(_rollo)
+	var serif := SystemFont.new()
+	serif.font_names = PackedStringArray(["Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif"])
+	for linea: Array in CREDITOS:
+		var l := Label.new()
+		l.text = String(linea[0])
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.add_theme_font_override("font", serif)
+		l.add_theme_font_size_override("font_size", int(linea[1]))
+		l.add_theme_color_override("font_color", PLACA.LETRA if int(linea[1]) < 26 else PLACA.ORO_VIVO)
+		l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.6))
+		l.add_theme_constant_override("outline_size", 3)
+		if l.text == "":
+			l.custom_minimum_size = Vector2(0, int(linea[1]))
+		_rollo.add_child(l)
+
+	# «Volver», abajo a la derecha, dentro del marco.
+	var volver := PLACA.boton("Volver")
+	volver.custom_minimum_size = Vector2(160, 42)
+	# Dentro del marco del dibujo nuevo, que es más estrecho que la pantalla.
+	volver.anchor_left = 0.76
+	volver.anchor_right = 0.88
+	volver.anchor_top = 0.86
+	volver.anchor_bottom = 0.92
+	volver.pressed.connect(func() -> void: _creditos.visible = false)
+	_creditos.add_child(volver)
+	PLACA.enfocar_al_mostrar(_creditos, volver)
+	# Cada vez que se abre, el rollo arranca desde abajo del todo.
+	_creditos.visibility_changed.connect(func() -> void:
+		if _creditos.visible:
+			_rollo.position.y = _ventana_del_rollo.size.y)
+
+
+func _process(delta: float) -> void:
+	if _creditos == null or not _creditos.visible or _rollo == null:
+		return
+	_rollo.position.y -= VELOCIDAD_DEL_ROLLO * delta
+	# Pasado del todo por arriba, vuelve a entrar por abajo.
+	if _rollo.position.y + _rollo.size.y < 0.0:
+		_rollo.position.y = _ventana_del_rollo.size.y
+
+
+## [ESC] o la B del mando: un paso atrás. Cierra lo que esté más encima.
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	if _options != null and _options.visible:
+		if _capturando_un_control():
+			return
+		OPCIONES.cerrar_lo_de_encima(_options)
+		get_viewport().set_input_as_handled()
+	elif _zonas != null and _zonas.visible:
+		_zonas.visible = false
+		get_viewport().set_input_as_handled()
+	elif _creditos != null and _creditos.visible:
+		_creditos.visible = false
+		get_viewport().set_input_as_handled()
+
+
+func _capturando_un_control() -> bool:
+	for h in get_tree().get_nodes_in_group("hoja_de_controles"):
+		if h is CanvasItem and (h as CanvasItem).visible and String(h.get("_capturando")) != "":
+			return true
+	return false
 
 
 ## Panel de selección de zona: una lista VERTICAL, no una fila.
@@ -175,34 +453,54 @@ func _build_debug_zones() -> void:
 	_zonas.visible = false
 	add_child(_zonas)
 
+	# Un velo ligero: detrás se sigue viendo la portada.
 	var dim := ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.03, 0.06, 0.86)
+	dim.color = Color(0.02, 0.03, 0.06, 0.45)
 	_zonas.add_child(dim)
 
-	# Una placa de ANCHO FIJO, centrada y alta como la ventana.
-	#
-	# Antes la lista se centraba con un CenterContainer y cada descripción era
-	# una línea suelta: la de "Poblado/Bar" mide más de mil píxeles, así que el
-	# bloque entero crecía con ella y se salía de la pantalla por los dos lados.
-	# Con el ancho fijo aquí, las descripciones no tienen más remedio que partir
-	# en varias líneas.
-	var marco := PanelContainer.new()
-	marco.anchor_left = 0.5
-	marco.anchor_right = 0.5
-	marco.anchor_top = 0.04
-	marco.anchor_bottom = 0.96
-	marco.offset_left = -ANCHO_DEL_PANEL * 0.5
-	marco.offset_right = ANCHO_DEL_PANEL * 0.5
-	marco.offset_top = 0.0
-	marco.offset_bottom = 0.0
-	marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.92, 26))
-	_zonas.add_child(marco)
+	# El marco es un DIBUJO —el panel de «Cargar partida», con la estrella y
+	# las alas arriba— alto como la ventana y con su proporción; la lista va
+	# dentro, en el hueco del marco. Sin el dibujo, la placa de siempre.
+	var caja := AspectRatioContainer.new()
+	caja.set_anchors_preset(Control.PRESET_FULL_RECT)
+	caja.anchor_top = 0.03
+	caja.anchor_bottom = 0.97
+	caja.offset_top = 0.0
+	caja.offset_bottom = 0.0
+	caja.ratio = 1.0 / PROPORCION_DEL_MARCO
+	caja.stretch_mode = AspectRatioContainer.STRETCH_FIT
+	_zonas.add_child(caja)
 
+	var lienzo := Control.new()
+	lienzo.name = "Lienzo"
+	caja.add_child(lienzo)
+	if ResourceLoader.exists(FONDO_DE_ZONAS):
+		var dibujo := TextureRect.new()
+		dibujo.name = "Dibujo"
+		dibujo.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dibujo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		dibujo.stretch_mode = TextureRect.STRETCH_SCALE
+		dibujo.texture = load(FONDO_DE_ZONAS)
+		dibujo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lienzo.add_child(dibujo)
+	else:
+		var marco := PanelContainer.new()
+		marco.set_anchors_preset(Control.PRESET_FULL_RECT)
+		marco.add_theme_stylebox_override("panel", PLACA.estilo(0.0, 0.92, 26))
+		lienzo.add_child(marco)
+
+	# El hueco del marco: debajo de las alas y por dentro del filete.
 	var aire := MarginContainer.new()
-	aire.add_theme_constant_override("margin_top", 22)
-	aire.add_theme_constant_override("margin_bottom", 22)
-	marco.add_child(aire)
+	aire.anchor_left = HUECO_DEL_MARCO.position.x
+	aire.anchor_top = HUECO_DEL_MARCO.position.y
+	aire.anchor_right = HUECO_DEL_MARCO.end.x
+	aire.anchor_bottom = HUECO_DEL_MARCO.end.y
+	aire.offset_left = 0.0
+	aire.offset_top = 0.0
+	aire.offset_right = 0.0
+	aire.offset_bottom = 0.0
+	lienzo.add_child(aire)
 
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
@@ -216,15 +514,11 @@ func _build_debug_zones() -> void:
 
 	# El scroll se come el alto que sobre: doce paradas con su descripción no
 	# entran en cualquier ventana.
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	var par: Array = PLACA.lista_con_scroll()
+	var scroll: ScrollContainer = par[0]
 	vb.add_child(scroll)
-
-	var lista := VBoxContainer.new()
-	lista.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var lista: VBoxContainer = par[1]
 	lista.add_theme_constant_override("separation", 9)
-	scroll.add_child(lista)
 
 	for i in DEBUG_ZONES.size():
 		var b := PLACA.boton(_etiqueta(DEBUG_ZONES[i]))
@@ -239,6 +533,9 @@ func _build_debug_zones() -> void:
 	var volver := PLACA.boton("Volver")
 	volver.pressed.connect(func() -> void: _zonas.visible = false)
 	vb.add_child(volver)
+	# Con mando: al abrirse la lista, el foco va a la primera parada.
+	if lista.get_child_count() > 0:
+		PLACA.enfocar_al_mostrar(_zonas, lista.get_child(0) as Control)
 
 
 ## El texto del botón, con el mundo cuando hace falta decirlo.
@@ -337,14 +634,81 @@ func _on_new_game() -> void:
 	get_tree().change_scene_to_file("res://scenes/core/Game.tscn")
 
 
-## Una entrada del menú: con placa si hay arte detrás, pelada si no.
+## Una entrada del menú: dibujada si están sus dos imágenes, con placa si hay
+## arte de fondo, y pelada si no hay nada.
 ##
-## El menú es el mismo en los dos casos —los mismos botones y en el mismo
+## El menú es el mismo en todos los casos —los mismos botones y en el mismo
 ## orden—; lo que cambia es cómo se ven sobre lo que hay debajo.
-func _entrada(con_arte: bool, texto: String, tamano: int, alto: int) -> Button:
-	if con_arte:
-		return PLACA.boton(texto)
-	return _boton_menu(texto, tamano, alto)
+func _entrada(con_arte: bool, texto: String, tamano: int, alto: int, clave := "") -> BaseButton:
+	var b: BaseButton = _boton_dibujado(clave)
+	if b == null:
+		b = PLACA.boton(texto) if con_arte else _boton_menu(texto, tamano, alto)
+	# Qué entrada es, se dibuje como se dibuje: un botón de imagen no tiene
+	# texto, y hay quien lo busca por lo que dice.
+	b.name = texto
+	b.set_meta("texto", texto)
+	return b
+
+
+## El botón con sus imágenes, o null si no está ni la de reposo.
+##
+## Sin la encendida —«Seleccionar zona» usa el dibujo de «Cargar partida», que
+## vino sin su versión encendida— se usa la misma de reposo y se le sube el
+## brillo con el ratón encima o el foco.
+func _boton_dibujado(clave: String) -> TextureButton:
+	if clave == "":
+		return null
+	var reposo := CARPETA_DE_BOTONES + clave + ".png"
+	var activo := CARPETA_DE_BOTONES + clave + "_activo.png"
+	if not ResourceLoader.exists(reposo):
+		return null
+	if ResourceLoader.exists(activo):
+		return boton_con_imagenes(load(reposo), load(activo), _ancho_de_columna)
+	return boton_con_imagenes(load(reposo), null, _ancho_de_columna)
+
+
+## Un botón hecho de dos imágenes: la de reposo y la encendida en oro.
+##
+## Con el ratón encima o el foco del mando NO se pasa a la de oro: se aclara la
+## de reposo, que basta para ver cuál está elegido sin cargar la pantalla. La
+## de oro es para el momento de pulsarlo. Se escala a lo ancho de la columna
+## manteniendo la proporción, así el mismo dibujo vale para cualquier ventana.
+## El color con el que se aclara un botón con el ratón encima o el foco.
+const ENCENDIDO_A_MANO := Color(1.35, 1.25, 0.95)
+
+
+static func boton_con_imagenes(reposo: Texture2D, activo: Texture2D, ancho := 420.0) -> TextureButton:
+	var b := TextureButton.new()
+	b.texture_normal = reposo
+	if activo != null:
+		b.texture_pressed = activo
+	var encender := func(si: bool) -> void:
+		b.self_modulate = ENCENDIDO_A_MANO if si else Color.WHITE
+	b.mouse_entered.connect(encender.bind(true))
+	b.mouse_exited.connect(func() -> void: encender.call(b.has_focus()))
+	# El foco que pone el código (meta "foco_silencioso") no enciende: sólo el
+	# que llega por la cruceta o el ratón.
+	b.focus_entered.connect(func() -> void:
+		if b.has_meta("foco_silencioso"):
+			b.remove_meta("foco_silencioso")
+			return
+		encender.call(true))
+	b.focus_exited.connect(encender.bind(false))
+	# Pulsado se ve la de oro tal cual, sin aclarar encima.
+	b.button_down.connect(encender.bind(false))
+	b.button_up.connect(func() -> void: encender.call(b.has_focus() or b.is_hovered()))
+	b.ignore_texture_size = true
+	b.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	b.size_flags_horizontal = Control.SIZE_FILL
+	# El alto sale del ancho de la columna y la proporción del dibujo: con un
+	# alto fijo el dibujo quedaba centrado en una caja más alta que él y los
+	# botones salían separados de más.
+	var prop: float = reposo.get_height() / maxf(float(reposo.get_width()), 1.0)
+	b.custom_minimum_size = Vector2(0, ancho * prop)
+	# Sin el rectángulo de foco por defecto encima del dibujo: la imagen
+	# encendida ya dice cuál está elegido.
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	return b
 
 
 func _boton_menu(texto: String, tamano_letra: int, alto: int) -> Button:

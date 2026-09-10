@@ -87,6 +87,19 @@ func test_los_clips_injertados_se_repiten() -> void:
 			"%s se repite" % n)
 
 
+## Y los de una pasada que lleguen por el injerto NO se repiten. El rodar entró
+## por el mismo camino que el reposo y se quedó en bucle: no terminaba nunca y
+## Benjamín rodaba para siempre.
+func test_el_rodar_injertado_no_se_repite() -> void:
+	var an := _montado(0.0)
+	var ap: AnimationPlayer = an.get("_anim")
+	assert_eq(ap.get_animation("rodar").loop_mode, Animation.LOOP_NONE,
+		"rodar es de una pasada")
+	an.call("rodar_en", 0.57)
+	assert_eq(ap.get_animation("rodar").loop_mode, Animation.LOOP_NONE,
+		"y al lanzarlo sigue sin bucle")
+
+
 func test_mirando_al_frente_cada_rumbo_elige_su_clip() -> void:
 	# Con el visual sin girar, el personaje mira a -Z y su derecha es +X.
 	var an := _montado(0.0)
@@ -158,6 +171,29 @@ func test_el_reposo_nuevo_pisa_al_del_modelo() -> void:
 	var puesto: float = (an.get("_anim") as AnimationPlayer).get_animation("reposo").length
 	assert_almost_eq(puesto, aparte, 0.001,
 		"el que queda montado es el nuevo, no el del modelo (%.2f s)" % suyo)
+
+
+## El rodar nuevo entra por el mismo camino que el reposo: viene en el .glb
+## aparte y pisa al del modelo. Es lo que se exporta con
+## tools/exportar_animaciones_benjamin.py a partir de Rodar.fbx.
+func test_el_rodar_nuevo_pisa_al_del_modelo() -> void:
+	var aparte := _duracion(SOSTENIDO, "rodar")
+	assert_gt(aparte, 0.0, "el .glb aparte trae rodar")
+	var an := _montado(0.0)
+	var puesto: float = (an.get("_anim") as AnimationPlayer).get_animation("rodar").length
+	assert_almost_eq(puesto, aparte, 0.001, "el que queda montado es el nuevo")
+
+
+## La rodada se pide por DURACIÓN y el clip se acelera para caber: así Benjamín
+## y Emilia ruedan lo mismo aunque el clip de cada uno dure distinto.
+func test_la_rodada_dura_lo_que_se_le_pide() -> void:
+	var an := _montado(0.0)
+	var ap: AnimationPlayer = an.get("_anim")
+	var largo: float = ap.get_animation("rodar").length
+	var dura: float = an.call("rodar_en", 0.57)
+	assert_almost_eq(dura, 0.57, 0.01, "dura lo pedido, no lo que dura el clip (%.2f s)" % largo)
+	assert_almost_eq(ap.speed_scale, largo / 0.57, 0.01, "el ritmo sale del clip")
+	assert_eq(ap.assigned_animation, "rodar")
 
 
 func test_el_reposo_montado_se_repite() -> void:
