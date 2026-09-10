@@ -17,7 +17,7 @@ extends RefCounted
 ## acciones cada una y con el stick no tiene sentido asignarlas de a una.
 const EDITABLES := [
 	"run", "jump", "rodar", "attack", "triple_arrow", "interact",
-	"guanaco", "guanaco_montar", "guanaco_charge", "swap_ai", "swap_hold", "ui_cancel",
+	"guanaco", "guanaco_montar", "guanaco_charge", "swap_ai", "swap_hold", "marcos", "ui_cancel",
 ]
 
 const TECLADO := "teclado"

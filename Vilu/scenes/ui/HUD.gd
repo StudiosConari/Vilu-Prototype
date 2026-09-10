@@ -22,6 +22,7 @@ func _ready() -> void:
 	_montar_nota()
 	_montar_aviso_de_logro()
 	_montar_cartel()
+	_montar_marcos()
 	GameManager.ability_unlocked.connect(func(_a: String) -> void: _refresh_abilities())
 	GameManager.beat_changed.connect(func(_i: int) -> void: _refresh_debug())
 	TravelManager.region_changed.connect(func(_r: String) -> void: _refresh_debug())
@@ -118,47 +119,54 @@ func _placa() -> StyleBoxFlat:
 	return fondo
 
 
-## El recuadro del centro de la pantalla: los avisos —«¡La lava quema!», «Nuevo
-## logro»— iban sueltos arriba del todo, en letras blancas sobre lo que hubiera
-## detrás, y sobre el cielo del volcán no se leían. Ahora salen en el centro,
-## con la misma placa que el recuadro de misiones. Los dos carteles se meten
-## dentro y la placa se ve mientras alguno tenga algo que decir.
+## La placa de los avisos —«¡La lava quema!», «Sin energía para la flecha
+## triple», los mineros corruptos—: arriba, centrada y chica, con el mismo
+## formato que el aviso de logro, para que no corte la pantalla. Iban en una
+## placa grande en el centro y tapaban lo que estaba pasando. Si justo hay un
+## logro sonando, el aviso se pone debajo de él.
 var _cartel: PanelContainer = null
+const AVISO_SEPARACION := 50.0
 
 
 func _montar_cartel() -> void:
 	_cartel = PanelContainer.new()
 	_cartel.name = "Cartel"
-	_cartel.set_anchors_preset(Control.PRESET_CENTER)
+	_cartel.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_cartel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_cartel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	_cartel.custom_minimum_size = Vector2(640, 0)
+	_cartel.offset_top = AVISO_ALTO
+	_cartel.offset_bottom = AVISO_ALTO
 	_cartel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_cartel.add_theme_stylebox_override("panel", _placa())
+	_cartel.add_theme_stylebox_override("panel", _placa_chica())
 	_cartel.visible = false
 	add_child(_cartel)
-	# En el centro justo: se probó un poco más arriba y se leía como «arriba»,
-	# no como «en medio». Son desplazamientos desde el ancla, no una posición:
-	# `position` es absoluta y con (-320, -180) la placa quedaba fuera de la
-	# pantalla. Crece hacia los dos lados desde el centro.
-	_cartel.offset_left = -320
-	_cartel.offset_right = 320
-	_cartel.offset_top = 0
-	_cartel.offset_bottom = 0
-
-	var caja := VBoxContainer.new()
-	caja.add_theme_constant_override("separation", 6)
-	_cartel.add_child(caja)
-	for l: Label in [_banner]:
-		if l.get_parent() != null:
-			l.get_parent().remove_child(l)
-		caja.add_child(l)
-		l.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(616, 0)
-		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if _banner.get_parent() != null:
+		_banner.get_parent().remove_child(_banner)
+	_cartel.add_child(_banner)
+	_banner.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.custom_minimum_size = Vector2.ZERO
+	_banner.add_theme_font_size_override("font_size", 18)
+	_banner.add_theme_color_override("font_color", Color(0.96, 0.93, 0.85))
+	_banner.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_banner.add_theme_constant_override("outline_size", 4)
 	_refrescar_cartel()
+
+
+## La placa chica de arriba: la del logro y la de los avisos.
+func _placa_chica() -> StyleBoxFlat:
+	var fondo := _placa()
+	fondo.set_content_margin_all(8)
+	fondo.content_margin_left = 16
+	fondo.content_margin_right = 16
+	return fondo
+
+
+## Al cambiar el idioma en Opciones, el recuadro de misiones se vuelve a
+## escribir: su texto se arma con `tr()` al cambiar de misión, y si no se
+## quedaba en el idioma anterior hasta la siguiente.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED and _mis_panel != null and _mis_texto != null:
+		_al_avanzar_mision(Misiones.hechos(), 0)
 
 
 ## Cada cuadro, y no por la señal `visibility_changed`: dentro de una placa
@@ -166,11 +174,19 @@ func _montar_cartel() -> void:
 ## y la placa se quedaba escondida con el aviso dentro.
 func _process(_delta: float) -> void:
 	_refrescar_cartel()
+	_refrescar_marcos()
 
 
 func _refrescar_cartel() -> void:
-	if _cartel != null:
-		_cartel.visible = _banner.visible
+	if _cartel == null:
+		return
+	_cartel.visible = _banner.visible
+	# Debajo del aviso de logro mientras ése se vea.
+	var y := AVISO_ALTO
+	if _placa_de_logro != null and _placa_de_logro.visible:
+		y += AVISO_SEPARACION
+	_cartel.offset_top = y
+	_cartel.offset_bottom = y
 
 
 ## Un recuadro bajo el de misiones, para un recordatorio que dura un rato.
@@ -247,11 +263,7 @@ func _montar_aviso_de_logro() -> void:
 	_placa_de_logro.offset_top = AVISO_ALTO
 	_placa_de_logro.offset_bottom = AVISO_ALTO
 	_placa_de_logro.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var fondo := _placa()
-	fondo.set_content_margin_all(8)
-	fondo.content_margin_left = 16
-	fondo.content_margin_right = 16
-	_placa_de_logro.add_theme_stylebox_override("panel", fondo)
+	_placa_de_logro.add_theme_stylebox_override("panel", _placa_chica())
 	_placa_de_logro.visible = false
 	add_child(_placa_de_logro)
 	_aviso = Label.new()
@@ -337,18 +349,27 @@ func bind_player(player: Node) -> void:
 	if player.has_signal("energy_changed"):
 		player.energy_changed.connect(_on_energy)
 		_on_energy(int(player.energy), player.max_energy)
+	_refrescar_marcos()
+
+
+## El que espera: su retrato chico va debajo del activo. Con null no se ve.
+func bind_companero(otro: Node) -> void:
+	_companero = otro
+	_refrescar_marcos()
 
 
 func _on_health(current: int, maximum: int) -> void:
 	_hp.max_value = maximum
 	_hp.value = current
 	_hp_label.text = tr("Vida %d/%d") % [current, maximum]
+	_barra("vida", current, maximum)
 
 
 func _on_energy(current: int, maximum: int) -> void:
 	_energy.max_value = maximum
 	_energy.value = current
 	_energy_label.text = tr("Energía %d/%d") % [current, maximum]
+	_barra("energia", current, maximum)
 
 
 func _refresh_abilities() -> void:
@@ -425,10 +446,14 @@ func show_swap_hint(on: bool) -> void:
 ## que la segunda línea no se salga por abajo.
 const LETRERO_CAMBIAR := "[R] cambiar (IA) · [T] cambiar (queda quieto)"
 const LETRERO_GUANACO := "[Q] invocar · [C] montar · [G] embestir"
+const LETRERO_MARCOS := "[P] marcos y logros"
 
 
 func texto_del_letrero_de_controles() -> String:
-	var t := tr(LETRERO_CAMBIAR)
+	# La [P] en su propia línea: en la misma que las de cambiar no cabía y se
+	# salía por la izquierda.
+	var t := tr(LETRERO_CAMBIAR) + "
+" + tr(LETRERO_MARCOS)
 	if GameManager.has_ability("guanaco"):
 		t = tr(LETRERO_GUANACO) + "\n" + t
 	return Botones.traducir(t)
@@ -452,3 +477,203 @@ func show_hint(text: String) -> void:
 func clear_hint() -> void:
 	if _hint:
 		_hint.visible = false
+
+
+# --- Los marcos de los personajes -------------------------------------------
+
+## El retrato del personaje activo con su panel de vida, energía y carga y,
+## debajo y más chico, el del que espera. Es el arte de `textures/ui/hud/`.
+##
+## El panel viene SIN barras ni rótulos: se borraron del dibujo y se ponen aquí,
+## así los rótulos salen en el idioma que toque y las barras se rellenan de
+## verdad. Las barras son las mismas pintadas, recortadas, que se usan como
+## textura de progreso: lo que falta de vida se ve como la barra apagada.
+##
+## El que espera se ve de dos maneras: tras [R] sigue al otro y sale con su
+## marco chico; tras [T] se queda plantado, y sale «amurrado». Y desde la cima
+## del Ojos del Salado hay un marco alternativo para cada uno, que se elige en
+## la pantalla de la [P].
+const ARTE_HUD := "res://textures/ui/hud/"
+## Alto del retrato grande, en la pantalla de diseño (1280x720). Se probó a
+## 210 y tapaba media esquina; a 140 se amontonaba: quedó en medio.
+const ALTO_DEL_RETRATO := 175.0
+const PROPORCION_DEL_RETRATO := 492.0 / 505.0   # ancho/alto de retrato_*.png
+const PROPORCION_DEL_PANEL := 0.4715            # alto/ancho de panel_*.png
+## El panel respecto del retrato —dónde empieza y cuánto mide, en fracciones
+## del retrato—, medido en la composición de referencia de la artista: el
+## retrato se monta sobre la punta izquierda del panel.
+const PANEL_DESDE := Vector2(0.845, 0.16)
+const PANEL_ANCHO := 1.36
+## El retrato chico del compañero: cuánto mide respecto del grande y dónde va.
+const CHICO_ESCALA := 0.6
+const CHICO_DESDE := Vector2(0.55, 0.80)
+## Barras y rótulos dentro del panel, en fracciones del panel.
+const BARRAS := {
+	"vida":    Rect2(0.3598, 0.3339, 0.4179, 0.0993),
+	"energia": Rect2(0.3598, 0.5246, 0.4179, 0.0994),
+	"carga":   Rect2(0.3561, 0.7075, 0.4273, 0.1590),
+}
+const ROTULOS := {
+	"vida":    Rect2(0.150, 0.3219, 0.205, 0.1153),
+	"energia": Rect2(0.150, 0.5207, 0.205, 0.1192),
+	"carga":   Rect2(0.150, 0.7353, 0.205, 0.1312),
+}
+const NOMBRE_DE_BARRA := {"vida": "Vida", "energia": "Energía", "carga": "Carga"}
+## Cómo se ve la parte vacía de una barra.
+const BARRA_APAGADA := Color(0.28, 0.28, 0.34, 1.0)
+const LETRA_DE_ROTULO := 12
+
+var _marcos: Control = null
+var _retrato: TextureRect = null
+var _panel: TextureRect = null
+var _chico: TextureRect = null
+var _barras := {}
+var _companero: Node = null
+
+
+func _montar_marcos() -> void:
+	if not ResourceLoader.exists(ARTE_HUD + "panel_emilia.png"):
+		return
+	_marcos = Control.new()
+	_marcos.name = "Marcos"
+	_marcos.position = Vector2(14, 8)
+	_marcos.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_marcos)
+
+	var alto := ALTO_DEL_RETRATO
+	var ancho := alto * PROPORCION_DEL_RETRATO
+	var panel_ancho := ancho * PANEL_ANCHO
+	var panel := Rect2(PANEL_DESDE.x * ancho, PANEL_DESDE.y * alto,
+		panel_ancho, panel_ancho * PROPORCION_DEL_PANEL)
+	# El panel primero y el retrato encima: las plumas del retrato tapan la
+	# punta del panel, como en la referencia.
+	_panel = _dibujo("Panel", panel)
+	_retrato = _dibujo("Retrato", Rect2(0, 0, ancho, alto))
+	for k: String in BARRAS:
+		var b := TextureProgressBar.new()
+		b.name = "Barra" + k.capitalize()
+		var arte := load(ARTE_HUD + "barra_%s.png" % k) as Texture2D
+		b.texture_progress = arte
+		b.texture_under = arte
+		b.tint_under = BARRA_APAGADA
+		b.nine_patch_stretch = true
+		b.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
+		b.min_value = 0.0
+		b.max_value = 1.0
+		# El paso por defecto de un Range es 1: con él la barra sólo sabe
+		# estar llena o vacía.
+		b.step = 0.0
+		b.value = 1.0 if k != "carga" else 0.0
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_colocar(b, _dentro(panel, BARRAS[k]))
+		_marcos.add_child(b)
+		_barras[k] = b
+	for k: String in ROTULOS:
+		var l := Label.new()
+		l.name = "Rotulo" + k.capitalize()
+		l.text = NOMBRE_DE_BARRA[k]
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.add_theme_font_override("font", _serif())
+		l.add_theme_font_size_override("font_size", LETRA_DE_ROTULO)
+		l.add_theme_color_override("font_color", PLACA.LETRA)
+		l.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.10, 0.9))
+		l.add_theme_constant_override("outline_size", 2)
+		l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_colocar(l, _dentro(panel, ROTULOS[k]))
+		_marcos.add_child(l)
+	_chico = _dibujo("Companero", Rect2(CHICO_DESDE.x * ancho, CHICO_DESDE.y * alto,
+		ancho * CHICO_ESCALA, alto * CHICO_ESCALA))
+	_marcos.size = Vector2(panel.end.x, alto * (CHICO_DESDE.y + CHICO_ESCALA))
+	_marcos.visible = false
+
+
+func _dibujo(nombre: String, r: Rect2) -> TextureRect:
+	var t := TextureRect.new()
+	t.name = nombre
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_colocar(t, r)
+	_marcos.add_child(t)
+	return t
+
+
+static func _colocar(c: Control, r: Rect2) -> void:
+	c.position = r.position
+	c.size = r.size
+
+
+static func _dentro(marco: Rect2, f: Rect2) -> Rect2:
+	return Rect2(marco.position + f.position * marco.size, f.size * marco.size)
+
+
+static func _serif() -> Font:
+	var f := SystemFont.new()
+	f.font_names = PackedStringArray(["Georgia", "Times New Roman", "Liberation Serif", "DejaVu Serif"])
+	return f
+
+
+func _barra(cual: String, valor: float, tope: float) -> void:
+	if _barras.has(cual):
+		(_barras[cual] as TextureProgressBar).value = clampf(valor / maxf(tope, 1.0), 0.0, 1.0)
+
+
+## "emilia" o "benjamin", por el rol: el arquero es Benjamín.
+static func quien_es(p: Node) -> String:
+	return "benjamin" if bool(p.get("is_archer")) else "emilia"
+
+
+## Plantado con [T]: el que espera sin seguir a nadie.
+static func esta_amurrado(p: Node) -> bool:
+	return "ai_mode" in p and int(p.get("ai_mode")) == int(p.AiMode.FROZEN)
+
+
+## Qué dibujo le toca a `quien`: amurrado si se quedó plantado, y con el marco
+## que eligió —si ya lo tiene— esté activo, siguiendo o plantado.
+func retrato_de(quien: String, amurrado: bool) -> String:
+	var alterno := GameManager.marco_de(quien) == "alterno"
+	if amurrado:
+		if quien == "emilia":
+			return ARTE_HUD + ("amurrada_alterna_emilia.png" if alterno else "amurrada_emilia.png")
+		return ARTE_HUD + ("amurrado_alterno_benjamin.png" if alterno else "amurrado_benjamin.png")
+	if alterno:
+		return ARTE_HUD + "alterno_%s.png" % quien
+	return ARTE_HUD + "retrato_%s.png" % quien
+
+
+func _refrescar_marcos() -> void:
+	if _marcos == null:
+		return
+	var hay := _bound != null and is_instance_valid(_bound)
+	_marcos.visible = hay
+	if not hay:
+		return
+	var quien := quien_es(_bound)
+	_poner(_retrato, retrato_de(quien, false))
+	_poner(_panel, ARTE_HUD + "panel_%s.png" % quien)
+	var con_companero := _companero != null and is_instance_valid(_companero) \
+		and _companero != _bound
+	_chico.visible = con_companero
+	if con_companero:
+		_poner(_chico, retrato_de(quien_es(_companero), esta_amurrado(_companero)))
+	# La carga: lo que lleva tensado el arco, o el golpe de Emilia.
+	var carga := 0.0
+	if bool(_bound.get("_charging")):
+		carga = clampf(float(_bound.get("_charge_t")) / maxf(float(_bound.get("charge_time")), 0.01), 0.0, 1.0)
+	_barra("carga", carga, 1.0)
+
+
+## El dibujo del retrato de `quien` con el marco que tenga elegido (y ganado).
+static func ruta_del_retrato(quien: String) -> String:
+	if GameManager.marco_de(quien) == "alterno":
+		return ARTE_HUD + "alterno_%s.png" % quien
+	return ARTE_HUD + "retrato_%s.png" % quien
+
+
+## Cambia la textura sólo si es otra: se llama cada cuadro.
+static func _poner(t: TextureRect, ruta: String) -> void:
+	if String(t.get_meta("ruta", "")) == ruta:
+		return
+	t.set_meta("ruta", ruta)
+	t.texture = load(ruta) if ResourceLoader.exists(ruta) else null

@@ -243,6 +243,15 @@ func _physics_process(delta: float) -> void:
 	if int(energy) != _energy_shown:
 		_energy_shown = int(energy)
 		energy_changed.emit(_energy_shown, max_energy)
+	# Derrotado no se hace nada más que caer al suelo: ni moverse, ni saltar,
+	# ni pegar. Game lo levanta al rato en el inicio de la zona.
+	if _derrotado:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if not is_on_floor():
+			velocity.y -= float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)) * delta
+		move_and_slide()
+		return
 
 	# --- Gravedad / planeo / corriente ascendente + reset de saltos ---
 	# La corriente que EMPUJA HACIA ABAJO manda sobre todo lo demás.
@@ -1316,7 +1325,7 @@ func set_ai_mode(combat: bool) -> void:
 ## la mano, la pelea volvería a ser de los dos y volveríamos a lo de antes. Lo
 ## que estás peleando es tuyo y de nadie más.
 func take_damage(amount: float, _from: Vector3 = Vector3.ZERO) -> void:
-	if not active:
+	if not active or _derrotado:
 		return
 	if health <= 0:
 		return
@@ -1333,6 +1342,44 @@ func heal(amount: int) -> void:
 
 func is_dead() -> bool:
 	return health <= 0
+
+
+# ─── Derrota ──────────────────────────────────────────────────────────────────
+
+## Con la vida a cero el personaje cae y deja de responder: Game lo escucha
+## por `died`, espera un momento y devuelve al party al inicio de la zona.
+## Sin esto, llegar a cero no cambiaba nada: se seguía jugando con la barra
+## vacía.
+var _derrotado := false
+## Lo que tarda en irse al suelo.
+const CAIDA_DE_DERROTA := 0.5
+
+
+func derrotar() -> void:
+	if _derrotado:
+		return
+	_derrotado = true
+	_charging = false
+	velocity = Vector3.ZERO
+	# No hay clip de derrota para los protagonistas: se tumba el modelo entero,
+	# que se lee igual de bien y no depende de que Mixamo tenga la pose.
+	if _visual != null:
+		var t := create_tween()
+		t.tween_property(_visual, "rotation:x", -PI * 0.5, CAIDA_DE_DERROTA) \
+			.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+
+
+## Vuelve a estar de pie y entero.
+func revivir() -> void:
+	_derrotado = false
+	if _visual != null:
+		_visual.rotation.x = 0.0
+	health = max_health
+	health_changed.emit(health, max_health)
+
+
+func esta_derrotado() -> bool:
+	return _derrotado
 
 
 func _banner(text: String) -> void:

@@ -27,6 +27,12 @@ var idioma := "es"
 ## ventanita. Quien prefiera ventana lo cambia una vez y queda guardado.
 var pantalla_completa := true
 
+## El marco del HUD que eligió cada uno: "clasico" o "alterno". El alterno sólo
+## se ve si ya se desbloqueó (GameManager.marco_de lo decide); aquí sólo se
+## recuerda la elección.
+var marco_emilia := "clasico"
+var marco_benjamin := "clasico"
+
 # --- Progreso del MVP (seccion "g") ---
 # GameManager es el dueño de la logica; aqui solo se almacena. Un unico
 # escritor (_write) para no pisar secciones entre si.
@@ -51,6 +57,8 @@ func _ready() -> void:
 		master_vol = float(c.get_value("d", "master_vol", 1.0))
 		idioma = String(c.get_value("d", "idioma", "es"))
 		pantalla_completa = bool(c.get_value("d", "pantalla_completa", true))
+		marco_emilia = String(c.get_value("d", "marco_emilia", "clasico"))
+		marco_benjamin = String(c.get_value("d", "marco_benjamin", "clasico"))
 		beat_index = int(c.get_value("g", "beat_index", 0))
 		has_bow = bool(c.get_value("g", "has_bow", false))
 		has_wings = bool(c.get_value("g", "has_wings", false))
@@ -73,6 +81,8 @@ func _write() -> void:
 	c.set_value("d", "master_vol", master_vol)
 	c.set_value("d", "idioma", idioma)
 	c.set_value("d", "pantalla_completa", pantalla_completa)
+	c.set_value("d", "marco_emilia", marco_emilia)
+	c.set_value("d", "marco_benjamin", marco_benjamin)
 	c.set_value("g", "beat_index", beat_index)
 	c.set_value("g", "has_bow", has_bow)
 	c.set_value("g", "has_wings", has_wings)
@@ -118,6 +128,22 @@ func aplicar_master() -> void:
 	var bus := AudioServer.get_bus_index("Master")
 	if bus >= 0:
 		AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(master_vol, 0.0001)))
+
+
+## Guarda el marco elegido. `quien` es "emilia" o "benjamin"; `cual`,
+## "clasico" o "alterno".
+func set_marco(quien: String, cual: String) -> void:
+	var v := "alterno" if cual == "alterno" else "clasico"
+	if quien == "benjamin":
+		marco_benjamin = v
+	else:
+		marco_emilia = v
+	_write()
+
+
+## El marco que eligió `quien`, sin mirar si lo tiene desbloqueado.
+func marco_elegido(quien: String) -> String:
+	return marco_benjamin if quien == "benjamin" else marco_emilia
 
 
 func set_idioma(cual: String) -> void:

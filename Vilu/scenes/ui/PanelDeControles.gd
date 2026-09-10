@@ -41,6 +41,7 @@ const FILAS := [
 	{"que": "Embestida",          "acciones": ["guanaco_charge"]},
 	{"que": "Cambiar (te sigue)", "acciones": ["swap_ai"]},
 	{"que": "Cambiar (se queda)", "acciones": ["swap_hold"]},
+	{"que": "Marcos y logros",    "acciones": ["marcos"]},
 	{"que": "Pausa",              "acciones": ["ui_cancel"]},
 ]
 
