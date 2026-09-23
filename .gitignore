@@ -28,3 +28,24 @@ Vilu/models/props/_sin_optimizar/
 # rechaza cualquier archivo de más de 100 MB: un push con esto dentro no puede
 # completarse nunca).
 *.zip
+
+# El juego ANTERIOR, de una etapa temprana y distinta.
+#
+# No es parte del prototipo y nada de `Vilu/` lo usa: eran 892 archivos —casi un
+# tercio de todo lo versionado— que sólo servían para que quien abre el repo no
+# supiera cuál de los dos proyectos mirar. Se sacó también del historial, así que
+# ya no viaja en el clon. La carpeta sigue en disco.
+emilia-game-(4.5)/
+
+# Respaldos manuales de trabajo: copias de seguridad que se hicieron antes de
+# operaciones destructivas sobre el terreno y el mapa.
+#
+# Se quedan EN DISCO a propósito —siguen sirviendo para volver atrás— pero no
+# tienen por qué viajar en el repo: ninguno es una dependencia, y la única
+# mención en el código es un comentario que explica dónde quedó el respaldo.
+_terrain_antes_recorte/
+_terrain_antes_pinchazos/
+_terrain_backup_001644/
+_project_godot_respaldo/
+_tarapaca_antes_dedup.tscn
+_tarapaca_horneada.tscn
