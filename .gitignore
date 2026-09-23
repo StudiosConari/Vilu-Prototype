@@ -46,6 +46,8 @@ emilia-game-(4.5)/
 _terrain_antes_recorte/
 _terrain_antes_pinchazos/
 _terrain_backup_001644/
-_project_godot_respaldo/
+# (es un archivo suelto, no una carpeta: con la barra final el patrón sólo casa
+# con directorios y `git add -A` lo volvía a meter justo después de quitarlo)
+_project_godot_respaldo
 _tarapaca_antes_dedup.tscn
 _tarapaca_horneada.tscn
